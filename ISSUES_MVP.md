@@ -20,7 +20,7 @@
 - [x] Slice 17: App Store Readiness Validation
 - [x] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
 - [x] Slice 19: GUI Workout and History Block Selection
-- [ ] Slice 20: GUI Exercise Logging Screen
+- [x] Slice 20: GUI Exercise Logging Screen
 - [ ] Slice 21: GUI End-to-End Logging Validation
 - [ ] Slice 22: Final Architecture and Test Cleanup
 
@@ -627,17 +627,17 @@ Build the exercise logging screen. It should display read-only exercise context,
 
 ### Acceptance criteria
 
-- [ ] Opening a primary slot shows the primary row selected by default.
-- [ ] The user can switch to a backup row from a selector.
-- [ ] Switching rows changes the row-local history and next set target.
-- [ ] Notes, targets, and rest are shown read-only.
-- [ ] Current/newest set rows appear above prior sets and history.
-- [ ] Structured fields can log a supported set notation value.
-- [ ] Unparseable cells can be viewed and edited as raw text.
-- [ ] The user can edit and clear set cells.
-- [ ] Saving a set auto-advances to the next empty set for that selected row.
-- [ ] All backend tests continue to pass.
-- [ ] All changes are committed after tests pass.
+- [x] Opening a primary slot shows the primary row selected by default.
+- [x] The user can switch to a backup row from a selector.
+- [x] Switching rows changes the row-local history and next set target.
+- [x] Notes, targets, and rest are shown read-only.
+- [x] Current/newest set rows appear above prior sets and history.
+- [x] Structured fields can log a supported set notation value.
+- [x] Unparseable cells can be viewed and edited as raw text.
+- [x] The user can edit and clear set cells.
+- [x] Saving a set auto-advances to the next empty set for that selected row.
+- [x] All backend tests continue to pass.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

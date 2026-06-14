@@ -5,6 +5,131 @@ import 'package:workout_tracker/main.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 void main() {
+  testWidgets('logs edits clears and switches row-local exercise history', (
+    tester,
+  ) async {
+    final rows = [
+      [...activeSheetFixedColumns, 'Week 3', '', 'Week 2', 'Week 1'],
+      [
+        ...List.filled(activeSheetFixedColumns.length, ''),
+        'S1',
+        'S2',
+        'S1',
+        'S1',
+      ],
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        'Controlled',
+        'Stay braced.',
+        'Legs',
+        '',
+        '225x5@8',
+        'manual heavy single',
+        '215x5@8',
+        '205x5@8',
+      ],
+      [
+        'Leg Press',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        'Backup if racks are full.',
+        'Legs',
+        'TRUE',
+        '',
+        '',
+        '360x10@8',
+        '',
+      ],
+    ];
+    final service = _FakeSpreadsheetValidationService.fromRows(rows);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.text('Validate spreadsheet'));
+    await tester.pump();
+    await tester.pump();
+    await tester.drag(find.byType(ListView), const Offset(0, -320));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Squat logging'), findsOneWidget);
+    expect(find.text('Stay braced.'), findsOneWidget);
+    expect(find.text('Rest: 3 min'), findsOneWidget);
+    expect(find.text('Target: 3 sets x 5 @ 8'), findsOneWidget);
+    expect(find.text('Next set S3'), findsOneWidget);
+    expect(find.text('manual heavy single'), findsOneWidget);
+
+    final nextSetTop = tester.getTopLeft(find.text('Next set S3')).dy;
+    final priorSetTop = tester.getTopLeft(find.text('S2')).dy;
+    final historyTop = tester.getTopLeft(find.text('Recent history')).dy;
+    expect(nextSetTop, lessThan(priorSetTop));
+    expect(priorSetTop, lessThan(historyTop));
+
+    await tester.tap(find.text('Leg Press'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leg Press logging'), findsOneWidget);
+    expect(find.text('Backup if racks are full.'), findsOneWidget);
+    expect(find.text('Rest: 2 min'), findsOneWidget);
+    expect(find.text('Next set S1'), findsOneWidget);
+    expect(find.text('Latest history: 360x10@8'), findsOneWidget);
+    expect(find.textContaining('215x5@8'), findsNothing);
+
+    await tester.enterText(find.byKey(const ValueKey('set-weight')), '400');
+    await tester.enterText(find.byKey(const ValueKey('set-reps')), '10');
+    await tester.enterText(find.byKey(const ValueKey('set-rpe')), '8');
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save set'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(service.appliedPlans.last.cellUpdates.single.value, '400x10@8');
+    await tester.drag(find.byType(ListView), const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Next set S2'), findsOneWidget);
+    expect(find.text('400x10@8'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('raw-S1')),
+      'sled felt sticky',
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('save-S1')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      service.appliedPlans.last.cellUpdates.single.value,
+      'sled felt sticky',
+    );
+    expect(find.text('sled felt sticky'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -120));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(service.appliedPlans.last.cellUpdates.single.value, '');
+    expect(find.text('Next set S1'), findsOneWidget);
+    expect(find.text('sled felt sticky'), findsNothing);
+  });
+
   testWidgets('selects a workout and history block before showing overview', (
     tester,
   ) async {
@@ -296,6 +421,7 @@ class _FakeSpreadsheetValidationService
   List<List<String>>? _sourceRows;
   final spreadsheetIds = <String>[];
   final createdHistoryBlockLabels = <String>[];
+  final appliedPlans = <ActiveSheetWritePlan>[];
 
   @override
   Future<SpreadsheetValidationReport> validateSpreadsheet(
@@ -320,6 +446,25 @@ class _FakeSpreadsheetValidationService
       final previewRows = activeSheet
           .planNewHistoryBlock(label: label)
           .previewRowsAfterApplying(sourceRows);
+      this.activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
+      _sourceRows = previewRows;
+    }
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: this.activeSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    final sourceRows = _sourceRows;
+    if (sourceRows != null) {
+      final previewRows = plan.previewRowsAfterApplying(sourceRows);
       this.activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
       _sourceRows = previewRows;
     }
