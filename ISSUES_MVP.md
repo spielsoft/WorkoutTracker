@@ -3,7 +3,7 @@
 - [x] Slice 0: Standard Flutter/Dart Scaffold and Git Repo
 - [x] Slice 1: Capture Domain Contract and Backend Test Fixtures
 - [x] Slice 2: Parse Active Sheet Rows Into Workout Slots
-- [ ] Slice 3: Validate Backup Grouping Rules
+- [x] Slice 3: Validate Backup Grouping Rules
 - [ ] Slice 4: Architecture Review: Sheet Contract Module Depth
 - [ ] Slice 5: Discover and Select History Blocks
 - [ ] Slice 6: Plan New History Block Creation and Growth
@@ -129,13 +129,13 @@ Extend the active sheet parser/validator so backup rows are grouped under the ne
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for backup grouping within a workout.
-- [ ] Backup rows attach to the nearest preceding non-backup row within the same `Workout` group.
-- [ ] Backup rows do not cross workout groups.
-- [ ] A workout whose first app-readable row is a backup produces a schema violation.
-- [ ] The parsed workout overview can distinguish primary rows from nested backup rows.
-- [ ] Validation errors are observable through the public backend interface.
-- [ ] All changes are committed after tests pass.
+- [x] A behavior test fails first for backup grouping within a workout.
+- [x] Backup rows attach to the nearest preceding non-backup row within the same `Workout` group.
+- [x] Backup rows do not cross workout groups.
+- [x] A workout whose first app-readable row is a backup produces a schema violation.
+- [x] The parsed workout overview can distinguish primary rows from nested backup rows.
+- [x] Validation errors are observable through the public backend interface.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

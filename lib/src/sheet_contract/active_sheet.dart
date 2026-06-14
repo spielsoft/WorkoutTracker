@@ -28,14 +28,54 @@ class ActiveSheetInput {
 }
 
 class ParsedActiveSheet {
-  ParsedActiveSheet({required Iterable<WorkoutSlot> slots})
-    : slots = List<WorkoutSlot>.unmodifiable(slots);
+  ParsedActiveSheet({
+    required Iterable<WorkoutSlot> slots,
+    Iterable<WorkoutSlot> primarySlots = const [],
+    Iterable<SchemaViolation> schemaViolations = const [],
+  }) : slots = List<WorkoutSlot>.unmodifiable(slots),
+       primarySlots = List<WorkoutSlot>.unmodifiable(primarySlots),
+       schemaViolations = List<SchemaViolation>.unmodifiable(schemaViolations);
 
   final List<WorkoutSlot> slots;
+  final List<WorkoutSlot> primarySlots;
+  final List<SchemaViolation> schemaViolations;
+}
+
+class SchemaViolation {
+  const SchemaViolation({
+    required this.sheetRowNumber,
+    required this.workout,
+    required this.message,
+  });
+
+  final int sheetRowNumber;
+  final String workout;
+  final String message;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is SchemaViolation &&
+            sheetRowNumber == other.sheetRowNumber &&
+            workout == other.workout &&
+            message == other.message;
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, workout, message);
+
+  @override
+  String toString() {
+    return 'SchemaViolation('
+        'sheetRowNumber: $sheetRowNumber, '
+        'workout: $workout, '
+        'message: $message'
+        ')';
+  }
 }
 
 class WorkoutSlot {
-  const WorkoutSlot({
+  WorkoutSlot({
     required this.sheetRowNumber,
     required this.exercise,
     required this.sets,
@@ -46,7 +86,8 @@ class WorkoutSlot {
     required this.notes,
     required this.workout,
     required this.isBackup,
-  });
+    Iterable<WorkoutSlot> backups = const [],
+  }) : backups = List<WorkoutSlot>.unmodifiable(backups);
 
   final int sheetRowNumber;
   final String exercise;
@@ -58,6 +99,23 @@ class WorkoutSlot {
   final String notes;
   final String workout;
   final bool isBackup;
+  final List<WorkoutSlot> backups;
+
+  WorkoutSlot withBackups(Iterable<WorkoutSlot> backups) {
+    return WorkoutSlot(
+      sheetRowNumber: sheetRowNumber,
+      exercise: exercise,
+      sets: sets,
+      reps: reps,
+      rpe: rpe,
+      rest: rest,
+      tempo: tempo,
+      notes: notes,
+      workout: workout,
+      isBackup: isBackup,
+      backups: backups,
+    );
+  }
 
   @override
   bool operator ==(Object other) {
@@ -72,7 +130,8 @@ class WorkoutSlot {
             tempo == other.tempo &&
             notes == other.notes &&
             workout == other.workout &&
-            isBackup == other.isBackup;
+            isBackup == other.isBackup &&
+            _listEquals(backups, other.backups);
   }
 
   @override
@@ -87,6 +146,7 @@ class WorkoutSlot {
     notes,
     workout,
     isBackup,
+    Object.hashAll(backups),
   );
 
   @override
@@ -101,7 +161,8 @@ class WorkoutSlot {
         'tempo: $tempo, '
         'notes: $notes, '
         'workout: $workout, '
-        'isBackup: $isBackup'
+        'isBackup: $isBackup, '
+        'backups: $backups'
         ')';
   }
 }
@@ -113,6 +174,9 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
 
   final columns = _FixedColumnIndexes.fromHeader(sheet.rows.first);
   final slots = <WorkoutSlot>[];
+  final primarySlotBuilders = <_PrimarySlotBuilder>[];
+  final schemaViolations = <SchemaViolation>[];
+  _PrimarySlotBuilder? currentPrimary;
 
   for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex += 1) {
     final sheetRowNumber = rowIndex + 1;
@@ -127,23 +191,58 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     }
 
     final workout = _cell(row, columns.workout).trim();
-    slots.add(
-      WorkoutSlot(
-        sheetRowNumber: sheetRowNumber,
-        exercise: exercise,
-        sets: _cell(row, columns.sets),
-        reps: _cell(row, columns.reps),
-        rpe: _cell(row, columns.rpe),
-        rest: _cell(row, columns.rest),
-        tempo: _cell(row, columns.tempo),
-        notes: _cell(row, columns.notes),
-        workout: workout.isEmpty ? defaultWorkoutName : workout,
-        isBackup: _isTrue(_cell(row, columns.isBackup)),
-      ),
+    final slot = WorkoutSlot(
+      sheetRowNumber: sheetRowNumber,
+      exercise: exercise,
+      sets: _cell(row, columns.sets),
+      reps: _cell(row, columns.reps),
+      rpe: _cell(row, columns.rpe),
+      rest: _cell(row, columns.rest),
+      tempo: _cell(row, columns.tempo),
+      notes: _cell(row, columns.notes),
+      workout: workout.isEmpty ? defaultWorkoutName : workout,
+      isBackup: _isTrue(_cell(row, columns.isBackup)),
     );
+    slots.add(slot);
+
+    if (slot.isBackup) {
+      final owner = currentPrimary?.primary.workout == slot.workout
+          ? currentPrimary
+          : null;
+      if (owner == null) {
+        schemaViolations.add(
+          SchemaViolation(
+            sheetRowNumber: slot.sheetRowNumber,
+            workout: slot.workout,
+            message:
+                'Backup row has no preceding primary row in the same workout.',
+          ),
+        );
+      } else {
+        owner.backups.add(slot);
+      }
+      continue;
+    }
+
+    final builder = _PrimarySlotBuilder(slot);
+    primarySlotBuilders.add(builder);
+    currentPrimary = builder;
   }
 
-  return ParsedActiveSheet(slots: slots);
+  return ParsedActiveSheet(
+    slots: slots,
+    primarySlots: primarySlotBuilders.map((builder) => builder.toSlot()),
+    schemaViolations: schemaViolations,
+  );
+}
+
+class _PrimarySlotBuilder {
+  _PrimarySlotBuilder(this.primary);
+
+  final WorkoutSlot primary;
+  final List<WorkoutSlot> backups = [];
+
+  WorkoutSlot toSlot() => primary.withBackups(backups);
 }
 
 String _cell(List<String> row, int index) {
@@ -155,6 +254,19 @@ String _cell(List<String> row, int index) {
 
 bool _isTrue(String value) {
   return value.trim().toLowerCase() == 'true';
+}
+
+bool _listEquals<T>(List<T> first, List<T> second) {
+  if (first.length != second.length) {
+    return false;
+  }
+
+  for (var index = 0; index < first.length; index += 1) {
+    if (first[index] != second[index]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 class _FixedColumnIndexes {

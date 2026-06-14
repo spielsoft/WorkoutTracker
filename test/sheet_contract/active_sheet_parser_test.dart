@@ -77,4 +77,109 @@ void main() {
       expect(activeSheet.slots.single.sheetRowNumber, 3);
     },
   );
+
+  test(
+    'groups backup rows under the nearest preceding primary in a workout',
+    () {
+      final workbook = loadLocalWorkoutWorkbookFixture();
+
+      final activeSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: workbook.activeSheet.rows,
+          mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+        ),
+      );
+
+      expect(activeSheet.schemaViolations, isEmpty);
+      expect(activeSheet.primarySlots.map((slot) => slot.exercise), [
+        'Bulgarian Split Squat',
+        'Bench Press',
+        'Plank',
+      ]);
+
+      final legsSlot = activeSheet.primarySlots.first;
+      expect(legsSlot.isBackup, isFalse);
+      expect(legsSlot.backups.map((slot) => slot.exercise), ['Reverse Lunge']);
+      expect(legsSlot.backups.single.isBackup, isTrue);
+      expect(legsSlot.backups.single.workout, 'Legs');
+
+      final upperSlot = activeSheet.primarySlots[1];
+      expect(upperSlot.backups.map((slot) => slot.exercise), ['Push-Up']);
+
+      final defaultSlot = activeSheet.primarySlots.last;
+      expect(defaultSlot.workout, defaultWorkoutName);
+      expect(defaultSlot.backups, isEmpty);
+    },
+  );
+
+  test('does not attach backups across an intervening workout group', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          activeSheetFixedColumns,
+          ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', ''],
+          ['Bench Press', '3', '8', '8', '2 min', '', '', 'Upper', ''],
+          ['Reverse Lunge', '3', '10/side', '8', '90s', '', '', 'Legs', 'TRUE'],
+        ],
+      ),
+    );
+
+    expect(activeSheet.primarySlots.first.exercise, 'Squat');
+    expect(activeSheet.primarySlots.first.backups, isEmpty);
+    expect(activeSheet.schemaViolations, [
+      SchemaViolation(
+        sheetRowNumber: 4,
+        workout: 'Legs',
+        message: 'Backup row has no preceding primary row in the same workout.',
+      ),
+    ]);
+  });
+
+  test('attaches backups to the nearest preceding primary in row order', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          activeSheetFixedColumns,
+          ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', ''],
+          ['Deadlift', '3', '5', '8', '3 min', '', '', 'Legs', ''],
+          ['Hip Thrust', '3', '10', '8', '2 min', '', '', 'Legs', 'TRUE'],
+        ],
+      ),
+    );
+
+    expect(activeSheet.schemaViolations, isEmpty);
+    expect(activeSheet.primarySlots.map((slot) => slot.exercise), [
+      'Squat',
+      'Deadlift',
+    ]);
+    expect(activeSheet.primarySlots.first.backups, isEmpty);
+    expect(activeSheet.primarySlots.last.backups.map((slot) => slot.exercise), [
+      'Hip Thrust',
+    ]);
+  });
+
+  test(
+    'reports a schema violation when a workout starts with a backup row',
+    () {
+      final activeSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            activeSheetFixedColumns,
+            ['Step-Up', '3', '10/side', '8', '90s', '', '', 'Legs', 'TRUE'],
+            ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', ''],
+          ],
+        ),
+      );
+
+      expect(activeSheet.primarySlots.map((slot) => slot.exercise), ['Squat']);
+      expect(activeSheet.schemaViolations, [
+        SchemaViolation(
+          sheetRowNumber: 2,
+          workout: 'Legs',
+          message:
+              'Backup row has no preceding primary row in the same workout.',
+        ),
+      ]);
+    },
+  );
 }
