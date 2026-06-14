@@ -19,7 +19,7 @@
 - [x] Slice 16: Architecture Review: Backend Completion Gate
 - [x] Slice 17: App Store Readiness Validation
 - [x] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
-- [ ] Slice 19: GUI Workout and History Block Selection
+- [x] Slice 19: GUI Workout and History Block Selection
 - [ ] Slice 20: GUI Exercise Logging Screen
 - [ ] Slice 21: GUI End-to-End Logging Validation
 - [ ] Slice 22: Final Architecture and Test Cleanup
@@ -596,16 +596,16 @@ Build the GUI flow for selecting a workout and selecting or creating a visible h
 
 ### Acceptance criteria
 
-- [ ] The user can select a workout from human-readable workout names.
-- [ ] Blank workout values appear under the default workout.
-- [ ] The user can select an existing visible history block.
-- [ ] The user can create a new history block.
-- [ ] The overview shows primary exercises only.
-- [ ] Backups are available as nested alternatives.
-- [ ] The overview preserves active sheet order.
-- [ ] Per-slot set counts include primary and backup row data.
-- [ ] All backend tests continue to pass.
-- [ ] All changes are committed after tests pass.
+- [x] The user can select a workout from human-readable workout names.
+- [x] Blank workout values appear under the default workout.
+- [x] The user can select an existing visible history block.
+- [x] The user can create a new history block.
+- [x] The overview shows primary exercises only.
+- [x] Backups are available as nested alternatives.
+- [x] The overview preserves active sheet order.
+- [x] Per-slot set counts include primary and backup row data.
+- [x] All backend tests continue to pass.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

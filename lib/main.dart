@@ -19,6 +19,12 @@ void main() {
 
 abstract interface class SpreadsheetValidationService {
   Future<SpreadsheetValidationReport> validateSpreadsheet(String spreadsheetId);
+
+  Future<SpreadsheetValidationReport> createHistoryBlock({
+    required String spreadsheetId,
+    required String label,
+    required ParsedActiveSheet activeSheet,
+  });
 }
 
 class SpreadsheetValidationReport {
@@ -45,9 +51,13 @@ class SpreadsheetValidationReport {
 
 class GoogleSpreadsheetValidationService
     implements SpreadsheetValidationService {
-  const GoogleSpreadsheetValidationService({required this.readAdapter});
+  const GoogleSpreadsheetValidationService({
+    required this.readAdapter,
+    this.writeAdapter,
+  });
 
   final GoogleSheetsReadAdapter readAdapter;
+  final GoogleSheetsWriteAdapter? writeAdapter;
 
   @override
   Future<SpreadsheetValidationReport> validateSpreadsheet(
@@ -57,6 +67,24 @@ class GoogleSpreadsheetValidationService
       spreadsheetId: spreadsheetId,
       activeSheet: await readAdapter.readParsedActiveSheet(spreadsheetId),
     );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> createHistoryBlock({
+    required String spreadsheetId,
+    required String label,
+    required ParsedActiveSheet activeSheet,
+  }) async {
+    final writeAdapter = this.writeAdapter;
+    if (writeAdapter == null) {
+      throw StateError('History block creation requires a write adapter.');
+    }
+    final plan = activeSheet.planNewHistoryBlock(label: label);
+    await writeAdapter.applyActiveSheetWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: plan,
+    );
+    return validateSpreadsheet(spreadsheetId);
   }
 }
 
@@ -72,12 +100,42 @@ class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
       client = await auth.clientViaApplicationDefaultCredentials(
         scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
       );
+      final api = sheets.SheetsApi(client);
       final adapter = GoogleSheetsReadAdapter(
-        client: GoogleApisSheetsSpreadsheetClient(sheets.SheetsApi(client)),
+        client: GoogleApisSheetsSpreadsheetClient(api),
       );
       return GoogleSpreadsheetValidationService(
         readAdapter: adapter,
       ).validateSpreadsheet(spreadsheetId);
+    } finally {
+      client?.close();
+    }
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> createHistoryBlock({
+    required String spreadsheetId,
+    required String label,
+    required ParsedActiveSheet activeSheet,
+  }) async {
+    auth.AutoRefreshingAuthClient? client;
+    try {
+      client = await auth.clientViaApplicationDefaultCredentials(
+        scopes: GoogleApisSheetsWriteClient.writeScopes,
+      );
+      final api = sheets.SheetsApi(client);
+      return GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(
+          client: GoogleApisSheetsSpreadsheetClient(api),
+        ),
+        writeAdapter: GoogleSheetsWriteAdapter(
+          client: GoogleApisSheetsWriteClient(api),
+        ),
+      ).createHistoryBlock(
+        spreadsheetId: spreadsheetId,
+        label: label,
+        activeSheet: activeSheet,
+      );
     } finally {
       client?.close();
     }
@@ -129,8 +187,11 @@ class SpreadsheetValidationShell extends StatefulWidget {
 class _SpreadsheetValidationShellState
     extends State<SpreadsheetValidationShell> {
   late final TextEditingController _spreadsheetController;
+  late final TextEditingController _newHistoryBlockController;
   SpreadsheetValidationReport? _report;
   String? _error;
+  String? _selectedWorkout;
+  String? _selectedHistoryBlock;
   bool _isValidating = false;
 
   @override
@@ -139,12 +200,21 @@ class _SpreadsheetValidationShellState
     _spreadsheetController = TextEditingController(
       text: widget.initialSpreadsheetText,
     );
+    _newHistoryBlockController = TextEditingController();
   }
 
   @override
   void dispose() {
     _spreadsheetController.dispose();
+    _newHistoryBlockController.dispose();
     super.dispose();
+  }
+
+  void _adoptReport(SpreadsheetValidationReport report) {
+    _report = report;
+    _error = null;
+    _selectedWorkout = report.activeSheet.selectableWorkouts.firstOrNull;
+    _selectedHistoryBlock = report.activeSheet.historyBlocks.firstOrNull?.label;
   }
 
   Future<void> _validateSelectedSpreadsheet() async {
@@ -173,8 +243,7 @@ class _SpreadsheetValidationShellState
         return;
       }
       setState(() {
-        _report = report;
-        _error = null;
+        _adoptReport(report);
       });
     } on Object catch (error) {
       if (!mounted) {
@@ -183,6 +252,58 @@ class _SpreadsheetValidationShellState
       setState(() {
         _report = null;
         _error = 'Unable to validate spreadsheet: $error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isValidating = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _createHistoryBlock() async {
+    final report = _report;
+    final label = _newHistoryBlockController.text.trim();
+    if (report == null || label.isEmpty) {
+      setState(() {
+        _error = 'Enter a visible history block label.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isValidating = true;
+      _error = null;
+    });
+
+    try {
+      final updatedReport = await widget.validationService.createHistoryBlock(
+        spreadsheetId: report.spreadsheetId,
+        label: label,
+        activeSheet: report.activeSheet,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _report = updatedReport;
+        _error = null;
+        _selectedHistoryBlock = label;
+        if (!updatedReport.activeSheet.selectableWorkouts.contains(
+          _selectedWorkout,
+        )) {
+          _selectedWorkout =
+              updatedReport.activeSheet.selectableWorkouts.firstOrNull;
+        }
+        _newHistoryBlockController.clear();
+      });
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = 'Unable to create history block: $error';
       });
     } finally {
       if (mounted) {
@@ -264,11 +385,223 @@ class _SpreadsheetValidationShellState
                       lines: [_error!],
                       tone: _IssueTone.error,
                     ),
-                  if (_report != null) _ValidationSummary(report: _report!),
+                  if (_report != null) ...[
+                    _ValidationSummary(report: _report!),
+                    if (!_report!.hasBlockingSchemaViolations) ...[
+                      const SizedBox(height: 24),
+                      _WorkoutAndHistorySelection(
+                        activeSheet: _report!.activeSheet,
+                        selectedWorkout: _selectedWorkout,
+                        selectedHistoryBlock: _selectedHistoryBlock,
+                        newHistoryBlockController: _newHistoryBlockController,
+                        onWorkoutChanged: (workout) {
+                          setState(() {
+                            _selectedWorkout = workout;
+                          });
+                        },
+                        onHistoryBlockChanged: (historyBlock) {
+                          setState(() {
+                            _selectedHistoryBlock = historyBlock;
+                          });
+                        },
+                        onCreateHistoryBlock: _isValidating
+                            ? null
+                            : _createHistoryBlock,
+                      ),
+                    ],
+                  ],
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkoutAndHistorySelection extends StatelessWidget {
+  const _WorkoutAndHistorySelection({
+    required this.activeSheet,
+    required this.selectedWorkout,
+    required this.selectedHistoryBlock,
+    required this.newHistoryBlockController,
+    required this.onWorkoutChanged,
+    required this.onHistoryBlockChanged,
+    required this.onCreateHistoryBlock,
+  });
+
+  final ParsedActiveSheet activeSheet;
+  final String? selectedWorkout;
+  final String? selectedHistoryBlock;
+  final TextEditingController newHistoryBlockController;
+  final ValueChanged<String?> onWorkoutChanged;
+  final ValueChanged<String?> onHistoryBlockChanged;
+  final VoidCallback? onCreateHistoryBlock;
+
+  @override
+  Widget build(BuildContext context) {
+    final workouts = activeSheet.selectableWorkouts;
+    final historyBlocks = activeSheet.historyBlocks;
+    final selectedWorkout = workouts.contains(this.selectedWorkout)
+        ? this.selectedWorkout
+        : workouts.firstOrNull;
+    final selectedHistoryBlock =
+        historyBlocks.any((block) => block.label == this.selectedHistoryBlock)
+        ? this.selectedHistoryBlock
+        : historyBlocks.firstOrNull?.label;
+    final overview = selectedWorkout == null || selectedHistoryBlock == null
+        ? null
+        : activeSheet.buildWorkoutOverview(
+            workout: selectedWorkout,
+            historyBlockLabel: selectedHistoryBlock,
+          );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Workout setup', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            SizedBox(
+              width: 260,
+              child: DropdownButtonFormField<String>(
+                initialValue: selectedWorkout,
+                decoration: const InputDecoration(
+                  labelText: 'Workout',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.fitness_center_outlined),
+                ),
+                items: [
+                  for (final workout in workouts)
+                    DropdownMenuItem(value: workout, child: Text(workout)),
+                ],
+                onChanged: onWorkoutChanged,
+              ),
+            ),
+            SizedBox(
+              width: 260,
+              child: DropdownButtonFormField<String>(
+                initialValue: selectedHistoryBlock,
+                decoration: const InputDecoration(
+                  labelText: 'History block',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.history_outlined),
+                ),
+                items: [
+                  for (final block in historyBlocks)
+                    DropdownMenuItem(
+                      value: block.label,
+                      child: Text(block.label),
+                    ),
+                ],
+                onChanged: onHistoryBlockChanged,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            SizedBox(
+              width: 260,
+              child: TextField(
+                controller: newHistoryBlockController,
+                decoration: const InputDecoration(
+                  labelText: 'New history block label',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.add_chart_outlined),
+                ),
+                textInputAction: TextInputAction.done,
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: onCreateHistoryBlock,
+              icon: const Icon(Icons.add_outlined),
+              label: const Text('Create history block'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        if (overview != null) _WorkoutOverviewList(overview: overview),
+      ],
+    );
+  }
+}
+
+class _WorkoutOverviewList extends StatelessWidget {
+  const _WorkoutOverviewList({required this.overview});
+
+  final WorkoutOverview overview;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '${overview.workout} exercises',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 8),
+        for (final slot in overview.slots) _WorkoutOverviewTile(slot: slot),
+      ],
+    );
+  }
+}
+
+class _WorkoutOverviewTile extends StatelessWidget {
+  const _WorkoutOverviewTile({required this.slot});
+
+  final WorkoutOverviewSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final setLabel = slot.setCount == 1 ? '1 set' : '${slot.setCount} sets';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      slot.exercise,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  Text(setLabel),
+                ],
+              ),
+              for (final backup in slot.backups) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.subdirectory_arrow_right, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(backup.exercise)),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
