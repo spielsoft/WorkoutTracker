@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:workout_tracker/google_sheets.dart';
@@ -6,6 +9,11 @@ import 'package:workout_tracker/sheet_contract.dart';
 const workoutTrackerDevelopmentSpreadsheetUrl =
     'https://docs.google.com/spreadsheets/d/'
     '$workoutTrackerDevelopmentSpreadsheetId/edit?gid=0#gid=0';
+const workoutTrackerDevelopmentCredentialsDartDefine =
+    'WORKOUT_TRACKER_GOOGLE_APPLICATION_CREDENTIALS';
+const workoutTrackerDevelopmentCredentialsPath = String.fromEnvironment(
+  workoutTrackerDevelopmentCredentialsDartDefine,
+);
 
 abstract interface class SpreadsheetValidationService {
   /// Reads and reparses the active sheet for [spreadsheetId].
@@ -113,7 +121,11 @@ class GoogleSpreadsheetValidationService
 }
 
 class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
-  const AdcSpreadsheetValidationService();
+  const AdcSpreadsheetValidationService({
+    this.credentialsPath = workoutTrackerDevelopmentCredentialsPath,
+  });
+
+  final String credentialsPath;
 
   @override
   Future<SpreadsheetValidationReport> validateSpreadsheet(
@@ -121,8 +133,9 @@ class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
   ) async {
     auth.AutoRefreshingAuthClient? client;
     try {
-      client = await auth.clientViaApplicationDefaultCredentials(
+      client = await clientViaWorkoutTrackerDevelopmentCredentials(
         scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
+        credentialsPath: credentialsPath,
       );
       final api = sheets.SheetsApi(client);
       final adapter = GoogleSheetsReadAdapter(
@@ -157,8 +170,9 @@ class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
   }) async {
     auth.AutoRefreshingAuthClient? client;
     try {
-      client = await auth.clientViaApplicationDefaultCredentials(
+      client = await clientViaWorkoutTrackerDevelopmentCredentials(
         scopes: GoogleApisSheetsWriteClient.writeScopes,
+        credentialsPath: credentialsPath,
       );
       final api = sheets.SheetsApi(client);
       return GoogleSpreadsheetValidationService(
@@ -177,6 +191,52 @@ class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
       client?.close();
     }
   }
+}
+
+Future<auth.AutoRefreshingAuthClient>
+clientViaWorkoutTrackerDevelopmentCredentials({
+  required List<String> scopes,
+  String credentialsPath = workoutTrackerDevelopmentCredentialsPath,
+}) async {
+  final trimmedPath = credentialsPath.trim();
+  if (trimmedPath.isEmpty) {
+    return auth.clientViaApplicationDefaultCredentials(scopes: scopes);
+  }
+
+  final credentials = jsonDecode(await File(trimmedPath).readAsString());
+  if (credentials is! Map<String, dynamic>) {
+    throw FormatException(
+      'Google credentials file must contain a JSON object: $trimmedPath',
+    );
+  }
+
+  final quotaProject = credentials['quota_project_id'] as String?;
+  if (credentials case {
+    'type': 'authorized_user',
+    'client_id': final String clientId,
+    'client_secret': final String? clientSecret,
+    'refresh_token': final String refreshToken,
+  }) {
+    return auth.clientViaRefreshToken(
+      auth.ClientId(clientId, clientSecret),
+      refreshToken,
+      scopes,
+      quotaProject: quotaProject,
+    );
+  }
+
+  if (credentials['type'] == 'service_account') {
+    return auth.clientViaServiceAccount(
+      auth.ServiceAccountCredentials.fromJson(credentials),
+      scopes,
+      quotaProject: quotaProject,
+    );
+  }
+
+  throw FormatException(
+    'Unsupported Google credentials type for $trimmedPath: '
+    '${credentials['type']}',
+  );
 }
 
 String spreadsheetIdFromSelection(String input) {

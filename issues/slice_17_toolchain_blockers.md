@@ -2,10 +2,19 @@
 
 These are local environment blockers discovered during Slice 17 packaging
 validation. They are not project architecture, framework, or package dependency
-blockers, but they must be cleared before GUI slices can verify runnable
-platform builds on this machine.
+blockers.
 
 ## Xcode CoreSimulator Framework Missing
+
+Status: resolved locally after Xcode finished installing simulator support.
+
+Current verification:
+
+- `flutter build macos`: passes.
+- `flutter build ios --simulator`: passes.
+- `flutter test integration_test/live_logging_flow_test.dart -d <iOS simulator>
+  --dart-define=WORKOUT_TRACKER_GOOGLE_APPLICATION_CREDENTIALS=<ADC path>`:
+  passes.
 
 Affected commands:
 

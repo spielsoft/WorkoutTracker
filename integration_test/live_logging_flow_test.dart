@@ -4,7 +4,6 @@ import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:integration_test/integration_test.dart';
 import 'package:workout_tracker/google_sheets.dart';
-import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
@@ -16,8 +15,8 @@ void main() {
   late SpreadsheetValidationService validationService;
 
   setUpAll(() async {
-    final authenticatedClient = await auth
-        .clientViaApplicationDefaultCredentials(
+    final authenticatedClient =
+        await clientViaWorkoutTrackerDevelopmentCredentials(
           scopes: GoogleApisSheetsWriteClient.writeScopes,
         );
     client = authenticatedClient;
@@ -161,5 +160,5 @@ Future<void> _waitForFinder(
       return;
     }
   }
-  fail('Timed out waiting for ${finder.description}.');
+  fail('Timed out waiting for ${finder.describeMatch(Plurality.many)}.');
 }

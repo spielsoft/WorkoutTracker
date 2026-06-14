@@ -109,11 +109,9 @@ remain out of scope for the MVP's local/dev install target.
 
 - `flutter test test/platform_store_readiness_test.dart`: passed.
 - `flutter test`: passed.
-- `flutter build macos`: blocked by local Xcode installation. `xcodebuild`
-  cannot load `IDESimulatorFoundation` because
-  `/Library/Developer/PrivateFrameworks/CoreSimulator.framework/Versions/A/CoreSimulator`
-  is missing.
+- `flutter build macos`: now passes after Xcode finished installing simulator
+  support.
+- `flutter build ios --simulator`: now passes after the iOS simulator runtime
+  was installed.
 - `flutter build appbundle`: blocked by local Android SDK configuration. Flutter
   reports no Android SDK and asks for `ANDROID_HOME`.
-- `flutter build ios --config-only`: blocked by the same local Xcode
-  `CoreSimulator.framework` issue as the macOS build.

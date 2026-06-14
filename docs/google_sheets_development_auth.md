@@ -46,15 +46,35 @@ the sheet again after validation:
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_backend_integration_gate.dart
 ```
 
-Slice 21 validates the macOS GUI flow against the same development spreadsheet
-using a live `integration_test`. The debug/profile macOS entitlement is left
-unsandboxed so the local development-run app can access ADC during this
-validation path, while release packaging keeps the sandbox enabled. Run the
-GUI validation with an explicit ADC file path:
+Slice 21 validates the GUI flow against the same development spreadsheet using
+a live `integration_test`.
+
+For macOS, the debug/profile entitlement is left unsandboxed so the local
+development-run app can access ADC during this validation path, while release
+packaging keeps the sandbox enabled. Run the macOS GUI validation with an
+explicit ADC file path:
 
 ```sh
 GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json" \
 flutter test integration_test/live_logging_flow_test.dart -d macos
+```
+
+For iOS simulator validation, boot an available simulator first. The simulator
+app process does not inherit the host `HOME` environment reliably, so pass the
+same ADC file path through Flutter's compile-time development define:
+
+```sh
+xcrun simctl boot B924969D-19D1-4BE0-A128-E6C8630B4FA9
+flutter devices
+flutter test integration_test/live_logging_flow_test.dart \
+  -d B924969D-19D1-4BE0-A128-E6C8630B4FA9 \
+  --dart-define=WORKOUT_TRACKER_GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json"
+```
+
+The iOS simulator build can be checked without live Google access:
+
+```sh
+flutter build ios --simulator
 ```
 
 For AFK verification, provide credentials before running the command:

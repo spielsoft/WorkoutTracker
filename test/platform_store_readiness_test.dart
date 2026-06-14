@@ -51,5 +51,19 @@ void main() {
       expect(blockers, contains('Xcode CoreSimulator Framework Missing'));
       expect(blockers, contains('Android SDK Not Configured'));
     });
+
+    test('documents iOS simulator validation alongside macOS validation', () {
+      final authDocs = File(
+        'docs/google_sheets_development_auth.md',
+      ).readAsStringSync();
+
+      expect(authDocs, contains('macOS GUI validation'));
+      expect(authDocs, contains('iOS simulator validation'));
+      expect(authDocs, contains('flutter build ios --simulator'));
+      expect(
+        authDocs,
+        contains('WORKOUT_TRACKER_GOOGLE_APPLICATION_CREDENTIALS'),
+      );
+    });
   });
 }
