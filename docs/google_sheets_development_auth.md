@@ -28,6 +28,15 @@ verification command uses Application Default Credentials:
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_write.dart
 ```
 
+Slice 14 resets the writable development spreadsheet to a deterministic active
+sheet and `Exercises` fixture. It uses the same Sheets spreadsheet scope and
+does not require Drive scopes. The live reset verification command uses
+Application Default Credentials:
+
+```sh
+/Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_reset.dart
+```
+
 For AFK verification, provide credentials before running the command:
 
 1. Create or choose a Google Cloud project with the Google Sheets API enabled.
@@ -59,6 +68,7 @@ Then rerun the relevant live verifier:
 ```sh
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_read.dart
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_write.dart
+/Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_reset.dart
 ```
 
 The development spreadsheet for Google integration slices is:

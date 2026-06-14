@@ -14,7 +14,7 @@
 - [x] Slice 11: Architecture Cleanup: Backend Module Seams
 - [x] Slice 12: Google Sheet Read Adapter
 - [x] Slice 13: Google Sheet Write Adapter
-- [ ] Slice 14: Development Sheet Reset and Cleanup Harness
+- [x] Slice 14: Development Sheet Reset and Cleanup Harness
 - [ ] Slice 15: Backend Integration Validation Gate
 - [ ] Slice 16: Architecture Review: Backend Completion Gate
 - [ ] Slice 17: App Store Readiness Validation
@@ -448,13 +448,13 @@ Create a repeatable reset and cleanup harness for the writable development sprea
 
 ### Acceptance criteria
 
-- [ ] The harness can reset the development spreadsheet to a known active sheet and `Exercises` tab fixture.
-- [ ] Integration tests can call the reset path before or after live write tests.
-- [ ] Cleanup preserves the workbook as a usable human-readable sheet.
-- [ ] The reset fixture includes primary rows, backup rows, at least one workout name, blank default workout rows, and at least one history block.
-- [ ] The reset fixture includes formula-driven active sheet fields pointing into `Exercises`.
-- [ ] The harness avoids touching unrelated spreadsheets.
-- [ ] All changes are committed after tests pass.
+- [x] The harness can reset the development spreadsheet to a known active sheet and `Exercises` tab fixture.
+- [x] Integration tests can call the reset path before or after live write tests.
+- [x] Cleanup preserves the workbook as a usable human-readable sheet.
+- [x] The reset fixture includes primary rows, backup rows, at least one workout name, blank default workout rows, and at least one history block.
+- [x] The reset fixture includes formula-driven active sheet fields pointing into `Exercises`.
+- [x] The harness avoids touching unrelated spreadsheets.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
