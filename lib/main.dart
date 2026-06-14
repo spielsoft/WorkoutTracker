@@ -1,122 +1,451 @@
 import 'package:flutter/material.dart';
+import 'package:googleapis/sheets/v4.dart' as sheets;
+import 'package:googleapis_auth/auth_io.dart' as auth;
+import 'package:workout_tracker/google_sheets.dart';
+import 'package:workout_tracker/sheet_contract.dart';
+
+const workoutTrackerDevelopmentSpreadsheetUrl =
+    'https://docs.google.com/spreadsheets/d/'
+    '$workoutTrackerDevelopmentSpreadsheetId/edit?gid=0#gid=0';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const WorkoutTrackerApp(
+      validationService: AdcSpreadsheetValidationService(),
+      initialSpreadsheetText: workoutTrackerDevelopmentSpreadsheetUrl,
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+abstract interface class SpreadsheetValidationService {
+  Future<SpreadsheetValidationReport> validateSpreadsheet(String spreadsheetId);
+}
 
-  // This widget is the root of your application.
+class SpreadsheetValidationReport {
+  const SpreadsheetValidationReport({
+    required this.spreadsheetId,
+    required this.activeSheet,
+  });
+
+  final String spreadsheetId;
+  final ParsedActiveSheet activeSheet;
+
+  List<SchemaViolation> get schemaViolations {
+    return activeSheet.schemaViolations;
+  }
+
+  List<FormulaHealingIssue> get formulaHealingIssues {
+    return activeSheet.formulaHealingIssues;
+  }
+
+  bool get hasBlockingSchemaViolations {
+    return schemaViolations.isNotEmpty;
+  }
+}
+
+class GoogleSpreadsheetValidationService
+    implements SpreadsheetValidationService {
+  const GoogleSpreadsheetValidationService({required this.readAdapter});
+
+  final GoogleSheetsReadAdapter readAdapter;
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: await readAdapter.readParsedActiveSheet(spreadsheetId),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
+  const AdcSpreadsheetValidationService();
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    auth.AutoRefreshingAuthClient? client;
+    try {
+      client = await auth.clientViaApplicationDefaultCredentials(
+        scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
+      );
+      final adapter = GoogleSheetsReadAdapter(
+        client: GoogleApisSheetsSpreadsheetClient(sheets.SheetsApi(client)),
+      );
+      return GoogleSpreadsheetValidationService(
+        readAdapter: adapter,
+      ).validateSpreadsheet(spreadsheetId);
+    } finally {
+      client?.close();
+    }
+  }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class WorkoutTrackerApp extends StatelessWidget {
+  const WorkoutTrackerApp({
+    required this.validationService,
+    this.initialSpreadsheetText = '',
+    super.key,
+  });
 
-  void _incrementCounter() {
+  final SpreadsheetValidationService validationService;
+  final String initialSpreadsheetText;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'WorkoutTracker',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7C66)),
+        useMaterial3: true,
+      ),
+      home: SpreadsheetValidationShell(
+        validationService: validationService,
+        initialSpreadsheetText: initialSpreadsheetText,
+      ),
+    );
+  }
+}
+
+class SpreadsheetValidationShell extends StatefulWidget {
+  const SpreadsheetValidationShell({
+    required this.validationService,
+    required this.initialSpreadsheetText,
+    super.key,
+  });
+
+  final SpreadsheetValidationService validationService;
+  final String initialSpreadsheetText;
+
+  @override
+  State<SpreadsheetValidationShell> createState() {
+    return _SpreadsheetValidationShellState();
+  }
+}
+
+class _SpreadsheetValidationShellState
+    extends State<SpreadsheetValidationShell> {
+  late final TextEditingController _spreadsheetController;
+  SpreadsheetValidationReport? _report;
+  String? _error;
+  bool _isValidating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _spreadsheetController = TextEditingController(
+      text: widget.initialSpreadsheetText,
+    );
+  }
+
+  @override
+  void dispose() {
+    _spreadsheetController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _validateSelectedSpreadsheet() async {
+    final spreadsheetId = spreadsheetIdFromSelection(
+      _spreadsheetController.text,
+    );
+    if (spreadsheetId.isEmpty) {
+      setState(() {
+        _report = null;
+        _error = 'Enter a Google Sheets URL or spreadsheet ID.';
+      });
+      return;
+    }
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _isValidating = true;
+      _report = null;
+      _error = null;
     });
+
+    try {
+      final report = await widget.validationService.validateSpreadsheet(
+        spreadsheetId,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _report = report;
+        _error = null;
+      });
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _report = null;
+        _error = 'Unable to validate spreadsheet: $error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isValidating = false;
+        });
+      }
+    }
+  }
+
+  void _useDevelopmentSheet() {
+    _spreadsheetController.text = workoutTrackerDevelopmentSpreadsheetUrl;
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('WorkoutTracker'),
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(24),
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 840),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Spreadsheet validation',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _spreadsheetController,
+                    decoration: const InputDecoration(
+                      labelText: 'Google Sheets URL or spreadsheet ID',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.table_chart_outlined),
+                    ),
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _validateSelectedSpreadsheet(),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: _isValidating
+                            ? null
+                            : _validateSelectedSpreadsheet,
+                        icon: _isValidating
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.verified_outlined),
+                        label: const Text('Validate spreadsheet'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _isValidating ? null : _useDevelopmentSheet,
+                        icon: const Icon(Icons.science_outlined),
+                        label: const Text('Use development sheet'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  if (_error != null)
+                    _IssuePanel(
+                      icon: Icons.error_outline,
+                      title: 'Connection or validation failed',
+                      lines: [_error!],
+                      tone: _IssueTone.error,
+                    ),
+                  if (_report != null) _ValidationSummary(report: _report!),
+                ],
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+String spreadsheetIdFromSelection(String input) {
+  final trimmed = input.trim();
+  final match = RegExp(r'/spreadsheets/d/([A-Za-z0-9_-]+)').firstMatch(trimmed);
+  return match?.group(1) ?? trimmed;
+}
+
+class _ValidationSummary extends StatelessWidget {
+  const _ValidationSummary({required this.report});
+
+  final SpreadsheetValidationReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final panels = <Widget>[
+      _IssuePanel(
+        icon: report.hasBlockingSchemaViolations
+            ? Icons.report_problem_outlined
+            : Icons.check_circle_outline,
+        title: report.hasBlockingSchemaViolations
+            ? 'Sheet contract issues'
+            : 'Sheet contract valid',
+        lines: report.hasBlockingSchemaViolations
+            ? report.schemaViolations.map(_schemaViolationLine).toList()
+            : [
+                'No blocking schema errors found in spreadsheet '
+                    '${report.spreadsheetId}.',
+              ],
+        tone: report.hasBlockingSchemaViolations
+            ? _IssueTone.error
+            : _IssueTone.success,
+      ),
+    ];
+
+    if (report.formulaHealingIssues.isEmpty) {
+      panels.add(
+        const _IssuePanel(
+          icon: Icons.check_circle_outline,
+          title: 'Formulas valid',
+          lines: ['No formula repair issues found.'],
+          tone: _IssueTone.success,
+        ),
+      );
+    } else {
+      panels.add(
+        _IssuePanel(
+          icon: Icons.build_outlined,
+          title: 'Formula repair needed',
+          lines: report.formulaHealingIssues
+              .expand(_formulaHealingIssueLines)
+              .toList(),
+          tone: _IssueTone.warning,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var index = 0; index < panels.length; index += 1) ...[
+          if (index > 0) const SizedBox(height: 12),
+          panels[index],
+        ],
+      ],
+    );
+  }
+}
+
+String _schemaViolationLine(SchemaViolation violation) {
+  return 'Row ${violation.sheetRowNumber}, ${violation.workout}: '
+      '${violation.message}';
+}
+
+Iterable<String> _formulaHealingIssueLines(FormulaHealingIssue issue) sync* {
+  final selection = issue.requiresUserSelection
+      ? 'requires exercise selection'
+      : 'preselects Exercises row ${issue.preselectedExerciseSheetRowNumber}';
+  yield 'Row ${issue.activeSheetRowNumber}, ${issue.displayedExerciseName}: '
+      '$selection.';
+  for (final cell in issue.cells) {
+    yield '${cell.columnName}: ${_formulaReasonLabel(cell.reason)}';
+  }
+}
+
+String _formulaReasonLabel(FormulaHealingIssueReason reason) {
+  switch (reason) {
+    case FormulaHealingIssueReason.missingFormula:
+      return 'missing formula';
+    case FormulaHealingIssueReason.brokenFormula:
+      return 'broken formula';
+  }
+}
+
+enum _IssueTone { error, warning, success }
+
+class _IssuePanel extends StatelessWidget {
+  const _IssuePanel({
+    required this.icon,
+    required this.title,
+    required this.lines,
+    required this.tone,
+  });
+
+  final IconData icon;
+  final String title;
+  final List<String> lines;
+  final _IssueTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _colorsForTone(Theme.of(context).colorScheme, tone);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: colors.foreground),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colors.foreground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(line),
+              ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+({Color background, Color border, Color foreground}) _colorsForTone(
+  ColorScheme colorScheme,
+  _IssueTone tone,
+) {
+  switch (tone) {
+    case _IssueTone.error:
+      return (
+        background: colorScheme.errorContainer,
+        border: colorScheme.error.withValues(alpha: 0.5),
+        foreground: colorScheme.onErrorContainer,
+      );
+    case _IssueTone.warning:
+      return (
+        background: const Color(0xFFFFF6D6),
+        border: const Color(0xFFB28A00),
+        foreground: const Color(0xFF5F4600),
+      );
+    case _IssueTone.success:
+      return (
+        background: const Color(0xFFE6F4EA),
+        border: const Color(0xFF4F9D69),
+        foreground: const Color(0xFF145A32),
+      );
   }
 }

@@ -18,7 +18,7 @@
 - [x] Slice 15: Backend Integration Validation Gate
 - [x] Slice 16: Architecture Review: Backend Completion Gate
 - [x] Slice 17: App Store Readiness Validation
-- [ ] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
+- [x] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
 - [ ] Slice 19: GUI Workout and History Block Selection
 - [ ] Slice 20: GUI Exercise Logging Screen
 - [ ] Slice 21: GUI End-to-End Logging Validation
@@ -567,14 +567,14 @@ Build the first GUI slice after backend completion. The app shell must support G
 
 ### Acceptance criteria
 
-- [ ] The GUI can start on macOS during development.
-- [ ] The user can connect or select a spreadsheet through the available development auth path.
-- [ ] The GUI runs backend validation on the selected spreadsheet.
-- [ ] Blocking schema errors are shown clearly.
-- [ ] Healable formula issues are shown clearly.
-- [ ] The GUI does not implement duplicate parser, validator, or healing logic.
-- [ ] All backend tests continue to pass.
-- [ ] All changes are committed after tests pass.
+- [x] The GUI can start on macOS during development.
+- [x] The user can connect or select a spreadsheet through the available development auth path.
+- [x] The GUI runs backend validation on the selected spreadsheet.
+- [x] Blocking schema errors are shown clearly.
+- [x] Healable formula issues are shown clearly.
+- [x] The GUI does not implement duplicate parser, validator, or healing logic.
+- [x] All backend tests continue to pass.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
