@@ -13,7 +13,7 @@
 - [x] Slice 10: Formula Healing Planner
 - [x] Slice 11: Architecture Cleanup: Backend Module Seams
 - [x] Slice 12: Google Sheet Read Adapter
-- [ ] Slice 13: Google Sheet Write Adapter
+- [x] Slice 13: Google Sheet Write Adapter
 - [ ] Slice 14: Development Sheet Reset and Cleanup Harness
 - [ ] Slice 15: Backend Integration Validation Gate
 - [ ] Slice 16: Architecture Review: Backend Completion Gate
@@ -417,16 +417,16 @@ Build the Google Sheets write adapter for applying backend write plans to the de
 
 ### Acceptance criteria
 
-- [ ] Planned writes from backend tests can be applied to the `development` spreadsheet.
-- [ ] The adapter can create a new `S1` history block in the live sheet.
-- [ ] The adapter can grow a selected history block with additional set columns.
-- [ ] The adapter can log a set to a primary row.
-- [ ] The adapter can log a set to a backup row.
-- [ ] The adapter can edit and clear existing set cells.
-- [ ] The adapter can apply formula healing plans to the active sheet without editing `Exercises`.
-- [ ] Existing unrelated sheet data is preserved.
-- [ ] Local tests that do not require Google still run without credentials.
-- [ ] All changes are committed after tests pass.
+- [x] Planned writes from backend tests can be applied to the `development` spreadsheet.
+- [x] The adapter can create a new `S1` history block in the live sheet.
+- [x] The adapter can grow a selected history block with additional set columns.
+- [x] The adapter can log a set to a primary row.
+- [x] The adapter can log a set to a backup row.
+- [x] The adapter can edit and clear existing set cells.
+- [x] The adapter can apply formula healing plans to the active sheet without editing `Exercises`.
+- [x] Existing unrelated sheet data is preserved.
+- [x] Local tests that do not require Google still run without credentials.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
