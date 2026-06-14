@@ -891,42 +891,66 @@ String? _latestHistoryValue(ExerciseLoggingContext context) {
   return null;
 }
 
-class _ValidationSummary extends StatelessWidget {
+class _ValidationSummary extends StatefulWidget {
   const _ValidationSummary({required this.report});
 
   final SpreadsheetValidationReport report;
 
   @override
+  State<_ValidationSummary> createState() => _ValidationSummaryState();
+}
+
+class _ValidationSummaryState extends State<_ValidationSummary> {
+  final _dismissedSuccessPanels = <String>{};
+
+  @override
+  void didUpdateWidget(_ValidationSummary oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.report != widget.report) {
+      _dismissedSuccessPanels.clear();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final report = widget.report;
     final panels = <Widget>[
-      _IssuePanel(
-        icon: report.hasBlockingSchemaViolations
-            ? Icons.report_problem_outlined
-            : Icons.check_circle_outline,
-        title: report.hasBlockingSchemaViolations
-            ? 'Sheet contract issues'
-            : 'Sheet contract valid',
-        lines: report.hasBlockingSchemaViolations
-            ? report.schemaViolations.map(_schemaViolationLine).toList()
-            : [
-                'No blocking schema errors found in spreadsheet '
-                    '${report.spreadsheetId}.',
-              ],
-        tone: report.hasBlockingSchemaViolations
-            ? _IssueTone.error
-            : _IssueTone.success,
-      ),
+      if (report.hasBlockingSchemaViolations ||
+          !_dismissedSuccessPanels.contains('Sheet contract valid'))
+        _IssuePanel(
+          icon: report.hasBlockingSchemaViolations
+              ? Icons.report_problem_outlined
+              : Icons.check_circle_outline,
+          title: report.hasBlockingSchemaViolations
+              ? 'Sheet contract issues'
+              : 'Sheet contract valid',
+          lines: report.hasBlockingSchemaViolations
+              ? report.schemaViolations.map(_schemaViolationLine).toList()
+              : [
+                  'No blocking schema errors found in spreadsheet '
+                      '${report.spreadsheetId}.',
+                ],
+          tone: report.hasBlockingSchemaViolations
+              ? _IssueTone.error
+              : _IssueTone.success,
+          onDismiss: report.hasBlockingSchemaViolations
+              ? null
+              : () => _dismissSuccessPanel('Sheet contract valid'),
+        ),
     ];
 
     if (report.formulaHealingIssues.isEmpty) {
-      panels.add(
-        const _IssuePanel(
-          icon: Icons.check_circle_outline,
-          title: 'Formulas valid',
-          lines: ['No formula repair issues found.'],
-          tone: _IssueTone.success,
-        ),
-      );
+      if (!_dismissedSuccessPanels.contains('Formulas valid')) {
+        panels.add(
+          _IssuePanel(
+            icon: Icons.check_circle_outline,
+            title: 'Formulas valid',
+            lines: const ['No formula repair issues found.'],
+            tone: _IssueTone.success,
+            onDismiss: () => _dismissSuccessPanel('Formulas valid'),
+          ),
+        );
+      }
     } else {
       panels.add(
         _IssuePanel(
@@ -949,6 +973,12 @@ class _ValidationSummary extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  void _dismissSuccessPanel(String title) {
+    setState(() {
+      _dismissedSuccessPanels.add(title);
+    });
   }
 }
 
@@ -985,17 +1015,19 @@ class _IssuePanel extends StatelessWidget {
     required this.title,
     required this.lines,
     required this.tone,
+    this.onDismiss,
   });
 
   final IconData icon;
   final String title;
   final List<String> lines;
   final _IssueTone tone;
+  final VoidCallback? onDismiss;
 
   @override
   Widget build(BuildContext context) {
     final colors = _colorsForTone(Theme.of(context).colorScheme, tone);
-    return DecoratedBox(
+    final panel = DecoratedBox(
       decoration: BoxDecoration(
         color: colors.background,
         borderRadius: BorderRadius.circular(8),
@@ -1019,6 +1051,10 @@ class _IssuePanel extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (onDismiss != null) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.close_outlined, color: colors.foreground),
+                ],
               ],
             ),
             const SizedBox(height: 10),
@@ -1029,6 +1065,17 @@ class _IssuePanel extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+    if (onDismiss == null) {
+      return panel;
+    }
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onDismiss,
+        child: panel,
       ),
     );
   }
