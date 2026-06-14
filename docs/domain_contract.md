@@ -18,6 +18,11 @@ Exercise | Sets | Reps | RPE | Rest | Tempo | Notes | Workout | is_backup | hist
 Display cells in the active sheet are direct spreadsheet formulas into
 `Exercises` wherever the sheet needs canonical exercise metadata. The app may
 repair those formulas, but it must preserve the sheet as human-readable data.
+For the MVP formula-healing planner, the active sheet's formula-driven columns
+are `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, and `Notes`. They map to
+`Exercises` columns `Exercise`, `Default Sets`, `Default Reps`, `Default RPE`,
+`Default Rest`, `Default Tempo`, and `Notes` respectively. `Workout` and
+`is_backup` remain active-sheet context and are not healed from `Exercises`.
 
 ## Vocabulary
 

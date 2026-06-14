@@ -10,7 +10,7 @@
 - [x] Slice 7: Parse and Render Set Notation
 - [x] Slice 8: Plan Set Logging Writes
 - [x] Slice 9: Build Read Models for Workout Overview and Exercise Logging
-- [ ] Slice 10: Formula Healing Planner
+- [x] Slice 10: Formula Healing Planner
 - [ ] Slice 11: Architecture Cleanup: Backend Module Seams
 - [ ] Slice 12: Google Sheet Read Adapter
 - [ ] Slice 13: Google Sheet Write Adapter
@@ -331,14 +331,14 @@ Add backend behavior for detecting and planning repair of missing or broken dire
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for detecting a missing formula-driven display cell.
-- [ ] Missing or broken formulas in formula-driven columns are reported as healable issues.
-- [ ] Exact displayed-name matches in `Exercises` are preselected where possible.
-- [ ] Ambiguous displayed-name matches require a user selection.
-- [ ] Missing displayed-name matches require a user selection.
-- [ ] Healing plans produce direct formulas into the selected `Exercises` row.
-- [ ] No healing plan writes to the `Exercises` tab.
-- [ ] All changes are committed after tests pass.
+- [x] A behavior test fails first for detecting a missing formula-driven display cell.
+- [x] Missing or broken formulas in formula-driven columns are reported as healable issues.
+- [x] Exact displayed-name matches in `Exercises` are preselected where possible.
+- [x] Ambiguous displayed-name matches require a user selection.
+- [x] Missing displayed-name matches require a user selection.
+- [x] Healing plans produce direct formulas into the selected `Exercises` row.
+- [x] No healing plan writes to the `Exercises` tab.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
