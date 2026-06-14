@@ -49,6 +49,73 @@ void main() {
     expect(activeSheet.slots.last.workout, defaultWorkoutName);
   });
 
+  test('discovers visible history block labels in sheet order', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    expect(activeSheet.historyBlocks.map((block) => block.label), [
+      'Week 2',
+      'Week 1',
+    ]);
+  });
+
+  test('selects an existing history block and exposes its set columns', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final newestBlock = activeSheet.selectHistoryBlock('Week 2');
+    final previousBlock = activeSheet.selectHistoryBlock('Week 1');
+
+    expect(newestBlock?.label, 'Week 2');
+    expect(newestBlock?.setColumns.map((column) => column.label), ['S1', 'S2']);
+    expect(newestBlock?.setColumns.map((column) => column.sheetColumnNumber), [
+      10,
+      11,
+    ]);
+    expect(previousBlock?.setColumns.map((column) => column.label), [
+      'S1',
+      'S2',
+      'S3',
+    ]);
+  });
+
+  test('treats history block labels as plain visible labels', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Session A', '2026-06-14'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
+          ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '', ''],
+        ],
+      ),
+    );
+
+    expect(activeSheet.historyBlocks.map((block) => block.label), [
+      'Session A',
+      '2026-06-14',
+    ]);
+    expect(
+      activeSheet.selectHistoryBlock('Session A')?.setColumns.single.label,
+      'S1',
+    );
+    expect(
+      activeSheet.selectHistoryBlock('2026-06-14')?.setColumns.single.label,
+      'S1',
+    );
+  });
+
   test(
     'ignores merged first-column human rows even when they contain text',
     () {

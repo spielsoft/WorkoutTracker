@@ -30,15 +30,82 @@ class ActiveSheetInput {
 class ParsedActiveSheet {
   ParsedActiveSheet({
     required Iterable<WorkoutSlot> slots,
+    Iterable<HistoryBlock> historyBlocks = const [],
     Iterable<WorkoutSlot> primarySlots = const [],
     Iterable<SchemaViolation> schemaViolations = const [],
   }) : slots = List<WorkoutSlot>.unmodifiable(slots),
+       historyBlocks = List<HistoryBlock>.unmodifiable(historyBlocks),
        primarySlots = List<WorkoutSlot>.unmodifiable(primarySlots),
        schemaViolations = List<SchemaViolation>.unmodifiable(schemaViolations);
 
   final List<WorkoutSlot> slots;
+  final List<HistoryBlock> historyBlocks;
   final List<WorkoutSlot> primarySlots;
   final List<SchemaViolation> schemaViolations;
+
+  HistoryBlock? selectHistoryBlock(String label) {
+    for (final block in historyBlocks) {
+      if (block.label == label) {
+        return block;
+      }
+    }
+    return null;
+  }
+}
+
+class HistoryBlock {
+  HistoryBlock({
+    required this.label,
+    Iterable<HistorySetColumn> setColumns = const [],
+  }) : setColumns = List<HistorySetColumn>.unmodifiable(setColumns);
+
+  final String label;
+  final List<HistorySetColumn> setColumns;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is HistoryBlock &&
+            label == other.label &&
+            _listEquals(setColumns, other.setColumns);
+  }
+
+  @override
+  int get hashCode => Object.hash(label, Object.hashAll(setColumns));
+
+  @override
+  String toString() {
+    return 'HistoryBlock(label: $label, setColumns: $setColumns)';
+  }
+}
+
+class HistorySetColumn {
+  const HistorySetColumn({
+    required this.label,
+    required this.sheetColumnNumber,
+  });
+
+  final String label;
+  final int sheetColumnNumber;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is HistorySetColumn &&
+            label == other.label &&
+            sheetColumnNumber == other.sheetColumnNumber;
+  }
+
+  @override
+  int get hashCode => Object.hash(label, sheetColumnNumber);
+
+  @override
+  String toString() {
+    return 'HistorySetColumn('
+        'label: $label, '
+        'sheetColumnNumber: $sheetColumnNumber'
+        ')';
+  }
 }
 
 class SchemaViolation {
@@ -173,6 +240,11 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   }
 
   final columns = _FixedColumnIndexes.fromHeader(sheet.rows.first);
+  final historyBlocks = _discoverHistoryBlocks(
+    header: sheet.rows.first,
+    setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
+    firstHistoryColumn: columns.isBackup + 1,
+  );
   final slots = <WorkoutSlot>[];
   final primarySlotBuilders = <_PrimarySlotBuilder>[];
   final schemaViolations = <SchemaViolation>[];
@@ -231,9 +303,51 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
 
   return ParsedActiveSheet(
     slots: slots,
+    historyBlocks: historyBlocks,
     primarySlots: primarySlotBuilders.map((builder) => builder.toSlot()),
     schemaViolations: schemaViolations,
   );
+}
+
+List<HistoryBlock> _discoverHistoryBlocks({
+  required List<String> header,
+  required List<String> setHeader,
+  required int firstHistoryColumn,
+}) {
+  final builders = <_HistoryBlockBuilder>[];
+  for (
+    var columnIndex = firstHistoryColumn;
+    columnIndex < header.length;
+    columnIndex += 1
+  ) {
+    final label = header[columnIndex].trim();
+    if (label.isNotEmpty) {
+      builders.add(_HistoryBlockBuilder(label));
+    }
+
+    if (builders.isEmpty) {
+      continue;
+    }
+
+    final setLabel = _cell(setHeader, columnIndex).trim();
+    if (setLabel.isNotEmpty) {
+      builders.last.setColumns.add(
+        HistorySetColumn(label: setLabel, sheetColumnNumber: columnIndex + 1),
+      );
+    }
+  }
+  return builders.map((builder) => builder.toBlock()).toList();
+}
+
+class _HistoryBlockBuilder {
+  _HistoryBlockBuilder(this.label);
+
+  final String label;
+  final List<HistorySetColumn> setColumns = [];
+
+  HistoryBlock toBlock() {
+    return HistoryBlock(label: label, setColumns: setColumns);
+  }
 }
 
 class _PrimarySlotBuilder {

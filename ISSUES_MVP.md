@@ -5,7 +5,7 @@
 - [x] Slice 2: Parse Active Sheet Rows Into Workout Slots
 - [x] Slice 3: Validate Backup Grouping Rules
 - [x] Slice 4: Architecture Review: Sheet Contract Module Depth
-- [ ] Slice 5: Discover and Select History Blocks
+- [x] Slice 5: Discover and Select History Blocks
 - [ ] Slice 6: Plan New History Block Creation and Growth
 - [ ] Slice 7: Parse and Render Set Notation
 - [ ] Slice 8: Plan Set Logging Writes
@@ -185,13 +185,13 @@ Add backend behavior for discovering visible history blocks and selecting an exi
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for discovering visible history blocks.
-- [ ] The backend lists selectable history block labels in sheet order.
-- [ ] History block labels are treated as plain visible labels.
-- [ ] The backend does not require or infer date metadata.
-- [ ] Selecting an existing history block exposes its set columns.
-- [ ] The newest block closest to fixed metadata columns is represented correctly.
-- [ ] All changes are committed after tests pass.
+- [x] A behavior test fails first for discovering visible history blocks.
+- [x] The backend lists selectable history block labels in sheet order.
+- [x] History block labels are treated as plain visible labels.
+- [x] The backend does not require or infer date metadata.
+- [x] Selecting an existing history block exposes its set columns.
+- [x] The newest block closest to fixed metadata columns is represented correctly.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
