@@ -13,7 +13,7 @@ metadata work.
 - Xcode project present: `ios/Runner.xcodeproj/project.pbxproj`.
 - App metadata present: `ios/Runner/Info.plist`.
 - App icon catalog present: `ios/Runner/Assets.xcassets/AppIcon.appiconset/`.
-- Current bundle identifier: `com.ispielma.workoutTracker`.
+- Current bundle identifier: `com.spielman.workouttracker`.
 - Version source: `pubspec.yaml` `version: 1.0.0+1`, surfaced to iOS through
   `FLUTTER_BUILD_NAME` and `FLUTTER_BUILD_NUMBER`.
 
@@ -32,7 +32,7 @@ https://docs.flutter.dev/deployment/ios
 - Xcode project present: `macos/Runner.xcodeproj/project.pbxproj`.
 - App metadata present: `macos/Runner/Info.plist`.
 - App icon catalog present: `macos/Runner/Assets.xcassets/AppIcon.appiconset/`.
-- Current bundle identifier: `com.ispielma.workoutTracker`.
+- Current bundle identifier: `com.spielman.workouttracker`.
 - Release entitlement file present: `macos/Runner/Release.entitlements`.
 - Release sandbox entitlement: `com.apple.security.app-sandbox = true`.
 
@@ -50,7 +50,7 @@ https://docs.flutter.dev/deployment/macos
 - Flutter target present: `android/`.
 - Android Gradle application module present: `android/app/build.gradle.kts`.
 - Manifest present: `android/app/src/main/AndroidManifest.xml`.
-- Current application ID: `com.ispielma.workout_tracker`.
+- Current application ID: `com.spielman.workouttracker`.
 - Version source: `pubspec.yaml` `version: 1.0.0+1`, surfaced to Android as
   `versionName` and `versionCode`.
 
@@ -63,10 +63,9 @@ https://docs.flutter.dev/deployment/android
 
 ## Known Future Needs
 
-- bundle identifiers: finalize whether Apple uses
-  `com.ispielma.workoutTracker` and Android uses
-  `com.ispielma.workout_tracker`, or migrate to one naming convention before
-  public release.
+- bundle identifiers: Apple and Android now use
+  `com.spielman.workouttracker`; keep future OAuth, signing, and store
+  registration aligned to that identifier.
 - signing: configure Apple release signing for iOS/macOS and a non-debug
   Android release keystore. `android/app/build.gradle.kts` currently signs
   release builds with debug keys so local `flutter run --release` remains easy.

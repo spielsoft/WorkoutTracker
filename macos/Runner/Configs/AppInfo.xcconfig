@@ -8,10 +8,10 @@
 PRODUCT_NAME = workout_tracker
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.ispielma.workoutTracker
+PRODUCT_BUNDLE_IDENTIFIER = com.spielman.workouttracker
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.ispielma. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.spielman. All rights reserved.
 
 // Replace these with values from GoogleService-Info.plist for the macOS app.
 WORKOUT_TRACKER_GOOGLE_CLIENT_ID = workout-tracker-google-client-id-not-configured
