@@ -1,3 +1,5 @@
+import '../set_notation/set_notation.dart';
+
 const defaultWorkoutName = 'Default';
 
 const activeSheetFixedColumns = [
@@ -33,15 +35,20 @@ class ParsedActiveSheet {
     Iterable<HistoryBlock> historyBlocks = const [],
     Iterable<WorkoutSlot> primarySlots = const [],
     Iterable<SchemaViolation> schemaViolations = const [],
+    Iterable<Iterable<String>> rows = const [],
   }) : slots = List<WorkoutSlot>.unmodifiable(slots),
        historyBlocks = List<HistoryBlock>.unmodifiable(historyBlocks),
        primarySlots = List<WorkoutSlot>.unmodifiable(primarySlots),
-       schemaViolations = List<SchemaViolation>.unmodifiable(schemaViolations);
+       schemaViolations = List<SchemaViolation>.unmodifiable(schemaViolations),
+       _rows = List<List<String>>.unmodifiable(
+         rows.map((row) => List<String>.unmodifiable(row)),
+       );
 
   final List<WorkoutSlot> slots;
   final List<HistoryBlock> historyBlocks;
   final List<WorkoutSlot> primarySlots;
   final List<SchemaViolation> schemaViolations;
+  final List<List<String>> _rows;
 
   HistoryBlock? selectHistoryBlock(String label) {
     for (final block in historyBlocks) {
@@ -91,16 +98,159 @@ class ParsedActiveSheet {
       ],
     );
   }
+
+  ActiveSheetWritePlan planSetLoggingWrite({
+    required String historyBlockLabel,
+    required int sheetRowNumber,
+    required SetNotation set,
+  }) {
+    final block = selectHistoryBlock(historyBlockLabel);
+    if (block == null) {
+      return ActiveSheetWritePlan();
+    }
+
+    final row = _sheetRow(sheetRowNumber);
+    for (final column in block.setColumns) {
+      if (_cell(row, column.sheetColumnNumber - 1).trim().isEmpty) {
+        final setNumber = block.setColumns.indexOf(column) + 1;
+        return ActiveSheetWritePlan(
+          cellUpdates: [
+            CellUpdate(
+              sheetRowNumber: sheetRowNumber,
+              sheetColumnNumber: column.sheetColumnNumber,
+              value: renderSetNotation(set),
+            ),
+          ],
+          nextSetPosition: _nextSetPosition(
+            block: block,
+            sheetRowNumber: sheetRowNumber,
+            currentSetNumber: setNumber,
+          ),
+        );
+      }
+    }
+
+    final newSetNumber = block.setColumns.length + 1;
+    final growthPlan = planHistoryBlockGrowth(
+      label: historyBlockLabel,
+      throughSetNumber: newSetNumber,
+    );
+    final newSheetColumnNumber = block.setColumns.isEmpty
+        ? activeSheetFixedColumns.length + 1
+        : block.setColumns.last.sheetColumnNumber + 1;
+    return ActiveSheetWritePlan(
+      columnInsertions: growthPlan.columnInsertions,
+      cellUpdates: [
+        CellUpdate(
+          sheetRowNumber: sheetRowNumber,
+          sheetColumnNumber: newSheetColumnNumber,
+          value: renderSetNotation(set),
+        ),
+      ],
+      nextSetPosition: SetPosition(
+        sheetRowNumber: sheetRowNumber,
+        setNumber: newSetNumber + 1,
+        sheetColumnNumber: null,
+      ),
+    );
+  }
+
+  ActiveSheetWritePlan planSetEdit({
+    required String historyBlockLabel,
+    required int sheetRowNumber,
+    required int setNumber,
+    required SetNotation set,
+  }) {
+    final column = _setColumn(
+      historyBlockLabel: historyBlockLabel,
+      setNumber: setNumber,
+    );
+    if (column == null) {
+      return ActiveSheetWritePlan();
+    }
+    return ActiveSheetWritePlan(
+      cellUpdates: [
+        CellUpdate(
+          sheetRowNumber: sheetRowNumber,
+          sheetColumnNumber: column.sheetColumnNumber,
+          value: renderSetNotation(set),
+        ),
+      ],
+    );
+  }
+
+  ActiveSheetWritePlan planSetClear({
+    required String historyBlockLabel,
+    required int sheetRowNumber,
+    required int setNumber,
+  }) {
+    final column = _setColumn(
+      historyBlockLabel: historyBlockLabel,
+      setNumber: setNumber,
+    );
+    if (column == null) {
+      return ActiveSheetWritePlan();
+    }
+    return ActiveSheetWritePlan(
+      cellUpdates: [
+        CellUpdate(
+          sheetRowNumber: sheetRowNumber,
+          sheetColumnNumber: column.sheetColumnNumber,
+          value: '',
+        ),
+      ],
+    );
+  }
+
+  SetPosition _nextSetPosition({
+    required HistoryBlock block,
+    required int sheetRowNumber,
+    required int currentSetNumber,
+  }) {
+    final nextSetNumber = currentSetNumber + 1;
+    final existingNextColumn = nextSetNumber <= block.setColumns.length
+        ? block.setColumns[nextSetNumber - 1].sheetColumnNumber
+        : null;
+    return SetPosition(
+      sheetRowNumber: sheetRowNumber,
+      setNumber: nextSetNumber,
+      sheetColumnNumber: existingNextColumn,
+    );
+  }
+
+  List<String> _sheetRow(int sheetRowNumber) {
+    final rowIndex = sheetRowNumber - 1;
+    if (rowIndex < 0 || rowIndex >= _rows.length) {
+      return const [];
+    }
+    return _rows[rowIndex];
+  }
+
+  HistorySetColumn? _setColumn({
+    required String historyBlockLabel,
+    required int setNumber,
+  }) {
+    final block = selectHistoryBlock(historyBlockLabel);
+    if (block == null || setNumber < 1 || setNumber > block.setColumns.length) {
+      return null;
+    }
+    return block.setColumns[setNumber - 1];
+  }
 }
 
 class ActiveSheetWritePlan {
   ActiveSheetWritePlan({
     Iterable<HistoryColumnInsertion> columnInsertions = const [],
+    Iterable<CellUpdate> cellUpdates = const [],
+    this.nextSetPosition,
   }) : columnInsertions = List<HistoryColumnInsertion>.unmodifiable(
          columnInsertions,
-       );
+       ),
+       cellUpdates = List<CellUpdate>.unmodifiable(cellUpdates);
 
   final List<HistoryColumnInsertion> columnInsertions;
+  final List<CellUpdate> cellUpdates;
+  final SetPosition? nextSetPosition;
 
   List<List<String>> previewRowsAfterApplying(Iterable<Iterable<String>> rows) {
     final preview = rows.map((row) => row.toList()).toList();
@@ -122,6 +272,22 @@ class ActiveSheetWritePlan {
       }
     }
 
+    for (final update in cellUpdates) {
+      final rowIndex = update.sheetRowNumber - 1;
+      final columnIndex = update.sheetColumnNumber - 1;
+      if (rowIndex < 0) {
+        continue;
+      }
+      while (preview.length <= rowIndex) {
+        preview.add([]);
+      }
+      final row = preview[rowIndex];
+      while (row.length <= columnIndex) {
+        row.add('');
+      }
+      row[columnIndex] = update.value;
+    }
+
     return preview.map((row) => List<String>.unmodifiable(row)).toList();
   }
 
@@ -129,15 +295,91 @@ class ActiveSheetWritePlan {
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is ActiveSheetWritePlan &&
-            _listEquals(columnInsertions, other.columnInsertions);
+            _listEquals(columnInsertions, other.columnInsertions) &&
+            _listEquals(cellUpdates, other.cellUpdates) &&
+            nextSetPosition == other.nextSetPosition;
   }
 
   @override
-  int get hashCode => Object.hashAll(columnInsertions);
+  int get hashCode => Object.hash(
+    Object.hashAll(columnInsertions),
+    Object.hashAll(cellUpdates),
+    nextSetPosition,
+  );
 
   @override
   String toString() {
-    return 'ActiveSheetWritePlan(columnInsertions: $columnInsertions)';
+    return 'ActiveSheetWritePlan('
+        'columnInsertions: $columnInsertions, '
+        'cellUpdates: $cellUpdates, '
+        'nextSetPosition: $nextSetPosition'
+        ')';
+  }
+}
+
+class SetPosition {
+  const SetPosition({
+    required this.sheetRowNumber,
+    required this.setNumber,
+    required this.sheetColumnNumber,
+  });
+
+  final int sheetRowNumber;
+  final int setNumber;
+  final int? sheetColumnNumber;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is SetPosition &&
+            sheetRowNumber == other.sheetRowNumber &&
+            setNumber == other.setNumber &&
+            sheetColumnNumber == other.sheetColumnNumber;
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, setNumber, sheetColumnNumber);
+
+  @override
+  String toString() {
+    return 'SetPosition('
+        'sheetRowNumber: $sheetRowNumber, '
+        'setNumber: $setNumber, '
+        'sheetColumnNumber: $sheetColumnNumber'
+        ')';
+  }
+}
+
+class CellUpdate {
+  const CellUpdate({
+    required this.sheetRowNumber,
+    required this.sheetColumnNumber,
+    required this.value,
+  });
+
+  final int sheetRowNumber;
+  final int sheetColumnNumber;
+  final String value;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is CellUpdate &&
+            sheetRowNumber == other.sheetRowNumber &&
+            sheetColumnNumber == other.sheetColumnNumber &&
+            value == other.value;
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, sheetColumnNumber, value);
+
+  @override
+  String toString() {
+    return 'CellUpdate('
+        'sheetRowNumber: $sheetRowNumber, '
+        'sheetColumnNumber: $sheetColumnNumber, '
+        'value: $value'
+        ')';
   }
 }
 
@@ -442,6 +684,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     historyBlocks: historyBlocks,
     primarySlots: primarySlotBuilders.map((builder) => builder.toSlot()),
     schemaViolations: schemaViolations,
+    rows: sheet.rows,
   );
 }
 

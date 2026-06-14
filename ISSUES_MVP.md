@@ -8,7 +8,7 @@
 - [x] Slice 5: Discover and Select History Blocks
 - [x] Slice 6: Plan New History Block Creation and Growth
 - [x] Slice 7: Parse and Render Set Notation
-- [ ] Slice 8: Plan Set Logging Writes
+- [x] Slice 8: Plan Set Logging Writes
 - [ ] Slice 9: Build Read Models for Workout Overview and Exercise Logging
 - [ ] Slice 10: Formula Healing Planner
 - [ ] Slice 11: Architecture Cleanup: Backend Module Seams
@@ -271,15 +271,15 @@ Add backend behavior for planning set writes, edits, clears, and auto-advance wi
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for logging a new set into the first empty set cell.
-- [ ] New set logging targets the selected row only.
-- [ ] Primary and backup rows can each receive their own row-local set entries.
-- [ ] Editing an existing set cell produces the expected planned write.
-- [ ] Clearing an existing set cell produces the expected planned write.
-- [ ] Logging beyond existing columns depends on the history block growth plan from Slice 6.
-- [ ] The next set position auto-advances after a successful planned write.
-- [ ] Raw unparseable existing data is preserved unless explicitly edited or cleared.
-- [ ] All changes are committed after tests pass.
+- [x] A behavior test fails first for logging a new set into the first empty set cell.
+- [x] New set logging targets the selected row only.
+- [x] Primary and backup rows can each receive their own row-local set entries.
+- [x] Editing an existing set cell produces the expected planned write.
+- [x] Clearing an existing set cell produces the expected planned write.
+- [x] Logging beyond existing columns depends on the history block growth plan from Slice 6.
+- [x] The next set position auto-advances after a successful planned write.
+- [x] Raw unparseable existing data is preserved unless explicitly edited or cleared.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

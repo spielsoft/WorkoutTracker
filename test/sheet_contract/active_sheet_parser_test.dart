@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/set_notation.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 import '../fixtures/workout_sheet_fixtures.dart';
@@ -226,6 +227,213 @@ void main() {
       '150x6@8',
       '150x6@8',
       '150x5@9',
+    ]);
+  });
+
+  test('plans logging a new set into the first empty selected-row cell', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final plan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Week 2',
+      sheetRowNumber: 3,
+      set: LoggedSet(
+        result: WeightedReps(weight: '75', reps: '8'),
+        rpe: '8',
+      ),
+    );
+
+    expect(plan.cellUpdates, [
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 10, value: '75x8@8'),
+    ]);
+  });
+
+  test('auto-advances to the next selected-row set position after logging', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final plan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Week 2',
+      sheetRowNumber: 3,
+      set: LoggedSet(
+        result: WeightedReps(weight: '75', reps: '8'),
+        rpe: '8',
+      ),
+    );
+
+    expect(
+      plan.nextSetPosition,
+      SetPosition(sheetRowNumber: 3, setNumber: 2, sheetColumnNumber: 11),
+    );
+  });
+
+  test('plans primary and backup set entries against their selected rows', () {
+    final rows = [
+      [...activeSheetFixedColumns, 'Session A', ''],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8', ''],
+      ['Leg Press', '3', '10', '8', '2 min', '', '', 'Legs', 'TRUE', '', ''],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final primaryPlan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      set: LoggedSet(
+        result: WeightedReps(weight: '230', reps: '5'),
+        rpe: '8',
+      ),
+    );
+    final backupPlan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 4,
+      set: LoggedSet(
+        result: WeightedReps(weight: '360', reps: '10'),
+        rpe: '8',
+      ),
+    );
+
+    expect(primaryPlan.cellUpdates, [
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '230x5@8'),
+    ]);
+    expect(backupPlan.cellUpdates, [
+      CellUpdate(sheetRowNumber: 4, sheetColumnNumber: 10, value: '360x10@8'),
+    ]);
+    expect(backupPlan.previewRowsAfterApplying(rows)[2].skip(9), [
+      '225x5@8',
+      '',
+    ]);
+  });
+
+  test('plans editing an existing set cell', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final plan = activeSheet.planSetEdit(
+      historyBlockLabel: 'Week 2',
+      sheetRowNumber: 6,
+      setNumber: 1,
+      set: LoggedSet(
+        result: WeightedReps(weight: '160', reps: '6'),
+        rpe: '8',
+      ),
+    );
+
+    expect(plan.cellUpdates, [
+      CellUpdate(sheetRowNumber: 6, sheetColumnNumber: 10, value: '160x6@8'),
+    ]);
+  });
+
+  test('plans clearing an existing set cell', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final plan = activeSheet.planSetClear(
+      historyBlockLabel: 'Week 2',
+      sheetRowNumber: 6,
+      setNumber: 1,
+    );
+
+    expect(plan.cellUpdates, [
+      CellUpdate(sheetRowNumber: 6, sheetColumnNumber: 10, value: ''),
+    ]);
+  });
+
+  test(
+    'plans history block growth when logging beyond existing set columns',
+    () {
+      final rows = [
+        [...activeSheetFixedColumns, 'Session A'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8'],
+      ];
+      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+      final plan = activeSheet.planSetLoggingWrite(
+        historyBlockLabel: 'Session A',
+        sheetRowNumber: 3,
+        set: LoggedSet(
+          result: WeightedReps(weight: '230', reps: '5'),
+          rpe: '8',
+        ),
+      );
+
+      expect(plan.columnInsertions, [
+        HistoryColumnInsertion(
+          sheetColumnNumber: 11,
+          headers: const [''],
+          setLabels: const ['S2'],
+        ),
+      ]);
+      expect(plan.cellUpdates, [
+        CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '230x5@8'),
+      ]);
+      expect(plan.previewRowsAfterApplying(rows)[2].skip(9), [
+        '225x5@8',
+        '230x5@8',
+      ]);
+    },
+  );
+
+  test('preserves raw unparseable existing data when logging a new set', () {
+    final rows = [
+      [...activeSheetFixedColumns, 'Session A', ''],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        'Legs',
+        '',
+        'worked up, knee felt odd',
+        '',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      set: LoggedSet(
+        result: WeightedReps(weight: '225', reps: '5'),
+        rpe: '8',
+      ),
+    );
+
+    expect(plan.cellUpdates, [
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '225x5@8'),
+    ]);
+    expect(plan.previewRowsAfterApplying(rows)[2].skip(9), [
+      'worked up, knee felt odd',
+      '225x5@8',
     ]);
   });
 
