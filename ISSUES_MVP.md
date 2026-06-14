@@ -1,7 +1,7 @@
 # MVP Implementation Plan
 
 - [x] Slice 0: Standard Flutter/Dart Scaffold and Git Repo
-- [ ] Slice 1: Capture Domain Contract and Backend Test Fixtures
+- [x] Slice 1: Capture Domain Contract and Backend Test Fixtures
 - [ ] Slice 2: Parse Active Sheet Rows Into Workout Slots
 - [ ] Slice 3: Validate Backup Grouping Rules
 - [ ] Slice 4: Architecture Review: Sheet Contract Module Depth
@@ -68,13 +68,13 @@ Record the domain contract in the repository and create backend test fixtures th
 
 ### Acceptance criteria
 
-- [ ] The project has a concise domain contract describing active sheet, workout, history block, exercise row, primary row, backup row, and formula healing vocabulary.
-- [ ] Local in-memory fixtures represent a valid active sheet and a valid `Exercises` tab.
-- [ ] Local in-memory fixtures include at least one workout with primary rows and backup rows.
-- [ ] Local in-memory fixtures include ignored human section/header rows.
-- [ ] The development Google Sheet URL is documented as a writable integration fixture.
-- [ ] Tests verify that fixture loading itself is stable and deterministic.
-- [ ] All changes are committed after tests pass.
+- [x] The project has a concise domain contract describing active sheet, workout, history block, exercise row, primary row, backup row, and formula healing vocabulary.
+- [x] Local in-memory fixtures represent a valid active sheet and a valid `Exercises` tab.
+- [x] Local in-memory fixtures include at least one workout with primary rows and backup rows.
+- [x] Local in-memory fixtures include ignored human section/header rows.
+- [x] The development Google Sheet URL is documented as a writable integration fixture.
+- [x] Tests verify that fixture loading itself is stable and deterministic.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
