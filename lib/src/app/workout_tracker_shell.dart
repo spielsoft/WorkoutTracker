@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/set_notation.dart';
 import 'package:workout_tracker/sheet_contract.dart';
@@ -23,11 +25,27 @@ class WorkoutTrackerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7C66)),
         useMaterial3: true,
       ),
+      scrollBehavior: const WorkoutTrackerScrollBehavior(),
       home: SpreadsheetValidationShell(
         validationService: validationService,
         initialSpreadsheetText: initialSpreadsheetText,
       ),
     );
+  }
+}
+
+class WorkoutTrackerScrollBehavior extends MaterialScrollBehavior {
+  const WorkoutTrackerScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices {
+    return {
+      PointerDeviceKind.touch,
+      PointerDeviceKind.mouse,
+      PointerDeviceKind.stylus,
+      PointerDeviceKind.invertedStylus,
+      PointerDeviceKind.trackpad,
+    };
   }
 }
 

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/google_sheets.dart';
@@ -114,6 +116,31 @@ void main() {
       expect(find.text('400x10@8'), findsOneWidget);
     },
   );
+
+  testWidgets('accepts simulator mouse and trackpad drag scrolling', (
+    tester,
+  ) async {
+    final service = _FakeSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    final behavior = ScrollConfiguration.of(
+      tester.element(find.byKey(const ValueKey('spreadsheet-selection-input'))),
+    );
+
+    expect(behavior.dragDevices, contains(PointerDeviceKind.touch));
+    expect(behavior.dragDevices, contains(PointerDeviceKind.mouse));
+    expect(behavior.dragDevices, contains(PointerDeviceKind.trackpad));
+  });
 
   testWidgets('logs edits clears and switches row-local exercise history', (
     tester,
