@@ -6,9 +6,9 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
-	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+	<key>keychain-access-groups</key>
 	<array>
-		<string>/.config/gcloud/application_default_credentials.json</string>
+		<string>$(AppIdentifierPrefix)com.google.GIDSignIn</string>
 	</array>
 </dict>
 </plist>

@@ -174,6 +174,74 @@ void main() {
       expect(client.closed, isTrue);
     },
   );
+
+  test(
+    'native Google sign-in validation requests read-only Sheets authorization',
+    () async {
+      final gateway = _RecordingGoogleSignInAuthorizationGateway();
+      final activeSheet = _minimalParsedActiveSheet();
+      bool? requestedWriteAccess;
+      final service = GoogleSignInSpreadsheetValidationService(
+        authorizationGateway: gateway,
+        serviceFactory: (sheets.SheetsApi api, {required bool canWrite}) {
+          requestedWriteAccess = canWrite;
+          return _DelayedValidationService(
+            client: _CloseTrackingAuthClient(),
+            activeSheet: activeSheet,
+          );
+        },
+      );
+
+      await service.validateSpreadsheet('spreadsheet-id');
+
+      expect(gateway.requestedScopes.single, [
+        sheets.SheetsApi.spreadsheetsReadonlyScope,
+      ]);
+      expect(requestedWriteAccess, isFalse);
+    },
+  );
+
+  test(
+    'native Google sign-in history block creation requests write authorization',
+    () async {
+      final gateway = _RecordingGoogleSignInAuthorizationGateway();
+      final activeSheet = _minimalParsedActiveSheet();
+      bool? requestedWriteAccess;
+      final service = GoogleSignInSpreadsheetValidationService(
+        authorizationGateway: gateway,
+        serviceFactory: (sheets.SheetsApi api, {required bool canWrite}) {
+          requestedWriteAccess = canWrite;
+          return _DelayedValidationService(
+            client: _CloseTrackingAuthClient(),
+            activeSheet: activeSheet,
+          );
+        },
+      );
+
+      await service.createHistoryBlock(
+        spreadsheetId: 'spreadsheet-id',
+        label: 'Week 2',
+        activeSheet: activeSheet,
+      );
+
+      expect(gateway.requestedScopes.single, [
+        sheets.SheetsApi.spreadsheetsScope,
+      ]);
+      expect(requestedWriteAccess, isTrue);
+    },
+  );
+}
+
+ParsedActiveSheet _minimalParsedActiveSheet() {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+      ],
+    ),
+  );
 }
 
 class _DelayedValidationService implements SpreadsheetValidationService {
@@ -250,5 +318,16 @@ class _CloseTrackingAuthClient extends http.BaseClient
   @override
   void close() {
     closed = true;
+  }
+}
+
+class _RecordingGoogleSignInAuthorizationGateway
+    implements GoogleSignInAuthorizationGateway {
+  final List<List<String>> requestedScopes = [];
+
+  @override
+  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
+    requestedScopes.add(scopes);
+    return const {'Authorization': 'Bearer test-token'};
   }
 }

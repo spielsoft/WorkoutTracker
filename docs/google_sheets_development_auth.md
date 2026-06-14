@@ -49,17 +49,33 @@ the sheet again after validation:
 Slice 21 validates the GUI flow against the same development spreadsheet using
 a live `integration_test`.
 
-For macOS, the debug/profile entitlement is left unsandboxed so the local
-development-run app can access ADC during this validation path. The release
-bundle keeps the sandbox enabled with outbound network access and a local
-development exception for the standard gcloud ADC file:
+The runnable iOS and macOS apps use native Google Sign-In rather than ADC. To
+enable the browser/account-picker flow, create iOS and macOS OAuth client
+configuration in Firebase/Google Cloud, then copy the `CLIENT_ID` and
+`REVERSED_CLIENT_ID` values from each platform's `GoogleService-Info.plist` to:
 
 ```text
-$HOME/.config/gcloud/application_default_credentials.json
+ios/Flutter/GoogleSignIn.xcconfig
+macos/Runner/Configs/AppInfo.xcconfig
 ```
 
+The platform `Info.plist` files already expose those values to the
+`google_sign_in` plugin as `GIDClientID` and `CFBundleURLTypes`. The app
+requests the Sheets scopes through native Google Sign-In when the user taps
+Validate, creates a history block, or saves a set.
+
+For macOS native Google Sign-In, open `macos/Runner.xcworkspace` in Xcode,
+select the `Runner` target, and choose a development team under Signing &
+Capabilities. The plugin requires keychain sharing, which cannot be used by an
+unsigned macOS target. The entitlements are already present in the project.
+
+For macOS, the debug/profile entitlement is left unsandboxed so the local
+development-run app can access ADC during the integration-test validation path.
+The release bundle keeps the sandbox enabled with outbound network access and
+Google Sign-In keychain sharing. It does not read local gcloud ADC credentials.
+
 Run the macOS GUI validation with an explicit ADC file path when using
-`flutter test`; normal app launches also check the standard gcloud ADC file:
+`flutter test`:
 
 ```sh
 GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json" \
