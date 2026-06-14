@@ -2,7 +2,7 @@
 
 - [x] Slice 0: Standard Flutter/Dart Scaffold and Git Repo
 - [x] Slice 1: Capture Domain Contract and Backend Test Fixtures
-- [ ] Slice 2: Parse Active Sheet Rows Into Workout Slots
+- [x] Slice 2: Parse Active Sheet Rows Into Workout Slots
 - [ ] Slice 3: Validate Backup Grouping Rules
 - [ ] Slice 4: Architecture Review: Sheet Contract Module Depth
 - [ ] Slice 5: Discover and Select History Blocks
@@ -99,14 +99,14 @@ Build the first backend tracer bullet: parse an in-memory active sheet with fixe
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for parsing a valid active sheet into workout slots.
-- [ ] The parser recognizes the fixed columns: `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, `Workout`, and `is_backup`.
-- [ ] Blank `Workout` values are interpreted as the default workout.
-- [ ] Blank `is_backup` values are interpreted as false.
-- [ ] Rows whose first display column is blank or merged are ignored as human-only rows.
-- [ ] Parsed slots preserve active sheet row order.
-- [ ] Tests exercise the public backend interface rather than private helpers.
-- [ ] All changes are committed after tests pass.
+- [x] A behavior test fails first for parsing a valid active sheet into workout slots.
+- [x] The parser recognizes the fixed columns: `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, `Workout`, and `is_backup`.
+- [x] Blank `Workout` values are interpreted as the default workout.
+- [x] Blank `is_backup` values are interpreted as false.
+- [x] Rows whose first display column is blank or merged are ignored as human-only rows.
+- [x] Parsed slots preserve active sheet row order.
+- [x] Tests exercise the public backend interface rather than private helpers.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
