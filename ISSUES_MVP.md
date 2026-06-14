@@ -22,7 +22,7 @@
 - [x] Slice 19: GUI Workout and History Block Selection
 - [x] Slice 20: GUI Exercise Logging Screen
 - [x] Slice 21: GUI End-to-End Logging Validation
-- [ ] Slice 22: Final Architecture and Test Cleanup
+- [x] Slice 22: Final Architecture and Test Cleanup
 
 ## Slice 0: Standard Flutter/Dart Scaffold and Git Repo
 
@@ -691,14 +691,14 @@ Run the final explicit architecture and test cleanup slice using the `improve-co
 
 ### Acceptance criteria
 
-- [ ] The review covers backend modules, Google adapters, and GUI-facing modules.
-- [ ] Tests are checked for behavior focus and implementation coupling.
-- [ ] Shallow modules are removed or deepened where doing so improves locality and leverage.
-- [ ] Public interfaces are documented where callers need invariants or ordering rules.
-- [ ] The development sheet cleanup harness still works.
-- [ ] The macOS app still runs after cleanup.
-- [ ] All tests pass.
-- [ ] Final cleanup changes are committed.
+- [x] The review covers backend modules, Google adapters, and GUI-facing modules.
+- [x] Tests are checked for behavior focus and implementation coupling.
+- [x] Shallow modules are removed or deepened where doing so improves locality and leverage.
+- [x] Public interfaces are documented where callers need invariants or ordering rules.
+- [x] The development sheet cleanup harness still works.
+- [x] The macOS app still runs after cleanup.
+- [x] All tests pass.
+- [x] Final cleanup changes are committed.
 
 ### Blocked by
 

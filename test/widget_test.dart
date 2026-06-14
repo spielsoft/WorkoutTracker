@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/google_sheets.dart';
-import 'package:workout_tracker/main.dart';
 import 'package:workout_tracker/sheet_contract.dart';
+import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
   testWidgets(
@@ -377,7 +377,10 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.enterText(find.byType(TextField).last, 'Week 3');
+    await tester.enterText(
+      find.byKey(const ValueKey('new-history-block-label')),
+      'Week 3',
+    );
     await tester.drag(find.byType(ListView), const Offset(0, -240));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Create history block'));

@@ -44,6 +44,12 @@ class ParsedActiveSheet {
     return null;
   }
 
+  /// Builds the overview for one workout in parsed active-sheet order.
+  ///
+  /// Callers should pass a [workout] selected from [selectableWorkouts] and a
+  /// [historyBlockLabel] selected from [historyBlocks]. The returned slot row
+  /// numbers are the only supported primary-row inputs for
+  /// [buildExerciseLoggingContext].
   WorkoutOverview buildWorkoutOverview({
     required String workout,
     required String historyBlockLabel,
@@ -54,6 +60,12 @@ class ParsedActiveSheet {
     );
   }
 
+  /// Builds the row-local logging context for one primary row and choice.
+  ///
+  /// [primarySheetRowNumber] must identify a primary row returned by
+  /// [buildWorkoutOverview]. [selectedSheetRowNumber] must be either that same
+  /// primary row or one of the backup row numbers exposed in the returned
+  /// logging choices for that primary row.
   ExerciseLoggingContext buildExerciseLoggingContext({
     required int primarySheetRowNumber,
     required int selectedSheetRowNumber,
@@ -66,10 +78,12 @@ class ParsedActiveSheet {
     );
   }
 
+  /// Plans a new visible history block inserted nearest the fixed metadata.
   ActiveSheetWritePlan planNewHistoryBlock({required String label}) {
     return _ActiveSheetWritePlanner(this).planNewHistoryBlock(label: label);
   }
 
+  /// Plans set-column growth for an existing visible history block.
   ActiveSheetWritePlan planHistoryBlockGrowth({
     required String label,
     required int throughSetNumber,
@@ -79,6 +93,12 @@ class ParsedActiveSheet {
     ).planHistoryBlockGrowth(label: label, throughSetNumber: throughSetNumber);
   }
 
+  /// Plans a logged-set write for a parsed exercise row.
+  ///
+  /// [sheetRowNumber] should come from the read-model row numbers exposed by
+  /// [buildWorkoutOverview] or [buildExerciseLoggingContext]. Invalid row
+  /// numbers or missing history blocks return an empty plan instead of leaking
+  /// row-validity checks into callers.
   ActiveSheetWritePlan planSetLoggingWrite({
     required String historyBlockLabel,
     required int sheetRowNumber,
@@ -91,6 +111,7 @@ class ParsedActiveSheet {
     );
   }
 
+  /// Plans an edit for an existing visible set cell on a parsed exercise row.
   ActiveSheetWritePlan planSetEdit({
     required String historyBlockLabel,
     required int sheetRowNumber,
@@ -105,6 +126,7 @@ class ParsedActiveSheet {
     );
   }
 
+  /// Plans a clear for an existing visible set cell on a parsed exercise row.
   ActiveSheetWritePlan planSetClear({
     required String historyBlockLabel,
     required int sheetRowNumber,
