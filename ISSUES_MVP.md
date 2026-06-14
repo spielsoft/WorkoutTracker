@@ -7,7 +7,7 @@
 - [x] Slice 4: Architecture Review: Sheet Contract Module Depth
 - [x] Slice 5: Discover and Select History Blocks
 - [x] Slice 6: Plan New History Block Creation and Growth
-- [ ] Slice 7: Parse and Render Set Notation
+- [x] Slice 7: Parse and Render Set Notation
 - [ ] Slice 8: Plan Set Logging Writes
 - [ ] Slice 9: Build Read Models for Workout Overview and Exercise Logging
 - [ ] Slice 10: Formula Healing Planner
@@ -241,15 +241,15 @@ Build the backend module that parses and renders compact human-readable set nota
 
 ### Acceptance criteria
 
-- [ ] Behavior tests fail first for each supported notation category.
-- [ ] Weighted reps such as `150x10@8` parse and render.
-- [ ] Optional pain such as `150x10@8,1` parses and renders.
-- [ ] Bodyweight reps such as `15@8` parse and render.
-- [ ] Timed entries such as `45s@8` parse and render.
-- [ ] Height/platform-style entries parse and render for the agreed MVP direction.
-- [ ] Optional notes are preserved.
-- [ ] Unparseable cells are preserved as raw text and render back without data loss.
-- [ ] All changes are committed after tests pass.
+- [x] Behavior tests fail first for each supported notation category.
+- [x] Weighted reps such as `150x10@8` parse and render.
+- [x] Optional pain such as `150x10@8,1` parses and renders.
+- [x] Bodyweight reps such as `15@8` parse and render.
+- [x] Timed entries such as `45s@8` parse and render.
+- [x] Height/platform-style entries parse and render for the agreed MVP direction.
+- [x] Optional notes are preserved.
+- [x] Unparseable cells are preserved as raw text and render back without data loss.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
