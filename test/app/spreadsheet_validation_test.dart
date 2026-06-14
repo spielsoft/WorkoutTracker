@@ -38,6 +38,76 @@ void main() {
   );
 
   test(
+    'runtime credential environment is used before host ADC lookup',
+    () async {
+      final tempDirectory = Directory.systemTemp.createTempSync(
+        'workout-tracker-runtime-credentials-test-',
+      );
+      addTearDown(() {
+        tempDirectory.deleteSync(recursive: true);
+      });
+      final credentialsFile = File('${tempDirectory.path}/credentials.json')
+        ..writeAsStringSync('[]');
+
+      await expectLater(
+        clientViaWorkoutTrackerDevelopmentCredentials(
+          scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
+          environment: {
+            workoutTrackerDevelopmentCredentialsDartDefine:
+                credentialsFile.path,
+          },
+          applicationDefaultClientFactory: ({required scopes}) {
+            throw StateError('host ADC should not be used');
+          },
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains('Google credentials file must contain a JSON object'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'standard gcloud ADC file is used before metadata-server ADC lookup',
+    () async {
+      final tempDirectory = Directory.systemTemp.createTempSync(
+        'workout-tracker-well-known-credentials-test-',
+      );
+      addTearDown(() {
+        tempDirectory.deleteSync(recursive: true);
+      });
+      final credentialsFile =
+          File(
+              '${tempDirectory.path}/.config/gcloud/'
+              'application_default_credentials.json',
+            )
+            ..createSync(recursive: true)
+            ..writeAsStringSync('[]');
+
+      await expectLater(
+        clientViaWorkoutTrackerDevelopmentCredentials(
+          scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
+          environment: {'HOME': tempDirectory.path},
+          applicationDefaultClientFactory: ({required scopes}) {
+            throw StateError('metadata ADC should not be used');
+          },
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains(credentialsFile.path),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
     'keeps the development auth client open until validation finishes',
     () async {
       final client = _CloseTrackingAuthClient();

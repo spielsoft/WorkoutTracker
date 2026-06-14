@@ -50,9 +50,16 @@ Slice 21 validates the GUI flow against the same development spreadsheet using
 a live `integration_test`.
 
 For macOS, the debug/profile entitlement is left unsandboxed so the local
-development-run app can access ADC during this validation path, while release
-packaging keeps the sandbox enabled. Run the macOS GUI validation with an
-explicit ADC file path:
+development-run app can access ADC during this validation path. The release
+bundle keeps the sandbox enabled with outbound network access and a local
+development exception for the standard gcloud ADC file:
+
+```text
+$HOME/.config/gcloud/application_default_credentials.json
+```
+
+Run the macOS GUI validation with an explicit ADC file path when using
+`flutter test`; normal app launches also check the standard gcloud ADC file:
 
 ```sh
 GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json" \

@@ -126,6 +126,11 @@ typedef WorkoutTrackerAuthClientFactory =
       required String credentialsPath,
     });
 
+typedef ApplicationDefaultAuthClientFactory =
+    Future<auth.AutoRefreshingAuthClient> Function({
+      required List<String> scopes,
+    });
+
 typedef GoogleSpreadsheetValidationServiceFactory =
     SpreadsheetValidationService Function(
       sheets.SheetsApi api, {
@@ -222,16 +227,32 @@ Future<auth.AutoRefreshingAuthClient>
 clientViaWorkoutTrackerDevelopmentCredentials({
   required List<String> scopes,
   String credentialsPath = workoutTrackerDevelopmentCredentialsPath,
+  Map<String, String>? environment,
+  ApplicationDefaultAuthClientFactory applicationDefaultClientFactory =
+      _clientViaApplicationDefaultCredentials,
 }) async {
-  final trimmedPath = credentialsPath.trim();
-  if (trimmedPath.isEmpty) {
-    return auth.clientViaApplicationDefaultCredentials(scopes: scopes);
+  final resolvedPath = resolveWorkoutTrackerGoogleCredentialsPath(
+    credentialsPath: credentialsPath,
+    environment: environment ?? Platform.environment,
+  );
+  if (resolvedPath == null) {
+    try {
+      return await applicationDefaultClientFactory(scopes: scopes);
+    } on Exception catch (error) {
+      throw StateError(
+        'No local Google credentials file was found. Set '
+        '$workoutTrackerDevelopmentCredentialsDartDefine, set '
+        'GOOGLE_APPLICATION_CREDENTIALS, or run '
+        '`gcloud auth application-default login` so the standard ADC file '
+        'exists. Original error: $error',
+      );
+    }
   }
 
-  final credentials = jsonDecode(await File(trimmedPath).readAsString());
+  final credentials = jsonDecode(await File(resolvedPath).readAsString());
   if (credentials is! Map<String, dynamic>) {
     throw FormatException(
-      'Google credentials file must contain a JSON object: $trimmedPath',
+      'Google credentials file must contain a JSON object: $resolvedPath',
     );
   }
 
@@ -259,9 +280,48 @@ clientViaWorkoutTrackerDevelopmentCredentials({
   }
 
   throw FormatException(
-    'Unsupported Google credentials type for $trimmedPath: '
+    'Unsupported Google credentials type for $resolvedPath: '
     '${credentials['type']}',
   );
+}
+
+String? resolveWorkoutTrackerGoogleCredentialsPath({
+  String credentialsPath = workoutTrackerDevelopmentCredentialsPath,
+  Map<String, String>? environment,
+}) {
+  final env = environment ?? Platform.environment;
+  final explicitPath = credentialsPath.trim();
+  if (explicitPath.isNotEmpty) {
+    return explicitPath;
+  }
+
+  final workoutTrackerPath =
+      env[workoutTrackerDevelopmentCredentialsDartDefine]?.trim() ?? '';
+  if (workoutTrackerPath.isNotEmpty) {
+    return workoutTrackerPath;
+  }
+
+  final googlePath = env['GOOGLE_APPLICATION_CREDENTIALS']?.trim() ?? '';
+  if (googlePath.isNotEmpty) {
+    return googlePath;
+  }
+
+  final home = env['HOME']?.trim() ?? '';
+  if (home.isNotEmpty) {
+    final wellKnownPath =
+        '$home/.config/gcloud/application_default_credentials.json';
+    if (File(wellKnownPath).existsSync()) {
+      return wellKnownPath;
+    }
+  }
+
+  return null;
+}
+
+Future<auth.AutoRefreshingAuthClient> _clientViaApplicationDefaultCredentials({
+  required List<String> scopes,
+}) {
+  return auth.clientViaApplicationDefaultCredentials(scopes: scopes);
 }
 
 String spreadsheetIdFromSelection(String input) {
