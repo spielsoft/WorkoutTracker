@@ -9,7 +9,7 @@
 - [x] Slice 6: Plan New History Block Creation and Growth
 - [x] Slice 7: Parse and Render Set Notation
 - [x] Slice 8: Plan Set Logging Writes
-- [ ] Slice 9: Build Read Models for Workout Overview and Exercise Logging
+- [x] Slice 9: Build Read Models for Workout Overview and Exercise Logging
 - [ ] Slice 10: Formula Healing Planner
 - [ ] Slice 11: Architecture Cleanup: Backend Module Seams
 - [ ] Slice 12: Google Sheet Read Adapter
@@ -302,14 +302,14 @@ Build backend read models that provide exactly what the future GUI needs without
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for building a primary-only workout overview.
-- [ ] Overview rows preserve active sheet order.
-- [ ] Backup rows are nested under their primary row and not shown as equal top-level exercises.
-- [ ] Per-slot set counts include primary and backup rows for that slot.
-- [ ] Exercise logging context includes read-only notes, rest, targets, selected row history, and available primary/backup choices.
-- [ ] History shown for an exercise is current-row only.
-- [ ] The default history view includes the last three non-empty history blocks for the selected row.
-- [ ] All changes are committed after tests pass.
+- [x] A behavior test fails first for building a primary-only workout overview.
+- [x] Overview rows preserve active sheet order.
+- [x] Backup rows are nested under their primary row and not shown as equal top-level exercises.
+- [x] Per-slot set counts include primary and backup rows for that slot.
+- [x] Exercise logging context includes read-only notes, rest, targets, selected row history, and available primary/backup choices.
+- [x] History shown for an exercise is current-row only.
+- [x] The default history view includes the last three non-empty history blocks for the selected row.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
