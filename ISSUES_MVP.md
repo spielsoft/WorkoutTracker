@@ -17,7 +17,7 @@
 - [x] Slice 14: Development Sheet Reset and Cleanup Harness
 - [x] Slice 15: Backend Integration Validation Gate
 - [x] Slice 16: Architecture Review: Backend Completion Gate
-- [ ] Slice 17: App Store Readiness Validation
+- [x] Slice 17: App Store Readiness Validation
 - [ ] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
 - [ ] Slice 19: GUI Workout and History Block Selection
 - [ ] Slice 20: GUI Exercise Logging Screen
@@ -538,13 +538,13 @@ Validate that the selected Flutter/Dart project setup does not block future subm
 
 ### Acceptance criteria
 
-- [ ] The project can build or is structurally prepared for iOS app packaging.
-- [ ] The project can build or is structurally prepared for macOS `.app` packaging.
-- [ ] The project can build or is structurally prepared for Android app packaging.
-- [ ] Known future needs are documented: bundle identifiers, signing, entitlements, OAuth consent/configuration, privacy disclosures, and store metadata.
-- [ ] No framework choice or package dependency is identified as blocking future iOS, macOS, or Android store submission.
-- [ ] Any discovered blocker is recorded as an issue before GUI work proceeds.
-- [ ] All changes are committed after validation.
+- [x] The project can build or is structurally prepared for iOS app packaging.
+- [x] The project can build or is structurally prepared for macOS `.app` packaging.
+- [x] The project can build or is structurally prepared for Android app packaging.
+- [x] Known future needs are documented: bundle identifiers, signing, entitlements, OAuth consent/configuration, privacy disclosures, and store metadata.
+- [x] No framework choice or package dependency is identified as blocking future iOS, macOS, or Android store submission.
+- [x] Any discovered blocker is recorded as an issue before GUI work proceeds.
+- [x] All changes are committed after validation.
 
 ### Blocked by
 
