@@ -11,8 +11,8 @@
 - [x] Slice 8: Plan Set Logging Writes
 - [x] Slice 9: Build Read Models for Workout Overview and Exercise Logging
 - [x] Slice 10: Formula Healing Planner
-- [ ] Slice 11: Architecture Cleanup: Backend Module Seams
-- [ ] Slice 12: Google Sheet Read Adapter
+- [x] Slice 11: Architecture Cleanup: Backend Module Seams
+- [x] Slice 12: Google Sheet Read Adapter
 - [ ] Slice 13: Google Sheet Write Adapter
 - [ ] Slice 14: Development Sheet Reset and Cleanup Harness
 - [ ] Slice 15: Backend Integration Validation Gate
@@ -388,14 +388,14 @@ Build the Google Sheets read adapter for the backend seam. It must read the acti
 
 ### Acceptance criteria
 
-- [ ] The adapter can read from the writable `development` spreadsheet.
-- [ ] The adapter identifies the first tab as the active workout sheet.
-- [ ] The adapter reads the `Exercises` tab when present.
-- [ ] Live read data can be passed through existing parser, validator, history block, and read model behavior.
-- [ ] Auth setup is documented with the minimum practical permissions for development.
-- [ ] If user-assisted login is required, the step is documented and repeatable.
-- [ ] Local tests that do not require Google still run without credentials.
-- [ ] All changes are committed after tests pass.
+- [x] The adapter can read from the writable `development` spreadsheet.
+- [x] The adapter identifies the first tab as the active workout sheet.
+- [x] The adapter reads the `Exercises` tab when present.
+- [x] Live read data can be passed through existing parser, validator, history block, and read model behavior.
+- [x] Auth setup is documented with the minimum practical permissions for development.
+- [x] If user-assisted login is required, the step is documented and repeatable.
+- [x] Local tests that do not require Google still run without credentials.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
