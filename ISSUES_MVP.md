@@ -360,12 +360,12 @@ Run an explicit architecture cleanup using the `improve-codebase-architecture` s
 
 ### Acceptance criteria
 
-- [ ] The review applies the deletion test to backend modules that look shallow.
-- [ ] The review identifies whether each seam has a real adapter need or is hypothetical.
-- [ ] Cleanup reduces caller knowledge where possible.
-- [ ] Behavior tests remain focused on public interfaces.
-- [ ] No GUI work is introduced.
-- [ ] All changes are committed after tests pass.
+- [x] The review applies the deletion test to backend modules that look shallow.
+- [x] The review identifies whether each seam has a real adapter need or is hypothetical.
+- [x] Cleanup reduces caller knowledge where possible.
+- [x] Behavior tests remain focused on public interfaces.
+- [x] No GUI work is introduced.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 
