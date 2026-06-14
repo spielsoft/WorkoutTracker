@@ -4,7 +4,7 @@
 - [x] Slice 1: Capture Domain Contract and Backend Test Fixtures
 - [x] Slice 2: Parse Active Sheet Rows Into Workout Slots
 - [x] Slice 3: Validate Backup Grouping Rules
-- [ ] Slice 4: Architecture Review: Sheet Contract Module Depth
+- [x] Slice 4: Architecture Review: Sheet Contract Module Depth
 - [ ] Slice 5: Discover and Select History Blocks
 - [ ] Slice 6: Plan New History Block Creation and Growth
 - [ ] Slice 7: Parse and Render Set Notation
@@ -157,12 +157,12 @@ Run an explicit architecture review using the `improve-codebase-architecture` sk
 
 ### Acceptance criteria
 
-- [ ] The review identifies whether the sheet contract module is deep or shallow.
-- [ ] Any shallow pass-through module discovered by the deletion test is removed or deepened.
-- [ ] Public tests continue to cross the same sheet contract interface used by callers.
-- [ ] Refactors happen only while tests are green.
-- [ ] The review result is documented briefly in the relevant commit message or project notes.
-- [ ] All changes are committed after tests pass.
+- [x] The review identifies whether the sheet contract module is deep or shallow.
+- [x] Any shallow pass-through module discovered by the deletion test is removed or deepened.
+- [x] Public tests continue to cross the same sheet contract interface used by callers.
+- [x] Refactors happen only while tests are green.
+- [x] The review result is documented briefly in the relevant commit message or project notes.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

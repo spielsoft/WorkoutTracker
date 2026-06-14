@@ -101,7 +101,7 @@ class WorkoutSlot {
   final bool isBackup;
   final List<WorkoutSlot> backups;
 
-  WorkoutSlot withBackups(Iterable<WorkoutSlot> backups) {
+  WorkoutSlot _withBackups(Iterable<WorkoutSlot> backups) {
     return WorkoutSlot(
       sheetRowNumber: sheetRowNumber,
       exercise: exercise,
@@ -242,7 +242,7 @@ class _PrimarySlotBuilder {
   final WorkoutSlot primary;
   final List<WorkoutSlot> backups = [];
 
-  WorkoutSlot toSlot() => primary.withBackups(backups);
+  WorkoutSlot toSlot() => primary._withBackups(backups);
 }
 
 String _cell(List<String> row, int index) {
