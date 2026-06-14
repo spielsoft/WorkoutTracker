@@ -116,6 +116,119 @@ void main() {
     );
   });
 
+  test('plans a new history block with only S1 near fixed columns', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final plan = activeSheet.planNewHistoryBlock(label: 'Week 3');
+
+    expect(plan.columnInsertions, [
+      HistoryColumnInsertion(
+        sheetColumnNumber: 10,
+        headers: const ['Week 3'],
+        setLabels: const ['S1'],
+      ),
+    ]);
+  });
+
+  test('plans growth for a selected history block beyond existing sets', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final plan = activeSheet.planHistoryBlockGrowth(
+      label: 'Week 2',
+      throughSetNumber: 3,
+    );
+
+    expect(plan.columnInsertions, [
+      HistoryColumnInsertion(
+        sheetColumnNumber: 12,
+        headers: const [''],
+        setLabels: const ['S3'],
+      ),
+    ]);
+  });
+
+  test('plans multiple growth columns for later set numbers as needed', () {
+    final rows = [
+      [...activeSheetFixedColumns, 'Session A'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8'],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planHistoryBlockGrowth(
+      label: 'Session A',
+      throughSetNumber: 4,
+    );
+
+    expect(plan.columnInsertions, [
+      HistoryColumnInsertion(
+        sheetColumnNumber: 11,
+        headers: const ['', '', ''],
+        setLabels: const ['S2', 'S3', 'S4'],
+      ),
+    ]);
+    expect(plan.previewRowsAfterApplying(rows)[1].skip(9), [
+      'S1',
+      'S2',
+      'S3',
+      'S4',
+    ]);
+  });
+
+  test('previews history insertions without overwriting existing data', () {
+    final workbook = loadLocalWorkoutWorkbookFixture();
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: workbook.activeSheet.rows,
+        mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
+      ),
+    );
+
+    final previewRows = activeSheet
+        .planNewHistoryBlock(label: 'Week 3')
+        .previewRowsAfterApplying(workbook.activeSheet.rows);
+
+    expect(previewRows.first.skip(9).take(6), [
+      'Week 3',
+      'Week 2',
+      '',
+      'Week 1',
+      '',
+      '',
+    ]);
+    expect(previewRows[1].skip(9).take(6), [
+      'S1',
+      'S1',
+      'S2',
+      'S1',
+      'S2',
+      'S3',
+    ]);
+    expect(previewRows[5].skip(9).take(6), [
+      '',
+      '155x6@8',
+      '',
+      '150x6@8',
+      '150x6@8',
+      '150x5@9',
+    ]);
+  });
+
   test(
     'ignores merged first-column human rows even when they contain text',
     () {

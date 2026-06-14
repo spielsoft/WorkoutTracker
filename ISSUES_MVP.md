@@ -6,7 +6,7 @@
 - [x] Slice 3: Validate Backup Grouping Rules
 - [x] Slice 4: Architecture Review: Sheet Contract Module Depth
 - [x] Slice 5: Discover and Select History Blocks
-- [ ] Slice 6: Plan New History Block Creation and Growth
+- [x] Slice 6: Plan New History Block Creation and Growth
 - [ ] Slice 7: Parse and Render Set Notation
 - [ ] Slice 8: Plan Set Logging Writes
 - [ ] Slice 9: Build Read Models for Workout Overview and Exercise Logging
@@ -213,13 +213,13 @@ Add backend write planning for creating a new history block and growing a select
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for planning creation of a new `S1` history block.
-- [ ] A new block is planned near the fixed metadata columns.
-- [ ] The new block starts with only `S1`.
-- [ ] Adding a set beyond existing set columns plans extension to `S2`, `S3`, and later columns as needed.
-- [ ] Planned writes are represented without requiring immediate Google access.
-- [ ] Existing history block labels and data are preserved by the plan.
-- [ ] All changes are committed after tests pass.
+- [x] A behavior test fails first for planning creation of a new `S1` history block.
+- [x] A new block is planned near the fixed metadata columns.
+- [x] The new block starts with only `S1`.
+- [x] Adding a set beyond existing set columns plans extension to `S2`, `S3`, and later columns as needed.
+- [x] Planned writes are represented without requiring immediate Google access.
+- [x] Existing history block labels and data are preserved by the plan.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

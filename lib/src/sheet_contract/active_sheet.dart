@@ -51,6 +51,142 @@ class ParsedActiveSheet {
     }
     return null;
   }
+
+  ActiveSheetWritePlan planNewHistoryBlock({required String label}) {
+    return ActiveSheetWritePlan(
+      columnInsertions: [
+        HistoryColumnInsertion(
+          sheetColumnNumber: activeSheetFixedColumns.length + 1,
+          headers: [label],
+          setLabels: const ['S1'],
+        ),
+      ],
+    );
+  }
+
+  ActiveSheetWritePlan planHistoryBlockGrowth({
+    required String label,
+    required int throughSetNumber,
+  }) {
+    final block = selectHistoryBlock(label);
+    if (block == null || throughSetNumber <= block.setColumns.length) {
+      return ActiveSheetWritePlan();
+    }
+
+    final nextSetNumber = block.setColumns.length + 1;
+    return ActiveSheetWritePlan(
+      columnInsertions: [
+        HistoryColumnInsertion(
+          sheetColumnNumber: block.setColumns.last.sheetColumnNumber + 1,
+          headers: List.filled(throughSetNumber - block.setColumns.length, ''),
+          setLabels: [
+            for (
+              var setNumber = nextSetNumber;
+              setNumber <= throughSetNumber;
+              setNumber += 1
+            )
+              'S$setNumber',
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class ActiveSheetWritePlan {
+  ActiveSheetWritePlan({
+    Iterable<HistoryColumnInsertion> columnInsertions = const [],
+  }) : columnInsertions = List<HistoryColumnInsertion>.unmodifiable(
+         columnInsertions,
+       );
+
+  final List<HistoryColumnInsertion> columnInsertions;
+
+  List<List<String>> previewRowsAfterApplying(Iterable<Iterable<String>> rows) {
+    final preview = rows.map((row) => row.toList()).toList();
+    final sortedInsertions = [...columnInsertions]
+      ..sort(
+        (first, second) =>
+            second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
+      );
+
+    for (final insertion in sortedInsertions) {
+      final columnIndex = insertion.sheetColumnNumber - 1;
+      for (var rowIndex = 0; rowIndex < preview.length; rowIndex += 1) {
+        final insertedValues = insertion._valuesForRow(rowIndex);
+        final row = preview[rowIndex];
+        while (row.length < columnIndex) {
+          row.add('');
+        }
+        row.insertAll(columnIndex, insertedValues);
+      }
+    }
+
+    return preview.map((row) => List<String>.unmodifiable(row)).toList();
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ActiveSheetWritePlan &&
+            _listEquals(columnInsertions, other.columnInsertions);
+  }
+
+  @override
+  int get hashCode => Object.hashAll(columnInsertions);
+
+  @override
+  String toString() {
+    return 'ActiveSheetWritePlan(columnInsertions: $columnInsertions)';
+  }
+}
+
+class HistoryColumnInsertion {
+  HistoryColumnInsertion({
+    required this.sheetColumnNumber,
+    required Iterable<String> headers,
+    required Iterable<String> setLabels,
+  }) : headers = List<String>.unmodifiable(headers),
+       setLabels = List<String>.unmodifiable(setLabels);
+
+  final int sheetColumnNumber;
+  final List<String> headers;
+  final List<String> setLabels;
+
+  List<String> _valuesForRow(int zeroBasedRowIndex) {
+    if (zeroBasedRowIndex == 0) {
+      return headers;
+    }
+    if (zeroBasedRowIndex == 1) {
+      return setLabels;
+    }
+    return List.filled(setLabels.length, '');
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is HistoryColumnInsertion &&
+            sheetColumnNumber == other.sheetColumnNumber &&
+            _listEquals(headers, other.headers) &&
+            _listEquals(setLabels, other.setLabels);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    sheetColumnNumber,
+    Object.hashAll(headers),
+    Object.hashAll(setLabels),
+  );
+
+  @override
+  String toString() {
+    return 'HistoryColumnInsertion('
+        'sheetColumnNumber: $sheetColumnNumber, '
+        'headers: $headers, '
+        'setLabels: $setLabels'
+        ')';
+  }
 }
 
 class HistoryBlock {
