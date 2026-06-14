@@ -57,7 +57,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Validate spreadsheet'));
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
       await tester.pump();
       await tester.pump();
       await tester.drag(find.byType(ListView), const Offset(0, -320));
@@ -167,7 +167,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Validate spreadsheet'));
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
     await tester.drag(find.byType(ListView), const Offset(0, -320));
@@ -323,7 +323,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Validate spreadsheet'));
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
 
@@ -373,7 +373,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Validate spreadsheet'));
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
 
@@ -449,7 +449,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Validate spreadsheet'));
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
 
@@ -510,7 +510,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Validate spreadsheet'));
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
 
@@ -519,6 +519,44 @@ void main() {
     expect(find.text('Formulas valid'), findsOneWidget);
     expect(find.text('Sheet contract issues'), findsNothing);
     expect(find.text('Formula repair needed'), findsNothing);
+  });
+
+  testWidgets('uses compact spreadsheet controls on mobile', (tester) async {
+    final service = _FakeSpreadsheetValidationService(
+      parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            [...activeSheetFixedColumns, 'Week 1'],
+            [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+            ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+          ],
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    expect(find.text('Spreadsheet validation'), findsNothing);
+    expect(find.byKey(const ValueKey('validate-spreadsheet')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('use-development-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('Validate'), findsOneWidget);
+    expect(find.text('Development'), findsOneWidget);
+
+    final validateTop = tester
+        .getTopLeft(find.byKey(const ValueKey('validate-spreadsheet')))
+        .dy;
+    final developmentTop = tester
+        .getTopLeft(find.byKey(const ValueKey('use-development-sheet')))
+        .dy;
+    expect(validateTop, developmentTop);
   });
 
   testWidgets('dismisses non-blocking validation confirmation panels', (
@@ -554,7 +592,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Validate spreadsheet'));
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
 

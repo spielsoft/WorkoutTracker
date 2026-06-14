@@ -114,11 +114,6 @@ class _SpreadsheetValidationShellState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'Spreadsheet validation',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 16),
                       TextField(
                         key: const ValueKey('spreadsheet-selection-input'),
                         controller: _spreadsheetController,
@@ -131,28 +126,34 @@ class _SpreadsheetValidationShellState
                         onSubmitted: (_) => _validateSelectedSpreadsheet(),
                       ),
                       const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          FilledButton.icon(
-                            onPressed: isBusy
-                                ? null
-                                : _validateSelectedSpreadsheet,
-                            icon: isBusy
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.verified_outlined),
-                            label: const Text('Validate spreadsheet'),
+                          Expanded(
+                            child: FilledButton.icon(
+                              key: const ValueKey('validate-spreadsheet'),
+                              onPressed: isBusy
+                                  ? null
+                                  : _validateSelectedSpreadsheet,
+                              icon: isBusy
+                                  ? const SizedBox.square(
+                                      dimension: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.verified_outlined),
+                              label: const Text('Validate'),
+                            ),
                           ),
-                          OutlinedButton.icon(
-                            onPressed: isBusy ? null : _useDevelopmentSheet,
-                            icon: const Icon(Icons.science_outlined),
-                            label: const Text('Use development sheet'),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              key: const ValueKey('use-development-sheet'),
+                              onPressed: isBusy ? null : _useDevelopmentSheet,
+                              icon: const Icon(Icons.science_outlined),
+                              label: const Text('Development'),
+                            ),
                           ),
                         ],
                       ),
