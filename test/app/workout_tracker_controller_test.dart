@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
@@ -138,6 +140,79 @@ void main() {
       );
     },
   );
+
+  test(
+    'pending history block creation can complete after controller disposal',
+    () async {
+      final activeSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            [...activeSheetFixedColumns, 'Week 1'],
+            [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+            ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+          ],
+        ),
+      );
+      final createCompleter = Completer<SpreadsheetValidationReport>();
+      final service = _PendingCreateHistoryBlockService(
+        activeSheet: activeSheet,
+        createCompleter: createCompleter,
+      );
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+
+      final createFuture = controller.createHistoryBlock('Week 2');
+      controller.dispose();
+      createCompleter.complete(
+        SpreadsheetValidationReport(
+          spreadsheetId: 'spreadsheet-id',
+          activeSheet: activeSheet,
+        ),
+      );
+
+      await expectLater(createFuture, completion(isTrue));
+    },
+  );
+}
+
+class _PendingCreateHistoryBlockService
+    implements SpreadsheetValidationService {
+  _PendingCreateHistoryBlockService({
+    required this.activeSheet,
+    required this.createCompleter,
+  });
+
+  final ParsedActiveSheet activeSheet;
+  final Completer<SpreadsheetValidationReport> createCompleter;
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> createHistoryBlock({
+    required String spreadsheetId,
+    required String label,
+    required ParsedActiveSheet activeSheet,
+  }) {
+    return createCompleter.future;
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 class _FakeSpreadsheetValidationService

@@ -120,12 +120,29 @@ class GoogleSpreadsheetValidationService
   }
 }
 
+typedef WorkoutTrackerAuthClientFactory =
+    Future<auth.AutoRefreshingAuthClient> Function({
+      required List<String> scopes,
+      required String credentialsPath,
+    });
+
+typedef GoogleSpreadsheetValidationServiceFactory =
+    SpreadsheetValidationService Function(
+      sheets.SheetsApi api, {
+      required bool canWrite,
+    });
+
 class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
   const AdcSpreadsheetValidationService({
     this.credentialsPath = workoutTrackerDevelopmentCredentialsPath,
-  });
+    this.clientFactory = clientViaWorkoutTrackerDevelopmentCredentials,
+    GoogleSpreadsheetValidationServiceFactory? serviceFactory,
+  }) : _serviceFactory =
+           serviceFactory ?? defaultGoogleSpreadsheetValidationServiceFactory;
 
   final String credentialsPath;
+  final WorkoutTrackerAuthClientFactory clientFactory;
+  final GoogleSpreadsheetValidationServiceFactory _serviceFactory;
 
   @override
   Future<SpreadsheetValidationReport> validateSpreadsheet(
@@ -133,16 +150,14 @@ class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
   ) async {
     auth.AutoRefreshingAuthClient? client;
     try {
-      client = await clientViaWorkoutTrackerDevelopmentCredentials(
+      client = await clientFactory(
         scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
         credentialsPath: credentialsPath,
       );
       final api = sheets.SheetsApi(client);
-      final adapter = GoogleSheetsReadAdapter(
-        client: GoogleApisSheetsSpreadsheetClient(api),
-      );
-      return GoogleSpreadsheetValidationService(
-        readAdapter: adapter,
+      return await _serviceFactory(
+        api,
+        canWrite: false,
       ).validateSpreadsheet(spreadsheetId);
     } finally {
       client?.close();
@@ -170,18 +185,14 @@ class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
   }) async {
     auth.AutoRefreshingAuthClient? client;
     try {
-      client = await clientViaWorkoutTrackerDevelopmentCredentials(
+      client = await clientFactory(
         scopes: GoogleApisSheetsWriteClient.writeScopes,
         credentialsPath: credentialsPath,
       );
       final api = sheets.SheetsApi(client);
-      return GoogleSpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(
-          client: GoogleApisSheetsSpreadsheetClient(api),
-        ),
-        writeAdapter: GoogleSheetsWriteAdapter(
-          client: GoogleApisSheetsWriteClient(api),
-        ),
+      return await _serviceFactory(
+        api,
+        canWrite: true,
       ).applyActiveSheetWritePlan(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
@@ -191,6 +202,20 @@ class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
       client?.close();
     }
   }
+}
+
+SpreadsheetValidationService defaultGoogleSpreadsheetValidationServiceFactory(
+  sheets.SheetsApi api, {
+  required bool canWrite,
+}) {
+  return GoogleSpreadsheetValidationService(
+    readAdapter: GoogleSheetsReadAdapter(
+      client: GoogleApisSheetsSpreadsheetClient(api),
+    ),
+    writeAdapter: canWrite
+        ? GoogleSheetsWriteAdapter(client: GoogleApisSheetsWriteClient(api))
+        : null,
+  );
 }
 
 Future<auth.AutoRefreshingAuthClient>

@@ -21,6 +21,7 @@ class WorkoutTrackerController extends ChangeNotifier {
   int? _loggingPrimarySheetRowNumber;
   int? _selectedLoggingSheetRowNumber;
   bool _isBusy = false;
+  bool _isDisposed = false;
 
   SpreadsheetValidationReport? get report => _report;
 
@@ -134,6 +135,12 @@ class WorkoutTrackerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   Future<bool> _runServiceAction({
     required Future<void> Function() action,
     required String failurePrefix,
@@ -157,7 +164,9 @@ class WorkoutTrackerController extends ChangeNotifier {
       return false;
     } finally {
       _isBusy = false;
-      notifyListeners();
+      if (!_isDisposed) {
+        notifyListeners();
+      }
     }
   }
 
