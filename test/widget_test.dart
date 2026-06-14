@@ -5,6 +5,116 @@ import 'package:workout_tracker/main.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 void main() {
+  testWidgets(
+    'logs a primary set before switching to backup logging in the same flow',
+    (tester) async {
+      final rows = [
+        [...activeSheetFixedColumns, 'Week 3', '', 'Week 2', 'Week 1'],
+        [
+          ...List.filled(activeSheetFixedColumns.length, ''),
+          'S1',
+          'S2',
+          'S1',
+          'S1',
+        ],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          'Controlled',
+          'Stay braced.',
+          'Legs',
+          '',
+          '225x5@8',
+          'manual heavy single',
+          '215x5@8',
+          '205x5@8',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '10',
+          '8',
+          '2 min',
+          '',
+          'Backup if racks are full.',
+          'Legs',
+          'TRUE',
+          '',
+          '',
+          '360x10@8',
+          '',
+        ],
+      ];
+      final service = _FakeSpreadsheetValidationService.fromRows(rows);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.text('Validate spreadsheet'));
+      await tester.pump();
+      await tester.pump();
+      await tester.drag(find.byType(ListView), const Offset(0, -320));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Squat'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const ValueKey('set-weight')), '230');
+      await tester.enterText(find.byKey(const ValueKey('set-reps')), '5');
+      await tester.enterText(find.byKey(const ValueKey('set-rpe')), '8');
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans.first.columnInsertions, [
+        HistoryColumnInsertion(
+          sheetColumnNumber: 12,
+          headers: const [''],
+          setLabels: const ['S3'],
+        ),
+      ]);
+      expect(service.appliedPlans.first.cellUpdates, [
+        const CellUpdate(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 12,
+          value: '230x5@8',
+        ),
+      ]);
+      expect(find.text('Next set S4'), findsOneWidget);
+      expect(find.text('230x5@8'), findsOneWidget);
+
+      await tester.tap(find.text('Leg Press'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Leg Press logging'), findsOneWidget);
+      expect(find.text('Next set S1'), findsOneWidget);
+      expect(find.text('Latest history: 360x10@8'), findsOneWidget);
+
+      await tester.enterText(find.byKey(const ValueKey('set-weight')), '400');
+      await tester.enterText(find.byKey(const ValueKey('set-reps')), '10');
+      await tester.enterText(find.byKey(const ValueKey('set-rpe')), '8');
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans.last.cellUpdates.single.value, '400x10@8');
+      await tester.drag(find.byType(ListView), const Offset(0, 300));
+      await tester.pumpAndSettle();
+      expect(find.text('Next set S2'), findsOneWidget);
+      expect(find.text('400x10@8'), findsOneWidget);
+    },
+  );
+
   testWidgets('logs edits clears and switches row-local exercise history', (
     tester,
   ) async {

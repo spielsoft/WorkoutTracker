@@ -21,7 +21,7 @@
 - [x] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
 - [x] Slice 19: GUI Workout and History Block Selection
 - [x] Slice 20: GUI Exercise Logging Screen
-- [ ] Slice 21: GUI End-to-End Logging Validation
+- [x] Slice 21: GUI End-to-End Logging Validation
 - [ ] Slice 22: Final Architecture and Test Cleanup
 
 ## Slice 0: Standard Flutter/Dart Scaffold and Git Repo
@@ -659,17 +659,17 @@ Validate the full app flow on macOS as a local `.app` or development-run equival
 
 ### Acceptance criteria
 
-- [ ] The app runs on macOS.
-- [ ] The user can complete any required Google login step.
-- [ ] The user can select the development spreadsheet.
-- [ ] The app validates the sheet and handles any healing workflow.
-- [ ] The user can select a workout and history block.
-- [ ] The user can log a primary set and see it in the sheet.
-- [ ] The user can log a backup set and see it in the sheet.
-- [ ] The user can edit and clear a set and see the sheet update.
-- [ ] The development sheet can be reset/cleaned after validation.
-- [ ] All backend and UI tests pass.
-- [ ] All changes are committed after tests pass.
+- [x] The app runs on macOS.
+- [x] The user can complete any required Google login step.
+- [x] The user can select the development spreadsheet.
+- [x] The app validates the sheet and handles any healing workflow.
+- [x] The user can select a workout and history block.
+- [x] The user can log a primary set and see it in the sheet.
+- [x] The user can log a backup set and see it in the sheet.
+- [x] The user can edit and clear a set and see the sheet update.
+- [x] The development sheet can be reset/cleaned after validation.
+- [x] All backend and UI tests pass.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

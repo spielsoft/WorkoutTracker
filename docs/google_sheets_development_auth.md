@@ -46,6 +46,17 @@ the sheet again after validation:
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_backend_integration_gate.dart
 ```
 
+Slice 21 validates the macOS GUI flow against the same development spreadsheet
+using a live `integration_test`. The debug/profile macOS entitlement is left
+unsandboxed so the local development-run app can access ADC during this
+validation path, while release packaging keeps the sandbox enabled. Run the
+GUI validation with an explicit ADC file path:
+
+```sh
+GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json" \
+flutter test integration_test/live_logging_flow_test.dart -d macos
+```
+
 For AFK verification, provide credentials before running the command:
 
 1. Create or choose a Google Cloud project with the Google Sheets API enabled.
