@@ -15,7 +15,7 @@
 - [x] Slice 12: Google Sheet Read Adapter
 - [x] Slice 13: Google Sheet Write Adapter
 - [x] Slice 14: Development Sheet Reset and Cleanup Harness
-- [ ] Slice 15: Backend Integration Validation Gate
+- [x] Slice 15: Backend Integration Validation Gate
 - [ ] Slice 16: Architecture Review: Backend Completion Gate
 - [ ] Slice 17: App Store Readiness Validation
 - [ ] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
@@ -477,16 +477,16 @@ Validate the full backend flow against the live development spreadsheet: reset f
 
 ### Acceptance criteria
 
-- [ ] The live development sheet can be reset to known state.
-- [ ] Backend validation passes on the reset sheet.
-- [ ] Formula healing can be planned and applied to the live sheet.
-- [ ] Existing and new history blocks can be selected or created.
-- [ ] A primary row set can be logged, read back, edited, cleared, and read back again.
-- [ ] A backup row set can be logged and included in slot set counts.
-- [ ] The final cleanup returns the sheet to known state.
-- [ ] Any required user login step is documented.
-- [ ] All non-Google local tests continue to pass.
-- [ ] All changes are committed after tests pass.
+- [x] The live development sheet can be reset to known state.
+- [x] Backend validation passes on the reset sheet.
+- [x] Formula healing can be planned and applied to the live sheet.
+- [x] Existing and new history blocks can be selected or created.
+- [x] A primary row set can be logged, read back, edited, cleared, and read back again.
+- [x] A backup row set can be logged and included in slot set counts.
+- [x] The final cleanup returns the sheet to known state.
+- [x] Any required user login step is documented.
+- [x] All non-Google local tests continue to pass.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

@@ -37,6 +37,15 @@ Application Default Credentials:
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_reset.dart
 ```
 
+Slice 15 validates the full backend integration gate against the same
+development spreadsheet. It uses the same Sheets spreadsheet scope, resets the
+sheet before validation, exercises live backend read/write behavior, and resets
+the sheet again after validation:
+
+```sh
+/Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_backend_integration_gate.dart
+```
+
 For AFK verification, provide credentials before running the command:
 
 1. Create or choose a Google Cloud project with the Google Sheets API enabled.
@@ -69,6 +78,7 @@ Then rerun the relevant live verifier:
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_read.dart
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_write.dart
 /Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_development_sheet_reset.dart
+/Users/ispielma/Dart/flutter/flutter/bin/dart run bin/verify_backend_integration_gate.dart
 ```
 
 The development spreadsheet for Google integration slices is:
