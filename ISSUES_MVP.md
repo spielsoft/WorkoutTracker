@@ -16,7 +16,7 @@
 - [x] Slice 13: Google Sheet Write Adapter
 - [x] Slice 14: Development Sheet Reset and Cleanup Harness
 - [x] Slice 15: Backend Integration Validation Gate
-- [ ] Slice 16: Architecture Review: Backend Completion Gate
+- [x] Slice 16: Architecture Review: Backend Completion Gate
 - [ ] Slice 17: App Store Readiness Validation
 - [ ] Slice 18: GUI Shell: Spreadsheet Selection and Backend Validation
 - [ ] Slice 19: GUI Workout and History Block Selection
@@ -509,13 +509,13 @@ Run the required backend-complete architecture review before GUI work starts. Us
 
 ### Acceptance criteria
 
-- [ ] The review covers the sheet contract module, notation module, formula healing module, write planning module, and Google adapters.
-- [ ] Any shallow module that fails the deletion test is removed or deepened.
-- [ ] Any adapter seam with only one adapter is justified or collapsed.
-- [ ] Backend tests still verify behavior through public interfaces.
-- [ ] Backend integration validation still passes after cleanup.
-- [ ] No GUI work starts before this slice is complete.
-- [ ] All changes are committed after tests pass.
+- [x] The review covers the sheet contract module, notation module, formula healing module, write planning module, and Google adapters.
+- [x] Any shallow module that fails the deletion test is removed or deepened.
+- [x] Any adapter seam with only one adapter is justified or collapsed.
+- [x] Backend tests still verify behavior through public interfaces.
+- [x] Backend integration validation still passes after cleanup.
+- [x] No GUI work starts before this slice is complete.
+- [x] All changes are committed after tests pass.
 
 ### Blocked by
 

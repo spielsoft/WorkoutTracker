@@ -1105,6 +1105,56 @@ void main() {
     ]);
   });
 
+  test('does not plan set writes for rows outside parsed exercise slots', () {
+    final rows = [
+      [...activeSheetFixedColumns, 'Session A'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        '',
+        'Human section row ignored by the app.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+      ],
+      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8'],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final loggingPlan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 99,
+      set: LoggedSet(
+        result: WeightedReps(weight: '230', reps: '5'),
+        rpe: '8',
+      ),
+    );
+    final editPlan = activeSheet.planSetEdit(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      setNumber: 1,
+      set: LoggedSet(
+        result: WeightedReps(weight: '230', reps: '5'),
+        rpe: '8',
+      ),
+    );
+    final clearPlan = activeSheet.planSetClear(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 1,
+      setNumber: 1,
+    );
+
+    expect(loggingPlan.cellUpdates, isEmpty);
+    expect(loggingPlan.columnInsertions, isEmpty);
+    expect(loggingPlan.nextSetPosition, isNull);
+    expect(editPlan.cellUpdates, isEmpty);
+    expect(clearPlan.cellUpdates, isEmpty);
+  });
+
   test(
     'ignores merged first-column human rows even when they contain text',
     () {

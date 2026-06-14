@@ -243,6 +243,10 @@ class _ActiveSheetWritePlanner {
     required int sheetRowNumber,
     required SetNotation set,
   }) {
+    if (!_isParsedExerciseRow(sheetRowNumber)) {
+      return ActiveSheetWritePlan();
+    }
+
     final block = sheet.selectHistoryBlock(historyBlockLabel);
     if (block == null) {
       return ActiveSheetWritePlan();
@@ -300,6 +304,10 @@ class _ActiveSheetWritePlanner {
     required int setNumber,
     required SetNotation set,
   }) {
+    if (!_isParsedExerciseRow(sheetRowNumber)) {
+      return ActiveSheetWritePlan();
+    }
+
     final column = _setColumn(
       historyBlockLabel: historyBlockLabel,
       setNumber: setNumber,
@@ -323,6 +331,10 @@ class _ActiveSheetWritePlanner {
     required int sheetRowNumber,
     required int setNumber,
   }) {
+    if (!_isParsedExerciseRow(sheetRowNumber)) {
+      return ActiveSheetWritePlan();
+    }
+
     final column = _setColumn(
       historyBlockLabel: historyBlockLabel,
       setNumber: setNumber,
@@ -366,5 +378,9 @@ class _ActiveSheetWritePlanner {
       return null;
     }
     return block.setColumns[setNumber - 1];
+  }
+
+  bool _isParsedExerciseRow(int sheetRowNumber) {
+    return sheet.slots.any((slot) => slot.sheetRowNumber == sheetRowNumber);
   }
 }
