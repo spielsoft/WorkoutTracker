@@ -6,7 +6,7 @@
 - [x] Slice 3: Heal and Reset Log Format Formula Columns
 - [x] Slice 4: Parse Existing History Cells With Row-Local Formats
 - [x] Slice 5: Plan Set Writes From Formatted Field Values
-- [ ] Slice 6: Render Dynamic Logging Fields in the GUI
+- [x] Slice 6: Render Dynamic Logging Fields in the GUI
 - [ ] Slice 7: Validate the End-to-End Logging Flow
 - [ ] Slice 8: Architecture and Test Cleanup
 
@@ -209,13 +209,13 @@ Replace the hard-coded Weight/Reps/RPE logging editor with a dynamic editor driv
 
 ### Acceptance criteria
 
-- [ ] A widget test fails first for an exercise whose format is `{Reps}[@]{RPE}` and verifies that only `Reps` and `RPE` fields appear.
-- [ ] Weighted exercises render `Weight`, `Reps`, and `RPE` fields from the format.
-- [ ] Height-based and timed exercises render their sheet-authored labels exactly.
-- [ ] Switching from a primary to a backup row refreshes the visible field labels and parsed values using the backup row's format.
-- [ ] Saving a structured entry sends field values to the backend write planner rather than assembling notation in the GUI.
-- [ ] Unparseable existing cells still provide raw edit controls.
-- [ ] The current exercise screen continues to show description, notes, rest, targets, current set rows, prior selected-block rows, and recent history.
+- [x] A widget test fails first for an exercise whose format is `{Reps}[@]{RPE}` and verifies that only `Reps` and `RPE` fields appear.
+- [x] Weighted exercises render `Weight`, `Reps`, and `RPE` fields from the format.
+- [x] Height-based and timed exercises render their sheet-authored labels exactly.
+- [x] Switching from a primary to a backup row refreshes the visible field labels and parsed values using the backup row's format.
+- [x] Saving a structured entry sends field values to the backend write planner rather than assembling notation in the GUI.
+- [x] Unparseable existing cells still provide raw edit controls.
+- [x] The current exercise screen continues to show description, notes, rest, targets, current set rows, prior selected-block rows, and recent history.
 
 ### Blocked by
 

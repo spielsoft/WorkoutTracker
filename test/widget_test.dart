@@ -70,13 +70,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Bench Press logging'), findsOneWidget);
-    expect(find.byKey(const ValueKey('set-weight')), findsOneWidget);
-    expect(find.byKey(const ValueKey('set-reps')), findsOneWidget);
-    expect(find.byKey(const ValueKey('set-rpe')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-Weight')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-Reps')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
 
-    await tester.enterText(find.byKey(const ValueKey('set-weight')), '155');
-    await tester.enterText(find.byKey(const ValueKey('set-reps')), '6');
-    await tester.enterText(find.byKey(const ValueKey('set-rpe')), '8');
+    await tester.enterText(
+      find.byKey(const ValueKey('set-field-Weight')),
+      '155',
+    );
+    await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
+    await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
     await tester.drag(find.byType(ListView), const Offset(0, -300));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Save set'));
@@ -84,6 +87,7 @@ void main() {
     await tester.pump();
 
     expect(service.appliedPlans, hasLength(1));
+    expect(service.appliedPlans.single.cellUpdates.single.value, '155x6@8');
   });
 
   testWidgets('renders compact spreadsheet controls with desktop scrolling', (
@@ -123,6 +127,259 @@ void main() {
     expect(behavior.dragDevices, contains(PointerDeviceKind.mouse));
     expect(behavior.dragDevices, contains(PointerDeviceKind.trackpad));
   });
+
+  testWidgets(
+    'renders bodyweight logging fields from the selected row format',
+    (tester) async {
+      final service = _FakeSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Pull Up',
+          '3',
+          '8',
+          '8',
+          '2 min',
+          '',
+          'Full hang.',
+          '{Reps}[@]{RPE}',
+          'Upper',
+          '',
+          '',
+        ],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Pull Up'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('set-field-Reps')), findsOneWidget);
+      expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
+      expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
+      expect(find.byKey(const ValueKey('set-field-Pain')), findsNothing);
+    },
+  );
+
+  testWidgets('renders height-based and timed sheet-authored labels', (
+    tester,
+  ) async {
+    final service = _FakeSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Step Up',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        '',
+        '{Height}[x]{Reps}[@]{RPE}',
+        'Legs',
+        '',
+        '',
+      ],
+      [
+        'Front Plank',
+        '3',
+        '45s',
+        '8',
+        '60s',
+        '',
+        '',
+        '{Seconds}[s@]{RPE}',
+        'Legs',
+        '',
+        '',
+      ],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Step Up'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('set-field-Height')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-Reps')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
+
+    await tester.tap(find.text('Back to exercises'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Front Plank'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('set-field-Seconds')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
+    expect(find.byKey(const ValueKey('set-field-Height')), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('set-field-Seconds')),
+      '45',
+    );
+    await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save set'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(service.appliedPlans.single.cellUpdates.single.value, '45s@8');
+  });
+
+  testWidgets(
+    'keeps exercise context, selected rows, recent history, and raw controls',
+    (tester) async {
+      final service = _FakeSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
+        [
+          'Carry',
+          '3',
+          '40',
+          '8',
+          '90s',
+          'Smooth',
+          'Stay tall.',
+          '{Distance}[@]{RPE}',
+          'Conditioning',
+          '',
+          'worked up, grip failed',
+          '30@7',
+        ],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Carry'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Carry logging'), findsOneWidget);
+      expect(find.text('Target: 3 sets x 40 @ 8'), findsOneWidget);
+      expect(find.text('Rest: 90s'), findsOneWidget);
+      expect(find.text('Tempo: Smooth'), findsOneWidget);
+      expect(find.text('Stay tall.'), findsOneWidget);
+      expect(find.text('Next set S2'), findsOneWidget);
+      expect(find.text('Logged sets'), findsOneWidget);
+      expect(find.byKey(const ValueKey('raw-S1')), findsOneWidget);
+      expect(find.text('Recent history'), findsOneWidget);
+      expect(find.text('Week 1 S1: 30@7'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'switching to a backup row refreshes structured labels and parsed values',
+    (tester) async {
+      final service = _FakeSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Pull Up',
+          '3',
+          '8',
+          '8',
+          '2 min',
+          '',
+          'Full hang.',
+          '{Reps}',
+          'Upper',
+          '',
+          '12',
+        ],
+        [
+          'Front Plank',
+          '3',
+          '45s',
+          '8',
+          '60s',
+          '',
+          'Brace hard.',
+          '{Seconds}[s@]{RPE}',
+          'Upper',
+          'TRUE',
+          '45s@8',
+        ],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Pull Up'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('logged-S1-field-Reps')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<TextField>(
+              find.byKey(const ValueKey('logged-S1-field-Reps')),
+            )
+            .controller
+            ?.text,
+        '12',
+      );
+
+      await tester.tap(find.text('Front Plank'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('set-field-Seconds')), findsOneWidget);
+      expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
+      expect(find.byKey(const ValueKey('set-field-Reps')), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(
+              find.byKey(const ValueKey('logged-S1-field-Seconds')),
+            )
+            .controller
+            ?.text,
+        '45',
+      );
+      expect(
+        tester
+            .widget<TextField>(
+              find.byKey(const ValueKey('logged-S1-field-RPE')),
+            )
+            .controller
+            ?.text,
+        '8',
+      );
+    },
+  );
 
   testWidgets('shows a top-right Google account menu for account switching', (
     tester,

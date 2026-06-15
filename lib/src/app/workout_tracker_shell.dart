@@ -430,6 +430,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
               width: 260,
               child: DropdownButtonFormField<String>(
                 initialValue: selectedWorkout,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Workout',
                   border: OutlineInputBorder(),
@@ -437,7 +438,10 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                 ),
                 items: [
                   for (final workout in workouts)
-                    DropdownMenuItem(value: workout, child: Text(workout)),
+                    DropdownMenuItem(
+                      value: workout,
+                      child: Text(workout, overflow: TextOverflow.ellipsis),
+                    ),
                 ],
                 onChanged: onWorkoutChanged,
               ),
@@ -446,6 +450,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
               width: 260,
               child: DropdownButtonFormField<String>(
                 initialValue: selectedHistoryBlock,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'History block',
                   border: OutlineInputBorder(),
@@ -455,7 +460,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                   for (final block in historyBlocks)
                     DropdownMenuItem(
                       value: block.label,
-                      child: Text(block.label),
+                      child: Text(block.label, overflow: TextOverflow.ellipsis),
                     ),
                 ],
                 onChanged: onHistoryBlockChanged,
@@ -623,17 +628,15 @@ class _ExerciseLoggingScreen extends StatefulWidget {
 }
 
 class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
-  final _weightController = TextEditingController();
-  final _repsController = TextEditingController();
-  final _rpeController = TextEditingController(text: '8');
-  final _painController = TextEditingController();
-  final _noteController = TextEditingController();
+  final _fieldControllers = <String, TextEditingController>{};
+  final _loggedFieldControllers = <int, Map<String, TextEditingController>>{};
   final _rawControllers = <int, TextEditingController>{};
 
   @override
   void initState() {
     super.initState();
-    _syncRawControllers(_context);
+    _syncFieldControllers(_context);
+    _syncLoggedEntryControllers(_context);
   }
 
   @override
@@ -642,17 +645,21 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     if (oldWidget.selectedSheetRowNumber != widget.selectedSheetRowNumber ||
         oldWidget.historyBlockLabel != widget.historyBlockLabel ||
         oldWidget.activeSheet != widget.activeSheet) {
-      _syncRawControllers(_context);
+      _syncFieldControllers(_context);
+      _syncLoggedEntryControllers(_context);
     }
   }
 
   @override
   void dispose() {
-    _weightController.dispose();
-    _repsController.dispose();
-    _rpeController.dispose();
-    _painController.dispose();
-    _noteController.dispose();
+    for (final controller in _fieldControllers.values) {
+      controller.dispose();
+    }
+    for (final controllers in _loggedFieldControllers.values) {
+      for (final controller in controllers.values) {
+        controller.dispose();
+      }
+    }
     for (final controller in _rawControllers.values) {
       controller.dispose();
     }
@@ -667,20 +674,66 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     );
   }
 
-  void _syncRawControllers(ExerciseLoggingContext context) {
-    final nonEmptyEntries = context.selectedHistory.entries.where(
-      (entry) => entry.rawValue.trim().isNotEmpty,
-    );
+  void _syncFieldControllers(ExerciseLoggingContext context) {
+    final labels = switch (context.logFormat) {
+      ParsedLogFormat(:final fieldLabels) => fieldLabels.toSet(),
+      InvalidLogFormat() => <String>{},
+    };
+    final removedLabels = _fieldControllers.keys
+        .where((label) => !labels.contains(label))
+        .toList();
+    for (final label in removedLabels) {
+      _fieldControllers.remove(label)?.dispose();
+    }
+    for (final label in labels) {
+      _fieldControllers.putIfAbsent(label, TextEditingController.new);
+    }
+  }
+
+  void _syncLoggedEntryControllers(ExerciseLoggingContext context) {
+    final nonEmptyEntries = context.selectedHistory.entries
+        .where((entry) => entry.rawValue.trim().isNotEmpty)
+        .toList();
     final activeSetNumbers = {
       for (final entry in nonEmptyEntries) entry.setNumber,
     };
-    final removedSetNumbers = _rawControllers.keys
+    final rawSetNumbers = {
+      for (final entry in nonEmptyEntries)
+        if (entry.logEntry is RawLogEntry) entry.setNumber,
+    };
+
+    final removedFormattedSetNumbers = _loggedFieldControllers.keys
         .where((setNumber) => !activeSetNumbers.contains(setNumber))
         .toList();
-    for (final setNumber in removedSetNumbers) {
+    for (final setNumber in removedFormattedSetNumbers) {
+      final controllers = _loggedFieldControllers.remove(setNumber);
+      if (controllers != null) {
+        for (final controller in controllers.values) {
+          controller.dispose();
+        }
+      }
+    }
+
+    final removedRawSetNumbers = _rawControllers.keys
+        .where((setNumber) => !rawSetNumbers.contains(setNumber))
+        .toList();
+    for (final setNumber in removedRawSetNumbers) {
       _rawControllers.remove(setNumber)?.dispose();
     }
+
+    for (final setNumber in rawSetNumbers) {
+      _loggedFieldControllers
+          .remove(setNumber)
+          ?.values
+          .forEach((controller) => controller.dispose());
+    }
+
     for (final entry in nonEmptyEntries) {
+      final logEntry = entry.logEntry;
+      if (logEntry is FormattedLogEntry) {
+        _syncLoggedFieldControllers(entry.setNumber, logEntry);
+        continue;
+      }
       final controller = _rawControllers.putIfAbsent(
         entry.setNumber,
         TextEditingController.new,
@@ -691,11 +744,37 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     }
   }
 
+  void _syncLoggedFieldControllers(int setNumber, FormattedLogEntry logEntry) {
+    _rawControllers.remove(setNumber)?.dispose();
+    final controllers = _loggedFieldControllers.putIfAbsent(
+      setNumber,
+      () => <String, TextEditingController>{},
+    );
+    final labels = logEntry.fieldLabels.toSet();
+    final removedLabels = controllers.keys
+        .where((label) => !labels.contains(label))
+        .toList();
+    for (final label in removedLabels) {
+      controllers.remove(label)?.dispose();
+    }
+    for (final label in logEntry.fieldLabels) {
+      final controller = controllers.putIfAbsent(
+        label,
+        TextEditingController.new,
+      );
+      final value = logEntry.fieldValues[label] ?? '';
+      if (controller.text != value) {
+        controller.text = value;
+      }
+    }
+  }
+
   Future<void> _saveStructuredSet(ExerciseLoggingContext context) async {
-    final weight = _weightController.text.trim();
-    final reps = _repsController.text.trim();
-    final rpe = _rpeController.text.trim();
-    if (weight.isEmpty || reps.isEmpty || rpe.isEmpty) {
+    final fieldValues = {
+      for (final entry in _fieldControllers.entries)
+        entry.key: entry.value.text.trim(),
+    };
+    if (fieldValues.values.every((value) => value.isEmpty)) {
       return;
     }
 
@@ -703,22 +782,15 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
       widget.activeSheet.planSetLoggingWrite(
         historyBlockLabel: widget.historyBlockLabel,
         sheetRowNumber: context.selectedChoice.sheetRowNumber,
-        fieldValues: {
-          'Weight': weight,
-          'Reps': reps,
-          'RPE': rpe,
-          'Pain': _painController.text.trim(),
-          'Set note': _noteController.text.trim(),
-        },
+        fieldValues: fieldValues,
       ),
     );
     if (!saved) {
       return;
     }
-    _weightController.clear();
-    _repsController.clear();
-    _painController.clear();
-    _noteController.clear();
+    for (final controller in _fieldControllers.values) {
+      controller.clear();
+    }
   }
 
   Future<void> _saveRawSet(
@@ -731,6 +803,27 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
         sheetRowNumber: context.selectedChoice.sheetRowNumber,
         setNumber: entry.setNumber,
         rawText: _rawControllers[entry.setNumber]?.text ?? '',
+      ),
+    );
+  }
+
+  Future<void> _saveStructuredSetEdit(
+    ExerciseLoggingContext context,
+    RowHistoryEntry entry,
+  ) async {
+    final controllers = _loggedFieldControllers[entry.setNumber];
+    if (controllers == null) {
+      return;
+    }
+    await widget.onApplyWritePlan(
+      widget.activeSheet.planSetEdit(
+        historyBlockLabel: widget.historyBlockLabel,
+        sheetRowNumber: context.selectedChoice.sheetRowNumber,
+        setNumber: entry.setNumber,
+        fieldValues: {
+          for (final controllerEntry in controllers.entries)
+            controllerEntry.key: controllerEntry.value.text.trim(),
+        },
       ),
     );
   }
@@ -802,11 +895,8 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
         ),
         const SizedBox(height: 8),
         _StructuredSetEditor(
-          weightController: _weightController,
-          repsController: _repsController,
-          rpeController: _rpeController,
-          painController: _painController,
-          noteController: _noteController,
+          logFormat: loggingContext.logFormat,
+          controllers: _fieldControllers,
           onSave: () => _saveStructuredSet(loggingContext),
         ),
         const SizedBox(height: 16),
@@ -816,12 +906,21 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
           const Text('No sets logged in this block.')
         else
           for (final entry in loggedEntries)
-            _LoggedSetEditor(
-              entry: entry,
-              controller: _rawControllers[entry.setNumber]!,
-              onSave: () => _saveRawSet(loggingContext, entry),
-              onClear: () => _clearSet(loggingContext, entry),
-            ),
+            if (entry.logEntry case FormattedLogEntry(:final fieldLabels))
+              _LoggedFormattedSetEditor(
+                entry: entry,
+                fieldLabels: fieldLabels,
+                controllers: _loggedFieldControllers[entry.setNumber]!,
+                onSave: () => _saveStructuredSetEdit(loggingContext, entry),
+                onClear: () => _clearSet(loggingContext, entry),
+              )
+            else
+              _LoggedSetEditor(
+                entry: entry,
+                controller: _rawControllers[entry.setNumber]!,
+                onSave: () => _saveRawSet(loggingContext, entry),
+                onClear: () => _clearSet(loggingContext, entry),
+              ),
         const SizedBox(height: 16),
         Text('Recent history', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -871,81 +970,38 @@ class _ExerciseContextPanel extends StatelessWidget {
 
 class _StructuredSetEditor extends StatelessWidget {
   const _StructuredSetEditor({
-    required this.weightController,
-    required this.repsController,
-    required this.rpeController,
-    required this.painController,
-    required this.noteController,
+    required this.logFormat,
+    required this.controllers,
     required this.onSave,
   });
 
-  final TextEditingController weightController;
-  final TextEditingController repsController;
-  final TextEditingController rpeController;
-  final TextEditingController painController;
-  final TextEditingController noteController;
+  final LogFormatParseResult logFormat;
+  final Map<String, TextEditingController> controllers;
   final VoidCallback onSave;
 
   @override
   Widget build(BuildContext context) {
+    final fieldLabels = switch (logFormat) {
+      ParsedLogFormat(:final fieldLabels) => fieldLabels,
+      InvalidLogFormat() => const <String>[],
+    };
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        SizedBox(
-          width: 96,
-          child: TextField(
-            key: const ValueKey('set-weight'),
-            controller: weightController,
-            decoration: const InputDecoration(
-              labelText: 'Weight',
-              border: OutlineInputBorder(),
+        for (final label in fieldLabels)
+          SizedBox(
+            width: 112,
+            child: TextField(
+              key: ValueKey('set-field-$label'),
+              controller: controllers[label],
+              decoration: InputDecoration(
+                labelText: label,
+                border: const OutlineInputBorder(),
+              ),
             ),
           ),
-        ),
-        SizedBox(
-          width: 96,
-          child: TextField(
-            key: const ValueKey('set-reps'),
-            controller: repsController,
-            decoration: const InputDecoration(
-              labelText: 'Reps',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        SizedBox(
-          width: 96,
-          child: TextField(
-            key: const ValueKey('set-rpe'),
-            controller: rpeController,
-            decoration: const InputDecoration(
-              labelText: 'RPE',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        SizedBox(
-          width: 96,
-          child: TextField(
-            controller: painController,
-            decoration: const InputDecoration(
-              labelText: 'Pain',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        SizedBox(
-          width: 180,
-          child: TextField(
-            controller: noteController,
-            decoration: const InputDecoration(
-              labelText: 'Set note',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
         FilledButton.icon(
           onPressed: onSave,
           icon: const Icon(Icons.save_outlined),
@@ -991,6 +1047,61 @@ class _LoggedSetEditor extends StatelessWidget {
           IconButton(
             key: ValueKey('save-${entry.setLabel}'),
             tooltip: 'Save raw set text',
+            onPressed: onSave,
+            icon: const Icon(Icons.check_outlined),
+          ),
+          IconButton(
+            key: ValueKey('clear-${entry.setLabel}'),
+            tooltip: 'Clear set',
+            onPressed: onClear,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoggedFormattedSetEditor extends StatelessWidget {
+  const _LoggedFormattedSetEditor({
+    required this.entry,
+    required this.fieldLabels,
+    required this.controllers,
+    required this.onSave,
+    required this.onClear,
+  });
+
+  final RowHistoryEntry entry;
+  final List<String> fieldLabels;
+  final Map<String, TextEditingController> controllers;
+  final VoidCallback onSave;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(width: 36, child: Text(entry.setLabel)),
+          for (final label in fieldLabels)
+            SizedBox(
+              width: 112,
+              child: TextField(
+                key: ValueKey('logged-${entry.setLabel}-field-$label'),
+                controller: controllers[label],
+                decoration: InputDecoration(
+                  labelText: label,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+          IconButton(
+            key: ValueKey('save-${entry.setLabel}'),
+            tooltip: 'Save structured set',
             onPressed: onSave,
             icon: const Icon(Icons.check_outlined),
           ),
