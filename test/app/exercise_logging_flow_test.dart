@@ -126,6 +126,11 @@ void main() {
         (entry) => entry.setNumber == 2,
       );
 
+      expect(
+        () => flow.viewModel.loggedEntries.clear(),
+        throwsUnsupportedError,
+      );
+
       flow.viewModel.loggedFormattedControllers[1]?['Seconds']?.text = '50';
       flow.viewModel.rawControllers[2]?.text = 'skip, mat busy';
 

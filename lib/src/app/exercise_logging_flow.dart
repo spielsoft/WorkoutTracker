@@ -270,15 +270,15 @@ class ExerciseLoggingFlow {
 }
 
 class ExerciseLoggingViewModel {
-  const ExerciseLoggingViewModel({
+  ExerciseLoggingViewModel({
     required this.context,
-    required this.loggedEntries,
+    required Iterable<RowHistoryEntry> loggedEntries,
     required this.nextSetNumber,
     required this.latestHistoryValue,
     required this.newSetControllers,
     required this.loggedFormattedControllers,
     required this.rawControllers,
-  });
+  }) : loggedEntries = List<RowHistoryEntry>.unmodifiable(loggedEntries);
 
   final ExerciseLoggingContext context;
   final List<RowHistoryEntry> loggedEntries;

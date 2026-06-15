@@ -5,7 +5,7 @@
 - [x] Slice 2: Deepen the Exercise Logging Flow Module
 - [x] Slice 3: Split Google Validation and Authorization Internals
 - [x] Slice 4: Separate Development Reset Fixtures From Reset Writing
-- [ ] Slice 5: Final Architecture and Test Cleanup Gate
+- [x] Slice 5: Final Architecture and Test Cleanup Gate
 
 ## Slice 0: Create a Shared Test Validation Harness
 
@@ -167,13 +167,22 @@ Run a final cleanup gate after the architecture slices land. Re-run the architec
 
 ### Acceptance criteria
 
-- [ ] Re-run an `improve-codebase-architecture` review focused on GUI logging flow, sheet-contract read models, validation/auth internals, reset fixtures, and test harnesses.
-- [ ] Remove or consolidate duplicate tests introduced during cleanup.
-- [ ] Confirm widget tests remain GUI smoke tests rather than backend behavior tests.
-- [ ] Confirm backend behavior tests still cross public sheet-contract and log-format Interfaces.
-- [ ] Run the default local test suite.
-- [ ] Document any remaining low-priority architecture findings for later work.
-- [ ] Commit the final cleanup separately from implementation slices.
+- [x] Re-run an `improve-codebase-architecture` review focused on GUI logging flow, sheet-contract read models, validation/auth internals, reset fixtures, and test harnesses.
+- [x] Remove or consolidate duplicate tests introduced during cleanup.
+- [x] Confirm widget tests remain GUI smoke tests rather than backend behavior tests.
+- [x] Confirm backend behavior tests still cross public sheet-contract and log-format Interfaces.
+- [x] Run the default local test suite.
+- [x] Document any remaining low-priority architecture findings for later work.
+- [x] Commit the final cleanup separately from implementation slices.
+
+### Architecture review notes
+
+- GUI logging flow: `ExerciseLoggingFlow` is the deep Module behind the logging screen; it owns row switching, field-controller lifecycle, raw-vs-formatted entry editing, and backend write-plan creation. The view model now returns an immutable logged-entry snapshot so widget code cannot mutate flow state accidentally.
+- Sheet-contract read models: `ExerciseLoggingContext`, `WorkoutOverview`, and row-history entries continue to expose one app-facing log entry representation, with parsing and raw preservation behind the public sheet-contract Interface.
+- Validation/auth internals: spreadsheet validation orchestration, Google account/session state, authorization header wrapping, and Google Sheets Adapter wiring are separated behind focused Modules.
+- Reset fixtures: deterministic fixture construction is separate from reset planning and Google request execution; reset planning remains locally testable without live Google access.
+- Test harnesses: controller and widget tests use `TestSpreadsheetValidationService` through the public validation Interface. Widget coverage is now smoke-level for visible GUI flow, while row-local parsing and write planning stay in sheet-contract/log-format/logging-flow tests.
+- Remaining low-priority finding: the local workbook fixture and the development reset fixture still duplicate representative workout-library content. Consolidating that fixture source would improve Locality, but it is outside this cleanup gate because both fixtures currently serve different Interfaces and the duplication is stable test data.
 
 ### Blocked by
 
