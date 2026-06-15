@@ -150,7 +150,7 @@ class GoogleAccountProfile {
 abstract interface class GoogleAccountSession implements Listenable {
   GoogleAccountProfile? get currentAccount;
 
-  Future<void> switchAccount();
+  Future<void> switchAccount({List<String> scopes = const []});
 }
 
 abstract interface class GoogleSignInAuthorizationGateway
@@ -191,11 +191,20 @@ class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
   }
 
   @override
-  Future<void> switchAccount() async {
+  Future<void> switchAccount({List<String> scopes = const []}) async {
     await _ensureInitialized();
     await _signIn.signOut();
     _setAccount(null);
-    final account = await _signIn.authenticate();
+    final account = await _signIn.authenticate(scopeHint: scopes);
+    if (scopes.isNotEmpty) {
+      final headers = await account.authorizationClient.authorizationHeaders(
+        scopes,
+        promptIfNecessary: true,
+      );
+      if (headers == null) {
+        throw StateError('Google authorization did not return Sheets headers.');
+      }
+    }
     _setAccount(account);
   }
 

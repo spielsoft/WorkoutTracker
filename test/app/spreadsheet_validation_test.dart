@@ -149,7 +149,7 @@ class _RecordingGoogleSignInAuthorizationGateway extends ChangeNotifier
   GoogleAccountProfile? get currentAccount => null;
 
   @override
-  Future<void> switchAccount() async {}
+  Future<void> switchAccount({List<String> scopes = const []}) async {}
 
   @override
   Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {

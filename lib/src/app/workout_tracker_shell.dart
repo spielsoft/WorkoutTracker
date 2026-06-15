@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/set_notation.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
@@ -250,7 +251,9 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
       _isSwitching = true;
     });
     try {
-      await widget.accountSession.switchAccount();
+      await widget.accountSession.switchAccount(
+        scopes: GoogleApisSheetsWriteClient.writeScopes,
+      );
     } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -175,6 +175,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(accountSession.switchCount, 1);
+    expect(accountSession.requestedScopes.single, [
+      'https://www.googleapis.com/auth/spreadsheets',
+    ]);
     expect(accountSession.currentAccount?.email, 'right@example.com');
   });
 
@@ -681,13 +684,15 @@ class _FakeGoogleAccountSession extends ChangeNotifier
 
   GoogleAccountProfile? _currentAccount;
   int switchCount = 0;
+  final requestedScopes = <List<String>>[];
 
   @override
   GoogleAccountProfile? get currentAccount => _currentAccount;
 
   @override
-  Future<void> switchAccount() async {
+  Future<void> switchAccount({List<String> scopes = const []}) async {
     switchCount += 1;
+    requestedScopes.add(scopes);
     _currentAccount = const GoogleAccountProfile(
       email: 'right@example.com',
       displayName: 'Right Account',
