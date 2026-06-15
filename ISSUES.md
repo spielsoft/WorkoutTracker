@@ -1,7 +1,7 @@
 # Literal Log Format Implementation Plan
 
 - [x] Slice 0: Define the Literal Log Format Contract
-- [ ] Slice 1: Parse and Render Literal Log Formats
+- [x] Slice 1: Parse and Render Literal Log Formats
 - [ ] Slice 2: Read Log Format Metadata From the Sheet Contract
 - [ ] Slice 3: Heal and Reset Log Format Formula Columns
 - [ ] Slice 4: Parse Existing History Cells With Row-Local Formats
@@ -62,15 +62,15 @@ Add a backend Module that parses a `Log Format` string into an ordered logging t
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for parsing `{Weight}[x]{Reps}[@]{RPE}` into three fields and two literal segments.
-- [ ] Blank format parses as the default `{Weight}[x]{Reps}[@]{RPE}`.
-- [ ] Formats with one to four fields are accepted.
-- [ ] Empty or malformed field labels are rejected through an observable validation result.
-- [ ] Formats with more than four fields are rejected through an observable validation result.
-- [ ] Rendering concatenates field values and literal segments exactly in format order.
-- [ ] Rendering preserves delimiters when field values are blank, such as `{Weight}[x]{Reps}[@]{RPE}[,]{Pain}` rendering `150x10@8,` when `Pain` is blank.
-- [ ] Tests cover repeated literal delimiters such as `{A}[,]{B}[,]{C}` so blank middle values are not ambiguous by omission.
-- [ ] The existing raw text preservation behavior is not removed.
+- [x] A behavior test fails first for parsing `{Weight}[x]{Reps}[@]{RPE}` into three fields and two literal segments.
+- [x] Blank format parses as the default `{Weight}[x]{Reps}[@]{RPE}`.
+- [x] Formats with one to four fields are accepted.
+- [x] Empty or malformed field labels are rejected through an observable validation result.
+- [x] Formats with more than four fields are rejected through an observable validation result.
+- [x] Rendering concatenates field values and literal segments exactly in format order.
+- [x] Rendering preserves delimiters when field values are blank, such as `{Weight}[x]{Reps}[@]{RPE}[,]{Pain}` rendering `150x10@8,` when `Pain` is blank.
+- [x] Tests cover repeated literal delimiters such as `{A}[,]{B}[,]{C}` so blank middle values are not ambiguous by omission.
+- [x] The existing raw text preservation behavior is not removed.
 
 ### Blocked by
 
