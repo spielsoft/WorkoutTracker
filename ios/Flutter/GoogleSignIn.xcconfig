@@ -1,3 +1,3 @@
 // Replace these with values from GoogleService-Info.plist for the iOS app.
-WORKOUT_TRACKER_GOOGLE_CLIENT_ID = workout-tracker-google-client-id-not-configured
-WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID = workout-tracker-google-reversed-client-id-not-configured
+WORKOUT_TRACKER_GOOGLE_CLIENT_ID = 657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk.apps.googleusercontent.com
+WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk

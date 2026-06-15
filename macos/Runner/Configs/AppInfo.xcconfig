@@ -14,5 +14,5 @@ PRODUCT_BUNDLE_IDENTIFIER = com.spielman.workouttracker
 PRODUCT_COPYRIGHT = Copyright © 2026 com.spielman. All rights reserved.
 
 // Replace these with values from GoogleService-Info.plist for the macOS app.
-WORKOUT_TRACKER_GOOGLE_CLIENT_ID = workout-tracker-google-client-id-not-configured
-WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID = workout-tracker-google-reversed-client-id-not-configured
+WORKOUT_TRACKER_GOOGLE_CLIENT_ID = 657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk.apps.googleusercontent.com
+WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk
