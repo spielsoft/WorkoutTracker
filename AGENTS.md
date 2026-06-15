@@ -67,6 +67,24 @@ GUI code must use completed backend modules instead of duplicating sheet parsing
 
 Tests should describe observable behavior, not implementation details.
 
+Use the smallest test tier that gives useful signal for the work in front of
+you:
+
+- Fast default local tests: run targeted `flutter test` commands for the
+  backend, adapter, or controller behavior you changed. These tests must not
+  require Google credentials or write to the development sheet.
+- Targeted GUI tests: run focused widget tests such as
+  `flutter test test/widget_test.dart` when app presentation or interaction
+  behavior changes.
+- Opt-in live Google integration: run
+  `integration_test/live_logging_flow_test.dart` only when explicitly needed,
+  Google login is ready, and it is acceptable to reset/write the development
+  sheet. Set `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` for that run; without
+  it, the live test must skip before authentication.
+- Release/full validation: run the broad local suite and any platform build or
+  live validation called for by a release, architecture gate, or final cleanup.
+  Do this deliberately rather than as a reflex for small changes.
+
 Good test surfaces include:
 
 - parsing an active sheet into workout slots
@@ -90,6 +108,11 @@ https://docs.google.com/spreadsheets/d/1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKv
 First try to complete Google integration work AFK. If local app authentication requires user login or authorization, stop at the smallest necessary HITL point and explain the exact action needed.
 
 Integration tests that write to the development sheet must reset or clean up after themselves.
+
+Live Google integration tests are opt-in. Do not set
+`WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` unless the current task explicitly
+requires live validation and the user/HITL state is ready for Google
+authorization and development-sheet writes.
 
 ## Architecture Expectations
 

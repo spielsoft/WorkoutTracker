@@ -24,7 +24,9 @@ Use TDD for the slice:
 3. Implement the smallest code needed to pass.
 4. Repeat until the slice acceptance criteria are met.
 5. Refactor only after tests are green.
-6. Run the relevant tests.
+6. Run the relevant targeted tests for the changed behavior. Do not run the
+   whole suite reflexively unless this is a release/full-validation task or the
+   slice acceptance criteria require it.
 7. Update the `ISSUES_MVP.md` checklist if the slice is complete.
 8. Commit the completed slice with a message like `Complete slice [N]: [slice title]`.
 
@@ -35,6 +37,13 @@ For Google Sheets integration slices, first try to complete the work AFK using t
 https://docs.google.com/spreadsheets/d/1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E/edit?gid=0#gid=0
 
 If local app authentication requires user interaction, stop at the smallest necessary HITL point and explain exactly what login/authorization action is needed. Do not mark the slice complete until the live read/write behavior required by the acceptance criteria is verified.
+
+Live Google integration tests are opt-in. Do not run
+`integration_test/live_logging_flow_test.dart` against Google unless the user or
+task explicitly requires live validation, Google login/HITL is ready, and
+development-sheet writes are acceptable. Set
+`WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` for that run; without it, the live
+test should skip before authentication.
 
 Do not begin GUI slices until Slice 16 is complete. For GUI slices, use the completed backend modules rather than duplicating sheet parsing, validation, formula healing, or write planning in UI code.
 
@@ -63,7 +72,9 @@ Use TDD for the slice:
 3. Implement the smallest code needed to pass.
 4. Repeat until the slice acceptance criteria are met.
 5. Refactor only after tests are green.
-6. Run the relevant tests.
+6. Run the relevant targeted tests for the changed behavior. Do not run the
+   whole suite reflexively unless this is a release/full-validation task or the
+   slice acceptance criteria require it.
 7. Update the `ISSUES_MVP.md` checklist if the slice is complete.
 8. Commit the completed slice with a message like `Complete slice [N]: [slice title]`.
 
@@ -74,6 +85,13 @@ For Google Sheets integration slices, first try to complete the work AFK using t
 https://docs.google.com/spreadsheets/d/1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E/edit?gid=0#gid=0
 
 If local app authentication requires user interaction, stop at the smallest necessary HITL point and explain exactly what login/authorization action is needed. Do not mark the slice complete until the live read/write behavior required by the acceptance criteria is verified.
+
+Live Google integration tests are opt-in. Do not run
+`integration_test/live_logging_flow_test.dart` against Google unless the user or
+task explicitly requires live validation, Google login/HITL is ready, and
+development-sheet writes are acceptable. Set
+`WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` for that run; without it, the live
+test should skip before authentication.
 
 Respect dependencies in `ISSUES_MVP.md`. Do not run dependent slices out of order. Do not begin GUI slices until Slice 16 is complete. For GUI slices, use the completed backend modules rather than duplicating sheet parsing, validation, formula healing, or write planning in UI code.
 
@@ -112,7 +130,9 @@ Use TDD for the slice:
 3. Implement the smallest code needed to pass.
 4. Repeat until the slice acceptance criteria are met.
 5. Refactor only after tests are green.
-6. Run the relevant tests.
+6. Run the relevant targeted tests for the changed behavior. Do not run the
+   whole suite reflexively unless this is a release/full-validation task or the
+   slice acceptance criteria require it.
 7. Update the `ISSUES_MVP.md` checklist if the slice is complete.
 8. Commit the completed slice with a message like `Complete slice [N]: [slice title]`.
 
@@ -123,6 +143,13 @@ For Google Sheets integration slices, first try to complete the work AFK using t
 https://docs.google.com/spreadsheets/d/1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E/edit?gid=0#gid=0
 
 If local app authentication requires user interaction, stop at the smallest necessary HITL point and explain exactly what login/authorization action is needed. Do not mark the slice complete until the live read/write behavior required by the acceptance criteria is verified.
+
+Live Google integration tests are opt-in. Do not run
+`integration_test/live_logging_flow_test.dart` against Google unless the user or
+task explicitly requires live validation, Google login/HITL is ready, and
+development-sheet writes are acceptable. Set
+`WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` for that run; without it, the live
+test should skip before authentication.
 
 For GUI slices, use the completed backend modules rather than duplicating sheet parsing, validation, formula healing, or write planning in UI code. For GUI validation slices, build or run the macOS app and report the `.app` path when a bundle is produced, unless the slice is explicitly documentation-only.
 

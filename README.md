@@ -78,6 +78,23 @@ Implementation will use TDD with vertical slices. Backend sheet-contract behavio
 
 Each completed slice should be committed separately.
 
+## Testing
+
+Use the narrowest test tier that matches the change:
+
+- Fast default local tests: targeted `flutter test` commands for backend,
+  adapter, controller, or notation behavior. These are the normal development
+  loop and do not require Google credentials.
+- Targeted GUI tests: focused widget tests such as
+  `flutter test test/widget_test.dart` for app flow or layout behavior.
+- Opt-in live Google integration:
+  `integration_test/live_logging_flow_test.dart` validates the real development
+  sheet flow. It skips by default; run it only when Google login/HITL is ready
+  and development-sheet writes are acceptable by setting
+  `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1`.
+- Release/full validation: run the broad local suite plus any relevant platform
+  build or live validation before release, architecture gates, or final cleanup.
+
 ## Current Status
 
 This repository now contains the standard Flutter/Dart scaffold generated for Slice 0, with iOS, macOS, Android, Linux, and Windows platform targets present. Backend sheet-contract implementation has not started yet.
