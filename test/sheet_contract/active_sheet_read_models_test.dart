@@ -42,6 +42,25 @@ void main() {
     });
   });
 
+  test('row history exposes one app-facing log entry representation', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final context = activeSheet.buildExerciseLoggingContext(
+      primarySheetRowNumber: 3,
+      selectedSheetRowNumber: 3,
+      historyBlockLabel: 'Session A',
+    );
+
+    final entry = context.selectedHistory.entries.single;
+    expect(entry.logEntry, isA<FormattedLogEntry>());
+    expect(() => (entry as dynamic).notation, throwsNoSuchMethodError);
+  });
+
   test('parses repeated delimiters and preserves unparseable raw entries', () {
     final rows = [
       historyHeaderRow(['Session A', '']),
@@ -82,6 +101,74 @@ void main() {
     expect((raw as RawLogEntry).text, 'left,right');
     expect(context.selectedHistory.entries.last.rawValue, 'left,right');
   });
+
+  test(
+    'parses bodyweight, timed, and height-based row-local history cells',
+    () {
+      final rows = [
+        historyHeaderRow(['Session A']),
+        setLabelRow(['S1']),
+        [
+          'Pull Up',
+          '3',
+          '',
+          '',
+          '2 min',
+          '',
+          '',
+          '{Reps}[@]{RPE}',
+          'Upper',
+          '',
+          '15@8',
+        ],
+        [
+          'Plank',
+          '3',
+          '',
+          '',
+          '90s',
+          '',
+          '',
+          '{Seconds}[s@]{RPE}',
+          'Upper',
+          '',
+          '45s@8',
+        ],
+        [
+          'Box Jump',
+          '3',
+          '',
+          '',
+          '2 min',
+          '',
+          '',
+          '{Height}[in x]{Reps}[@]{RPE}',
+          'Upper',
+          '',
+          '24in x10@8',
+        ],
+      ];
+      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+      FormattedLogEntry entryFor(int sheetRowNumber) {
+        final context = activeSheet.buildExerciseLoggingContext(
+          primarySheetRowNumber: sheetRowNumber,
+          selectedSheetRowNumber: sheetRowNumber,
+          historyBlockLabel: 'Session A',
+        );
+        return context.selectedHistory.entries.single.logEntry
+            as FormattedLogEntry;
+      }
+
+      expect(entryFor(3).fieldValues, {'Reps': '15', 'RPE': '8'});
+      expect(entryFor(4).fieldValues, {'Seconds': '45', 'RPE': '8'});
+      expect(entryFor(5).fieldValues, {
+        'Height': '24',
+        'Reps': '10',
+        'RPE': '8',
+      });
+    },
+  );
 
   test('uses primary and backup row-local formats independently', () {
     final rows = [

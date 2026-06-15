@@ -93,7 +93,6 @@ class RowHistoryEntry {
     required this.setLabel,
     required this.sheetColumnNumber,
     required this.rawValue,
-    required this.notation,
     required this.logEntry,
   });
 
@@ -101,7 +100,6 @@ class RowHistoryEntry {
   final String setLabel;
   final int sheetColumnNumber;
   final String rawValue;
-  final SetNotation notation;
   final LogEntry logEntry;
 }
 
@@ -237,7 +235,6 @@ class _WorkoutReadModelBuilder {
       setLabel: column.label,
       sheetColumnNumber: column.sheetColumnNumber,
       rawValue: value,
-      notation: parseSetNotation(value),
       logEntry: logFormat is ParsedLogFormat
           ? parseLogEntry(logFormat, value)
           : RawLogEntry(value),

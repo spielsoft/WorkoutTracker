@@ -1,7 +1,7 @@
 # Architecture Cleanup Implementation Plan
 
 - [x] Slice 0: Create a Shared Test Validation Harness
-- [ ] Slice 1: Retire the Dual Set Parsing Interface
+- [x] Slice 1: Retire the Dual Set Parsing Interface
 - [ ] Slice 2: Deepen the Exercise Logging Flow Module
 - [ ] Slice 3: Split Google Validation and Authorization Internals
 - [ ] Slice 4: Separate Development Reset Fixtures From Reset Writing
@@ -49,12 +49,12 @@ Remove the need for callers to understand both the older fixed set-notation mode
 
 ### Acceptance criteria
 
-- [ ] Row-history read models expose a single app-facing entry representation for formatted-vs-raw log cells.
-- [ ] GUI code no longer depends on the older fixed set-notation Interface.
-- [ ] Sheet-contract tests continue to cover row-local log-format parsing for weighted, bodyweight, timed, height-based, blank-field, and raw cells.
-- [ ] Public exports no longer expose the older set-notation Module unless a retained compatibility reason is documented.
-- [ ] Obsolete set-notation tests are removed or moved to the retained internal compatibility surface.
-- [ ] Relevant log-format, sheet-contract, controller, and widget tests pass.
+- [x] Row-history read models expose a single app-facing entry representation for formatted-vs-raw log cells.
+- [x] GUI code no longer depends on the older fixed set-notation Interface.
+- [x] Sheet-contract tests continue to cover row-local log-format parsing for weighted, bodyweight, timed, height-based, blank-field, and raw cells.
+- [x] Public exports no longer expose the older set-notation Module unless a retained compatibility reason is documented.
+- [x] Obsolete set-notation tests are removed or moved to the retained internal compatibility surface.
+- [x] Relevant log-format, sheet-contract, controller, and widget tests pass.
 
 ### Blocked by
 
