@@ -241,9 +241,13 @@ class _ActiveSheetWritePlanner {
   ActiveSheetWritePlan planSetLoggingWrite({
     required String historyBlockLabel,
     required int sheetRowNumber,
-    required SetNotation set,
+    required Map<String, String> fieldValues,
   }) {
-    if (!_isParsedExerciseRow(sheetRowNumber)) {
+    final renderedSet = _renderSetForRow(
+      sheetRowNumber: sheetRowNumber,
+      fieldValues: fieldValues,
+    );
+    if (renderedSet == null) {
       return ActiveSheetWritePlan();
     }
 
@@ -261,7 +265,7 @@ class _ActiveSheetWritePlanner {
             CellUpdate(
               sheetRowNumber: sheetRowNumber,
               sheetColumnNumber: column.sheetColumnNumber,
-              value: renderSetNotation(set),
+              value: renderedSet,
             ),
           ],
           nextSetPosition: _nextSetPosition(
@@ -287,7 +291,7 @@ class _ActiveSheetWritePlanner {
         CellUpdate(
           sheetRowNumber: sheetRowNumber,
           sheetColumnNumber: newSheetColumnNumber,
-          value: renderSetNotation(set),
+          value: renderedSet,
         ),
       ],
       nextSetPosition: SetPosition(
@@ -302,7 +306,39 @@ class _ActiveSheetWritePlanner {
     required String historyBlockLabel,
     required int sheetRowNumber,
     required int setNumber,
-    required SetNotation set,
+    required Map<String, String> fieldValues,
+  }) {
+    final renderedSet = _renderSetForRow(
+      sheetRowNumber: sheetRowNumber,
+      fieldValues: fieldValues,
+    );
+    if (renderedSet == null) {
+      return ActiveSheetWritePlan();
+    }
+
+    final column = _setColumn(
+      historyBlockLabel: historyBlockLabel,
+      setNumber: setNumber,
+    );
+    if (column == null) {
+      return ActiveSheetWritePlan();
+    }
+    return ActiveSheetWritePlan(
+      cellUpdates: [
+        CellUpdate(
+          sheetRowNumber: sheetRowNumber,
+          sheetColumnNumber: column.sheetColumnNumber,
+          value: renderedSet,
+        ),
+      ],
+    );
+  }
+
+  ActiveSheetWritePlan planRawSetEdit({
+    required String historyBlockLabel,
+    required int sheetRowNumber,
+    required int setNumber,
+    required String rawText,
   }) {
     if (!_isParsedExerciseRow(sheetRowNumber)) {
       return ActiveSheetWritePlan();
@@ -320,7 +356,7 @@ class _ActiveSheetWritePlanner {
         CellUpdate(
           sheetRowNumber: sheetRowNumber,
           sheetColumnNumber: column.sheetColumnNumber,
-          value: renderSetNotation(set),
+          value: rawText,
         ),
       ],
     );
@@ -382,5 +418,28 @@ class _ActiveSheetWritePlanner {
 
   bool _isParsedExerciseRow(int sheetRowNumber) {
     return sheet.slots.any((slot) => slot.sheetRowNumber == sheetRowNumber);
+  }
+
+  String? _renderSetForRow({
+    required int sheetRowNumber,
+    required Map<String, String> fieldValues,
+  }) {
+    final slot = _slotForRow(sheetRowNumber);
+    if (slot == null) {
+      return null;
+    }
+    final format = slot.logFormat;
+    return format is ParsedLogFormat
+        ? renderLogFormat(format, fieldValues)
+        : null;
+  }
+
+  WorkoutSlot? _slotForRow(int sheetRowNumber) {
+    for (final slot in sheet.slots) {
+      if (slot.sheetRowNumber == sheetRowNumber) {
+        return slot;
+      }
+    }
+    return null;
   }
 }

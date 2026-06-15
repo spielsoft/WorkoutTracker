@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/google_sheets.dart';
-import 'package:workout_tracker/set_notation.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 import 'spreadsheet_validation.dart';
@@ -704,12 +703,13 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
       widget.activeSheet.planSetLoggingWrite(
         historyBlockLabel: widget.historyBlockLabel,
         sheetRowNumber: context.selectedChoice.sheetRowNumber,
-        set: LoggedSet(
-          result: WeightedReps(weight: weight, reps: reps),
-          rpe: rpe,
-          pain: _blankToNull(_painController.text),
-          note: _blankToNull(_noteController.text),
-        ),
+        fieldValues: {
+          'Weight': weight,
+          'Reps': reps,
+          'RPE': rpe,
+          'Pain': _painController.text.trim(),
+          'Set note': _noteController.text.trim(),
+        },
       ),
     );
     if (!saved) {
@@ -726,11 +726,11 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     RowHistoryEntry entry,
   ) async {
     await widget.onApplyWritePlan(
-      widget.activeSheet.planSetEdit(
+      widget.activeSheet.planRawSetEdit(
         historyBlockLabel: widget.historyBlockLabel,
         sheetRowNumber: context.selectedChoice.sheetRowNumber,
         setNumber: entry.setNumber,
-        set: RawSetNotation(_rawControllers[entry.setNumber]?.text ?? ''),
+        rawText: _rawControllers[entry.setNumber]?.text ?? '',
       ),
     );
   }
@@ -1037,11 +1037,6 @@ int _nextSetNumber(RowHistoryBlock block) {
     }
   }
   return block.entries.length + 1;
-}
-
-String? _blankToNull(String value) {
-  final trimmed = value.trim();
-  return trimmed.isEmpty ? null : trimmed;
 }
 
 String? _latestHistoryValue(ExerciseLoggingContext context) {

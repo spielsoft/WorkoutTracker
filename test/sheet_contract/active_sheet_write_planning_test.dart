@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:workout_tracker/set_notation.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 import 'active_sheet_test_helpers.dart';
@@ -11,19 +10,52 @@ void main() {
     final plan = activeSheet.planSetLoggingWrite(
       historyBlockLabel: 'Week 2',
       sheetRowNumber: 3,
-      set: LoggedSet(
-        result: WeightedReps(weight: '75', reps: '8'),
-        rpe: '8',
-      ),
+      fieldValues: const {'Weight': '150', 'Reps': '10', 'RPE': '8'},
     );
 
     expect(plan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '75x8@8'),
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '150x10@8'),
     ]);
     expect(
       plan.nextSetPosition,
       SetPosition(sheetRowNumber: 3, setNumber: 2, sheetColumnNumber: 12),
     );
+  });
+
+  test('renders surrounding literals when a formatted field is blank', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+        'Legs',
+        '',
+        '',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      fieldValues: const {
+        'Weight': '150',
+        'Reps': '10',
+        'RPE': '8',
+        'Pain': '',
+      },
+    );
+
+    expect(plan.cellUpdates, [
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '150x10@8,'),
+    ]);
   });
 
   test('plans primary and backup set entries against their selected rows', () {
@@ -39,7 +71,7 @@ void main() {
         '2 min',
         '',
         '',
-        '',
+        '{Reps}[@]{RPE}',
         'Legs',
         'TRUE',
         '',
@@ -51,25 +83,19 @@ void main() {
     final primaryPlan = activeSheet.planSetLoggingWrite(
       historyBlockLabel: 'Session A',
       sheetRowNumber: 3,
-      set: LoggedSet(
-        result: WeightedReps(weight: '230', reps: '5'),
-        rpe: '8',
-      ),
+      fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
     );
     final backupPlan = activeSheet.planSetLoggingWrite(
       historyBlockLabel: 'Session A',
       sheetRowNumber: 4,
-      set: LoggedSet(
-        result: WeightedReps(weight: '360', reps: '10'),
-        rpe: '8',
-      ),
+      fieldValues: const {'Reps': '10', 'RPE': '8'},
     );
 
     expect(primaryPlan.cellUpdates, [
       CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 12, value: '230x5@8'),
     ]);
     expect(backupPlan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 4, sheetColumnNumber: 11, value: '360x10@8'),
+      CellUpdate(sheetRowNumber: 4, sheetColumnNumber: 11, value: '10@8'),
     ]);
     expect(
       backupPlan
@@ -86,10 +112,7 @@ void main() {
       historyBlockLabel: 'Week 2',
       sheetRowNumber: 6,
       setNumber: 1,
-      set: LoggedSet(
-        result: WeightedReps(weight: '160', reps: '6'),
-        rpe: '8',
-      ),
+      fieldValues: const {'Weight': '160', 'Reps': '6', 'RPE': '8'},
     );
 
     expect(plan.cellUpdates, [
@@ -124,10 +147,7 @@ void main() {
       final plan = activeSheet.planSetLoggingWrite(
         historyBlockLabel: 'Session A',
         sheetRowNumber: 3,
-        set: LoggedSet(
-          result: WeightedReps(weight: '230', reps: '5'),
-          rpe: '8',
-        ),
+        fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
       );
 
       expect(plan.columnInsertions, [
@@ -173,10 +193,7 @@ void main() {
     final plan = activeSheet.planSetLoggingWrite(
       historyBlockLabel: 'Session A',
       sheetRowNumber: 3,
-      set: LoggedSet(
-        result: WeightedReps(weight: '225', reps: '5'),
-        rpe: '8',
-      ),
+      fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
     );
 
     expect(plan.cellUpdates, [
@@ -214,19 +231,13 @@ void main() {
     final loggingPlan = activeSheet.planSetLoggingWrite(
       historyBlockLabel: 'Session A',
       sheetRowNumber: 99,
-      set: LoggedSet(
-        result: WeightedReps(weight: '230', reps: '5'),
-        rpe: '8',
-      ),
+      fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
     );
     final editPlan = activeSheet.planSetEdit(
       historyBlockLabel: 'Session A',
       sheetRowNumber: 3,
       setNumber: 1,
-      set: LoggedSet(
-        result: WeightedReps(weight: '230', reps: '5'),
-        rpe: '8',
-      ),
+      fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
     );
     final clearPlan = activeSheet.planSetClear(
       historyBlockLabel: 'Session A',
@@ -239,5 +250,41 @@ void main() {
     expect(loggingPlan.nextSetPosition, isNull);
     expect(editPlan.cellUpdates, isEmpty);
     expect(clearPlan.cellUpdates, isEmpty);
+  });
+
+  test('plans raw edits for unparseable set cells', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        '',
+        'Legs',
+        '',
+        'worked up, knee felt odd',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planRawSetEdit(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      setNumber: 1,
+      rawText: 'worked up, knee felt better',
+    );
+
+    expect(plan.cellUpdates, [
+      CellUpdate(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 11,
+        value: 'worked up, knee felt better',
+      ),
+    ]);
   });
 }

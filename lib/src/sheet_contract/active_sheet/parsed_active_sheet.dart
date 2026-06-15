@@ -102,12 +102,12 @@ class ParsedActiveSheet {
   ActiveSheetWritePlan planSetLoggingWrite({
     required String historyBlockLabel,
     required int sheetRowNumber,
-    required SetNotation set,
+    required Map<String, String> fieldValues,
   }) {
     return _ActiveSheetWritePlanner(this).planSetLoggingWrite(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
-      set: set,
+      fieldValues: fieldValues,
     );
   }
 
@@ -116,13 +116,28 @@ class ParsedActiveSheet {
     required String historyBlockLabel,
     required int sheetRowNumber,
     required int setNumber,
-    required SetNotation set,
+    required Map<String, String> fieldValues,
   }) {
     return _ActiveSheetWritePlanner(this).planSetEdit(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
-      set: set,
+      fieldValues: fieldValues,
+    );
+  }
+
+  /// Plans a raw-text edit for an existing visible set cell.
+  ActiveSheetWritePlan planRawSetEdit({
+    required String historyBlockLabel,
+    required int sheetRowNumber,
+    required int setNumber,
+    required String rawText,
+  }) {
+    return _ActiveSheetWritePlanner(this).planRawSetEdit(
+      historyBlockLabel: historyBlockLabel,
+      sheetRowNumber: sheetRowNumber,
+      setNumber: setNumber,
+      rawText: rawText,
     );
   }
 

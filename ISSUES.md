@@ -5,7 +5,7 @@
 - [x] Slice 2: Read Log Format Metadata From the Sheet Contract
 - [x] Slice 3: Heal and Reset Log Format Formula Columns
 - [x] Slice 4: Parse Existing History Cells With Row-Local Formats
-- [ ] Slice 5: Plan Set Writes From Formatted Field Values
+- [x] Slice 5: Plan Set Writes From Formatted Field Values
 - [ ] Slice 6: Render Dynamic Logging Fields in the GUI
 - [ ] Slice 7: Validate the End-to-End Logging Flow
 - [ ] Slice 8: Architecture and Test Cleanup
@@ -180,14 +180,14 @@ Change structured set write planning so callers provide field values for the sel
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for logging field values through `{Weight}[x]{Reps}[@]{RPE}` and planning the cell value `150x10@8`.
-- [ ] A blank optional-looking field still renders surrounding literals, such as `150x10@8,`.
-- [ ] Primary and backup row writes use the selected row's own format.
-- [ ] Logging into the first empty selected-row cell still works.
-- [ ] Logging beyond existing set columns still plans history block growth.
-- [ ] Editing an existing set cell can use structured field values when the cell parses successfully.
-- [ ] Raw edit and clear behavior remain available for unparseable cells.
-- [ ] The write planner remains testable without Google access.
+- [x] A behavior test fails first for logging field values through `{Weight}[x]{Reps}[@]{RPE}` and planning the cell value `150x10@8`.
+- [x] A blank optional-looking field still renders surrounding literals, such as `150x10@8,`.
+- [x] Primary and backup row writes use the selected row's own format.
+- [x] Logging into the first empty selected-row cell still works.
+- [x] Logging beyond existing set columns still plans history block growth.
+- [x] Editing an existing set cell can use structured field values when the cell parses successfully.
+- [x] Raw edit and clear behavior remain available for unparseable cells.
+- [x] The write planner remains testable without Google access.
 
 ### Blocked by
 
