@@ -142,6 +142,42 @@ void main() {
     expect(behavior.dragDevices, contains(PointerDeviceKind.trackpad));
   });
 
+  testWidgets('shows a top-right Google account menu for account switching', (
+    tester,
+  ) async {
+    final service = _FakeSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+    ]);
+    final accountSession = _FakeGoogleAccountSession(
+      const GoogleAccountProfile(
+        email: 'wrong@example.com',
+        displayName: 'Wrong Account',
+      ),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Google account: wrong@example.com'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wrong Account'), findsOneWidget);
+    expect(find.text('wrong@example.com'), findsOneWidget);
+
+    await tester.tap(find.text('Switch account'));
+    await tester.pumpAndSettle();
+
+    expect(accountSession.switchCount, 1);
+    expect(accountSession.currentAccount?.email, 'right@example.com');
+  });
+
   testWidgets('logs edits clears and switches row-local exercise history', (
     tester,
   ) async {
@@ -570,10 +606,7 @@ void main() {
 
     expect(find.text('Spreadsheet validation'), findsNothing);
     expect(find.byKey(const ValueKey('validate-spreadsheet')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('use-development-sheet')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('use-development-sheet')), findsOneWidget);
     expect(find.text('Validate'), findsOneWidget);
     expect(find.text('Development'), findsOneWidget);
 
@@ -640,6 +673,27 @@ void main() {
     expect(find.text('Formulas valid'), findsNothing);
     expect(find.text('Workout setup'), findsOneWidget);
   });
+}
+
+class _FakeGoogleAccountSession extends ChangeNotifier
+    implements GoogleAccountSession {
+  _FakeGoogleAccountSession(this._currentAccount);
+
+  GoogleAccountProfile? _currentAccount;
+  int switchCount = 0;
+
+  @override
+  GoogleAccountProfile? get currentAccount => _currentAccount;
+
+  @override
+  Future<void> switchAccount() async {
+    switchCount += 1;
+    _currentAccount = const GoogleAccountProfile(
+      email: 'right@example.com',
+      displayName: 'Right Account',
+    );
+    notifyListeners();
+  }
 }
 
 class _FakeSpreadsheetValidationService

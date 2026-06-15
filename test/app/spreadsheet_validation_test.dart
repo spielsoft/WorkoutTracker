@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:http/http.dart' as http;
@@ -140,9 +141,15 @@ class _CloseTrackingAuthClient extends http.BaseClient {
   }
 }
 
-class _RecordingGoogleSignInAuthorizationGateway
+class _RecordingGoogleSignInAuthorizationGateway extends ChangeNotifier
     implements GoogleSignInAuthorizationGateway {
   final List<List<String>> requestedScopes = [];
+
+  @override
+  GoogleAccountProfile? get currentAccount => null;
+
+  @override
+  Future<void> switchAccount() async {}
 
   @override
   Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {

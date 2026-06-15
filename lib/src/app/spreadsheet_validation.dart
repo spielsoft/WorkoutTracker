@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:http/http.dart' as http;
@@ -129,11 +130,35 @@ typedef GoogleSpreadsheetValidationServiceFactory =
       required bool canWrite,
     });
 
-abstract interface class GoogleSignInAuthorizationGateway {
+class GoogleAccountProfile {
+  const GoogleAccountProfile({
+    required this.email,
+    this.displayName,
+    this.photoUrl,
+  });
+
+  final String email;
+  final String? displayName;
+  final String? photoUrl;
+
+  String get label {
+    final name = displayName?.trim();
+    return name == null || name.isEmpty ? email : name;
+  }
+}
+
+abstract interface class GoogleAccountSession implements Listenable {
+  GoogleAccountProfile? get currentAccount;
+
+  Future<void> switchAccount();
+}
+
+abstract interface class GoogleSignInAuthorizationGateway
+    implements GoogleAccountSession {
   Future<Map<String, String>> authorizationHeaders(List<String> scopes);
 }
 
-class NativeGoogleSignInAuthorizationGateway
+class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
     implements GoogleSignInAuthorizationGateway {
   NativeGoogleSignInAuthorizationGateway({
     this.clientId = workoutTrackerGoogleSignInClientId,
@@ -146,6 +171,10 @@ class NativeGoogleSignInAuthorizationGateway
   final GoogleSignIn _signIn;
   Future<void>? _initialization;
   GoogleSignInAccount? _account;
+  GoogleAccountProfile? _currentAccountProfile;
+
+  @override
+  GoogleAccountProfile? get currentAccount => _currentAccountProfile;
 
   @override
   Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
@@ -161,11 +190,32 @@ class NativeGoogleSignInAuthorizationGateway
     return headers;
   }
 
+  @override
+  Future<void> switchAccount() async {
+    await _ensureInitialized();
+    await _signIn.signOut();
+    _setAccount(null);
+    final account = await _signIn.authenticate();
+    _setAccount(account);
+  }
+
   Future<void> _ensureInitialized() {
-    return _initialization ??= _signIn.initialize(
+    return _initialization ??= _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _signIn.initialize(
       clientId: _optional(clientId),
       serverClientId: _optional(serverClientId),
     );
+    _signIn.authenticationEvents.listen((event) {
+      switch (event) {
+        case GoogleSignInAuthenticationEventSignIn(:final user):
+          _setAccount(user);
+        case GoogleSignInAuthenticationEventSignOut():
+          _setAccount(null);
+      }
+    });
   }
 
   Future<GoogleSignInAccount> _currentAccount(List<String> scopes) async {
@@ -176,9 +226,22 @@ class NativeGoogleSignInAuthorizationGateway
 
     final lightweight = _signIn.attemptLightweightAuthentication();
     final lightweightAccount = lightweight == null ? null : await lightweight;
-    _account =
+    final account =
         lightweightAccount ?? await _signIn.authenticate(scopeHint: scopes);
-    return _account!;
+    _setAccount(account);
+    return account;
+  }
+
+  void _setAccount(GoogleSignInAccount? account) {
+    _account = account;
+    _currentAccountProfile = account == null
+        ? null
+        : GoogleAccountProfile(
+            email: account.email,
+            displayName: account.displayName,
+            photoUrl: account.photoUrl,
+          );
+    notifyListeners();
   }
 
   static String? _optional(String value) {
