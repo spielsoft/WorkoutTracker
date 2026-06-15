@@ -108,6 +108,51 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('plans reset writes with typed cell values and text formatting', () {
+    final tab = DevelopmentSheetResetTab(
+      title: 'Active Workout',
+      rows: [
+        ['Exercise', 'Tempo', 'History'],
+        ['=Exercises!A2', '3-1-1', ''],
+        ['Timed Drill', '45s', '12-15'],
+      ],
+    );
+
+    final plan = DevelopmentSheetResetTabRewritePlan(
+      sheetId: 42,
+      tab: tab,
+      frozenRowCount: 1,
+    );
+
+    final textFormatRequest = plan.requests.singleWhere(
+      (request) =>
+          request.repeatCell?.fields == 'userEnteredFormat.numberFormat',
+    );
+    expect(
+      textFormatRequest.repeatCell?.cell?.userEnteredFormat?.numberFormat?.type,
+      'TEXT',
+    );
+    expect(textFormatRequest.repeatCell?.range?.sheetId, 42);
+    expect(textFormatRequest.repeatCell?.range?.startRowIndex, 0);
+    expect(textFormatRequest.repeatCell?.range?.endRowIndex, 50);
+    expect(textFormatRequest.repeatCell?.range?.startColumnIndex, 0);
+    expect(textFormatRequest.repeatCell?.range?.endColumnIndex, 3);
+
+    final writeRequest = plan.requests.singleWhere(
+      (request) => request.updateCells != null,
+    );
+    expect(writeRequest.updateCells?.fields, 'userEnteredValue');
+
+    final rows = writeRequest.updateCells!.rows!;
+    expect(rows[1].values![0].userEnteredValue?.formulaValue, '=Exercises!A2');
+    expect(rows[1].values![0].userEnteredValue?.stringValue, isNull);
+    expect(rows[1].values![1].userEnteredValue?.stringValue, '3-1-1');
+    expect(rows[1].values![2].userEnteredValue, isNull);
+    expect(rows[2].values![0].userEnteredValue?.stringValue, 'Timed Drill');
+    expect(rows[2].values![1].userEnteredValue?.stringValue, '45s');
+    expect(rows[2].values![2].userEnteredValue?.stringValue, '12-15');
+  });
 }
 
 class _FakeDevelopmentSheetResetClient implements DevelopmentSheetResetClient {
