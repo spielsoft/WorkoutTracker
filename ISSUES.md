@@ -4,7 +4,7 @@
 - [x] Slice 1: Parse and Render Literal Log Formats
 - [x] Slice 2: Read Log Format Metadata From the Sheet Contract
 - [x] Slice 3: Heal and Reset Log Format Formula Columns
-- [ ] Slice 4: Parse Existing History Cells With Row-Local Formats
+- [x] Slice 4: Parse Existing History Cells With Row-Local Formats
 - [ ] Slice 5: Plan Set Writes From Formatted Field Values
 - [ ] Slice 6: Render Dynamic Logging Fields in the GUI
 - [ ] Slice 7: Validate the End-to-End Logging Flow
@@ -152,13 +152,13 @@ Use each row's `Log Format` to parse existing selected-history cells into editab
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for parsing `150x10@8,` using `{Weight}[x]{Reps}[@]{RPE}[,]{Pain}` into field values with blank `Pain`.
-- [ ] Repeated delimiter formats such as `{A}[,]{B}[,]{C}` parse cells with blank middle fields without dropping delimiters.
-- [ ] Existing history entries expose the row-local field labels and parsed field values through the public read model.
-- [ ] Existing unparseable cells remain `Raw` entries and preserve their original text.
-- [ ] Row-local parsing is used for primary and backup rows independently.
-- [ ] Recent history still shows the last three non-empty history blocks for the selected row.
-- [ ] Tests cover blank format defaulting during history parsing.
+- [x] A behavior test fails first for parsing `150x10@8,` using `{Weight}[x]{Reps}[@]{RPE}[,]{Pain}` into field values with blank `Pain`.
+- [x] Repeated delimiter formats such as `{A}[,]{B}[,]{C}` parse cells with blank middle fields without dropping delimiters.
+- [x] Existing history entries expose the row-local field labels and parsed field values through the public read model.
+- [x] Existing unparseable cells remain `Raw` entries and preserve their original text.
+- [x] Row-local parsing is used for primary and backup rows independently.
+- [x] Recent history still shows the last three non-empty history blocks for the selected row.
+- [x] Tests cover blank format defaulting during history parsing.
 
 ### Blocked by
 

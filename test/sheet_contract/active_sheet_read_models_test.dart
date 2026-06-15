@@ -4,6 +4,150 @@ import 'package:workout_tracker/sheet_contract.dart';
 import 'active_sheet_test_helpers.dart';
 
 void main() {
+  test('parses selected history cells with the row-local log format', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Step Up',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+        'Legs',
+        '',
+        '150x10@8,',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final context = activeSheet.buildExerciseLoggingContext(
+      primarySheetRowNumber: 3,
+      selectedSheetRowNumber: 3,
+      historyBlockLabel: 'Session A',
+    );
+
+    final logEntry = context.selectedHistory.entries.single.logEntry;
+    expect(logEntry, isA<FormattedLogEntry>());
+    final formatted = logEntry as FormattedLogEntry;
+    expect(formatted.fieldLabels, ['Weight', 'Reps', 'RPE', 'Pain']);
+    expect(formatted.fieldValues, {
+      'Weight': '150',
+      'Reps': '10',
+      'RPE': '8',
+      'Pain': '',
+    });
+  });
+
+  test('parses repeated delimiters and preserves unparseable raw entries', () {
+    final rows = [
+      historyHeaderRow(['Session A', '']),
+      setLabelRow(['S1', 'S2']),
+      [
+        'Carry',
+        '3',
+        '',
+        '',
+        '2 min',
+        '',
+        '',
+        '{A}[,]{B}[,]{C}',
+        'Legs',
+        '',
+        'left,,right',
+        'left,right',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final context = activeSheet.buildExerciseLoggingContext(
+      primarySheetRowNumber: 3,
+      selectedSheetRowNumber: 3,
+      historyBlockLabel: 'Session A',
+    );
+
+    final formatted = context.selectedHistory.entries.first.logEntry;
+    expect(formatted, isA<FormattedLogEntry>());
+    expect((formatted as FormattedLogEntry).fieldValues, {
+      'A': 'left',
+      'B': '',
+      'C': 'right',
+    });
+
+    final raw = context.selectedHistory.entries.last.logEntry;
+    expect(raw, isA<RawLogEntry>());
+    expect((raw as RawLogEntry).text, 'left,right');
+    expect(context.selectedHistory.entries.last.rawValue, 'left,right');
+  });
+
+  test('uses primary and backup row-local formats independently', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      ['Pull Up', '3', '', '', '2 min', '', '', '{Reps}', 'Upper', '', '12'],
+      [
+        'Plank',
+        '3',
+        '',
+        '',
+        '90s',
+        '',
+        '',
+        '{Seconds}[s@]{RPE}',
+        'Upper',
+        'TRUE',
+        '45s@8',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final primaryContext = activeSheet.buildExerciseLoggingContext(
+      primarySheetRowNumber: 3,
+      selectedSheetRowNumber: 3,
+      historyBlockLabel: 'Session A',
+    );
+    final backupContext = activeSheet.buildExerciseLoggingContext(
+      primarySheetRowNumber: 3,
+      selectedSheetRowNumber: 4,
+      historyBlockLabel: 'Session A',
+    );
+
+    final primaryEntry =
+        primaryContext.selectedHistory.entries.single.logEntry
+            as FormattedLogEntry;
+    expect(primaryEntry.fieldLabels, ['Reps']);
+    expect(primaryEntry.fieldValues, {'Reps': '12'});
+
+    final backupEntry =
+        backupContext.selectedHistory.entries.single.logEntry
+            as FormattedLogEntry;
+    expect(backupEntry.fieldLabels, ['Seconds', 'RPE']);
+    expect(backupEntry.fieldValues, {'Seconds': '45', 'RPE': '8'});
+  });
+
+  test('uses the default log format when parsing blank-format history', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final context = activeSheet.buildExerciseLoggingContext(
+      primarySheetRowNumber: 3,
+      selectedSheetRowNumber: 3,
+      historyBlockLabel: 'Session A',
+    );
+
+    final entry =
+        context.selectedHistory.entries.single.logEntry as FormattedLogEntry;
+    expect(entry.fieldLabels, ['Weight', 'Reps', 'RPE']);
+    expect(entry.fieldValues, {'Weight': '225', 'Reps': '5', 'RPE': '8'});
+  });
+
   test('builds a primary-only workout overview with nested backups', () {
     final rows = [
       historyHeaderRow(['Session A', '']),
@@ -207,6 +351,14 @@ void main() {
         ),
         ['', '235x5@8'],
       );
+      final recentEntry =
+          context.recentHistoryBlocks.first.entries.last.logEntry
+              as FormattedLogEntry;
+      expect(recentEntry.fieldValues, {
+        'Weight': '235',
+        'Reps': '5',
+        'RPE': '8',
+      });
     },
   );
 }

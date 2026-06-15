@@ -94,6 +94,7 @@ class RowHistoryEntry {
     required this.sheetColumnNumber,
     required this.rawValue,
     required this.notation,
+    required this.logEntry,
   });
 
   final int setNumber;
@@ -101,6 +102,7 @@ class RowHistoryEntry {
   final int sheetColumnNumber;
   final String rawValue;
   final SetNotation notation;
+  final LogEntry logEntry;
 }
 
 class _WorkoutReadModelBuilder {
@@ -167,8 +169,12 @@ class _WorkoutReadModelBuilder {
       selectedHistory: _rowHistoryBlock(
         label: historyBlockLabel,
         sheetRowNumber: selected.sheetRowNumber,
+        logFormat: selected.logFormat,
       ),
-      recentHistoryBlocks: _recentRowHistoryBlocks(selected.sheetRowNumber),
+      recentHistoryBlocks: _recentRowHistoryBlocks(
+        selected.sheetRowNumber,
+        selected.logFormat,
+      ),
     );
   }
 
@@ -197,6 +203,7 @@ class _WorkoutReadModelBuilder {
   RowHistoryBlock _rowHistoryBlock({
     required String label,
     required int sheetRowNumber,
+    required LogFormatParseResult logFormat,
   }) {
     final block = sheet.selectHistoryBlock(label);
     if (block == null) {
@@ -208,7 +215,12 @@ class _WorkoutReadModelBuilder {
       label: block.label,
       entries: [
         for (var index = 0; index < block.setColumns.length; index += 1)
-          _historyEntry(block.setColumns[index], row, setNumber: index + 1),
+          _historyEntry(
+            block.setColumns[index],
+            row,
+            logFormat: logFormat,
+            setNumber: index + 1,
+          ),
       ],
     );
   }
@@ -216,6 +228,7 @@ class _WorkoutReadModelBuilder {
   RowHistoryEntry _historyEntry(
     HistorySetColumn column,
     List<String> row, {
+    required LogFormatParseResult logFormat,
     required int setNumber,
   }) {
     final value = _cell(row, column.sheetColumnNumber - 1);
@@ -225,10 +238,16 @@ class _WorkoutReadModelBuilder {
       sheetColumnNumber: column.sheetColumnNumber,
       rawValue: value,
       notation: parseSetNotation(value),
+      logEntry: logFormat is ParsedLogFormat
+          ? parseLogEntry(logFormat, value)
+          : RawLogEntry(value),
     );
   }
 
-  List<RowHistoryBlock> _recentRowHistoryBlocks(int sheetRowNumber) {
+  List<RowHistoryBlock> _recentRowHistoryBlocks(
+    int sheetRowNumber,
+    LogFormatParseResult logFormat,
+  ) {
     final row = sheet._sheetRow(sheetRowNumber);
     final blocks = <RowHistoryBlock>[];
     for (final block in sheet.historyBlocks) {
@@ -236,7 +255,11 @@ class _WorkoutReadModelBuilder {
         continue;
       }
       blocks.add(
-        _rowHistoryBlock(label: block.label, sheetRowNumber: sheetRowNumber),
+        _rowHistoryBlock(
+          label: block.label,
+          sheetRowNumber: sheetRowNumber,
+          logFormat: logFormat,
+        ),
       );
       if (blocks.length == 3) {
         break;
