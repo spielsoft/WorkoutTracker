@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
+import 'app_state_store.dart';
 import 'spreadsheet_validation.dart';
 import 'workout_tracker_controller.dart';
 
@@ -11,12 +13,14 @@ class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
     required this.validationService,
     this.accountSession,
+    this.appStateStore,
     this.initialSpreadsheetText = '',
     super.key,
   });
 
   final SpreadsheetValidationService validationService;
   final GoogleAccountSession? accountSession;
+  final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
 
   @override
@@ -31,6 +35,7 @@ class WorkoutTrackerApp extends StatelessWidget {
       home: SpreadsheetValidationShell(
         validationService: validationService,
         accountSession: accountSession,
+        appStateStore: appStateStore,
         initialSpreadsheetText: initialSpreadsheetText,
       ),
     );
@@ -56,12 +61,14 @@ class SpreadsheetValidationShell extends StatefulWidget {
   const SpreadsheetValidationShell({
     required this.validationService,
     this.accountSession,
+    this.appStateStore,
     required this.initialSpreadsheetText,
     super.key,
   });
 
   final SpreadsheetValidationService validationService;
   final GoogleAccountSession? accountSession;
+  final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
 
   @override
@@ -85,15 +92,54 @@ class _SpreadsheetValidationShellState
     _spreadsheetController = TextEditingController(
       text: widget.initialSpreadsheetText,
     );
+    _spreadsheetController.addListener(_persistSpreadsheetText);
     _newHistoryBlockController = TextEditingController();
+    unawaited(_restoreAccount());
+    unawaited(_restoreSpreadsheetText());
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _spreadsheetController.removeListener(_persistSpreadsheetText);
     _spreadsheetController.dispose();
     _newHistoryBlockController.dispose();
     super.dispose();
+  }
+
+  Future<void> _restoreAccount() async {
+    try {
+      await widget.accountSession?.restoreAccount();
+    } on Object {
+      // Silent restore is best-effort; explicit account actions still report.
+    }
+  }
+
+  Future<void> _restoreSpreadsheetText() async {
+    String? savedText;
+    try {
+      savedText = await widget.appStateStore?.readSpreadsheetText();
+    } on Object {
+      return;
+    }
+    if (!mounted ||
+        savedText == null ||
+        savedText == _spreadsheetController.text) {
+      return;
+    }
+    _spreadsheetController.text = savedText;
+  }
+
+  void _persistSpreadsheetText() {
+    final store = widget.appStateStore;
+    if (store == null) {
+      return;
+    }
+    unawaited(
+      store
+          .writeSpreadsheetText(_spreadsheetController.text)
+          .catchError((_) {}),
+    );
   }
 
   Future<void> _validateSelectedSpreadsheet() async {
@@ -109,23 +155,9 @@ class _SpreadsheetValidationShellState
     }
   }
 
-  void _useDevelopmentSheet() {
-    _spreadsheetController.text = workoutTrackerDevelopmentSpreadsheetUrl;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('WorkoutTracker'),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-        actions: [
-          if (widget.accountSession != null)
-            _GoogleAccountMenu(accountSession: widget.accountSession!),
-        ],
-      ),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: _controller,
@@ -141,48 +173,47 @@ class _SpreadsheetValidationShellState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      TextField(
-                        key: const ValueKey('spreadsheet-selection-input'),
-                        controller: _spreadsheetController,
-                        decoration: const InputDecoration(
-                          labelText: 'Google Sheets URL or spreadsheet ID',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.table_chart_outlined),
-                        ),
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _validateSelectedSpreadsheet(),
-                      ),
-                      const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: FilledButton.icon(
-                              key: const ValueKey('validate-spreadsheet'),
-                              onPressed: isBusy
-                                  ? null
-                                  : _validateSelectedSpreadsheet,
-                              icon: isBusy
-                                  ? const SizedBox.square(
-                                      dimension: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.verified_outlined),
-                              label: const Text('Validate'),
+                            child: TextField(
+                              key: const ValueKey(
+                                'spreadsheet-selection-input',
+                              ),
+                              controller: _spreadsheetController,
+                              decoration: const InputDecoration(
+                                labelText:
+                                    'Google Sheets URL or spreadsheet ID',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.table_chart_outlined),
+                              ),
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) =>
+                                  _validateSelectedSpreadsheet(),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              key: const ValueKey('use-development-sheet'),
-                              onPressed: isBusy ? null : _useDevelopmentSheet,
-                              icon: const Icon(Icons.science_outlined),
-                              label: const Text('Development'),
+                          if (widget.accountSession != null) ...[
+                            const SizedBox(width: 8),
+                            _GoogleAccountMenu(
+                              accountSession: widget.accountSession!,
                             ),
-                          ),
+                          ],
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        key: const ValueKey('validate-spreadsheet'),
+                        onPressed: isBusy ? null : _validateSelectedSpreadsheet,
+                        icon: isBusy
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.verified_outlined),
+                        label: const Text('Validate'),
                       ),
                       const SizedBox(height: 24),
                       if (error != null)
@@ -410,6 +441,10 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
         historyBlocks.any((block) => block.label == this.selectedHistoryBlock)
         ? this.selectedHistoryBlock
         : historyBlocks.firstOrNull?.label;
+    final progressByWorkout = {
+      for (final workout in workouts)
+        workout: _progressForWorkout(workout, selectedHistoryBlock),
+    };
     final overview = selectedWorkout == null || selectedHistoryBlock == null
         ? null
         : activeSheet.buildWorkoutOverview(
@@ -440,7 +475,10 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                   for (final workout in workouts)
                     DropdownMenuItem(
                       value: workout,
-                      child: Text(workout, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '$workout ${progressByWorkout[workout]!.label}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
                 onChanged: onWorkoutChanged,
@@ -515,6 +553,29 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       ],
     );
   }
+
+  _WorkoutProgress _progressForWorkout(
+    String workout,
+    String? historyBlockLabel,
+  ) {
+    final overview = activeSheet.buildWorkoutOverview(
+      workout: workout,
+      historyBlockLabel: historyBlockLabel ?? '',
+    );
+    final done = historyBlockLabel == null
+        ? 0
+        : overview.slots.where((slot) => slot.setCount > 0).length;
+    return _WorkoutProgress(done: done, total: overview.slots.length);
+  }
+}
+
+class _WorkoutProgress {
+  const _WorkoutProgress({required this.done, required this.total});
+
+  final int done;
+  final int total;
+
+  String get label => '($done/$total done)';
 }
 
 class _WorkoutOverviewList extends StatelessWidget {
@@ -582,15 +643,26 @@ class _WorkoutOverviewTile extends StatelessWidget {
                     Text(setLabel),
                   ],
                 ),
-                for (final backup in slot.backups) ...[
+                if (slot.backups.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.only(left: 16),
-                    child: Row(
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 6,
                       children: [
-                        const Icon(Icons.subdirectory_arrow_right, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(backup.exercise)),
+                        for (final backup in slot.backups)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.subdirectory_arrow_right,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(backup.exercise),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -864,26 +936,38 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
           ),
         ),
         Text(
-          '${selectedChoice.exercise} logging',
+          selectedChoice.exercise,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
-        SegmentedButton<int>(
-          segments: [
-            for (final choice in loggingContext.choices)
-              ButtonSegment(
-                value: choice.sheetRowNumber,
-                label: Text(choice.exercise),
-                icon: Icon(
-                  choice.isBackup
-                      ? Icons.alt_route_outlined
-                      : Icons.fitness_center_outlined,
-                ),
-              ),
-          ],
-          selected: {selectedChoice.sheetRowNumber},
-          onSelectionChanged: (selection) {
-            widget.onChoiceChanged(selection.single);
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final direction = constraints.maxWidth < 520
+                ? Axis.vertical
+                : Axis.horizontal;
+            return SegmentedButton<int>(
+              direction: direction,
+              segments: [
+                for (final choice in loggingContext.choices)
+                  ButtonSegment(
+                    value: choice.sheetRowNumber,
+                    label: Text(
+                      choice.exercise,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    icon: Icon(
+                      choice.isBackup
+                          ? Icons.alt_route_outlined
+                          : Icons.fitness_center_outlined,
+                    ),
+                  ),
+              ],
+              selected: {selectedChoice.sheetRowNumber},
+              onSelectionChanged: (selection) {
+                widget.onChoiceChanged(selection.single);
+              },
+            );
           },
         ),
         const SizedBox(height: 16),
@@ -1124,17 +1208,23 @@ class _RecentHistoryBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = block.entries.where(
-      (entry) => entry.rawValue.trim().isNotEmpty,
-    );
+    final entries = block.entries
+        .where((entry) => entry.rawValue.trim().isNotEmpty)
+        .toList();
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(block.label, style: Theme.of(context).textTheme.labelLarge),
-          for (final entry in entries)
-            Text('${block.label} ${entry.setLabel}: ${entry.rawValue}'),
+          Wrap(
+            spacing: 16,
+            runSpacing: 4,
+            children: [
+              for (final entry in entries)
+                Text('${entry.setLabel}: ${entry.rawValue}'),
+            ],
+          ),
         ],
       ),
     );

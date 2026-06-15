@@ -150,6 +150,8 @@ class GoogleAccountProfile {
 abstract interface class GoogleAccountSession implements Listenable {
   GoogleAccountProfile? get currentAccount;
 
+  Future<void> restoreAccount();
+
   Future<void> switchAccount({List<String> scopes = const []});
 }
 
@@ -175,6 +177,16 @@ class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
 
   @override
   GoogleAccountProfile? get currentAccount => _currentAccountProfile;
+
+  @override
+  Future<void> restoreAccount() async {
+    await _ensureInitialized();
+    final lightweight = _signIn.attemptLightweightAuthentication();
+    final account = lightweight == null ? null : await lightweight;
+    if (account != null) {
+      _setAccount(account);
+    }
+  }
 
   @override
   Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
@@ -233,8 +245,8 @@ class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
       return existing;
     }
 
-    final lightweight = _signIn.attemptLightweightAuthentication();
-    final lightweightAccount = lightweight == null ? null : await lightweight;
+    await restoreAccount();
+    final lightweightAccount = _account;
     final account =
         lightweightAccount ?? await _signIn.authenticate(scopeHint: scopes);
     _setAccount(account);

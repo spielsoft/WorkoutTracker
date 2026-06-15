@@ -36,7 +36,7 @@ void main() {
       ),
     );
 
-    expect(find.text('WorkoutTracker'), findsOneWidget);
+    expect(find.text('WorkoutTracker'), findsNothing);
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsOneWidget,
@@ -50,6 +50,7 @@ void main() {
     expect(find.text('Workout setup'), findsOneWidget);
     expect(find.text('Workout'), findsOneWidget);
     expect(find.text('History block'), findsOneWidget);
+    expect(find.text('Legs (0/1 done)'), findsOneWidget);
     expect(find.text('Legs exercises'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);
 
@@ -58,9 +59,9 @@ void main() {
     await tester.tap(find.text('Week 1').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Legs').first);
+    await tester.tap(find.text('Legs (0/1 done)').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Upper').last);
+    await tester.tap(find.text('Upper (0/1 done)').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Upper exercises'), findsOneWidget);
@@ -69,7 +70,8 @@ void main() {
     await tester.tap(find.text('Bench Press'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Bench Press logging'), findsOneWidget);
+    expect(find.text('Bench Press'), findsWidgets);
+    expect(find.text('Bench Press logging'), findsNothing);
     expect(find.byKey(const ValueKey('set-field-Weight')), findsOneWidget);
     expect(find.byKey(const ValueKey('set-field-Reps')), findsOneWidget);
     expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
@@ -132,17 +134,9 @@ void main() {
 
     expect(find.text('Spreadsheet validation'), findsNothing);
     expect(find.byKey(const ValueKey('validate-spreadsheet')), findsOneWidget);
-    expect(find.byKey(const ValueKey('use-development-sheet')), findsOneWidget);
+    expect(find.byKey(const ValueKey('use-development-sheet')), findsNothing);
     expect(find.text('Validate'), findsOneWidget);
-    expect(find.text('Development'), findsOneWidget);
-
-    final validateTop = tester
-        .getTopLeft(find.byKey(const ValueKey('validate-spreadsheet')))
-        .dy;
-    final developmentTop = tester
-        .getTopLeft(find.byKey(const ValueKey('use-development-sheet')))
-        .dy;
-    expect(validateTop, developmentTop);
+    expect(find.text('Development'), findsNothing);
 
     final behavior = ScrollConfiguration.of(
       tester.element(find.byKey(const ValueKey('spreadsheet-selection-input'))),
@@ -151,6 +145,115 @@ void main() {
     expect(behavior.dragDevices, contains(PointerDeviceKind.mouse));
     expect(behavior.dragDevices, contains(PointerDeviceKind.trackpad));
   });
+
+  testWidgets('restores and persists the spreadsheet field', (tester) async {
+    final store = _MemoryAppStateStore('saved-spreadsheet-id');
+    final service = _FakeSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        appStateStore: store,
+        initialSpreadsheetText: 'initial-spreadsheet-id',
+      ),
+    );
+    await tester.pump();
+
+    final input = find.byKey(const ValueKey('spreadsheet-selection-input'));
+    expect(
+      tester.widget<TextField>(input).controller?.text,
+      'saved-spreadsheet-id',
+    );
+
+    await tester.enterText(input, 'edited-spreadsheet-id');
+    await tester.pump();
+
+    expect(store.writes.last, 'edited-spreadsheet-id');
+  });
+
+  testWidgets('restores the Google account session on startup', (tester) async {
+    final accountSession = _FakeGoogleAccountSession(
+      null,
+      restoredAccount: const GoogleAccountProfile(
+        email: 'saved@example.com',
+        displayName: 'Saved Account',
+      ),
+    );
+    final service = _FakeSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+    await tester.pump();
+
+    expect(accountSession.restoreCount, 1);
+    expect(find.byTooltip('Google account: saved@example.com'), findsOneWidget);
+  });
+
+  testWidgets(
+    'labels workouts with selected-block progress and counts backups with parent',
+    (tester) async {
+      final service = _FakeSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Pull Up',
+          '3',
+          '8',
+          '8',
+          '2 min',
+          '',
+          'Full hang.',
+          '{Reps}',
+          'Upper',
+          '',
+          '',
+        ],
+        [
+          'Front Plank',
+          '3',
+          '45s',
+          '8',
+          '60s',
+          '',
+          'Brace hard.',
+          '{Seconds}[s@]{RPE}',
+          'Upper',
+          'TRUE',
+          '45s@8',
+        ],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Upper (1/1 done)'), findsOneWidget);
+      await tester.tap(find.text('Upper (1/1 done)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Legs (0/1 done)'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'renders bodyweight logging fields from the selected row format',
@@ -305,8 +408,8 @@ void main() {
     'keeps exercise context, selected rows, recent history, and raw controls',
     (tester) async {
       final service = _FakeSpreadsheetValidationService.fromRows([
-        [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
-        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
+        [...activeSheetFixedColumns, 'Week 2', 'Week 1', ''],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1', 'S2'],
         [
           'Carry',
           '3',
@@ -320,6 +423,7 @@ void main() {
           '',
           'worked up, grip failed',
           '30@7',
+          '35@8',
         ],
       ]);
 
@@ -336,7 +440,8 @@ void main() {
       await tester.tap(find.text('Carry'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Carry logging'), findsOneWidget);
+      expect(find.text('Carry'), findsWidgets);
+      expect(find.text('Carry logging'), findsNothing);
       expect(find.text('Target: 3 sets x 40 @ 8'), findsOneWidget);
       expect(find.text('Rest: 90s'), findsOneWidget);
       expect(find.text('Tempo: Smooth'), findsOneWidget);
@@ -345,13 +450,23 @@ void main() {
       expect(find.text('Logged sets'), findsOneWidget);
       expect(find.byKey(const ValueKey('raw-S1')), findsOneWidget);
       expect(find.text('Recent history'), findsOneWidget);
-      expect(find.text('Week 1 S1: 30@7'), findsOneWidget);
+      expect(find.text('Week 1'), findsWidgets);
+      expect(find.text('Week 1 S1: 30@7'), findsNothing);
+      expect(find.text('S1: 30@7'), findsOneWidget);
+      expect(find.text('S2: 35@8'), findsOneWidget);
     },
   );
 
   testWidgets(
     'switching to a backup row refreshes structured labels and parsed values',
     (tester) async {
+      tester.view.physicalSize = const Size(390, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
       final service = _FakeSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -396,6 +511,20 @@ void main() {
       await tester.tap(find.text('Pull Up'));
       await tester.pumpAndSettle();
 
+      final rowSelector = tester.widget<SegmentedButton<int>>(
+        find.byWidgetPredicate((widget) => widget is SegmentedButton<int>),
+      );
+      expect(rowSelector.direction, Axis.vertical);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              widget.data == 'Front Plank' &&
+              widget.maxLines == 1 &&
+              widget.overflow == TextOverflow.ellipsis,
+        ),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const ValueKey('logged-S1-field-Reps')),
         findsOneWidget,
@@ -479,14 +608,25 @@ void main() {
 
 class _FakeGoogleAccountSession extends ChangeNotifier
     implements GoogleAccountSession {
-  _FakeGoogleAccountSession(this._currentAccount);
+  _FakeGoogleAccountSession(this._currentAccount, {this.restoredAccount});
 
   GoogleAccountProfile? _currentAccount;
+  final GoogleAccountProfile? restoredAccount;
+  int restoreCount = 0;
   int switchCount = 0;
   final requestedScopes = <List<String>>[];
 
   @override
   GoogleAccountProfile? get currentAccount => _currentAccount;
+
+  @override
+  Future<void> restoreAccount() async {
+    restoreCount += 1;
+    if (restoredAccount != null) {
+      _currentAccount = restoredAccount;
+      notifyListeners();
+    }
+  }
 
   @override
   Future<void> switchAccount({List<String> scopes = const []}) async {
@@ -497,6 +637,24 @@ class _FakeGoogleAccountSession extends ChangeNotifier
       displayName: 'Right Account',
     );
     notifyListeners();
+  }
+}
+
+class _MemoryAppStateStore implements AppStateStore {
+  _MemoryAppStateStore(this.spreadsheetText);
+
+  String? spreadsheetText;
+  final writes = <String>[];
+
+  @override
+  Future<String?> readSpreadsheetText() async {
+    return spreadsheetText;
+  }
+
+  @override
+  Future<void> writeSpreadsheetText(String value) async {
+    spreadsheetText = value;
+    writes.add(value);
   }
 }
 

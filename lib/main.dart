@@ -9,7 +9,7 @@ void main() {
         authorizationGateway: googleSignInGateway,
       ),
       accountSession: googleSignInGateway,
-      initialSpreadsheetText: workoutTrackerDevelopmentSpreadsheetUrl,
+      appStateStore: const FileAppStateStore(),
     ),
   );
 }
