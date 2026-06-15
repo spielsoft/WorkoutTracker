@@ -88,6 +88,30 @@ void main() {
 
     expect(service.appliedPlans, hasLength(1));
     expect(service.appliedPlans.single.cellUpdates.single.value, '155x6@8');
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey('logged-S1-field-Weight')),
+          )
+          .controller
+          ?.text,
+      '155',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('logged-S1-field-Reps')))
+          .controller
+          ?.text,
+      '6',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('logged-S1-field-RPE')))
+          .controller
+          ?.text,
+      '8',
+    );
+    expect(find.text('Next set S2'), findsOneWidget);
   });
 
   testWidgets('renders compact spreadsheet controls with desktop scrolling', (
@@ -166,6 +190,38 @@ void main() {
       expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
       expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
       expect(find.byKey(const ValueKey('set-field-Pain')), findsNothing);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('set-field-Reps')),
+        '12',
+      );
+      await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans.single.cellUpdates.single.value, '12@8');
+      expect(
+        tester
+            .widget<TextField>(
+              find.byKey(const ValueKey('logged-S1-field-Reps')),
+            )
+            .controller
+            ?.text,
+        '12',
+      );
+      expect(
+        tester
+            .widget<TextField>(
+              find.byKey(const ValueKey('logged-S1-field-RPE')),
+            )
+            .controller
+            ?.text,
+        '8',
+      );
+      expect(find.text('Next set S2'), findsOneWidget);
     },
   );
 
@@ -446,12 +502,14 @@ class _FakeGoogleAccountSession extends ChangeNotifier
 
 class _FakeSpreadsheetValidationService
     implements SpreadsheetValidationService {
-  _FakeSpreadsheetValidationService(this.activeSheet);
+  _FakeSpreadsheetValidationService(this.activeSheet) : _rows = const [];
 
   _FakeSpreadsheetValidationService.fromRows(List<List<String>> rows)
-    : activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+    : activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows)),
+      _rows = rows.map((row) => row.toList()).toList();
 
   ParsedActiveSheet activeSheet;
+  List<List<String>> _rows;
   final spreadsheetIds = <String>[];
   final appliedPlans = <ActiveSheetWritePlan>[];
 
@@ -485,6 +543,13 @@ class _FakeSpreadsheetValidationService
     required ActiveSheetWritePlan plan,
   }) async {
     appliedPlans.add(plan);
+    if (_rows.isNotEmpty) {
+      _rows = plan
+          .previewRowsAfterApplying(_rows)
+          .map((row) => row.toList())
+          .toList();
+      this.activeSheet = parseActiveSheet(ActiveSheetInput(rows: _rows));
+    }
     return SpreadsheetValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: this.activeSheet,

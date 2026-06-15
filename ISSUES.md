@@ -7,7 +7,7 @@
 - [x] Slice 4: Parse Existing History Cells With Row-Local Formats
 - [x] Slice 5: Plan Set Writes From Formatted Field Values
 - [x] Slice 6: Render Dynamic Logging Fields in the GUI
-- [ ] Slice 7: Validate the End-to-End Logging Flow
+- [x] Slice 7: Validate the End-to-End Logging Flow
 - [ ] Slice 8: Architecture and Test Cleanup
 
 ## Slice 0: Define the Literal Log Format Contract
@@ -237,14 +237,14 @@ Update the focused GUI and backend integration validation so the app can read a 
 
 ### Acceptance criteria
 
-- [ ] The default local test suite passes.
-- [ ] A focused GUI flow test logs a weighted exercise through dynamic fields.
-- [ ] A focused GUI flow test logs a bodyweight or timed exercise without a weight field.
-- [ ] A backend integration-style test verifies primary and backup rows can use different formats.
-- [ ] The opt-in live Google test is updated to use the development fixture's `Log Format` column but remains skipped unless `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` is set.
-- [ ] The live test reset/cleanup path still leaves the development sheet in a known state.
-- [ ] A manual or opt-in validation confirms the example sheet opens in the app and shows exercises after the live sheet has been updated.
-- [ ] No app-owned exercise metadata database or hidden mapping is introduced.
+- [x] The default local test suite passes.
+- [x] A focused GUI flow test logs a weighted exercise through dynamic fields.
+- [x] A focused GUI flow test logs a bodyweight or timed exercise without a weight field.
+- [x] A backend integration-style test verifies primary and backup rows can use different formats.
+- [x] The opt-in live Google test is updated to use the development fixture's `Log Format` column but remains skipped unless `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` is set.
+- [x] The live test reset/cleanup path still leaves the development sheet in a known state.
+- [x] A manual or opt-in validation confirms the example sheet opens in the app and shows exercises after the live sheet has been updated.
+- [x] No app-owned exercise metadata database or hidden mapping is introduced.
 
 ### Blocked by
 

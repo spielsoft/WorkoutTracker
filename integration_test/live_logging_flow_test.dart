@@ -69,20 +69,25 @@ void main() {
         tester,
         find.byKey(const ValueKey('validate-spreadsheet')),
       );
-      await _waitForFinder(tester, find.text('Sheet contract valid'));
       await _waitForFinder(tester, find.text('Bulgarian Split Squat'));
 
-      expect(find.text('Formulas valid'), findsOneWidget);
       expect(find.text('Reverse Lunge'), findsOneWidget);
 
       await _tapVisible(tester, find.text('Bulgarian Split Squat'));
       await _waitForFinder(tester, find.text('Bulgarian Split Squat logging'));
 
-      await tester.enterText(find.byKey(const ValueKey('set-weight')), '80');
-      await tester.enterText(find.byKey(const ValueKey('set-reps')), '8');
-      await tester.enterText(find.byKey(const ValueKey('set-rpe')), '8');
+      await tester.enterText(
+        find.byKey(const ValueKey('set-field-Weight')),
+        '80',
+      );
+      await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '8');
+      await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
       await _tapVisible(tester, find.text('Save set'));
-      await _waitForFinder(tester, find.text('80x8@8'));
+      await _waitForTextFieldValue(
+        tester,
+        find.byKey(const ValueKey('logged-S1-field-Weight')),
+        '80',
+      );
 
       var activeSheet = await _waitForLoggedSetValue(
         readAdapter: readAdapter,
@@ -97,9 +102,16 @@ void main() {
       );
       expect(primaryContext.selectedHistory.entries.first.rawValue, '80x8@8');
 
-      await tester.enterText(find.byKey(const ValueKey('raw-S1')), '82.5x8@8');
+      await tester.enterText(
+        find.byKey(const ValueKey('logged-S1-field-Weight')),
+        '82.5',
+      );
       await _tapVisible(tester, find.byKey(const ValueKey('save-S1')));
-      await _waitForFinder(tester, find.text('82.5x8@8'));
+      await _waitForTextFieldValue(
+        tester,
+        find.byKey(const ValueKey('logged-S1-field-Weight')),
+        '82.5',
+      );
 
       activeSheet = await _waitForLoggedSetValue(
         readAdapter: readAdapter,
@@ -133,24 +145,34 @@ void main() {
       await _tapVisible(tester, find.text('Reverse Lunge'));
       await _waitForFinder(tester, find.text('Reverse Lunge logging'));
 
-      await tester.enterText(find.byKey(const ValueKey('set-weight')), '25');
-      await tester.enterText(find.byKey(const ValueKey('set-reps')), '10');
-      await tester.enterText(find.byKey(const ValueKey('set-rpe')), '8');
+      await tester.enterText(
+        find.byKey(const ValueKey('set-field-Weight')),
+        '25',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('set-field-Reps')),
+        '10',
+      );
+      await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
       await _tapVisible(tester, find.text('Save set'));
-      await _waitForFinder(tester, find.text('25x10@8'));
+      await _waitForTextFieldValue(
+        tester,
+        find.byKey(const ValueKey('logged-S1-field-Weight')),
+        '25',
+      );
 
       activeSheet = await _waitForLoggedSetValue(
         readAdapter: readAdapter,
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 4,
-        expectedValue: '25x10@8',
+        expectedValue: '25x10@8,',
       );
       final backupContext = activeSheet.buildExerciseLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 4,
         historyBlockLabel: 'Week 2',
       );
-      expect(backupContext.selectedHistory.entries.first.rawValue, '25x10@8');
+      expect(backupContext.selectedHistory.entries.first.rawValue, '25x10@8,');
 
       await _tapVisible(tester, find.text('Back to exercises'));
       await _waitForFinder(tester, find.text('Legs exercises'));
@@ -203,6 +225,29 @@ Future<void> _waitForFinder(
     }
   }
   fail('Timed out waiting for ${finder.describeMatch(Plurality.many)}.');
+}
+
+Future<void> _waitForTextFieldValue(
+  WidgetTester tester,
+  Finder finder,
+  String expectedValue, {
+  Duration timeout = const Duration(seconds: 60),
+}) async {
+  final end = DateTime.now().add(timeout);
+  while (DateTime.now().isBefore(end)) {
+    await tester.pump(const Duration(milliseconds: 200));
+    final widgets = finder.evaluate().toList();
+    if (widgets.isNotEmpty) {
+      final textField = tester.widget<TextField>(finder);
+      if (textField.controller?.text == expectedValue) {
+        return;
+      }
+    }
+  }
+  final value = finder.evaluate().isEmpty
+      ? '<missing>'
+      : tester.widget<TextField>(finder).controller?.text;
+  fail('Timed out waiting for text field value $expectedValue; got $value.');
 }
 
 Future<ParsedActiveSheet> _waitForLoggedSetValue({

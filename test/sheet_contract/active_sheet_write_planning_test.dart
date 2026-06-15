@@ -105,6 +105,98 @@ void main() {
     );
   });
 
+  test(
+    'primary and backup rows keep different row-local formats through reparse',
+    () {
+      final rows = [
+        historyHeaderRow(['Session A', '']),
+        setLabelRow(['S1', 'S2']),
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
+        [
+          'Hamstring Curl',
+          '3',
+          '12',
+          '8',
+          '90s',
+          '',
+          '',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          'TRUE',
+          '',
+          '',
+        ],
+      ];
+      var activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+      var primaryContext = activeSheet.buildExerciseLoggingContext(
+        primarySheetRowNumber: 3,
+        selectedSheetRowNumber: 3,
+        historyBlockLabel: 'Session A',
+      );
+      var backupContext = activeSheet.buildExerciseLoggingContext(
+        primarySheetRowNumber: 3,
+        selectedSheetRowNumber: 4,
+        historyBlockLabel: 'Session A',
+      );
+
+      expect(
+        primaryContext.logFormat,
+        isA<ParsedLogFormat>().having(
+          (format) => format.fieldLabels,
+          'field labels',
+          ['Weight', 'Reps', 'RPE'],
+        ),
+      );
+      expect(
+        backupContext.logFormat,
+        isA<ParsedLogFormat>().having(
+          (format) => format.fieldLabels,
+          'field labels',
+          ['Reps', 'RPE'],
+        ),
+      );
+
+      final primaryPlan = activeSheet.planSetLoggingWrite(
+        historyBlockLabel: 'Session A',
+        sheetRowNumber: primaryContext.selectedChoice.sheetRowNumber,
+        fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+      );
+      var previewRows = primaryPlan.previewRowsAfterApplying(rows);
+      activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
+
+      final backupPlan = activeSheet.planSetLoggingWrite(
+        historyBlockLabel: 'Session A',
+        sheetRowNumber: backupContext.selectedChoice.sheetRowNumber,
+        fieldValues: const {'Reps': '12', 'RPE': '8'},
+      );
+      previewRows = backupPlan.previewRowsAfterApplying(previewRows);
+      activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
+
+      primaryContext = activeSheet.buildExerciseLoggingContext(
+        primarySheetRowNumber: 3,
+        selectedSheetRowNumber: 3,
+        historyBlockLabel: 'Session A',
+      );
+      backupContext = activeSheet.buildExerciseLoggingContext(
+        primarySheetRowNumber: 3,
+        selectedSheetRowNumber: 4,
+        historyBlockLabel: 'Session A',
+      );
+
+      expect(primaryContext.selectedHistory.entries.first.rawValue, '225x5@8');
+      expect(backupContext.selectedHistory.entries.first.rawValue, '12@8');
+      expect(
+        backupContext.selectedHistory.entries.first.logEntry,
+        isA<FormattedLogEntry>().having(
+          (entry) => entry.fieldValues,
+          'field values',
+          {'Reps': '12', 'RPE': '8'},
+        ),
+      );
+    },
+  );
+
   test('plans editing an existing set cell', () {
     final activeSheet = parseFixtureActiveSheet();
 
