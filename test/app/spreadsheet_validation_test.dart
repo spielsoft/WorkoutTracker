@@ -12,12 +12,14 @@ void main() {
       final gateway = _RecordingGoogleSignInAuthorizationGateway();
       final activeSheet = _minimalParsedActiveSheet();
       bool? requestedWriteAccess;
+      final authClient = _CloseTrackingAuthClient();
       final service = GoogleSignInSpreadsheetValidationService(
         authorizationGateway: gateway,
+        authorizationClientFactory: (_) => authClient,
         serviceFactory: (sheets.SheetsApi api, {required bool canWrite}) {
           requestedWriteAccess = canWrite;
           return _DelayedValidationService(
-            client: _CloseTrackingAuthClient(),
+            client: authClient,
             activeSheet: activeSheet,
           );
         },
@@ -25,6 +27,8 @@ void main() {
 
       await service.validateSpreadsheet('spreadsheet-id');
 
+      expect(authClient.closedDuringAction, isFalse);
+      expect(authClient.closed, isTrue);
       expect(gateway.requestedScopes.single, [
         sheets.SheetsApi.spreadsheetsScope,
       ]);

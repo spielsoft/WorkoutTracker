@@ -3,7 +3,7 @@
 - [x] Slice 0: Create a Shared Test Validation Harness
 - [x] Slice 1: Retire the Dual Set Parsing Interface
 - [x] Slice 2: Deepen the Exercise Logging Flow Module
-- [ ] Slice 3: Split Google Validation and Authorization Internals
+- [x] Slice 3: Split Google Validation and Authorization Internals
 - [ ] Slice 4: Separate Development Reset Fixtures From Reset Writing
 - [ ] Slice 5: Final Architecture and Test Cleanup Gate
 
@@ -109,12 +109,12 @@ This is an internal cleanup: user-visible spreadsheet validation, sign-in restor
 
 ### Acceptance criteria
 
-- [ ] The public validation Interface used by the controller remains stable or changes only through a narrow compatibility update.
-- [ ] Google account/session behavior is localized behind a focused internal Module.
-- [ ] Authorization header wrapping is localized behind a focused internal Module or Adapter.
-- [ ] Google read/write Adapter wiring is separated from validation flow orchestration.
-- [ ] Existing validation tests are preserved or narrowed to the correct internal seams.
-- [ ] Controller and spreadsheet-validation tests pass.
+- [x] The public validation Interface used by the controller remains stable or changes only through a narrow compatibility update.
+- [x] Google account/session behavior is localized behind a focused internal Module.
+- [x] Authorization header wrapping is localized behind a focused internal Module or Adapter.
+- [x] Google read/write Adapter wiring is separated from validation flow orchestration.
+- [x] Existing validation tests are preserved or narrowed to the correct internal seams.
+- [x] Controller and spreadsheet-validation tests pass.
 
 ### Blocked by
 
