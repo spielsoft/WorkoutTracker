@@ -5,11 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
+import 'app/test_spreadsheet_validation_service.dart';
+
 void main() {
   testWidgets('renders the main logging flow and sends a save to the service', (
     tester,
   ) async {
-    final service = _FakeSpreadsheetValidationService.fromRows([
+    final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
       [
@@ -119,7 +121,7 @@ void main() {
   testWidgets('renders compact spreadsheet controls with desktop scrolling', (
     tester,
   ) async {
-    final service = _FakeSpreadsheetValidationService.fromRows([
+    final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -148,7 +150,7 @@ void main() {
 
   testWidgets('restores and persists the spreadsheet field', (tester) async {
     final store = _MemoryAppStateStore('saved-spreadsheet-id');
-    final service = _FakeSpreadsheetValidationService.fromRows([
+    final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -183,7 +185,7 @@ void main() {
         displayName: 'Saved Account',
       ),
     );
-    final service = _FakeSpreadsheetValidationService.fromRows([
+    final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -205,7 +207,7 @@ void main() {
   testWidgets(
     'labels workouts with selected-block progress and counts backups with parent',
     (tester) async {
-      final service = _FakeSpreadsheetValidationService.fromRows([
+      final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         [
@@ -258,7 +260,7 @@ void main() {
   testWidgets(
     'renders bodyweight logging fields from the selected row format',
     (tester) async {
-      final service = _FakeSpreadsheetValidationService.fromRows([
+      final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         [
@@ -331,7 +333,7 @@ void main() {
   testWidgets('renders height-based and timed sheet-authored labels', (
     tester,
   ) async {
-    final service = _FakeSpreadsheetValidationService.fromRows([
+    final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       [
@@ -407,7 +409,7 @@ void main() {
   testWidgets(
     'keeps exercise context, selected rows, recent history, and raw controls',
     (tester) async {
-      final service = _FakeSpreadsheetValidationService.fromRows([
+      final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 2', 'Week 1', ''],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1', 'S2'],
         [
@@ -467,7 +469,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      final service = _FakeSpreadsheetValidationService.fromRows([
+      final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         [
@@ -569,7 +571,7 @@ void main() {
   testWidgets('shows a top-right Google account menu for account switching', (
     tester,
   ) async {
-    final service = _FakeSpreadsheetValidationService.fromRows([
+    final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -655,62 +657,5 @@ class _MemoryAppStateStore implements AppStateStore {
   Future<void> writeSpreadsheetText(String value) async {
     spreadsheetText = value;
     writes.add(value);
-  }
-}
-
-class _FakeSpreadsheetValidationService
-    implements SpreadsheetValidationService {
-  _FakeSpreadsheetValidationService(this.activeSheet) : _rows = const [];
-
-  _FakeSpreadsheetValidationService.fromRows(List<List<String>> rows)
-    : activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows)),
-      _rows = rows.map((row) => row.toList()).toList();
-
-  ParsedActiveSheet activeSheet;
-  List<List<String>> _rows;
-  final spreadsheetIds = <String>[];
-  final appliedPlans = <ActiveSheetWritePlan>[];
-
-  @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    spreadsheetIds.add(spreadsheetId);
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-    );
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) async {
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: this.activeSheet,
-    );
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) async {
-    appliedPlans.add(plan);
-    if (_rows.isNotEmpty) {
-      _rows = plan
-          .previewRowsAfterApplying(_rows)
-          .map((row) => row.toList())
-          .toList();
-      this.activeSheet = parseActiveSheet(ActiveSheetInput(rows: _rows));
-    }
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: this.activeSheet,
-    );
   }
 }

@@ -4,11 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
+import 'test_spreadsheet_validation_service.dart';
+
 void main() {
   test(
     'validates a spreadsheet selection and adopts workout and history ordering',
     () async {
-      final service = _FakeSpreadsheetValidationService.fromRows([
+      final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 2', '', 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2', 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', '', ''],
@@ -50,7 +52,7 @@ void main() {
   test(
     'changing workout or history clears the current logging selection',
     () async {
-      final service = _FakeSpreadsheetValidationService.fromRows([
+      final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 2', '', 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2', 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', '', ''],
@@ -93,7 +95,7 @@ void main() {
   test(
     'creates a history block and preserves the current workout when it still exists',
     () async {
-      final service = _FakeSpreadsheetValidationService.fromRows([
+      final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 2'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
@@ -123,7 +125,7 @@ void main() {
     'blank spreadsheet selection reports a user error without calling the service',
     () async {
       final controller = WorkoutTrackerController(
-        validationService: _FakeSpreadsheetValidationService.fromRows([
+        validationService: TestSpreadsheetValidationService.fromRows([
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
           ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -136,7 +138,7 @@ void main() {
       expect(controller.error, 'Enter a Google Sheets URL or spreadsheet ID.');
       expect(controller.report, isNull);
       expect(
-        (controller.validationService as _FakeSpreadsheetValidationService)
+        (controller.validationService as TestSpreadsheetValidationService)
             .spreadsheetIds,
         isEmpty,
       );
@@ -274,71 +276,5 @@ class _PendingCreateHistoryBlockService
     required ActiveSheetWritePlan plan,
   }) {
     throw UnimplementedError();
-  }
-}
-
-class _FakeSpreadsheetValidationService
-    implements SpreadsheetValidationService {
-  _FakeSpreadsheetValidationService(this.activeSheet);
-
-  _FakeSpreadsheetValidationService.fromRows(List<List<String>> rows)
-    : activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows)),
-      _sourceRows = rows;
-
-  ParsedActiveSheet activeSheet;
-  List<List<String>>? _sourceRows;
-  final spreadsheetIds = <String>[];
-  final createdHistoryBlockLabels = <String>[];
-  final appliedPlans = <ActiveSheetWritePlan>[];
-
-  @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    spreadsheetIds.add(spreadsheetId);
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-    );
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) async {
-    createdHistoryBlockLabels.add(label);
-    final sourceRows = _sourceRows;
-    if (sourceRows != null) {
-      final previewRows = activeSheet
-          .planNewHistoryBlock(label: label)
-          .previewRowsAfterApplying(sourceRows);
-      this.activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
-      _sourceRows = previewRows;
-    }
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: this.activeSheet,
-    );
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) async {
-    appliedPlans.add(plan);
-    final sourceRows = _sourceRows;
-    if (sourceRows != null) {
-      final previewRows = plan.previewRowsAfterApplying(sourceRows);
-      this.activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
-      _sourceRows = previewRows;
-    }
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: this.activeSheet,
-    );
   }
 }
