@@ -122,6 +122,7 @@ void main() {
   });
 
   test('plans reset writes with typed cell values and text formatting', () {
+    final planner = DevelopmentSheetResetPlanner();
     final tab = DevelopmentSheetResetTab(
       title: 'Active Workout',
       rows: [
@@ -131,7 +132,7 @@ void main() {
       ],
     );
 
-    final plan = DevelopmentSheetResetTabRewritePlan(
+    final plan = planner.planTabRewrite(
       sheetId: 42,
       tab: tab,
       frozenRowCount: 1,

@@ -4,7 +4,7 @@
 - [x] Slice 1: Retire the Dual Set Parsing Interface
 - [x] Slice 2: Deepen the Exercise Logging Flow Module
 - [x] Slice 3: Split Google Validation and Authorization Internals
-- [ ] Slice 4: Separate Development Reset Fixtures From Reset Writing
+- [x] Slice 4: Separate Development Reset Fixtures From Reset Writing
 - [ ] Slice 5: Final Architecture and Test Cleanup Gate
 
 ## Slice 0: Create a Shared Test Validation Harness
@@ -139,12 +139,12 @@ This should preserve the existing live-development-sheet safety rule: only the k
 
 ### Acceptance criteria
 
-- [ ] Development fixture data lives in a fixture-focused Module rather than inside the Google reset writer Implementation.
-- [ ] Reset request planning remains locally testable without live Google access.
-- [ ] Typed-cell reset behavior remains covered: formulas as formulas, non-empty literals as strings, empty cells blank, and reset range formatted as text.
-- [ ] Reset safety still rejects unrelated spreadsheet IDs by default.
-- [ ] Fixture tests still verify representative workouts, backups, direct formulas, and representative `Log Format` values.
-- [ ] Relevant fixture and Google reset tests pass.
+- [x] Development fixture data lives in a fixture-focused Module rather than inside the Google reset writer Implementation.
+- [x] Reset request planning remains locally testable without live Google access.
+- [x] Typed-cell reset behavior remains covered: formulas as formulas, non-empty literals as strings, empty cells blank, and reset range formatted as text.
+- [x] Reset safety still rejects unrelated spreadsheet IDs by default.
+- [x] Fixture tests still verify representative workouts, backups, direct formulas, and representative `Log Format` values.
+- [x] Relevant fixture and Google reset tests pass.
 
 ### Blocked by
 
