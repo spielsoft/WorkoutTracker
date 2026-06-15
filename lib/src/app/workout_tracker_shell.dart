@@ -6,6 +6,7 @@ import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 import 'app_state_store.dart';
+import 'exercise_logging_flow.dart';
 import 'spreadsheet_validation.dart';
 import 'workout_tracker_controller.dart';
 
@@ -700,15 +701,12 @@ class _ExerciseLoggingScreen extends StatefulWidget {
 }
 
 class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
-  final _fieldControllers = <String, TextEditingController>{};
-  final _loggedFieldControllers = <int, Map<String, TextEditingController>>{};
-  final _rawControllers = <int, TextEditingController>{};
+  late final ExerciseLoggingFlow _flow;
 
   @override
   void initState() {
     super.initState();
-    _syncFieldControllers(_context);
-    _syncLoggedEntryControllers(_context);
+    _flow = _createFlow();
   }
 
   @override
@@ -716,213 +714,66 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedSheetRowNumber != widget.selectedSheetRowNumber ||
         oldWidget.historyBlockLabel != widget.historyBlockLabel ||
+        oldWidget.primarySheetRowNumber != widget.primarySheetRowNumber ||
         oldWidget.activeSheet != widget.activeSheet) {
-      _syncFieldControllers(_context);
-      _syncLoggedEntryControllers(_context);
+      _flow.update(
+        activeSheet: widget.activeSheet,
+        historyBlockLabel: widget.historyBlockLabel,
+        primarySheetRowNumber: widget.primarySheetRowNumber,
+        selectedSheetRowNumber: widget.selectedSheetRowNumber,
+      );
     }
   }
 
   @override
   void dispose() {
-    for (final controller in _fieldControllers.values) {
-      controller.dispose();
-    }
-    for (final controllers in _loggedFieldControllers.values) {
-      for (final controller in controllers.values) {
-        controller.dispose();
-      }
-    }
-    for (final controller in _rawControllers.values) {
-      controller.dispose();
-    }
+    _flow.dispose();
     super.dispose();
   }
 
-  ExerciseLoggingContext get _context {
-    return widget.activeSheet.buildExerciseLoggingContext(
+  ExerciseLoggingFlow _createFlow() {
+    return ExerciseLoggingFlow(
+      activeSheet: widget.activeSheet,
+      historyBlockLabel: widget.historyBlockLabel,
       primarySheetRowNumber: widget.primarySheetRowNumber,
       selectedSheetRowNumber: widget.selectedSheetRowNumber,
-      historyBlockLabel: widget.historyBlockLabel,
     );
   }
 
-  void _syncFieldControllers(ExerciseLoggingContext context) {
-    final labels = switch (context.logFormat) {
-      ParsedLogFormat(:final fieldLabels) => fieldLabels.toSet(),
-      InvalidLogFormat() => <String>{},
-    };
-    final removedLabels = _fieldControllers.keys
-        .where((label) => !labels.contains(label))
-        .toList();
-    for (final label in removedLabels) {
-      _fieldControllers.remove(label)?.dispose();
-    }
-    for (final label in labels) {
-      _fieldControllers.putIfAbsent(label, TextEditingController.new);
-    }
-  }
-
-  void _syncLoggedEntryControllers(ExerciseLoggingContext context) {
-    final nonEmptyEntries = context.selectedHistory.entries
-        .where((entry) => entry.rawValue.trim().isNotEmpty)
-        .toList();
-    final activeSetNumbers = {
-      for (final entry in nonEmptyEntries) entry.setNumber,
-    };
-    final rawSetNumbers = {
-      for (final entry in nonEmptyEntries)
-        if (entry.logEntry is RawLogEntry) entry.setNumber,
-    };
-
-    final removedFormattedSetNumbers = _loggedFieldControllers.keys
-        .where((setNumber) => !activeSetNumbers.contains(setNumber))
-        .toList();
-    for (final setNumber in removedFormattedSetNumbers) {
-      final controllers = _loggedFieldControllers.remove(setNumber);
-      if (controllers != null) {
-        for (final controller in controllers.values) {
-          controller.dispose();
-        }
-      }
-    }
-
-    final removedRawSetNumbers = _rawControllers.keys
-        .where((setNumber) => !rawSetNumbers.contains(setNumber))
-        .toList();
-    for (final setNumber in removedRawSetNumbers) {
-      _rawControllers.remove(setNumber)?.dispose();
-    }
-
-    for (final setNumber in rawSetNumbers) {
-      _loggedFieldControllers
-          .remove(setNumber)
-          ?.values
-          .forEach((controller) => controller.dispose());
-    }
-
-    for (final entry in nonEmptyEntries) {
-      final logEntry = entry.logEntry;
-      if (logEntry is FormattedLogEntry) {
-        _syncLoggedFieldControllers(entry.setNumber, logEntry);
-        continue;
-      }
-      final controller = _rawControllers.putIfAbsent(
-        entry.setNumber,
-        TextEditingController.new,
-      );
-      if (controller.text != entry.rawValue) {
-        controller.text = entry.rawValue;
-      }
-    }
-  }
-
-  void _syncLoggedFieldControllers(int setNumber, FormattedLogEntry logEntry) {
-    _rawControllers.remove(setNumber)?.dispose();
-    final controllers = _loggedFieldControllers.putIfAbsent(
-      setNumber,
-      () => <String, TextEditingController>{},
-    );
-    final labels = logEntry.fieldLabels.toSet();
-    final removedLabels = controllers.keys
-        .where((label) => !labels.contains(label))
-        .toList();
-    for (final label in removedLabels) {
-      controllers.remove(label)?.dispose();
-    }
-    for (final label in logEntry.fieldLabels) {
-      final controller = controllers.putIfAbsent(
-        label,
-        TextEditingController.new,
-      );
-      final value = logEntry.fieldValues[label] ?? '';
-      if (controller.text != value) {
-        controller.text = value;
-      }
-    }
-  }
-
-  Future<void> _saveStructuredSet(ExerciseLoggingContext context) async {
-    final fieldValues = {
-      for (final entry in _fieldControllers.entries)
-        entry.key: entry.value.text.trim(),
-    };
-    if (fieldValues.values.every((value) => value.isEmpty)) {
+  Future<void> _saveStructuredSet() async {
+    final plan = _flow.planStructuredSetSave();
+    if (plan == null) {
       return;
     }
 
-    final saved = await widget.onApplyWritePlan(
-      widget.activeSheet.planSetLoggingWrite(
-        historyBlockLabel: widget.historyBlockLabel,
-        sheetRowNumber: context.selectedChoice.sheetRowNumber,
-        fieldValues: fieldValues,
-      ),
-    );
+    final saved = await widget.onApplyWritePlan(plan);
     if (!saved) {
       return;
     }
-    for (final controller in _fieldControllers.values) {
-      controller.clear();
-    }
+    _flow.clearNewSetControllers();
   }
 
-  Future<void> _saveRawSet(
-    ExerciseLoggingContext context,
-    RowHistoryEntry entry,
-  ) async {
-    await widget.onApplyWritePlan(
-      widget.activeSheet.planRawSetEdit(
-        historyBlockLabel: widget.historyBlockLabel,
-        sheetRowNumber: context.selectedChoice.sheetRowNumber,
-        setNumber: entry.setNumber,
-        rawText: _rawControllers[entry.setNumber]?.text ?? '',
-      ),
-    );
+  Future<void> _saveRawSet(RowHistoryEntry entry) async {
+    await widget.onApplyWritePlan(_flow.planRawSetEdit(entry));
   }
 
-  Future<void> _saveStructuredSetEdit(
-    ExerciseLoggingContext context,
-    RowHistoryEntry entry,
-  ) async {
-    final controllers = _loggedFieldControllers[entry.setNumber];
-    if (controllers == null) {
+  Future<void> _saveStructuredSetEdit(RowHistoryEntry entry) async {
+    final plan = _flow.planStructuredSetEdit(entry);
+    if (plan == null) {
       return;
     }
-    await widget.onApplyWritePlan(
-      widget.activeSheet.planSetEdit(
-        historyBlockLabel: widget.historyBlockLabel,
-        sheetRowNumber: context.selectedChoice.sheetRowNumber,
-        setNumber: entry.setNumber,
-        fieldValues: {
-          for (final controllerEntry in controllers.entries)
-            controllerEntry.key: controllerEntry.value.text.trim(),
-        },
-      ),
-    );
+    await widget.onApplyWritePlan(plan);
   }
 
-  Future<void> _clearSet(
-    ExerciseLoggingContext context,
-    RowHistoryEntry entry,
-  ) async {
-    await widget.onApplyWritePlan(
-      widget.activeSheet.planSetClear(
-        historyBlockLabel: widget.historyBlockLabel,
-        sheetRowNumber: context.selectedChoice.sheetRowNumber,
-        setNumber: entry.setNumber,
-      ),
-    );
+  Future<void> _clearSet(RowHistoryEntry entry) async {
+    await widget.onApplyWritePlan(_flow.planSetClear(entry));
   }
 
   @override
   Widget build(BuildContext context) {
-    final loggingContext = _context;
+    final viewModel = _flow.viewModel;
+    final loggingContext = viewModel.context;
     final selectedChoice = loggingContext.selectedChoice;
-    final loggedEntries =
-        loggingContext.selectedHistory.entries
-            .where((entry) => entry.rawValue.trim().isNotEmpty)
-            .toList()
-          ..sort((left, right) => right.setNumber.compareTo(left.setNumber));
-    final nextSetNumber = _nextSetNumber(loggingContext.selectedHistory);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -971,39 +822,43 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
           },
         ),
         const SizedBox(height: 16),
-        _ExerciseContextPanel(context: loggingContext),
+        _ExerciseContextPanel(
+          context: loggingContext,
+          latestHistoryValue: viewModel.latestHistoryValue,
+        ),
         const SizedBox(height: 16),
         Text(
-          'Next set S$nextSetNumber',
+          'Next set S${viewModel.nextSetNumber}',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         _StructuredSetEditor(
           logFormat: loggingContext.logFormat,
-          controllers: _fieldControllers,
-          onSave: () => _saveStructuredSet(loggingContext),
+          controllers: viewModel.newSetControllers,
+          onSave: _saveStructuredSet,
         ),
         const SizedBox(height: 16),
         Text('Logged sets', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
-        if (loggedEntries.isEmpty)
+        if (viewModel.loggedEntries.isEmpty)
           const Text('No sets logged in this block.')
         else
-          for (final entry in loggedEntries)
+          for (final entry in viewModel.loggedEntries)
             if (entry.logEntry case FormattedLogEntry(:final fieldLabels))
               _LoggedFormattedSetEditor(
                 entry: entry,
                 fieldLabels: fieldLabels,
-                controllers: _loggedFieldControllers[entry.setNumber]!,
-                onSave: () => _saveStructuredSetEdit(loggingContext, entry),
-                onClear: () => _clearSet(loggingContext, entry),
+                controllers:
+                    viewModel.loggedFormattedControllers[entry.setNumber]!,
+                onSave: () => _saveStructuredSetEdit(entry),
+                onClear: () => _clearSet(entry),
               )
             else
               _LoggedSetEditor(
                 entry: entry,
-                controller: _rawControllers[entry.setNumber]!,
-                onSave: () => _saveRawSet(loggingContext, entry),
-                onClear: () => _clearSet(loggingContext, entry),
+                controller: viewModel.rawControllers[entry.setNumber]!,
+                onSave: () => _saveRawSet(entry),
+                onClear: () => _clearSet(entry),
               ),
         const SizedBox(height: 16),
         Text('Recent history', style: Theme.of(context).textTheme.titleMedium),
@@ -1019,14 +874,17 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
 }
 
 class _ExerciseContextPanel extends StatelessWidget {
-  const _ExerciseContextPanel({required this.context});
+  const _ExerciseContextPanel({
+    required this.context,
+    required this.latestHistoryValue,
+  });
 
   final ExerciseLoggingContext context;
+  final String? latestHistoryValue;
 
   @override
   Widget build(BuildContext context) {
     final targets = this.context.targets;
-    final latestHistory = _latestHistoryValue(this.context);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
@@ -1044,7 +902,8 @@ class _ExerciseContextPanel extends StatelessWidget {
             if (targets.tempo.trim().isNotEmpty)
               Text('Tempo: ${targets.tempo}'),
             if (this.context.notes.trim().isNotEmpty) Text(this.context.notes),
-            if (latestHistory != null) Text('Latest history: $latestHistory'),
+            if (latestHistoryValue != null)
+              Text('Latest history: $latestHistoryValue'),
           ],
         ),
       ),
@@ -1229,26 +1088,6 @@ class _RecentHistoryBlock extends StatelessWidget {
       ),
     );
   }
-}
-
-int _nextSetNumber(RowHistoryBlock block) {
-  for (final entry in block.entries) {
-    if (entry.rawValue.trim().isEmpty) {
-      return entry.setNumber;
-    }
-  }
-  return block.entries.length + 1;
-}
-
-String? _latestHistoryValue(ExerciseLoggingContext context) {
-  for (final block in context.recentHistoryBlocks) {
-    for (final entry in block.entries) {
-      if (entry.rawValue.trim().isNotEmpty) {
-        return entry.rawValue;
-      }
-    }
-  }
-  return null;
 }
 
 class _ValidationSummary extends StatelessWidget {

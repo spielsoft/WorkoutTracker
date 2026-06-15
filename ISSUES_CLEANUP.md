@@ -2,7 +2,7 @@
 
 - [x] Slice 0: Create a Shared Test Validation Harness
 - [x] Slice 1: Retire the Dual Set Parsing Interface
-- [ ] Slice 2: Deepen the Exercise Logging Flow Module
+- [x] Slice 2: Deepen the Exercise Logging Flow Module
 - [ ] Slice 3: Split Google Validation and Authorization Internals
 - [ ] Slice 4: Separate Development Reset Fixtures From Reset Writing
 - [ ] Slice 5: Final Architecture and Test Cleanup Gate
@@ -79,12 +79,12 @@ The existing sheet-contract Seam should remain authoritative for parsing history
 
 ### Acceptance criteria
 
-- [ ] The exercise logging screen renders from a logging-flow view model or equivalent deep Module instead of assembling all logging behavior directly in the widget state.
-- [ ] Structured new-set save, structured edit, raw edit, clear, and backup-row switching still use backend write plans.
-- [ ] Field-controller lifecycle is localized and does not leak sheet-contract details across unrelated widgets.
-- [ ] Widget tests stay smoke-level and verify visible behavior, not backend parsing choreography.
-- [ ] Existing uncommitted segmented-button styling work is preserved and not reverted.
-- [ ] Relevant widget, controller, and sheet-contract tests pass.
+- [x] The exercise logging screen renders from a logging-flow view model or equivalent deep Module instead of assembling all logging behavior directly in the widget state.
+- [x] Structured new-set save, structured edit, raw edit, clear, and backup-row switching still use backend write plans.
+- [x] Field-controller lifecycle is localized and does not leak sheet-contract details across unrelated widgets.
+- [x] Widget tests stay smoke-level and verify visible behavior, not backend parsing choreography.
+- [x] Existing uncommitted segmented-button styling work is preserved and not reverted.
+- [x] Relevant widget, controller, and sheet-contract tests pass.
 
 ### Blocked by
 
