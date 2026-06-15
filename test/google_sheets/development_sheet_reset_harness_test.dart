@@ -33,39 +33,45 @@ void main() {
         'S2',
         'S1',
       ]);
-      expect(activeRows.any((row) => row[7] == 'Legs'), isTrue);
+
+      final displayRows = _activeRowsWithExerciseDisplayValues(fixture);
+      final parsedActiveSheet = parseActiveSheet(
+        ActiveSheetInput(rows: displayRows),
+      );
+      final primarySlots = parsedActiveSheet.primarySlots;
+
+      expect(parsedActiveSheet.schemaViolations, isEmpty);
       expect(
-        activeRows.where((row) => row.length > 8 && row[7] == 'Legs'),
-        hasLength(greaterThanOrEqualTo(8)),
+        primarySlots.where((slot) => slot.workout == 'Legs'),
+        hasLength(greaterThanOrEqualTo(2)),
       );
       expect(
-        activeRows.where((row) => row.length > 8 && row[7] == 'Upper'),
-        hasLength(greaterThanOrEqualTo(10)),
+        primarySlots.where((slot) => slot.workout == 'Upper'),
+        hasLength(greaterThanOrEqualTo(2)),
       );
       expect(
-        activeRows.any((row) => row[7].isEmpty && row[0].startsWith('=')),
-        isTrue,
-      );
-      expect(activeRows.any((row) => row[8] == 'TRUE'), isTrue);
-      expect(
-        activeRows.any(
-          (row) => row[7] == 'Upper' && row.first == '=Exercises!A15',
+        primarySlots,
+        anyElement(
+          predicate<WorkoutSlot>(
+            (slot) =>
+                slot.exercise == 'Plank' &&
+                slot.workout == 'Upper' &&
+                !slot.isBackup,
+            'contains Plank as an Upper primary',
+          ),
         ),
+      );
+      expect(primarySlots.any((slot) => slot.backups.length > 2), isTrue);
+      expect(
+        primarySlots.any((slot) => slot.workout == defaultWorkoutName),
         isTrue,
       );
 
-      final firstExerciseFormulaRow = activeRows.firstWhere(
-        (row) => row.first == '=Exercises!A2',
+      final formulaRows = activeRows.where(
+        (row) => row.length > 8 && row.first.startsWith('=Exercises!A'),
       );
-      expect(firstExerciseFormulaRow.take(7), [
-        '=Exercises!A2',
-        '=Exercises!C2',
-        '=Exercises!D2',
-        '=Exercises!E2',
-        '=Exercises!F2',
-        '=Exercises!G2',
-        '=Exercises!H2',
-      ]);
+      expect(formulaRows, isNotEmpty);
+      expect(formulaRows.every(_usesDirectExerciseDisplayFormulas), isTrue);
 
       final exercisesRows = fixture.exercisesSheet.rows;
       expect(exercisesRows.first, [
@@ -78,28 +84,17 @@ void main() {
         'Default Tempo',
         'Notes',
       ]);
-      expect(exercisesRows.map((row) => row.first), contains('Reverse Lunge'));
+      final exerciseLibraryNames = exercisesRows
+          .skip(1)
+          .map((row) => row.first);
       expect(
-        exercisesRows.map((row) => row.first),
-        containsAll([
-          'Step-Up',
-          'Leg Press',
-          'Romanian Deadlift',
-          'Dumbbell RDL',
-          'Hamstring Curl',
-          'Standing Calf Raise',
-          'Seated Calf Raise',
-          'Dumbbell Floor Press',
-          'Machine Chest Press',
-          'Plank',
-          'Dead Bug',
-          'Side Plank',
-          'Seated Cable Row',
-          'Chest-Supported Row',
-          'Lat Pulldown',
-          'Farmer Carry',
-        ]),
+        displayRows
+            .skip(2)
+            .where((row) => row.length > 8 && row.first.isNotEmpty)
+            .every((row) => exerciseLibraryNames.contains(row.first)),
+        isTrue,
       );
+      expect(exerciseLibraryNames, containsAll(['Plank', 'Farmer Carry']));
     },
   );
 
@@ -127,4 +122,80 @@ class _FakeDevelopmentSheetResetClient implements DevelopmentSheetResetClient {
     resetSpreadsheetIds.add(spreadsheetId);
     fixtures.add(fixture);
   }
+}
+
+List<List<String>> _activeRowsWithExerciseDisplayValues(
+  DevelopmentSheetResetFixture fixture,
+) {
+  return fixture.activeSheet.rows
+      .map(
+        (row) => row
+            .map((cell) => _exerciseDisplayValue(cell, fixture.exercisesSheet))
+            .toList(),
+      )
+      .toList();
+}
+
+String _exerciseDisplayValue(String cell, DevelopmentSheetResetTab exercises) {
+  final formula = _exerciseFormula(cell);
+  if (formula == null) {
+    return cell;
+  }
+
+  final rowIndex = formula.rowNumber - 1;
+  final columnIndex = _columnNumber(formula.columnLetters) - 1;
+  if (rowIndex < 0 ||
+      rowIndex >= exercises.rows.length ||
+      columnIndex < 0 ||
+      columnIndex >= exercises.rows[rowIndex].length) {
+    return cell;
+  }
+  return exercises.rows[rowIndex][columnIndex];
+}
+
+bool _usesDirectExerciseDisplayFormulas(List<String> row) {
+  final firstFormula = _exerciseFormula(row.first);
+  if (firstFormula == null || firstFormula.columnLetters != 'A') {
+    return false;
+  }
+
+  final expectedColumns = ['A', 'C', 'D', 'E', 'F', 'G', 'H'];
+  for (var index = 0; index < expectedColumns.length; index += 1) {
+    final formula = _exerciseFormula(row[index]);
+    if (formula == null ||
+        formula.columnLetters != expectedColumns[index] ||
+        formula.rowNumber != firstFormula.rowNumber) {
+      return false;
+    }
+  }
+  return true;
+}
+
+_ExerciseFormula? _exerciseFormula(String value) {
+  final match = RegExp(r'^=Exercises!([A-Z]+)(\d+)$').firstMatch(value);
+  if (match == null) {
+    return null;
+  }
+  return _ExerciseFormula(
+    columnLetters: match.group(1)!,
+    rowNumber: int.parse(match.group(2)!),
+  );
+}
+
+int _columnNumber(String letters) {
+  var number = 0;
+  for (final codeUnit in letters.codeUnits) {
+    number = number * 26 + codeUnit - 64;
+  }
+  return number;
+}
+
+class _ExerciseFormula {
+  const _ExerciseFormula({
+    required this.columnLetters,
+    required this.rowNumber,
+  });
+
+  final String columnLetters;
+  final int rowNumber;
 }

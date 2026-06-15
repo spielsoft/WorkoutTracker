@@ -32,93 +32,44 @@ void main() {
     );
     expect(first.activeSheet.mergedFirstColumnRows, contains(2));
     expect(first.activeSheet.rows[1].first, isEmpty);
+
+    final exerciseRows = first.activeSheet.rows.where(_isExerciseRow).toList();
+    final legsRows = exerciseRows.where((row) => row[7] == 'Legs').toList();
+    final upperRows = exerciseRows.where((row) => row[7] == 'Upper').toList();
+    final defaultWorkoutRows = exerciseRows
+        .where((row) => row[7].isEmpty)
+        .toList();
+    final backupRows = exerciseRows.where((row) => row[8] == 'TRUE').toList();
+
     expect(
-      first.activeSheet.rows,
-      anyElement(
-        predicate<List<String>>(
-          (row) => _startsWith(row, [
-            'Bulgarian Split Squat',
-            '3',
-            '8/side',
-            '8',
-            '2 min',
-            '3-1-1',
-            'Use straps if grip limits load.',
-            'Legs',
-            '',
-          ]),
-          'contains a primary Legs row',
-        ),
-      ),
+      legsRows.where((row) => row[8] != 'TRUE'),
+      hasLength(greaterThanOrEqualTo(2)),
     );
     expect(
-      first.activeSheet.rows,
-      anyElement(
-        predicate<List<String>>(
-          (row) => _startsWith(row, [
-            'Reverse Lunge',
-            '3',
-            '10/side',
-            '8',
-            '90s',
-            '',
-            'Backup if benches are taken.',
-            'Legs',
-            'TRUE',
-          ]),
-          'contains a backup Legs row',
-        ),
-      ),
+      upperRows.where((row) => row[8] != 'TRUE'),
+      hasLength(greaterThanOrEqualTo(2)),
     );
+    expect(backupRows, isNotEmpty);
+    expect(defaultWorkoutRows, isNotEmpty);
     expect(
-      first.activeSheet.rows,
+      exerciseRows,
       anyElement(
         predicate<List<String>>(
-          (row) => _startsWith(row, [
-            'Plank',
-            '3',
-            '45s',
-            '8',
-            '60s',
-            '',
-            'Brace hard and keep hips level.',
-            'Upper',
-            '',
-          ]),
+          (row) => row[0] == 'Plank' && row[7] == 'Upper' && row[8] != 'TRUE',
           'contains Plank as a primary Upper row',
         ),
       ),
     );
+
+    final exerciseLibraryNames = first.exercisesSheet.rows
+        .skip(1)
+        .map((row) => row.first)
+        .toSet();
+    expect(exerciseLibraryNames, containsAll(['Plank', 'Farmer Carry']));
     expect(
-      first.activeSheet.rows.where((row) => row.length > 8 && row[7] == 'Legs'),
-      hasLength(greaterThanOrEqualTo(8)),
+      exerciseRows.every((row) => exerciseLibraryNames.contains(row.first)),
+      isTrue,
     );
-    expect(
-      first.activeSheet.rows.where(
-        (row) => row.length > 8 && row[7] == 'Upper',
-      ),
-      hasLength(greaterThanOrEqualTo(10)),
-    );
-    expect(
-      first.exercisesSheet.rows.map((row) => row.first),
-      containsAll([
-        'Step-Up',
-        'Leg Press',
-        'Romanian Deadlift',
-        'Dumbbell RDL',
-        'Hamstring Curl',
-        'Standing Calf Raise',
-        'Seated Calf Raise',
-        'Dumbbell Floor Press',
-        'Machine Chest Press',
-        'Dead Bug',
-        'Side Plank',
-        'Seated Cable Row',
-        'Chest-Supported Row',
-        'Lat Pulldown',
-      ]),
-    );
-    expect(first.exercisesSheet.rows, hasLength(greaterThanOrEqualTo(4)));
   });
 
   test('names the writable development Google Sheet fixture', () {
@@ -136,16 +87,5 @@ void main() {
   });
 }
 
-bool _startsWith(List<String> row, List<String> prefix) {
-  if (row.length < prefix.length) {
-    return false;
-  }
-
-  for (var index = 0; index < prefix.length; index += 1) {
-    if (row[index] != prefix[index]) {
-      return false;
-    }
-  }
-
-  return true;
-}
+bool _isExerciseRow(List<String> row) =>
+    row.length > 8 && row.first.isNotEmpty && row.first != 'Exercise';

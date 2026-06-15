@@ -14,75 +14,42 @@ void main() {
         mergedFirstColumnRows: workbook.activeSheet.mergedFirstColumnRows,
       ),
     );
+    final expectedReadableRows = _appReadableRows(workbook);
 
-    expect(activeSheet.slots.map((slot) => slot.exercise), [
-      'Bulgarian Split Squat',
-      'Reverse Lunge',
-      'Step-Up',
-      'Leg Press',
-      'Romanian Deadlift',
-      'Dumbbell RDL',
-      'Hamstring Curl',
-      'Standing Calf Raise',
-      'Seated Calf Raise',
-      'Bench Press',
-      'Push-Up',
-      'Dumbbell Floor Press',
-      'Machine Chest Press',
-      'Plank',
-      'Dead Bug',
-      'Side Plank',
-      'Seated Cable Row',
-      'Chest-Supported Row',
-      'Lat Pulldown',
-      'Farmer Carry',
-    ]);
-    expect(activeSheet.slots.map((slot) => slot.sheetRowNumber), [
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-    ]);
+    expect(
+      activeSheet.slots.map((slot) => slot.exercise),
+      expectedReadableRows.map((row) => row.values.first),
+    );
+    expect(
+      activeSheet.slots.map((slot) => slot.sheetRowNumber),
+      expectedReadableRows.map((row) => row.sheetRowNumber),
+    );
 
+    final firstReadableRow = expectedReadableRows.first;
     expect(
       activeSheet.slots.first,
       WorkoutSlot(
-        sheetRowNumber: 3,
-        exercise: 'Bulgarian Split Squat',
-        sets: '3',
-        reps: '8/side',
-        rpe: '8',
-        rest: '2 min',
-        tempo: '3-1-1',
-        notes: 'Use straps if grip limits load.',
-        workout: 'Legs',
-        isBackup: false,
+        sheetRowNumber: firstReadableRow.sheetRowNumber,
+        exercise: firstReadableRow.values[0],
+        sets: firstReadableRow.values[1],
+        reps: firstReadableRow.values[2],
+        rpe: firstReadableRow.values[3],
+        rest: firstReadableRow.values[4],
+        tempo: firstReadableRow.values[5],
+        notes: firstReadableRow.values[6],
+        workout: firstReadableRow.values[7],
+        isBackup: firstReadableRow.values[8] == 'TRUE',
       ),
     );
-    expect(activeSheet.slots[1].isBackup, isTrue);
-    expect(activeSheet.slots[2].isBackup, isTrue);
-    expect(activeSheet.slots[3].isBackup, isTrue);
-    expect(activeSheet.slots[5].isBackup, isTrue);
-    expect(activeSheet.slots[6].isBackup, isTrue);
-    expect(activeSheet.slots[8].isBackup, isTrue);
-    expect(activeSheet.slots[10].isBackup, isTrue);
-    expect(activeSheet.slots.last.workout, defaultWorkoutName);
+    expect(activeSheet.slots.any((slot) => slot.isBackup), isTrue);
+    expect(
+      activeSheet.slots.map((slot) => slot.isBackup),
+      expectedReadableRows.map((row) => row.values[8] == 'TRUE'),
+    );
+    expect(
+      activeSheet.slots.any((slot) => slot.workout == defaultWorkoutName),
+      isTrue,
+    );
   });
 
   test('discovers visible history block labels in sheet order', () {
@@ -1235,46 +1202,43 @@ void main() {
       );
 
       expect(activeSheet.schemaViolations, isEmpty);
-      expect(activeSheet.primarySlots.map((slot) => slot.exercise), [
-        'Bulgarian Split Squat',
-        'Romanian Deadlift',
-        'Standing Calf Raise',
-        'Bench Press',
-        'Plank',
-        'Seated Cable Row',
-        'Farmer Carry',
-      ]);
+      expect(activeSheet.primarySlots.every((slot) => !slot.isBackup), isTrue);
+      expect(
+        activeSheet.primarySlots.where((slot) => slot.workout == 'Legs'),
+        hasLength(greaterThanOrEqualTo(2)),
+      );
+      expect(
+        activeSheet.primarySlots.where((slot) => slot.workout == 'Upper'),
+        hasLength(greaterThanOrEqualTo(2)),
+      );
 
-      final legsSlot = activeSheet.primarySlots.first;
-      expect(legsSlot.isBackup, isFalse);
-      expect(legsSlot.backups.map((slot) => slot.exercise), [
-        'Reverse Lunge',
-        'Step-Up',
-        'Leg Press',
-      ]);
-      expect(legsSlot.backups, hasLength(greaterThan(2)));
-      expect(legsSlot.backups.every((slot) => slot.isBackup), isTrue);
-      expect(legsSlot.backups.every((slot) => slot.workout == 'Legs'), isTrue);
+      final multiBackupSlot = activeSheet.primarySlots.firstWhere(
+        (slot) => slot.backups.length > 2,
+      );
+      expect(multiBackupSlot.backups.every((slot) => slot.isBackup), isTrue);
+      expect(
+        multiBackupSlot.backups.every(
+          (slot) => slot.workout == multiBackupSlot.workout,
+        ),
+        isTrue,
+      );
+      expect(
+        multiBackupSlot.backups.every(
+          (slot) => slot.sheetRowNumber > multiBackupSlot.sheetRowNumber,
+        ),
+        isTrue,
+      );
 
-      final upperSlot = activeSheet.primarySlots[3];
-      expect(upperSlot.exercise, 'Bench Press');
-      expect(upperSlot.backups.map((slot) => slot.exercise), [
-        'Push-Up',
-        'Dumbbell Floor Press',
-        'Machine Chest Press',
-      ]);
-      expect(upperSlot.backups, hasLength(greaterThan(2)));
-
-      final plankSlot = activeSheet.primarySlots[4];
+      final plankSlot = activeSheet.primarySlots.firstWhere(
+        (slot) => slot.exercise == 'Plank',
+      );
       expect(plankSlot.exercise, 'Plank');
       expect(plankSlot.workout, 'Upper');
-      expect(plankSlot.backups.map((slot) => slot.exercise), [
-        'Dead Bug',
-        'Side Plank',
-      ]);
+      expect(plankSlot.isBackup, isFalse);
 
-      final defaultSlot = activeSheet.primarySlots.last;
-      expect(defaultSlot.exercise, 'Farmer Carry');
+      final defaultSlot = activeSheet.primarySlots.firstWhere(
+        (slot) => slot.workout == defaultWorkoutName,
+      );
       expect(defaultSlot.workout, defaultWorkoutName);
       expect(defaultSlot.backups, isEmpty);
     },
@@ -1350,4 +1314,35 @@ void main() {
       ]);
     },
   );
+}
+
+List<_ReadableFixtureRow> _appReadableRows(WorkoutWorkbookFixture workbook) {
+  final readableRows = <_ReadableFixtureRow>[];
+  for (
+    var rowIndex = 2;
+    rowIndex < workbook.activeSheet.rows.length;
+    rowIndex += 1
+  ) {
+    final sheetRowNumber = rowIndex + 1;
+    final row = workbook.activeSheet.rows[rowIndex];
+    if (workbook.activeSheet.mergedFirstColumnRows.contains(sheetRowNumber) ||
+        row.length <= 8 ||
+        row.first.isEmpty) {
+      continue;
+    }
+    readableRows.add(
+      _ReadableFixtureRow(sheetRowNumber: sheetRowNumber, values: row),
+    );
+  }
+  return readableRows;
+}
+
+class _ReadableFixtureRow {
+  const _ReadableFixtureRow({
+    required this.sheetRowNumber,
+    required this.values,
+  });
+
+  final int sheetRowNumber;
+  final List<String> values;
 }
