@@ -97,7 +97,12 @@ The active sheet remains human-readable. It uses fixed metadata/display columns 
 - The active sheet does not expose `exercise_id`.
 - Formula healing is mandatory when formula-driven fields are missing or broken.
 - Formula healing offers exercise choices from `Exercises`; exact displayed-name matches are preselected where possible.
-- The active sheet fixed columns are `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, `Workout`, and `is_backup`, followed by history blocks.
+- The active sheet fixed columns are `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, `Log Format`, `Workout`, and `is_backup`, followed by history blocks.
+- The `Exercises` tab owns a human-readable `Log Format` metadata column, and the active sheet mirrors it by direct formula for each exercise row.
+- A blank `Log Format` means the default literal format `{Weight}[x]{Reps}[@]{RPE}`.
+- Literal log formats use `{Field Label}` for app field labels and `[sheet literal]` for compact sheet text.
+- Literal text inside `[]` is always rendered and is never automatically omitted for blank field values.
+- Existing set cells that cannot be parsed by the row-local `Log Format` remain raw text and editable.
 - `Workout` is human-readable and visible near the end of the fixed metadata area.
 - Blank `Workout` means the default workout.
 - `is_backup` is the last metadata column before history blocks.

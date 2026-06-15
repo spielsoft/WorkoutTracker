@@ -12,17 +12,50 @@ exercise metadata and is read-only for the MVP.
 The active sheet starts with fixed columns, followed by visible history blocks:
 
 ```text
-Exercise | Sets | Reps | RPE | Rest | Tempo | Notes | Workout | is_backup | history blocks...
+Exercise | Sets | Reps | RPE | Rest | Tempo | Notes | Log Format | Workout | is_backup | history blocks...
 ```
 
 Display cells in the active sheet are direct spreadsheet formulas into
 `Exercises` wherever the sheet needs canonical exercise metadata. The app may
 repair those formulas, but it must preserve the sheet as human-readable data.
 For the MVP formula-healing planner, the active sheet's formula-driven columns
-are `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, and `Notes`. They map to
-`Exercises` columns `Exercise`, `Default Sets`, `Default Reps`, `Default RPE`,
-`Default Rest`, `Default Tempo`, and `Notes` respectively. `Workout` and
-`is_backup` remain active-sheet context and are not healed from `Exercises`.
+are `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, and
+`Log Format`. They map to `Exercises` columns `Exercise`, `Default Sets`,
+`Default Reps`, `Default RPE`, `Default Rest`, `Default Tempo`, `Notes`, and
+`Log Format` respectively. `Workout` and `is_backup` remain active-sheet
+context and are not healed from `Exercises`; `is_backup` remains the final
+metadata column before history blocks.
+
+## Literal Log Formats
+
+The `Exercises` tab owns a human-readable `Log Format` metadata column. The
+active sheet mirrors that value by direct formula so each row can define the
+structured logging fields and compact sheet notation used for its history
+cells. A blank `Log Format` means the default format:
+
+```text
+{Weight}[x]{Reps}[@]{RPE}
+```
+
+The format language is literal:
+
+- Text inside `{}` is an app field label. Field labels are exact
+  user-authored text, not app-owned semantic names.
+- Text inside `[]` is literal sheet text.
+- Literal text inside `[]` is always rendered and is never automatically
+  omitted when an adjacent field value is blank.
+- The initial app supports one to four fields per format.
+- Existing history cells that cannot be parsed by the row-local format remain
+  raw text and stay editable.
+
+Examples:
+
+```text
+{Weight}[x]{Reps}[@]{RPE}
+{Height}[x]{Reps}[@]{RPE}[,]{Pain}
+{Reps}[@]{RPE}
+{Seconds}[s@]{RPE}
+```
 
 ## Vocabulary
 
