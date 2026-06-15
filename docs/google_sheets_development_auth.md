@@ -25,6 +25,13 @@ macos/Runner/Configs/AppInfo.xcconfig
 The platform `Info.plist` files expose those values to the `google_sign_in`
 plugin as `GIDClientID` and `CFBundleURLTypes`.
 
+Enable the Google Sheets API in the same Google Cloud project as the OAuth
+client:
+
+```text
+https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=657151291920
+```
+
 ## Sheets Scopes
 
 Validation reads spreadsheet structure and cell display/formula data with the

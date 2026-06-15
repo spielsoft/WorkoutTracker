@@ -160,7 +160,10 @@ class WorkoutTrackerController extends ChangeNotifier {
       if (clearReport) {
         _report = null;
       }
-      _error = '$failurePrefix: $error';
+      _error = _formatServiceFailure(
+        failurePrefix: failurePrefix,
+        error: error,
+      );
       return false;
     } finally {
       _isBusy = false;
@@ -181,5 +184,29 @@ class WorkoutTrackerController extends ChangeNotifier {
   void _clearLoggingSelection() {
     _loggingPrimarySheetRowNumber = null;
     _selectedLoggingSheetRowNumber = null;
+  }
+
+  static String _formatServiceFailure({
+    required String failurePrefix,
+    required Object error,
+  }) {
+    final message = error.toString();
+    if (message.contains('Google Sheets API has not been used') &&
+        message.contains('sheets.googleapis.com')) {
+      final project = RegExp(
+        r'project[ =]([A-Za-z0-9-]+)',
+      ).firstMatch(message)?.group(1);
+      final projectText = project == null
+          ? 'this app\'s Google Cloud project'
+          : 'Google Cloud project $project';
+      final enableUrl = project == null
+          ? 'https://console.cloud.google.com/apis/library/sheets.googleapis.com'
+          : 'https://console.cloud.google.com/apis/library/'
+                'sheets.googleapis.com?project=$project';
+      return '$failurePrefix: Google Sheets API is disabled for $projectText. '
+          'Enable the Google Sheets API, wait a few minutes for Google to '
+          'propagate the change, then retry: $enableUrl';
+    }
+    return '$failurePrefix: $message';
   }
 }

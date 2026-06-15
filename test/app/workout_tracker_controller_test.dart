@@ -142,6 +142,34 @@ void main() {
   );
 
   test(
+    'disabled Google Sheets API errors explain the project setup action',
+    () async {
+      final controller = WorkoutTrackerController(
+        validationService: _FailingSpreadsheetValidationService(
+          'DetailedApiRequestError(status: 403, message: Google Sheets API '
+          'has not been used in project 657151291920 before or it is disabled. '
+          'Enable it by visiting https://console.developers.google.com/apis/'
+          'api/sheets.googleapis.com/overview?project=657151291920 then retry.)',
+        ),
+      );
+
+      final validated = await controller.validateSpreadsheetSelection(
+        'spreadsheet-id',
+      );
+
+      expect(validated, isFalse);
+      expect(
+        controller.error,
+        'Unable to validate spreadsheet: Google Sheets API is disabled for '
+        'Google Cloud project 657151291920. Enable the Google Sheets API, wait '
+        'a few minutes for Google to propagate the change, then retry: '
+        'https://console.cloud.google.com/apis/library/'
+        'sheets.googleapis.com?project=657151291920',
+      );
+    },
+  );
+
+  test(
     'pending history block creation can complete after controller disposal',
     () async {
       final activeSheet = parseActiveSheet(
@@ -174,6 +202,38 @@ void main() {
       await expectLater(createFuture, completion(isTrue));
     },
   );
+}
+
+class _FailingSpreadsheetValidationService
+    implements SpreadsheetValidationService {
+  const _FailingSpreadsheetValidationService(this.message);
+
+  final String message;
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) {
+    throw StateError(message);
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> createHistoryBlock({
+    required String spreadsheetId,
+    required String label,
+    required ParsedActiveSheet activeSheet,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 class _PendingCreateHistoryBlockService
