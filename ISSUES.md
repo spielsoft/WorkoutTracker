@@ -3,7 +3,7 @@
 - [x] Slice 0: Define the Literal Log Format Contract
 - [x] Slice 1: Parse and Render Literal Log Formats
 - [x] Slice 2: Read Log Format Metadata From the Sheet Contract
-- [ ] Slice 3: Heal and Reset Log Format Formula Columns
+- [x] Slice 3: Heal and Reset Log Format Formula Columns
 - [ ] Slice 4: Parse Existing History Cells With Row-Local Formats
 - [ ] Slice 5: Plan Set Writes From Formatted Field Values
 - [ ] Slice 6: Render Dynamic Logging Fields in the GUI
@@ -122,15 +122,15 @@ Update formula healing and development sheet reset behavior so the active sheet'
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for a missing active-sheet `Log Format` formula.
-- [ ] Formula healing regenerates the `Log Format` formula for exact, ambiguous, and selected exercise repairs using the same user-choice rules as other exercise metadata.
-- [ ] The development reset fixture adds `Log Format` to `Exercises`.
-- [ ] Active workout rows in the reset fixture link `Log Format` by direct formula.
-- [ ] The live development/example Google Sheet is reset or migrated to include the `Log Format` column after app support for the new sheet shape exists.
-- [ ] The live sheet update is not performed before Slice 2 support lands, so the currently working app is not broken by a premature schema change.
-- [ ] The reset writer continues to write formulas as formulas and non-formula literals as plain text.
-- [ ] Fixture tests include at least one weighted format, one bodyweight format, one height-based format, one timed format, and one optional-pain format.
-- [ ] Existing Google read/write adapter behavior remains compatible with the expanded fixed metadata area.
+- [x] A behavior test fails first for a missing active-sheet `Log Format` formula.
+- [x] Formula healing regenerates the `Log Format` formula for exact, ambiguous, and selected exercise repairs using the same user-choice rules as other exercise metadata.
+- [x] The development reset fixture adds `Log Format` to `Exercises`.
+- [x] Active workout rows in the reset fixture link `Log Format` by direct formula.
+- [x] The live development/example Google Sheet is reset or migrated to include the `Log Format` column after app support for the new sheet shape exists.
+- [x] The live sheet update is not performed before Slice 2 support lands, so the currently working app is not broken by a premature schema change.
+- [x] The reset writer continues to write formulas as formulas and non-formula literals as plain text.
+- [x] Fixture tests include at least one weighted format, one bodyweight format, one height-based format, one timed format, and one optional-pain format.
+- [x] Existing Google read/write adapter behavior remains compatible with the expanded fixed metadata area.
 
 ### Blocked by
 

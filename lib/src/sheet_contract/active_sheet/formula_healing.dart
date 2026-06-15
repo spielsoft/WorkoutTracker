@@ -301,6 +301,8 @@ int _defaultExerciseColumnNumber(String activeColumnName) {
       return 7;
     case 'Notes':
       return 8;
+    case 'Log Format':
+      return 9;
     default:
       return 1;
   }
@@ -369,6 +371,12 @@ List<_FormulaDrivenColumn> _formulaDrivenColumns(
       activeSheetColumnIndex: active.notes,
       exercisesSheetColumnIndex: exercises.notes,
     ),
+    if (active.logFormat != null && exercises.logFormat != null)
+      _FormulaDrivenColumn(
+        activeColumnName: 'Log Format',
+        activeSheetColumnIndex: active.logFormat!,
+        exercisesSheetColumnIndex: exercises.logFormat!,
+      ),
   ];
 }
 

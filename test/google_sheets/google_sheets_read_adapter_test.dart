@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/google_sheets.dart';
+import 'package:workout_tracker/log_format.dart';
 
 void main() {
   test(
@@ -20,11 +21,12 @@ void main() {
                     'Rest',
                     'Tempo',
                     'Notes',
+                    'Log Format',
                     'Workout',
                     'is_backup',
                     'Week 1',
                   ],
-                  ['', '', '', '', '', '', '', '', '', 'S1'],
+                  ['', '', '', '', '', '', '', '', '', '', 'S1'],
                   [
                     'Squat',
                     '3',
@@ -33,6 +35,7 @@ void main() {
                     '3 min',
                     '',
                     'Stay braced.',
+                    '{Weight}[x]{Reps}[@]{RPE}',
                     'Legs',
                     '',
                     '225x5@8',
@@ -74,6 +77,11 @@ void main() {
                     sheetColumnNumber: 7,
                     formula: '=Exercises!H2',
                   ),
+                  GoogleSheetCellFormula(
+                    sheetRowNumber: 3,
+                    sheetColumnNumber: 8,
+                    formula: '=Exercises!I2',
+                  ),
                 ],
               ),
               GoogleSheetSnapshot(
@@ -88,6 +96,7 @@ void main() {
                     'Default Rest',
                     'Default Tempo',
                     'Notes',
+                    'Log Format',
                   ],
                   [
                     'Squat',
@@ -98,6 +107,7 @@ void main() {
                     '3 min',
                     '',
                     'Stay braced.',
+                    '{Weight}[x]{Reps}[@]{RPE}',
                   ],
                 ],
               ),
@@ -117,6 +127,10 @@ void main() {
 
       expect(activeSheet.selectableWorkouts, ['Legs']);
       expect(activeSheet.historyBlocks.single.label, 'Week 1');
+      expect(
+        (activeSheet.slots.single.logFormat as ParsedLogFormat).fieldLabels,
+        ['Weight', 'Reps', 'RPE'],
+      );
       expect(
         activeSheet
             .buildWorkoutOverview(workout: 'Legs', historyBlockLabel: 'Week 1')

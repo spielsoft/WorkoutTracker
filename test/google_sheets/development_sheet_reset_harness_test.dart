@@ -83,7 +83,19 @@ void main() {
         'Default Rest',
         'Default Tempo',
         'Notes',
+        'Log Format',
       ]);
+      final exerciseFormats = exercisesRows.skip(1).map((row) => row[8]);
+      expect(
+        exerciseFormats,
+        containsAll([
+          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Reps}[@]{RPE}',
+          '{Height}[x]{Reps}[@]{RPE}',
+          '{Seconds}[s@]{RPE}',
+          '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+        ]),
+      );
       final exerciseLibraryNames = exercisesRows
           .skip(1)
           .map((row) => row.first);
@@ -204,7 +216,7 @@ bool _usesDirectExerciseDisplayFormulas(List<String> row) {
     return false;
   }
 
-  final expectedColumns = ['A', 'C', 'D', 'E', 'F', 'G', 'H'];
+  final expectedColumns = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
   for (var index = 0; index < expectedColumns.length; index += 1) {
     final formula = _exerciseFormula(row[index]);
     if (formula == null ||

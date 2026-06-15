@@ -197,6 +197,7 @@ class _ExercisesColumnIndexes {
     required this.defaultRest,
     required this.defaultTempo,
     required this.notes,
+    required this.logFormat,
   });
 
   factory _ExercisesColumnIndexes.fromHeader(List<String> header) {
@@ -213,6 +214,7 @@ class _ExercisesColumnIndexes {
       defaultRest: indexes['Default Rest'] ?? 5,
       defaultTempo: indexes['Default Tempo'] ?? 6,
       notes: indexes['Notes'] ?? 7,
+      logFormat: indexes['Log Format'],
     );
   }
 
@@ -223,4 +225,5 @@ class _ExercisesColumnIndexes {
   final int defaultRest;
   final int defaultTempo;
   final int notes;
+  final int? logFormat;
 }

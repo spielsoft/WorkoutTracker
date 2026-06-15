@@ -10,38 +10,7 @@ void main() {
       final activeSheet = parseActiveSheet(
         ActiveSheetInput(
           rows: _squatRows(),
-          cellFormulas: const [
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 2,
-              formula: '=Exercises!C2',
-            ),
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 3,
-              formula: '=Exercises!D2',
-            ),
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 4,
-              formula: '=Exercises!E2',
-            ),
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 5,
-              formula: '=Exercises!F2',
-            ),
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 6,
-              formula: '=Exercises!G2',
-            ),
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 7,
-              formula: '=Exercises!H2',
-            ),
-          ],
+          cellFormulas: _missingExerciseFormulaCells,
           exercisesRows: _squatExerciseRows,
         ),
       );
@@ -71,43 +40,7 @@ void main() {
     final activeSheet = parseActiveSheet(
       ActiveSheetInput(
         rows: _squatRows(),
-        cellFormulas: const [
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 1,
-            formula: '=Exercises!A2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 2,
-            formula: '=Exercises!C2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 3,
-            formula: '=Exercises!D99',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 4,
-            formula: '=Exercises!E2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 5,
-            formula: '=Exercises!F2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 6,
-            formula: '=Exercises!G2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 7,
-            formula: '=Exercises!H2',
-          ),
-        ],
+        cellFormulas: _brokenRepsFormulaCells,
         exercisesRows: _squatExerciseRows,
       ),
     );
@@ -123,6 +56,104 @@ void main() {
     ]);
   });
 
+  test('reports and plans healing for a missing Log Format formula', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: _squatRows(),
+        cellFormulas: _missingLogFormatFormulaCells,
+        exercisesRows: _squatExerciseRows,
+      ),
+    );
+
+    expect(activeSheet.formulaHealingIssues, [
+      FormulaHealingIssue(
+        activeSheetRowNumber: 3,
+        displayedExerciseName: 'Squat',
+        preselectedExerciseSheetRowNumber: 2,
+        requiresUserSelection: false,
+        candidateExerciseSheetRowNumbers: const [2],
+        cells: const [
+          FormulaHealingCellIssue(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            columnName: 'Log Format',
+            reason: FormulaHealingIssueReason.missingFormula,
+            currentFormula: '',
+          ),
+        ],
+      ),
+    ]);
+
+    expect(
+      activeSheet.planFormulaHealing(activeSheetRowNumber: 3).cellUpdates,
+      [
+        const CellUpdate(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          value: '=Exercises!I2',
+        ),
+      ],
+    );
+  });
+
+  test(
+    'plans Log Format healing only after ambiguous issues get a user choice',
+    () {
+      final activeSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: _squatRows(),
+          cellFormulas: _missingLogFormatFormulaCells,
+          exercisesRows: const [
+            _exercisesHeader,
+            [
+              'Squat',
+              'Back squat',
+              '3',
+              '5',
+              '8',
+              '3 min',
+              '',
+              'Stay braced.',
+              '{Weight}[x]{Reps}[@]{RPE}',
+            ],
+            [
+              'Squat',
+              'Safety-bar squat',
+              '3',
+              '5',
+              '8',
+              '3 min',
+              '',
+              'Stay tall.',
+              '{Reps}[@]{RPE}',
+            ],
+          ],
+        ),
+      );
+
+      final issue = activeSheet.formulaHealingIssues.single;
+      expect(issue.requiresUserSelection, isTrue);
+      expect(issue.cells.single.columnName, 'Log Format');
+      expect(
+        activeSheet.planFormulaHealing(activeSheetRowNumber: 3).cellUpdates,
+        isEmpty,
+      );
+
+      final plan = activeSheet.planFormulaHealing(
+        activeSheetRowNumber: 3,
+        selectedExerciseSheetRowNumber: 3,
+      );
+
+      expect(plan.cellUpdates, const [
+        CellUpdate(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          value: '=Exercises!I3',
+        ),
+      ]);
+    },
+  );
+
   test('requires user selection for ambiguous displayed-name matches', () {
     final activeSheet = parseActiveSheet(
       ActiveSheetInput(
@@ -130,7 +161,17 @@ void main() {
         cellFormulas: _missingExerciseFormulaCells,
         exercisesRows: const [
           _exercisesHeader,
-          ['Squat', 'Back squat', '3', '5', '8', '3 min', '', 'Stay braced.'],
+          [
+            'Squat',
+            'Back squat',
+            '3',
+            '5',
+            '8',
+            '3 min',
+            '',
+            'Stay braced.',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
           [
             'Squat',
             'Safety-bar squat',
@@ -140,6 +181,7 @@ void main() {
             '3 min',
             '',
             'Stay tall.',
+            '{Weight}[x]{Reps}[@]{RPE}',
           ],
         ],
       ),
@@ -166,8 +208,8 @@ void main() {
             '3 min',
             '',
             'Stay braced.',
+            '{Weight}[x]{Reps}[@]{RPE}',
             'Legs',
-            '',
             '',
           ],
         ],
@@ -213,7 +255,17 @@ void main() {
           cellFormulas: _missingExerciseFormulaCells,
           exercisesRows: const [
             _exercisesHeader,
-            ['Squat', 'Back squat', '3', '5', '8', '3 min', '', 'Stay braced.'],
+            [
+              'Squat',
+              'Back squat',
+              '3',
+              '5',
+              '8',
+              '3 min',
+              '',
+              'Stay braced.',
+              '{Weight}[x]{Reps}[@]{RPE}',
+            ],
             [
               'Squat',
               'Safety-bar squat',
@@ -223,6 +275,7 @@ void main() {
               '3 min',
               '',
               'Stay tall.',
+              '{Weight}[x]{Reps}[@]{RPE}',
             ],
           ],
         ),
@@ -254,7 +307,19 @@ List<List<String>> _squatRows() {
   return [
     historyHeaderRow(['Session A']),
     setLabelRow(['S1']),
-    ['Squat', '3', '5', '8', '3 min', '', 'Stay braced.', 'Legs', '', ''],
+    [
+      'Squat',
+      '3',
+      '5',
+      '8',
+      '3 min',
+      '',
+      'Stay braced.',
+      '{Weight}[x]{Reps}[@]{RPE}',
+      'Legs',
+      '',
+      '',
+    ],
   ];
 }
 
@@ -267,11 +332,22 @@ const _exercisesHeader = [
   'Default Rest',
   'Default Tempo',
   'Notes',
+  'Log Format',
 ];
 
 const _squatExerciseRows = [
   _exercisesHeader,
-  ['Squat', 'Back squat', '3', '5', '8', '3 min', '', 'Stay braced.'],
+  [
+    'Squat',
+    'Back squat',
+    '3',
+    '5',
+    '8',
+    '3 min',
+    '',
+    'Stay braced.',
+    '{Weight}[x]{Reps}[@]{RPE}',
+  ],
 ];
 
 const _missingExerciseFormulaCells = [
@@ -304,5 +380,91 @@ const _missingExerciseFormulaCells = [
     sheetRowNumber: 3,
     sheetColumnNumber: 7,
     formula: '=Exercises!H2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 8,
+    formula: '=Exercises!I2',
+  ),
+];
+
+const _missingLogFormatFormulaCells = [
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 1,
+    formula: '=Exercises!A2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 2,
+    formula: '=Exercises!C2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 3,
+    formula: '=Exercises!D2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 4,
+    formula: '=Exercises!E2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 5,
+    formula: '=Exercises!F2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 6,
+    formula: '=Exercises!G2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 7,
+    formula: '=Exercises!H2',
+  ),
+];
+
+const _brokenRepsFormulaCells = [
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 1,
+    formula: '=Exercises!A2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 2,
+    formula: '=Exercises!C2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 3,
+    formula: '=Exercises!D99',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 4,
+    formula: '=Exercises!E2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 5,
+    formula: '=Exercises!F2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 6,
+    formula: '=Exercises!G2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 7,
+    formula: '=Exercises!H2',
+  ),
+  CellFormula(
+    sheetRowNumber: 3,
+    sheetColumnNumber: 8,
+    formula: '=Exercises!I2',
   ),
 ];
