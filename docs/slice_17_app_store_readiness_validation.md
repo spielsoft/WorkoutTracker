@@ -93,10 +93,9 @@ No blocking dependencies were identified for future iOS App Store, macOS App
 Store, or Android Play Store submission.
 
 Current direct dependencies are Flutter SDK, `cupertino_icons`, `googleapis`,
-`googleapis_auth`, and `http`. These do not introduce native ad, analytics,
-payment, tracking, or private API SDKs. The Google API packages are appropriate
-for the backend adapter and should remain behind an auth abstraction as the GUI
-chooses the final platform sign-in flow.
+`google_sign_in`, and `http`. These do not introduce native ad, analytics,
+payment, tracking, or private API SDKs. The Google API packages remain behind
+the native Google Sign-In authorization path used by the GUI.
 
 No project architecture, framework choice, or package dependency blocker was
 found. Local toolchain blockers discovered while attempting platform builds are

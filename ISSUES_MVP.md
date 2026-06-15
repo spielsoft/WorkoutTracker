@@ -384,7 +384,7 @@ Run an explicit architecture cleanup using the `improve-codebase-architecture` s
 
 ### What to build
 
-Build the Google Sheets read adapter for the backend seam. It must read the active first tab and the `Exercises` tab from the selected spreadsheet and translate live Google data into the same backend interface used by in-memory tests. This slice may require the user to complete Google login or authorize local credentials.
+Build the Google Sheets read adapter for the backend seam. It must read the active first tab and the `Exercises` tab from the selected spreadsheet and translate live Google data into the same backend interface used by in-memory tests. This slice may require the user to complete Google login.
 
 ### Acceptance criteria
 

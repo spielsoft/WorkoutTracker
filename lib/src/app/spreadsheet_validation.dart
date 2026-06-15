@@ -1,9 +1,5 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
-import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
 import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
@@ -11,11 +7,6 @@ import 'package:workout_tracker/sheet_contract.dart';
 const workoutTrackerDevelopmentSpreadsheetUrl =
     'https://docs.google.com/spreadsheets/d/'
     '$workoutTrackerDevelopmentSpreadsheetId/edit?gid=0#gid=0';
-const workoutTrackerDevelopmentCredentialsDartDefine =
-    'WORKOUT_TRACKER_GOOGLE_APPLICATION_CREDENTIALS';
-const workoutTrackerDevelopmentCredentialsPath = String.fromEnvironment(
-  workoutTrackerDevelopmentCredentialsDartDefine,
-);
 const workoutTrackerGoogleSignInClientIdDartDefine =
     'WORKOUT_TRACKER_GOOGLE_CLIENT_ID';
 const workoutTrackerGoogleSignInClientId = String.fromEnvironment(
@@ -132,94 +123,11 @@ class GoogleSpreadsheetValidationService
   }
 }
 
-typedef WorkoutTrackerAuthClientFactory =
-    Future<auth.AutoRefreshingAuthClient> Function({
-      required List<String> scopes,
-      required String credentialsPath,
-    });
-
-typedef ApplicationDefaultAuthClientFactory =
-    Future<auth.AutoRefreshingAuthClient> Function({
-      required List<String> scopes,
-    });
-
 typedef GoogleSpreadsheetValidationServiceFactory =
     SpreadsheetValidationService Function(
       sheets.SheetsApi api, {
       required bool canWrite,
     });
-
-class AdcSpreadsheetValidationService implements SpreadsheetValidationService {
-  const AdcSpreadsheetValidationService({
-    this.credentialsPath = workoutTrackerDevelopmentCredentialsPath,
-    this.clientFactory = clientViaWorkoutTrackerDevelopmentCredentials,
-    GoogleSpreadsheetValidationServiceFactory? serviceFactory,
-  }) : _serviceFactory =
-           serviceFactory ?? defaultGoogleSpreadsheetValidationServiceFactory;
-
-  final String credentialsPath;
-  final WorkoutTrackerAuthClientFactory clientFactory;
-  final GoogleSpreadsheetValidationServiceFactory _serviceFactory;
-
-  @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    auth.AutoRefreshingAuthClient? client;
-    try {
-      client = await clientFactory(
-        scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
-        credentialsPath: credentialsPath,
-      );
-      final api = sheets.SheetsApi(client);
-      return await _serviceFactory(
-        api,
-        canWrite: false,
-      ).validateSpreadsheet(spreadsheetId);
-    } finally {
-      client?.close();
-    }
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) async {
-    return applyActiveSheetWritePlan(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      plan: activeSheet.planNewHistoryBlock(label: label),
-    );
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) async {
-    auth.AutoRefreshingAuthClient? client;
-    try {
-      client = await clientFactory(
-        scopes: GoogleApisSheetsWriteClient.writeScopes,
-        credentialsPath: credentialsPath,
-      );
-      final api = sheets.SheetsApi(client);
-      return await _serviceFactory(
-        api,
-        canWrite: true,
-      ).applyActiveSheetWritePlan(
-        spreadsheetId: spreadsheetId,
-        activeSheet: activeSheet,
-        plan: plan,
-      );
-    } finally {
-      client?.close();
-    }
-  }
-}
 
 abstract interface class GoogleSignInAuthorizationGateway {
   Future<Map<String, String>> authorizationHeaders(List<String> scopes);
@@ -342,7 +250,7 @@ class GoogleSignInSpreadsheetValidationService
     action,
   }) async {
     final headers = await _authorizationGateway.authorizationHeaders(scopes);
-    final client = _AuthorizationHeadersClient(headers: headers);
+    final client = GoogleAuthorizationHeadersClient(headers: headers);
     try {
       final api = sheets.SheetsApi(client);
       return await action(_serviceFactory(api, canWrite: canWrite));
@@ -366,8 +274,8 @@ SpreadsheetValidationService defaultGoogleSpreadsheetValidationServiceFactory(
   );
 }
 
-class _AuthorizationHeadersClient extends http.BaseClient {
-  _AuthorizationHeadersClient({required this.headers, http.Client? inner})
+class GoogleAuthorizationHeadersClient extends http.BaseClient {
+  GoogleAuthorizationHeadersClient({required this.headers, http.Client? inner})
     : _inner = inner ?? http.Client();
 
   final Map<String, String> headers;
@@ -384,107 +292,6 @@ class _AuthorizationHeadersClient extends http.BaseClient {
     _inner.close();
     super.close();
   }
-}
-
-Future<auth.AutoRefreshingAuthClient>
-clientViaWorkoutTrackerDevelopmentCredentials({
-  required List<String> scopes,
-  String credentialsPath = workoutTrackerDevelopmentCredentialsPath,
-  Map<String, String>? environment,
-  ApplicationDefaultAuthClientFactory applicationDefaultClientFactory =
-      _clientViaApplicationDefaultCredentials,
-}) async {
-  final resolvedPath = resolveWorkoutTrackerGoogleCredentialsPath(
-    credentialsPath: credentialsPath,
-    environment: environment ?? Platform.environment,
-  );
-  if (resolvedPath == null) {
-    try {
-      return await applicationDefaultClientFactory(scopes: scopes);
-    } on Exception catch (error) {
-      throw StateError(
-        'No local Google credentials file was found. Set '
-        '$workoutTrackerDevelopmentCredentialsDartDefine, set '
-        'GOOGLE_APPLICATION_CREDENTIALS, or run '
-        '`gcloud auth application-default login` so the standard ADC file '
-        'exists. Original error: $error',
-      );
-    }
-  }
-
-  final credentials = jsonDecode(await File(resolvedPath).readAsString());
-  if (credentials is! Map<String, dynamic>) {
-    throw FormatException(
-      'Google credentials file must contain a JSON object: $resolvedPath',
-    );
-  }
-
-  final quotaProject = credentials['quota_project_id'] as String?;
-  if (credentials case {
-    'type': 'authorized_user',
-    'client_id': final String clientId,
-    'client_secret': final String? clientSecret,
-    'refresh_token': final String refreshToken,
-  }) {
-    return auth.clientViaRefreshToken(
-      auth.ClientId(clientId, clientSecret),
-      refreshToken,
-      scopes,
-      quotaProject: quotaProject,
-    );
-  }
-
-  if (credentials['type'] == 'service_account') {
-    return auth.clientViaServiceAccount(
-      auth.ServiceAccountCredentials.fromJson(credentials),
-      scopes,
-      quotaProject: quotaProject,
-    );
-  }
-
-  throw FormatException(
-    'Unsupported Google credentials type for $resolvedPath: '
-    '${credentials['type']}',
-  );
-}
-
-String? resolveWorkoutTrackerGoogleCredentialsPath({
-  String credentialsPath = workoutTrackerDevelopmentCredentialsPath,
-  Map<String, String>? environment,
-}) {
-  final env = environment ?? Platform.environment;
-  final explicitPath = credentialsPath.trim();
-  if (explicitPath.isNotEmpty) {
-    return explicitPath;
-  }
-
-  final workoutTrackerPath =
-      env[workoutTrackerDevelopmentCredentialsDartDefine]?.trim() ?? '';
-  if (workoutTrackerPath.isNotEmpty) {
-    return workoutTrackerPath;
-  }
-
-  final googlePath = env['GOOGLE_APPLICATION_CREDENTIALS']?.trim() ?? '';
-  if (googlePath.isNotEmpty) {
-    return googlePath;
-  }
-
-  final home = env['HOME']?.trim() ?? '';
-  if (home.isNotEmpty) {
-    final wellKnownPath =
-        '$home/.config/gcloud/application_default_credentials.json';
-    if (File(wellKnownPath).existsSync()) {
-      return wellKnownPath;
-    }
-  }
-
-  return null;
-}
-
-Future<auth.AutoRefreshingAuthClient> _clientViaApplicationDefaultCredentials({
-  required List<String> scopes,
-}) {
-  return auth.clientViaApplicationDefaultCredentials(scopes: scopes);
 }
 
 String spreadsheetIdFromSelection(String input) {

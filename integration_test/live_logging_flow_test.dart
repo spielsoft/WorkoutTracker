@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
-import 'package:googleapis_auth/auth_io.dart' as auth;
+import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
 import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
@@ -10,16 +10,19 @@ import 'package:workout_tracker/workout_tracker_app.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  auth.AutoRefreshingAuthClient? client;
+  http.Client? client;
   late DevelopmentSheetResetHarness resetHarness;
   late GoogleSheetsReadAdapter readAdapter;
   late SpreadsheetValidationService validationService;
 
   setUpAll(() async {
-    final authenticatedClient =
-        await clientViaWorkoutTrackerDevelopmentCredentials(
-          scopes: GoogleApisSheetsWriteClient.writeScopes,
-        );
+    final authorizationGateway = NativeGoogleSignInAuthorizationGateway();
+    final headers = await authorizationGateway.authorizationHeaders(
+      GoogleApisSheetsWriteClient.writeScopes,
+    );
+    final authenticatedClient = GoogleAuthorizationHeadersClient(
+      headers: headers,
+    );
     client = authenticatedClient;
     final api = sheets.SheetsApi(authenticatedClient);
     resetHarness = DevelopmentSheetResetHarness(
@@ -28,7 +31,9 @@ void main() {
     readAdapter = GoogleSheetsReadAdapter(
       client: GoogleApisSheetsSpreadsheetClient(api),
     );
-    validationService = const AdcSpreadsheetValidationService();
+    validationService = GoogleSignInSpreadsheetValidationService(
+      authorizationGateway: authorizationGateway,
+    );
   });
 
   tearDownAll(() {

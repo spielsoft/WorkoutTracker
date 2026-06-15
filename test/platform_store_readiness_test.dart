@@ -60,10 +60,8 @@ void main() {
       expect(authDocs, contains('macOS GUI validation'));
       expect(authDocs, contains('iOS simulator validation'));
       expect(authDocs, contains('flutter build ios --simulator'));
-      expect(
-        authDocs,
-        contains('WORKOUT_TRACKER_GOOGLE_APPLICATION_CREDENTIALS'),
-      );
+      expect(authDocs, contains('native Google Sign-In'));
+      expect(authDocs, contains('account-picker'));
     });
   });
 }

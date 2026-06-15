@@ -12,9 +12,8 @@ Current verification:
 
 - `flutter build macos`: passes.
 - `flutter build ios --simulator`: passes.
-- `flutter test integration_test/live_logging_flow_test.dart -d <iOS simulator>
-  --dart-define=WORKOUT_TRACKER_GOOGLE_APPLICATION_CREDENTIALS=<ADC path>`:
-  passes.
+- Native Google Sign-In has replaced the temporary local-credential validation
+  path for iOS and macOS app runs.
 
 Affected commands:
 
