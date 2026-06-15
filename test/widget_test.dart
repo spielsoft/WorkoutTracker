@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
@@ -21,12 +20,13 @@ void main() {
         '3 min',
         'Controlled',
         'Stay braced.',
+        '',
         'Legs',
         '',
         '',
         '',
       ],
-      ['Bench Press', '4', '6', '8', '3 min', '', '', 'Upper', '', '', ''],
+      ['Bench Press', '4', '6', '8', '3 min', '', '', '', 'Upper', '', '', ''],
     ]);
 
     await tester.pumpWidget(
@@ -92,7 +92,7 @@ void main() {
     final service = _FakeSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
     ]);
 
     await tester.pumpWidget(
@@ -130,7 +130,7 @@ void main() {
     final service = _FakeSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
     ]);
     final accountSession = _FakeGoogleAccountSession(
       const GoogleAccountProfile(

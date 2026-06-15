@@ -29,6 +29,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     }
 
     final workout = _cell(row, columns.workout).trim();
+    final logFormat = parseLogFormat(_logFormatCell(row, columns));
     final slot = WorkoutSlot(
       sheetRowNumber: sheetRowNumber,
       exercise: exercise,
@@ -38,10 +39,21 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
       rest: _cell(row, columns.rest),
       tempo: _cell(row, columns.tempo),
       notes: _cell(row, columns.notes),
+      logFormat: logFormat,
       workout: workout.isEmpty ? defaultWorkoutName : workout,
       isBackup: _isTrue(_cell(row, columns.isBackup)),
     );
     slots.add(slot);
+
+    if (logFormat case InvalidLogFormat(:final errors)) {
+      schemaViolations.add(
+        SchemaViolation(
+          sheetRowNumber: slot.sheetRowNumber,
+          workout: slot.workout,
+          message: 'Invalid Log Format: ${errors.join(' ')}',
+        ),
+      );
+    }
 
     if (slot.isBackup) {
       final owner = currentPrimary?.primary.workout == slot.workout
@@ -129,6 +141,7 @@ class _FixedColumnIndexes {
     required this.rest,
     required this.tempo,
     required this.notes,
+    required this.logFormat,
     required this.workout,
     required this.isBackup,
   });
@@ -147,8 +160,11 @@ class _FixedColumnIndexes {
       rest: indexes['Rest'] ?? 4,
       tempo: indexes['Tempo'] ?? 5,
       notes: indexes['Notes'] ?? 6,
-      workout: indexes['Workout'] ?? 7,
-      isBackup: indexes['is_backup'] ?? 8,
+      logFormat: indexes['Log Format'],
+      workout:
+          indexes['Workout'] ?? (indexes.containsKey('Log Format') ? 8 : 7),
+      isBackup:
+          indexes['is_backup'] ?? (indexes.containsKey('Log Format') ? 9 : 8),
     );
   }
 
@@ -159,8 +175,17 @@ class _FixedColumnIndexes {
   final int rest;
   final int tempo;
   final int notes;
+  final int? logFormat;
   final int workout;
   final int isBackup;
+}
+
+String _logFormatCell(List<String> row, _FixedColumnIndexes columns) {
+  final logFormatColumn = columns.logFormat;
+  if (logFormatColumn == null) {
+    return '';
+  }
+  return _cell(row, logFormatColumn);
 }
 
 class _ExercisesColumnIndexes {

@@ -5,6 +5,108 @@ import '../fixtures/workout_sheet_fixtures.dart';
 import 'active_sheet_test_helpers.dart';
 
 void main() {
+  test('parses row-local log format metadata before workout columns', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [
+            'Exercise',
+            'Sets',
+            'Reps',
+            'RPE',
+            'Rest',
+            'Tempo',
+            'Notes',
+            'Log Format',
+            'Workout',
+            'is_backup',
+            'Session A',
+          ],
+          ['', '', '', '', '', '', '', '', '', '', 'S1'],
+          [
+            'Squat',
+            '3',
+            '5',
+            '8',
+            '3 min',
+            '',
+            'Stay braced.',
+            '{Weight}[x]{Reps}[@]{RPE}',
+            'Legs',
+            '',
+            '225x5@8',
+          ],
+          [
+            'Leg Press',
+            '3',
+            '10',
+            '8',
+            '2 min',
+            '',
+            'Backup if racks are taken.',
+            '',
+            'Legs',
+            'TRUE',
+            '',
+          ],
+        ],
+      ),
+    );
+
+    final primary = activeSheet.primarySlots.single;
+    final backup = primary.backups.single;
+
+    expect(activeSheet.schemaViolations, isEmpty);
+    expect(
+      activeSheet.historyBlocks.single.setColumns.single.sheetColumnNumber,
+      11,
+    );
+    expect(activeSheet.selectableWorkouts, ['Legs']);
+    expect(primary.workout, 'Legs');
+    expect(primary.isBackup, isFalse);
+    expect((primary.logFormat as ParsedLogFormat).fieldLabels, [
+      'Weight',
+      'Reps',
+      'RPE',
+    ]);
+    expect(backup.workout, 'Legs');
+    expect(backup.isBackup, isTrue);
+    expect(backup.logFormat, parseLogFormat(defaultLogFormatText));
+  });
+
+  test('reports schema violations for invalid row-local log formats', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+          [
+            'Squat',
+            '3',
+            '5',
+            '8',
+            '3 min',
+            '',
+            'Stay braced.',
+            '{Weight[x]{Reps}',
+            'Legs',
+            '',
+            '',
+          ],
+        ],
+      ),
+    );
+
+    expect(activeSheet.slots.single.logFormat, isA<InvalidLogFormat>());
+    expect(activeSheet.schemaViolations, [
+      SchemaViolation(
+        sheetRowNumber: 3,
+        workout: 'Legs',
+        message: 'Invalid Log Format: Field labels cannot contain brackets.',
+      ),
+    ]);
+  });
+
   test('parses app-readable active sheet rows into ordered workout slots', () {
     final workbook = loadLocalWorkoutWorkbookFixture();
     final activeSheet = parseFixtureActiveSheet();
@@ -31,14 +133,15 @@ void main() {
         rest: firstReadableRow.values[4],
         tempo: firstReadableRow.values[5],
         notes: firstReadableRow.values[6],
-        workout: firstReadableRow.values[7],
-        isBackup: firstReadableRow.values[8] == 'TRUE',
+        logFormat: parseLogFormat(defaultLogFormatText),
+        workout: firstReadableRow.values[8],
+        isBackup: firstReadableRow.values[9] == 'TRUE',
       ),
     );
     expect(activeSheet.slots.any((slot) => slot.isBackup), isTrue);
     expect(
       activeSheet.slots.map((slot) => slot.isBackup),
-      expectedReadableRows.map((row) => row.values[8] == 'TRUE'),
+      expectedReadableRows.map((row) => row.values[9] == 'TRUE'),
     );
     expect(
       activeSheet.slots.any((slot) => slot.workout == defaultWorkoutName),
@@ -63,8 +166,9 @@ void main() {
               'Human section label spanning columns.',
               '',
               '',
+              '',
             ],
-            ['Squat', '3', '5', '8', '3 min', '', '', '', ''],
+            ['Squat', '3', '5', '8', '3 min', '', '', '', '', ''],
           ],
           mergedFirstColumnRows: {2},
         ),
@@ -128,9 +232,20 @@ void main() {
       ActiveSheetInput(
         rows: [
           activeSheetFixedColumns,
-          ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', ''],
-          ['Bench Press', '3', '8', '8', '2 min', '', '', 'Upper', ''],
-          ['Reverse Lunge', '3', '10/side', '8', '90s', '', '', 'Legs', 'TRUE'],
+          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', ''],
+          ['Bench Press', '3', '8', '8', '2 min', '', '', '', 'Upper', ''],
+          [
+            'Reverse Lunge',
+            '3',
+            '10/side',
+            '8',
+            '90s',
+            '',
+            '',
+            '',
+            'Legs',
+            'TRUE',
+          ],
         ],
       ),
     );
@@ -151,9 +266,9 @@ void main() {
       ActiveSheetInput(
         rows: [
           activeSheetFixedColumns,
-          ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', ''],
-          ['Deadlift', '3', '5', '8', '3 min', '', '', 'Legs', ''],
-          ['Hip Thrust', '3', '10', '8', '2 min', '', '', 'Legs', 'TRUE'],
+          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', ''],
+          ['Deadlift', '3', '5', '8', '3 min', '', '', '', 'Legs', ''],
+          ['Hip Thrust', '3', '10', '8', '2 min', '', '', '', 'Legs', 'TRUE'],
         ],
       ),
     );
@@ -176,8 +291,8 @@ void main() {
         ActiveSheetInput(
           rows: [
             activeSheetFixedColumns,
-            ['Step-Up', '3', '10/side', '8', '90s', '', '', 'Legs', 'TRUE'],
-            ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', ''],
+            ['Step-Up', '3', '10/side', '8', '90s', '', '', '', 'Legs', 'TRUE'],
+            ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', ''],
           ],
         ),
       );

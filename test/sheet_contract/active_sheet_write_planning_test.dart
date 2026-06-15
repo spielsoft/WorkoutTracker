@@ -18,11 +18,11 @@ void main() {
     );
 
     expect(plan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 10, value: '75x8@8'),
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '75x8@8'),
     ]);
     expect(
       plan.nextSetPosition,
-      SetPosition(sheetRowNumber: 3, setNumber: 2, sheetColumnNumber: 11),
+      SetPosition(sheetRowNumber: 3, setNumber: 2, sheetColumnNumber: 12),
     );
   });
 
@@ -30,8 +30,21 @@ void main() {
     final rows = [
       historyHeaderRow(['Session A', '']),
       setLabelRow(['S1', 'S2']),
-      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8', ''],
-      ['Leg Press', '3', '10', '8', '2 min', '', '', 'Legs', 'TRUE', '', ''],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8', ''],
+      [
+        'Leg Press',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        '',
+        '',
+        'Legs',
+        'TRUE',
+        '',
+        '',
+      ],
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
@@ -53,15 +66,17 @@ void main() {
     );
 
     expect(primaryPlan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '230x5@8'),
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 12, value: '230x5@8'),
     ]);
     expect(backupPlan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 4, sheetColumnNumber: 10, value: '360x10@8'),
+      CellUpdate(sheetRowNumber: 4, sheetColumnNumber: 11, value: '360x10@8'),
     ]);
-    expect(backupPlan.previewRowsAfterApplying(rows)[2].skip(9), [
-      '225x5@8',
-      '',
-    ]);
+    expect(
+      backupPlan
+          .previewRowsAfterApplying(rows)[2]
+          .skip(activeSheetFixedColumns.length),
+      ['225x5@8', ''],
+    );
   });
 
   test('plans editing an existing set cell', () {
@@ -78,7 +93,7 @@ void main() {
     );
 
     expect(plan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 6, sheetColumnNumber: 10, value: '160x6@8'),
+      CellUpdate(sheetRowNumber: 6, sheetColumnNumber: 11, value: '160x6@8'),
     ]);
   });
 
@@ -92,7 +107,7 @@ void main() {
     );
 
     expect(plan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 6, sheetColumnNumber: 10, value: ''),
+      CellUpdate(sheetRowNumber: 6, sheetColumnNumber: 11, value: ''),
     ]);
   });
 
@@ -102,7 +117,7 @@ void main() {
       final rows = [
         historyHeaderRow(['Session A']),
         setLabelRow(['S1']),
-        ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
@@ -117,18 +132,20 @@ void main() {
 
       expect(plan.columnInsertions, [
         HistoryColumnInsertion(
-          sheetColumnNumber: 11,
+          sheetColumnNumber: 12,
           headers: const [''],
           setLabels: const ['S2'],
         ),
       ]);
       expect(plan.cellUpdates, [
-        CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '230x5@8'),
+        CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 12, value: '230x5@8'),
       ]);
-      expect(plan.previewRowsAfterApplying(rows)[2].skip(9), [
-        '225x5@8',
-        '230x5@8',
-      ]);
+      expect(
+        plan
+            .previewRowsAfterApplying(rows)[2]
+            .skip(activeSheetFixedColumns.length),
+        ['225x5@8', '230x5@8'],
+      );
     },
   );
 
@@ -142,6 +159,7 @@ void main() {
         '5',
         '8',
         '3 min',
+        '',
         '',
         '',
         'Legs',
@@ -162,12 +180,14 @@ void main() {
     );
 
     expect(plan.cellUpdates, [
-      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 11, value: '225x5@8'),
+      CellUpdate(sheetRowNumber: 3, sheetColumnNumber: 12, value: '225x5@8'),
     ]);
-    expect(plan.previewRowsAfterApplying(rows)[2].skip(9), [
-      'worked up, knee felt odd',
-      '225x5@8',
-    ]);
+    expect(
+      plan
+          .previewRowsAfterApplying(rows)[2]
+          .skip(activeSheetFixedColumns.length),
+      ['worked up, knee felt odd', '225x5@8'],
+    );
   });
 
   test('does not plan set writes for rows outside parsed exercise slots', () {
@@ -185,8 +205,9 @@ void main() {
         '',
         '',
         '',
+        '',
       ],
-      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 

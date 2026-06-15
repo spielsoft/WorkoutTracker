@@ -10,6 +10,7 @@ class WorkoutSlot {
     required this.rest,
     required this.tempo,
     required this.notes,
+    required this.logFormat,
     required this.workout,
     required this.isBackup,
     Iterable<WorkoutSlot> backups = const [],
@@ -23,6 +24,7 @@ class WorkoutSlot {
   final String rest;
   final String tempo;
   final String notes;
+  final LogFormatParseResult logFormat;
   final String workout;
   final bool isBackup;
   final List<WorkoutSlot> backups;
@@ -37,6 +39,7 @@ class WorkoutSlot {
       rest: rest,
       tempo: tempo,
       notes: notes,
+      logFormat: logFormat,
       workout: workout,
       isBackup: isBackup,
       backups: backups,
@@ -55,6 +58,7 @@ class WorkoutSlot {
             rest == other.rest &&
             tempo == other.tempo &&
             notes == other.notes &&
+            logFormat == other.logFormat &&
             workout == other.workout &&
             isBackup == other.isBackup &&
             _listEquals(backups, other.backups);
@@ -70,6 +74,7 @@ class WorkoutSlot {
     rest,
     tempo,
     notes,
+    logFormat,
     workout,
     isBackup,
     Object.hashAll(backups),
@@ -86,6 +91,7 @@ class WorkoutSlot {
         'rest: $rest, '
         'tempo: $tempo, '
         'notes: $notes, '
+        'logFormat: $logFormat, '
         'workout: $workout, '
         'isBackup: $isBackup, '
         'backups: $backups'
@@ -107,5 +113,6 @@ WorkoutChoice _choiceForSlot(WorkoutSlot slot) {
     sheetRowNumber: slot.sheetRowNumber,
     exercise: slot.exercise,
     isBackup: slot.isBackup,
+    logFormat: slot.logFormat,
   );
 }

@@ -1,3 +1,4 @@
+import '../log_format/log_format.dart';
 import '../set_notation/set_notation.dart';
 
 part 'active_sheet/formula_healing.dart';

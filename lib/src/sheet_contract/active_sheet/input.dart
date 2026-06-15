@@ -10,6 +10,7 @@ const activeSheetFixedColumns = [
   'Rest',
   'Tempo',
   'Notes',
+  'Log Format',
   'Workout',
   'is_backup',
 ];

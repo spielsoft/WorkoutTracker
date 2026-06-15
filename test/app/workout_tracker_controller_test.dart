@@ -11,13 +11,14 @@ void main() {
       final service = _FakeSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 2', '', 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2', 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '', '', ''],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', '', ''],
         [
           'Bench Press',
           '4',
           '6',
           '8',
           '3 min',
+          '',
           '',
           '',
           'Upper',
@@ -52,7 +53,7 @@ void main() {
       final service = _FakeSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 2', '', 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2', 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '', '', ''],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', '', ''],
         [
           'Leg Press',
           '3',
@@ -61,13 +62,14 @@ void main() {
           '2 min',
           '',
           '',
+          '',
           'Legs',
           'TRUE',
           '',
           '',
           '',
         ],
-        ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '', ''],
+        ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '', '', ''],
       ]);
       final controller = WorkoutTrackerController(validationService: service);
 
@@ -94,8 +96,8 @@ void main() {
       final service = _FakeSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 2'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8'],
-        ['Plank', '3', '45s', '8', '60s', '', '', '', '', '45s@8'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+        ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '45s@8'],
       ]);
       final controller = WorkoutTrackerController(validationService: service);
 
@@ -124,7 +126,7 @@ void main() {
         validationService: _FakeSpreadsheetValidationService.fromRows([
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
         ]),
       );
 
@@ -177,7 +179,7 @@ void main() {
           rows: [
             [...activeSheetFixedColumns, 'Week 1'],
             [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-            ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', ''],
+            ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
           ],
         ),
       );

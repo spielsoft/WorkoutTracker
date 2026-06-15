@@ -2,7 +2,7 @@
 
 - [x] Slice 0: Define the Literal Log Format Contract
 - [x] Slice 1: Parse and Render Literal Log Formats
-- [ ] Slice 2: Read Log Format Metadata From the Sheet Contract
+- [x] Slice 2: Read Log Format Metadata From the Sheet Contract
 - [ ] Slice 3: Heal and Reset Log Format Formula Columns
 - [ ] Slice 4: Parse Existing History Cells With Row-Local Formats
 - [ ] Slice 5: Plan Set Writes From Formatted Field Values
@@ -93,14 +93,14 @@ Extend the active sheet parser and read models so every parsed workout slot carr
 
 ### Acceptance criteria
 
-- [ ] A behavior test fails first for parsing a valid active sheet containing a `Log Format` column.
-- [ ] The parser recognizes `Log Format` between `Notes` and `Workout`.
-- [ ] `Workout` remains visible near the end of the fixed metadata area.
-- [ ] `is_backup` remains the final metadata column before history blocks.
-- [ ] Parsed primary and backup rows expose their row-local log format through the public sheet-contract Interface.
-- [ ] Blank `Log Format` values are interpreted as the default format.
-- [ ] Invalid `Log Format` values produce schema violations that prevent unsafe structured logging for that row.
-- [ ] Workout overview behavior, backup grouping, history block discovery, and set counts continue to work with the added metadata column.
+- [x] A behavior test fails first for parsing a valid active sheet containing a `Log Format` column.
+- [x] The parser recognizes `Log Format` between `Notes` and `Workout`.
+- [x] `Workout` remains visible near the end of the fixed metadata area.
+- [x] `is_backup` remains the final metadata column before history blocks.
+- [x] Parsed primary and backup rows expose their row-local log format through the public sheet-contract Interface.
+- [x] Blank `Log Format` values are interpreted as the default format.
+- [x] Invalid `Log Format` values produce schema violations that prevent unsafe structured logging for that row.
+- [x] Workout overview behavior, backup grouping, history block discovery, and set counts continue to work with the added metadata column.
 
 ### Blocked by
 

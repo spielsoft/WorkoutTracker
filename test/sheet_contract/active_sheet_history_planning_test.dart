@@ -23,8 +23,8 @@ void main() {
     expect(newestBlock?.label, 'Week 2');
     expect(newestBlock?.setColumns.map((column) => column.label), ['S1', 'S2']);
     expect(newestBlock?.setColumns.map((column) => column.sheetColumnNumber), [
-      10,
       11,
+      12,
     ]);
     expect(previousBlock?.setColumns.map((column) => column.label), [
       'S1',
@@ -39,7 +39,7 @@ void main() {
         rows: [
           historyHeaderRow(['Session A', '2026-06-14']),
           setLabelRow(['S1', 'S1']),
-          ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '', ''],
+          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
         ],
       ),
     );
@@ -65,7 +65,7 @@ void main() {
 
     expect(plan.columnInsertions, [
       HistoryColumnInsertion(
-        sheetColumnNumber: 10,
+        sheetColumnNumber: 11,
         headers: const ['Week 3'],
         setLabels: const ['S1'],
       ),
@@ -82,7 +82,7 @@ void main() {
 
     expect(plan.columnInsertions, [
       HistoryColumnInsertion(
-        sheetColumnNumber: 12,
+        sheetColumnNumber: 13,
         headers: const [''],
         setLabels: const ['S3'],
       ),
@@ -93,7 +93,7 @@ void main() {
     final rows = [
       historyHeaderRow(['Session A']),
       setLabelRow(['S1']),
-      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
@@ -104,17 +104,17 @@ void main() {
 
     expect(plan.columnInsertions, [
       HistoryColumnInsertion(
-        sheetColumnNumber: 11,
+        sheetColumnNumber: 12,
         headers: const ['', '', ''],
         setLabels: const ['S2', 'S3', 'S4'],
       ),
     ]);
-    expect(plan.previewRowsAfterApplying(rows)[1].skip(9), [
-      'S1',
-      'S2',
-      'S3',
-      'S4',
-    ]);
+    expect(
+      plan
+          .previewRowsAfterApplying(rows)[1]
+          .skip(activeSheetFixedColumns.length),
+      ['S1', 'S2', 'S3', 'S4'],
+    );
   });
 
   test('previews history insertions without overwriting existing data', () {
@@ -125,7 +125,7 @@ void main() {
         .planNewHistoryBlock(label: 'Week 3')
         .previewRowsAfterApplying(workbook.activeSheet.rows);
 
-    expect(previewRows.first.skip(9).take(6), [
+    expect(previewRows.first.skip(activeSheetFixedColumns.length).take(6), [
       'Week 3',
       'Week 2',
       '',
@@ -133,7 +133,7 @@ void main() {
       '',
       '',
     ]);
-    expect(previewRows[1].skip(9).take(6), [
+    expect(previewRows[1].skip(activeSheetFixedColumns.length).take(6), [
       'S1',
       'S1',
       'S2',
@@ -144,7 +144,7 @@ void main() {
     final benchPressPreviewRow = previewRows.firstWhere(
       (row) => row.first == 'Bench Press',
     );
-    expect(benchPressPreviewRow.skip(9).take(6), [
+    expect(benchPressPreviewRow.skip(activeSheetFixedColumns.length).take(6), [
       '',
       '155x6@8',
       '',

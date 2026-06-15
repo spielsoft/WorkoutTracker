@@ -29,11 +29,13 @@ class WorkoutChoice {
     required this.sheetRowNumber,
     required this.exercise,
     required this.isBackup,
+    required this.logFormat,
   });
 
   final int sheetRowNumber;
   final String exercise;
   final bool isBackup;
+  final LogFormatParseResult logFormat;
 }
 
 class ExerciseLoggingContext {
@@ -42,6 +44,7 @@ class ExerciseLoggingContext {
     Iterable<WorkoutChoice> choices = const [],
     required this.notes,
     required this.rest,
+    required this.logFormat,
     required this.targets,
     required this.selectedHistory,
     Iterable<RowHistoryBlock> recentHistoryBlocks = const [],
@@ -54,6 +57,7 @@ class ExerciseLoggingContext {
   final List<WorkoutChoice> choices;
   final String notes;
   final String rest;
+  final LogFormatParseResult logFormat;
   final ExerciseTargets targets;
   final RowHistoryBlock selectedHistory;
   final List<RowHistoryBlock> recentHistoryBlocks;
@@ -153,6 +157,7 @@ class _WorkoutReadModelBuilder {
       choices: choices.map(_choiceForSlot),
       notes: selected.notes,
       rest: selected.rest,
+      logFormat: selected.logFormat,
       targets: ExerciseTargets(
         sets: selected.sets,
         reps: selected.reps,

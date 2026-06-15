@@ -8,7 +8,7 @@ void main() {
     final rows = [
       historyHeaderRow(['Session A', '']),
       setLabelRow(['S1', 'S2']),
-      ['Squat', '3', '5', '8', '3 min', '', '', 'Legs', '', '225x5@8', ''],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8', ''],
       [
         'Leg Press',
         '3',
@@ -17,18 +17,20 @@ void main() {
         '2 min',
         '',
         '',
+        '',
         'Legs',
         'TRUE',
         '360x10@8',
         '',
       ],
-      ['Deadlift', '3', '5', '8', '3 min', '', '', 'Legs', '', '', ''],
+      ['Deadlift', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
       [
         'Bench Press',
         '4',
         '6',
         '8',
         '3 min',
+        '',
         '',
         '',
         'Upper',
@@ -80,6 +82,7 @@ void main() {
           '3 min',
           '',
           'Stay braced.',
+          '{Weight}[x]{Reps}[@]{RPE}',
           'Legs',
           '',
           '225x5@8',
@@ -94,6 +97,7 @@ void main() {
           '2 min',
           '',
           'Backup if racks are taken.',
+          '{Reps}[@]{RPE}',
           'Legs',
           'TRUE',
           '',
@@ -111,9 +115,17 @@ void main() {
 
       expect(context.selectedChoice.exercise, 'Leg Press');
       expect(context.selectedChoice.isBackup, isTrue);
+      expect(
+        (context.selectedChoice.logFormat as ParsedLogFormat).fieldLabels,
+        ['Reps', 'RPE'],
+      );
       expect(context.choices.map((choice) => choice.exercise), [
         'Squat',
         'Leg Press',
+      ]);
+      expect((context.logFormat as ParsedLogFormat).fieldLabels, [
+        'Reps',
+        'RPE',
       ]);
       expect(context.notes, 'Backup if racks are taken.');
       expect(context.rest, '2 min');
@@ -149,6 +161,7 @@ void main() {
           '3 min',
           '',
           '',
+          '',
           'Legs',
           '',
           '',
@@ -163,6 +176,7 @@ void main() {
           '5',
           '8',
           '3 min',
+          '',
           '',
           '',
           'Legs',

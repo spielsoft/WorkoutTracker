@@ -21,6 +21,7 @@ void main() {
         'Rest',
         'Tempo',
         'Notes',
+        'Log Format',
         'Workout',
         'is_backup',
         'Week 2',
@@ -34,19 +35,19 @@ void main() {
     expect(first.activeSheet.rows[1].first, isEmpty);
 
     final exerciseRows = first.activeSheet.rows.where(_isExerciseRow).toList();
-    final legsRows = exerciseRows.where((row) => row[7] == 'Legs').toList();
-    final upperRows = exerciseRows.where((row) => row[7] == 'Upper').toList();
+    final legsRows = exerciseRows.where((row) => row[8] == 'Legs').toList();
+    final upperRows = exerciseRows.where((row) => row[8] == 'Upper').toList();
     final defaultWorkoutRows = exerciseRows
-        .where((row) => row[7].isEmpty)
+        .where((row) => row[8].isEmpty)
         .toList();
-    final backupRows = exerciseRows.where((row) => row[8] == 'TRUE').toList();
+    final backupRows = exerciseRows.where((row) => row[9] == 'TRUE').toList();
 
     expect(
-      legsRows.where((row) => row[8] != 'TRUE'),
+      legsRows.where((row) => row[9] != 'TRUE'),
       hasLength(greaterThanOrEqualTo(2)),
     );
     expect(
-      upperRows.where((row) => row[8] != 'TRUE'),
+      upperRows.where((row) => row[9] != 'TRUE'),
       hasLength(greaterThanOrEqualTo(2)),
     );
     expect(backupRows, isNotEmpty);
@@ -55,7 +56,7 @@ void main() {
       exerciseRows,
       anyElement(
         predicate<List<String>>(
-          (row) => row[0] == 'Plank' && row[7] == 'Upper' && row[8] != 'TRUE',
+          (row) => row[0] == 'Plank' && row[8] == 'Upper' && row[9] != 'TRUE',
           'contains Plank as a primary Upper row',
         ),
       ),
