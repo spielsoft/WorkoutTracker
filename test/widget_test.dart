@@ -532,7 +532,7 @@ void main() {
     expect(find.textContaining('Exercise: missing formula'), findsOneWidget);
   });
 
-  testWidgets('shows a ready state for a valid selected spreadsheet', (
+  testWidgets('shows workflow without success panels for a valid spreadsheet', (
     tester,
   ) async {
     final service = _FakeSpreadsheetValidationService(
@@ -581,10 +581,11 @@ void main() {
     await tester.pump();
 
     expect(service.spreadsheetIds, ['spreadsheet-id']);
-    expect(find.text('Sheet contract valid'), findsOneWidget);
-    expect(find.text('Formulas valid'), findsOneWidget);
+    expect(find.text('Sheet contract valid'), findsNothing);
+    expect(find.text('Formulas valid'), findsNothing);
     expect(find.text('Sheet contract issues'), findsNothing);
     expect(find.text('Formula repair needed'), findsNothing);
+    expect(find.text('Workout setup'), findsOneWidget);
   });
 
   testWidgets('uses compact spreadsheet controls on mobile', (tester) async {
@@ -620,61 +621,6 @@ void main() {
         .getTopLeft(find.byKey(const ValueKey('use-development-sheet')))
         .dy;
     expect(validateTop, developmentTop);
-  });
-
-  testWidgets('dismisses non-blocking validation confirmation panels', (
-    tester,
-  ) async {
-    final service = _FakeSpreadsheetValidationService(
-      parseActiveSheet(
-        ActiveSheetInput(
-          rows: [
-            [...activeSheetFixedColumns, 'Week 1'],
-            [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-            [
-              'Squat',
-              '3',
-              '5',
-              '8',
-              '3 min',
-              '',
-              'Stay braced.',
-              'Legs',
-              '',
-              '',
-            ],
-          ],
-        ),
-      ),
-    );
-
-    await tester.pumpWidget(
-      WorkoutTrackerApp(
-        validationService: service,
-        initialSpreadsheetText: 'spreadsheet-id',
-      ),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-    await tester.pump();
-    await tester.pump();
-
-    expect(find.text('Sheet contract valid'), findsOneWidget);
-    expect(find.text('Formulas valid'), findsOneWidget);
-    expect(find.text('Workout setup'), findsOneWidget);
-
-    await tester.tap(find.text('Sheet contract valid'));
-    await tester.pump();
-
-    expect(find.text('Sheet contract valid'), findsNothing);
-    expect(find.text('Formulas valid'), findsOneWidget);
-    expect(find.text('Workout setup'), findsOneWidget);
-
-    await tester.tap(find.text('Formulas valid'));
-    await tester.pump();
-
-    expect(find.text('Formulas valid'), findsNothing);
-    expect(find.text('Workout setup'), findsOneWidget);
   });
 }
 
