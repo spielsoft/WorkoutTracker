@@ -8,7 +8,7 @@
 - [x] Slice 5: Plan Set Writes From Formatted Field Values
 - [x] Slice 6: Render Dynamic Logging Fields in the GUI
 - [x] Slice 7: Validate the End-to-End Logging Flow
-- [ ] Slice 8: Architecture and Test Cleanup
+- [x] Slice 8: Architecture and Test Cleanup
 
 ## Slice 0: Define the Literal Log Format Contract
 
@@ -266,13 +266,13 @@ Run a cleanup pass after the feature lands. Review whether the literal log forma
 
 ### Acceptance criteria
 
-- [ ] Run an `improve-codebase-architecture` review focused on the new log format Module, sheet-contract read/write planning, and GUI dynamic field rendering.
-- [ ] Remove or consolidate duplicate tests left behind by TDD.
-- [ ] Ensure format parsing/rendering tests stay local to the format Module.
-- [ ] Ensure sheet-contract tests cover row-local behavior through public Interfaces.
-- [ ] Ensure widget tests cover only GUI rendering and interaction smoke behavior.
-- [ ] Run the relevant local test tier after cleanup.
-- [ ] Commit the cleanup separately from implementation slices.
+- [x] Run an `improve-codebase-architecture` review focused on the new log format Module, sheet-contract read/write planning, and GUI dynamic field rendering.
+- [x] Remove or consolidate duplicate tests left behind by TDD.
+- [x] Ensure format parsing/rendering tests stay local to the format Module.
+- [x] Ensure sheet-contract tests cover row-local behavior through public Interfaces.
+- [x] Ensure widget tests cover only GUI rendering and interaction smoke behavior.
+- [x] Run the relevant local test tier after cleanup.
+- [x] Commit the cleanup separately from implementation slices.
 
 ### Blocked by
 

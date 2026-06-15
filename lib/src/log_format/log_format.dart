@@ -249,6 +249,7 @@ Map<String, String>? _parseLogEntrySegments(
           }
         }
     }
+    return null;
   }
 
   return parseFrom(0, 0, <String, String>{});
