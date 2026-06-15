@@ -18,16 +18,46 @@ void main() {
     expect(activeSheet.slots.map((slot) => slot.exercise), [
       'Bulgarian Split Squat',
       'Reverse Lunge',
+      'Step-Up',
+      'Leg Press',
+      'Romanian Deadlift',
+      'Dumbbell RDL',
+      'Hamstring Curl',
+      'Standing Calf Raise',
+      'Seated Calf Raise',
       'Bench Press',
       'Push-Up',
+      'Dumbbell Floor Press',
+      'Machine Chest Press',
       'Plank',
+      'Dead Bug',
+      'Side Plank',
+      'Seated Cable Row',
+      'Chest-Supported Row',
+      'Lat Pulldown',
+      'Farmer Carry',
     ]);
     expect(activeSheet.slots.map((slot) => slot.sheetRowNumber), [
       3,
       4,
+      5,
       6,
       7,
       8,
+      9,
+      10,
+      11,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
     ]);
 
     expect(
@@ -46,7 +76,12 @@ void main() {
       ),
     );
     expect(activeSheet.slots[1].isBackup, isTrue);
+    expect(activeSheet.slots[2].isBackup, isTrue);
     expect(activeSheet.slots[3].isBackup, isTrue);
+    expect(activeSheet.slots[5].isBackup, isTrue);
+    expect(activeSheet.slots[6].isBackup, isTrue);
+    expect(activeSheet.slots[8].isBackup, isTrue);
+    expect(activeSheet.slots[10].isBackup, isTrue);
     expect(activeSheet.slots.last.workout, defaultWorkoutName);
   });
 
@@ -681,7 +716,10 @@ void main() {
       'S2',
       'S3',
     ]);
-    expect(previewRows[5].skip(9).take(6), [
+    final benchPressPreviewRow = previewRows.firstWhere(
+      (row) => row.first == 'Bench Press',
+    );
+    expect(benchPressPreviewRow.skip(9).take(6), [
       '',
       '155x6@8',
       '',
@@ -1199,20 +1237,44 @@ void main() {
       expect(activeSheet.schemaViolations, isEmpty);
       expect(activeSheet.primarySlots.map((slot) => slot.exercise), [
         'Bulgarian Split Squat',
+        'Romanian Deadlift',
+        'Standing Calf Raise',
         'Bench Press',
         'Plank',
+        'Seated Cable Row',
+        'Farmer Carry',
       ]);
 
       final legsSlot = activeSheet.primarySlots.first;
       expect(legsSlot.isBackup, isFalse);
-      expect(legsSlot.backups.map((slot) => slot.exercise), ['Reverse Lunge']);
-      expect(legsSlot.backups.single.isBackup, isTrue);
-      expect(legsSlot.backups.single.workout, 'Legs');
+      expect(legsSlot.backups.map((slot) => slot.exercise), [
+        'Reverse Lunge',
+        'Step-Up',
+        'Leg Press',
+      ]);
+      expect(legsSlot.backups, hasLength(greaterThan(2)));
+      expect(legsSlot.backups.every((slot) => slot.isBackup), isTrue);
+      expect(legsSlot.backups.every((slot) => slot.workout == 'Legs'), isTrue);
 
-      final upperSlot = activeSheet.primarySlots[1];
-      expect(upperSlot.backups.map((slot) => slot.exercise), ['Push-Up']);
+      final upperSlot = activeSheet.primarySlots[3];
+      expect(upperSlot.exercise, 'Bench Press');
+      expect(upperSlot.backups.map((slot) => slot.exercise), [
+        'Push-Up',
+        'Dumbbell Floor Press',
+        'Machine Chest Press',
+      ]);
+      expect(upperSlot.backups, hasLength(greaterThan(2)));
+
+      final plankSlot = activeSheet.primarySlots[4];
+      expect(plankSlot.exercise, 'Plank');
+      expect(plankSlot.workout, 'Upper');
+      expect(plankSlot.backups.map((slot) => slot.exercise), [
+        'Dead Bug',
+        'Side Plank',
+      ]);
 
       final defaultSlot = activeSheet.primarySlots.last;
+      expect(defaultSlot.exercise, 'Farmer Carry');
       expect(defaultSlot.workout, defaultWorkoutName);
       expect(defaultSlot.backups, isEmpty);
     },

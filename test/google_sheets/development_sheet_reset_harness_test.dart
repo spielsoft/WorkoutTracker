@@ -35,10 +35,24 @@ void main() {
       ]);
       expect(activeRows.any((row) => row[7] == 'Legs'), isTrue);
       expect(
+        activeRows.where((row) => row.length > 8 && row[7] == 'Legs'),
+        hasLength(greaterThanOrEqualTo(8)),
+      );
+      expect(
+        activeRows.where((row) => row.length > 8 && row[7] == 'Upper'),
+        hasLength(greaterThanOrEqualTo(10)),
+      );
+      expect(
         activeRows.any((row) => row[7].isEmpty && row[0].startsWith('=')),
         isTrue,
       );
       expect(activeRows.any((row) => row[8] == 'TRUE'), isTrue);
+      expect(
+        activeRows.any(
+          (row) => row[7] == 'Upper' && row.first == '=Exercises!A15',
+        ),
+        isTrue,
+      );
 
       final firstExerciseFormulaRow = activeRows.firstWhere(
         (row) => row.first == '=Exercises!A2',
@@ -65,6 +79,27 @@ void main() {
         'Notes',
       ]);
       expect(exercisesRows.map((row) => row.first), contains('Reverse Lunge'));
+      expect(
+        exercisesRows.map((row) => row.first),
+        containsAll([
+          'Step-Up',
+          'Leg Press',
+          'Romanian Deadlift',
+          'Dumbbell RDL',
+          'Hamstring Curl',
+          'Standing Calf Raise',
+          'Seated Calf Raise',
+          'Dumbbell Floor Press',
+          'Machine Chest Press',
+          'Plank',
+          'Dead Bug',
+          'Side Plank',
+          'Seated Cable Row',
+          'Chest-Supported Row',
+          'Lat Pulldown',
+          'Farmer Carry',
+        ]),
+      );
     },
   );
 

@@ -70,6 +70,54 @@ void main() {
         ),
       ),
     );
+    expect(
+      first.activeSheet.rows,
+      anyElement(
+        predicate<List<String>>(
+          (row) => _startsWith(row, [
+            'Plank',
+            '3',
+            '45s',
+            '8',
+            '60s',
+            '',
+            'Brace hard and keep hips level.',
+            'Upper',
+            '',
+          ]),
+          'contains Plank as a primary Upper row',
+        ),
+      ),
+    );
+    expect(
+      first.activeSheet.rows.where((row) => row.length > 8 && row[7] == 'Legs'),
+      hasLength(greaterThanOrEqualTo(8)),
+    );
+    expect(
+      first.activeSheet.rows.where(
+        (row) => row.length > 8 && row[7] == 'Upper',
+      ),
+      hasLength(greaterThanOrEqualTo(10)),
+    );
+    expect(
+      first.exercisesSheet.rows.map((row) => row.first),
+      containsAll([
+        'Step-Up',
+        'Leg Press',
+        'Romanian Deadlift',
+        'Dumbbell RDL',
+        'Hamstring Curl',
+        'Standing Calf Raise',
+        'Seated Calf Raise',
+        'Dumbbell Floor Press',
+        'Machine Chest Press',
+        'Dead Bug',
+        'Side Plank',
+        'Seated Cable Row',
+        'Chest-Supported Row',
+        'Lat Pulldown',
+      ]),
+    );
     expect(first.exercisesSheet.rows, hasLength(greaterThanOrEqualTo(4)));
   });
 
