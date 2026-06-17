@@ -4,7 +4,7 @@
 - [x] Slice 1: Use Read-Only Scope For Spreadsheet Validation
 - [x] Slice 2: Hide Exercise Logging Flow From Public App Exports
 - [x] Slice 3: Decompose Workout Tracker Shell File
-- [ ] Slice 4: Keep Account Switching Scope-Free
+- [x] Slice 4: Keep Account Switching Scope-Free
 - [ ] Slice 5: Evaluate Controller-Level GUI View Model
 
 ## Slice 0: Compact Spreadsheet Validation Write Interface
@@ -119,10 +119,10 @@ Make the generic account switch UI avoid requesting Google Sheets scopes. Valida
 
 ### Acceptance criteria
 
-- [ ] Account switching requests no scopes from the account menu.
-- [ ] Validation still requests read-only Sheets scope.
-- [ ] Write operations still request write-capable Sheets scope.
-- [ ] Relevant widget and spreadsheet-validation tests pass.
+- [x] Account switching requests no scopes from the account menu.
+- [x] Validation still requests read-only Sheets scope.
+- [x] Write operations still request write-capable Sheets scope.
+- [x] Relevant widget and spreadsheet-validation tests pass.
 
 ### Blocked by
 

@@ -517,9 +517,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(accountSession.switchCount, 1);
-    expect(accountSession.requestedScopes.single, [
-      'https://www.googleapis.com/auth/spreadsheets',
-    ]);
+    expect(accountSession.requestedScopes.single, isEmpty);
     expect(accountSession.currentAccount?.email, 'right@example.com');
   });
 }
