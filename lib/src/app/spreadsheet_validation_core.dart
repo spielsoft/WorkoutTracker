@@ -14,17 +14,6 @@ abstract interface class SpreadsheetValidationService {
   /// Interface.
   Future<SpreadsheetValidationReport> validateSpreadsheet(String spreadsheetId);
 
-  /// Creates a new visible history block on the active sheet and rereads it.
-  ///
-  /// Callers must pass the latest [activeSheet] returned for [spreadsheetId].
-  /// Mixing a stale [ParsedActiveSheet] from an older read or a different
-  /// spreadsheet violates the Interface ordering rules.
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  });
-
   /// Applies [plan] to the active sheet and rereads the spreadsheet.
   ///
   /// Callers should treat [plan] as row-order-sensitive and build it from the

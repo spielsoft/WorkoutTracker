@@ -117,7 +117,10 @@ void main() {
         ),
         contains('Week 3'),
       );
-      expect(service.createdHistoryBlockLabels, ['Week 3']);
+      expect(service.appliedPlans, hasLength(1));
+      expect(service.appliedPlans.single.columnInsertions.single.headers, [
+        'Week 3',
+      ]);
     },
   );
 
@@ -185,10 +188,10 @@ void main() {
           ],
         ),
       );
-      final createCompleter = Completer<SpreadsheetValidationReport>();
+      final writeCompleter = Completer<SpreadsheetValidationReport>();
       final service = _PendingCreateHistoryBlockService(
         activeSheet: activeSheet,
-        createCompleter: createCompleter,
+        writeCompleter: writeCompleter,
       );
       final controller = WorkoutTrackerController(validationService: service);
 
@@ -196,7 +199,7 @@ void main() {
 
       final createFuture = controller.createHistoryBlock('Week 2');
       controller.dispose();
-      createCompleter.complete(
+      writeCompleter.complete(
         SpreadsheetValidationReport(
           spreadsheetId: 'spreadsheet-id',
           activeSheet: activeSheet,
@@ -222,15 +225,6 @@ class _FailingSpreadsheetValidationService
   }
 
   @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) {
-    throw UnimplementedError();
-  }
-
-  @override
   Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -244,11 +238,11 @@ class _PendingCreateHistoryBlockService
     implements SpreadsheetValidationService {
   _PendingCreateHistoryBlockService({
     required this.activeSheet,
-    required this.createCompleter,
+    required this.writeCompleter,
   });
 
   final ParsedActiveSheet activeSheet;
-  final Completer<SpreadsheetValidationReport> createCompleter;
+  final Completer<SpreadsheetValidationReport> writeCompleter;
 
   @override
   Future<SpreadsheetValidationReport> validateSpreadsheet(
@@ -261,20 +255,11 @@ class _PendingCreateHistoryBlockService
   }
 
   @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) {
-    return createCompleter.future;
-  }
-
-  @override
   Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) {
-    throw UnimplementedError();
+    return writeCompleter.future;
   }
 }

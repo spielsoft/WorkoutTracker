@@ -37,19 +37,6 @@ class GoogleSignInSpreadsheetValidationService
   }
 
   @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) async {
-    return applyActiveSheetWritePlan(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      plan: activeSheet.planNewHistoryBlock(label: label),
-    );
-  }
-
-  @override
   Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,

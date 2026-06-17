@@ -70,10 +70,10 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create history block',
       action: () async {
-        final updatedReport = await validationService.createHistoryBlock(
+        final updatedReport = await validationService.applyActiveSheetWritePlan(
           spreadsheetId: report.spreadsheetId,
-          label: trimmedLabel,
           activeSheet: report.activeSheet,
+          plan: report.activeSheet.planNewHistoryBlock(label: trimmedLabel),
         );
         _report = updatedReport;
         _error = null;

@@ -53,10 +53,10 @@ void main() {
         },
       );
 
-      await service.createHistoryBlock(
+      await service.applyActiveSheetWritePlan(
         spreadsheetId: 'spreadsheet-id',
-        label: 'Week 2',
         activeSheet: activeSheet,
+        plan: activeSheet.planNewHistoryBlock(label: 'Week 2'),
       );
 
       expect(gateway.requestedScopes.single, [
@@ -93,19 +93,6 @@ class _DelayedValidationService implements SpreadsheetValidationService {
     return SpreadsheetValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
-    );
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) async {
-    await _expectClientStillOpen();
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: this.activeSheet,
     );
   }
 

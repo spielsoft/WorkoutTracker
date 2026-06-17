@@ -14,7 +14,6 @@ class TestSpreadsheetValidationService implements SpreadsheetValidationService {
   List<List<String>>? _rows;
 
   final spreadsheetIds = <String>[];
-  final createdHistoryBlockLabels = <String>[];
   final appliedPlans = <ActiveSheetWritePlan>[];
 
   ParsedActiveSheet get activeSheet => _activeSheet;
@@ -24,17 +23,6 @@ class TestSpreadsheetValidationService implements SpreadsheetValidationService {
     String spreadsheetId,
   ) async {
     spreadsheetIds.add(spreadsheetId);
-    return _report(spreadsheetId);
-  }
-
-  @override
-  Future<SpreadsheetValidationReport> createHistoryBlock({
-    required String spreadsheetId,
-    required String label,
-    required ParsedActiveSheet activeSheet,
-  }) async {
-    createdHistoryBlockLabels.add(label);
-    _applyPlan(activeSheet.planNewHistoryBlock(label: label));
     return _report(spreadsheetId);
   }
 
