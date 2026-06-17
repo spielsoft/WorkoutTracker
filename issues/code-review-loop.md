@@ -3,7 +3,9 @@
 - [x] Slice 0: Compact Spreadsheet Validation Write Interface
 - [x] Slice 1: Use Read-Only Scope For Spreadsheet Validation
 - [x] Slice 2: Hide Exercise Logging Flow From Public App Exports
-- [ ] Slice 3: Evaluate Controller-Level GUI View Model
+- [x] Slice 3: Decompose Workout Tracker Shell File
+- [ ] Slice 4: Keep Account Switching Scope-Free
+- [ ] Slice 5: Evaluate Controller-Level GUI View Model
 
 ## Slice 0: Compact Spreadsheet Validation Write Interface
 
@@ -80,7 +82,57 @@ None - can start immediately.
 
 - Architecture review finding: internal logging-flow Module leaks through public app exports.
 
-## Slice 3: Evaluate Controller-Level GUI View Model
+## Slice 3: Decompose Workout Tracker Shell File
+
+### Type
+
+`AFK`
+
+### What to build
+
+Split the oversized workout tracker shell library into focused GUI part files without changing behavior. Keep app shell orchestration, account menu, workout setup/overview, exercise logging, and validation panels easier to scan independently.
+
+### Acceptance criteria
+
+- [x] `workout_tracker_shell.dart` drops back below 1000 lines.
+- [x] Behavior stays unchanged.
+- [x] Widget tests pass.
+- [x] Focused analyzer on touched GUI files passes.
+
+### Blocked by
+
+None - can start immediately.
+
+### User stories covered
+
+- Thermo-nuclear review finding: GUI shell file crossed 1000 lines and now owns too many responsibilities.
+
+## Slice 4: Keep Account Switching Scope-Free
+
+### Type
+
+`AFK`
+
+### What to build
+
+Make the generic account switch UI avoid requesting Google Sheets scopes. Validation and write operations should request their own scopes at the point of use.
+
+### Acceptance criteria
+
+- [ ] Account switching requests no scopes from the account menu.
+- [ ] Validation still requests read-only Sheets scope.
+- [ ] Write operations still request write-capable Sheets scope.
+- [ ] Relevant widget and spreadsheet-validation tests pass.
+
+### Blocked by
+
+None - can start immediately.
+
+### User stories covered
+
+- Thermo-nuclear review finding: scope policy leaked into account menu.
+
+## Slice 5: Evaluate Controller-Level GUI View Model
 
 ### Type
 
@@ -99,7 +151,12 @@ Evaluate whether a controller-level app view model should own valid workout/hist
 ### Blocked by
 
 - Slice 0: Compact Spreadsheet Validation Write Interface
+- Slice 3: Decompose Workout Tracker Shell File
 
 ### User stories covered
 
 - Architecture review finding: GUI state policy split between controller and widget tree.
+
+### Review note
+
+The duplicate setup-preview and exercise-picker entry paths are intentionally preserved for now. The user clarified that selecting an exercise from setup should jump forward to the same logging destination as selecting from the exercise-picker screen.

@@ -50,6 +50,7 @@ void main() {
 
     expect(service.spreadsheetIds, ['spreadsheet-id']);
     expect(find.text('Workout setup'), findsOneWidget);
+    expect(find.byTooltip('Back to sheet selection'), findsOneWidget);
     expect(find.text('Workout'), findsOneWidget);
     expect(find.text('History block'), findsOneWidget);
     expect(find.text('Legs (0/1 done)'), findsOneWidget);
@@ -68,12 +69,16 @@ void main() {
 
     expect(find.text('Upper exercises'), findsOneWidget);
     expect(find.text('Bench Press'), findsOneWidget);
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
 
     await tester.tap(find.text('Bench Press'));
     await tester.pumpAndSettle();
 
     expect(find.text('Bench Press'), findsWidgets);
     expect(find.text('Bench Press logging'), findsNothing);
+    expect(find.byTooltip('Back to exercises'), findsOneWidget);
+    expect(find.text('Workout setup'), findsNothing);
+    expect(find.text('Upper exercises'), findsNothing);
     expect(find.byKey(const ValueKey('set-field-Weight')), findsOneWidget);
     expect(find.byKey(const ValueKey('set-field-Reps')), findsOneWidget);
     expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
@@ -137,7 +142,7 @@ void main() {
     expect(find.text('Spreadsheet validation'), findsNothing);
     expect(find.byKey(const ValueKey('validate-spreadsheet')), findsOneWidget);
     expect(find.byKey(const ValueKey('use-development-sheet')), findsNothing);
-    expect(find.text('Validate'), findsOneWidget);
+    expect(find.text('Select'), findsOneWidget);
     expect(find.text('Development'), findsNothing);
 
     final behavior = ScrollConfiguration.of(
@@ -258,6 +263,60 @@ void main() {
   );
 
   testWidgets(
+    'selecting a workout setup opens the full exercise picker with compact context',
+    (tester) async {
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Bulgarian Split Squat',
+          '3',
+          '8',
+          '8',
+          '90s',
+          '',
+          '',
+          '',
+          'Legs',
+          '',
+          '',
+        ],
+        ['Reverse Lunge', '3', '8', '8', '90s', '', '', '', 'Legs', 'TRUE', ''],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Legs - Week 1'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('compact-workout-overview')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+      expect(find.text('Legs - Week 1'), findsOneWidget);
+      expect(find.text('Legs exercises'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('full-workout-overview')),
+        findsOneWidget,
+      );
+      expect(find.text('Bulgarian Split Squat'), findsOneWidget);
+      expect(find.text('Reverse Lunge'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'keeps exercise context, selected rows, recent history, and raw controls',
     (tester) async {
       final service = TestSpreadsheetValidationService.fromRows([
@@ -368,6 +427,12 @@ void main() {
         find.byWidgetPredicate((widget) => widget is SegmentedButton<int>),
       );
       expect(rowSelector.direction, Axis.vertical);
+      final shape = rowSelector.style?.shape?.resolve({});
+      expect(shape, isA<RoundedRectangleBorder>());
+      expect(
+        (shape! as RoundedRectangleBorder).borderRadius,
+        BorderRadius.circular(8),
+      );
       expect(
         find.byWidgetPredicate(
           (widget) =>
