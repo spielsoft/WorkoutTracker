@@ -31,12 +31,8 @@ class _ScreenHeader extends StatelessWidget {
 
 class _WorkoutAndHistorySelection extends StatelessWidget {
   const _WorkoutAndHistorySelection({
-    required this.activeSheet,
+    required this.setup,
     required this.screen,
-    required this.selectedWorkout,
-    required this.selectedHistoryBlock,
-    required this.loggingPrimarySheetRowNumber,
-    required this.selectedLoggingSheetRowNumber,
     required this.newHistoryBlockController,
     required this.onBackToSheetSelection,
     required this.onSelectWorkoutSetup,
@@ -50,12 +46,8 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onCreateHistoryBlock,
   });
 
-  final ParsedActiveSheet activeSheet;
+  final WorkoutSetupReadModel setup;
   final _WorkoutTrackerScreen screen;
-  final String? selectedWorkout;
-  final String? selectedHistoryBlock;
-  final int? loggingPrimarySheetRowNumber;
-  final int? selectedLoggingSheetRowNumber;
   final TextEditingController newHistoryBlockController;
   final VoidCallback onBackToSheetSelection;
   final VoidCallback onSelectWorkoutSetup;
@@ -70,35 +62,21 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final workouts = activeSheet.selectableWorkouts;
-    final historyBlocks = activeSheet.historyBlocks;
-    final selectedWorkout = workouts.contains(this.selectedWorkout)
-        ? this.selectedWorkout
-        : workouts.firstOrNull;
-    final selectedHistoryBlock =
-        historyBlocks.any((block) => block.label == this.selectedHistoryBlock)
-        ? this.selectedHistoryBlock
-        : historyBlocks.firstOrNull?.label;
-    final progressByWorkout = {
-      for (final workout in workouts)
-        workout: _progressForWorkout(workout, selectedHistoryBlock),
-    };
-    final overview = selectedWorkout == null || selectedHistoryBlock == null
-        ? null
-        : activeSheet.buildWorkoutOverview(
-            workout: selectedWorkout,
-            historyBlockLabel: selectedHistoryBlock,
-          );
+    final activeSheet = setup.activeSheet;
+    final workouts = setup.workouts;
+    final historyBlocks = setup.historyBlocks;
+    final selectedWorkout = setup.selectedWorkout;
+    final selectedHistoryBlock = setup.selectedHistoryBlock;
+    final overview = setup.overview;
 
     if (screen == _WorkoutTrackerScreen.exerciseLogging &&
-        selectedHistoryBlock != null &&
-        loggingPrimarySheetRowNumber != null) {
+        setup.loggingTarget != null) {
+      final target = setup.loggingTarget!;
       return _ExerciseLoggingScreen(
         activeSheet: activeSheet,
-        historyBlockLabel: selectedHistoryBlock,
-        primarySheetRowNumber: loggingPrimarySheetRowNumber!,
-        selectedSheetRowNumber:
-            selectedLoggingSheetRowNumber ?? loggingPrimarySheetRowNumber!,
+        historyBlockLabel: target.historyBlockLabel,
+        primarySheetRowNumber: target.primarySheetRowNumber,
+        selectedSheetRowNumber: target.selectedSheetRowNumber,
         onChoiceChanged: onLoggingRowChanged,
         onClose: onCloseExercise,
         onApplyWritePlan: onApplyWritePlan,
@@ -157,7 +135,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                     DropdownMenuItem(
                       value: workout,
                       child: Text(
-                        '$workout ${progressByWorkout[workout]!.label}',
+                        '$workout ${setup.progressByWorkout[workout]!.label}',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -231,29 +209,6 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       ],
     );
   }
-
-  _WorkoutProgress _progressForWorkout(
-    String workout,
-    String? historyBlockLabel,
-  ) {
-    final overview = activeSheet.buildWorkoutOverview(
-      workout: workout,
-      historyBlockLabel: historyBlockLabel ?? '',
-    );
-    final done = historyBlockLabel == null
-        ? 0
-        : overview.slots.where((slot) => slot.setCount > 0).length;
-    return _WorkoutProgress(done: done, total: overview.slots.length);
-  }
-}
-
-class _WorkoutProgress {
-  const _WorkoutProgress({required this.done, required this.total});
-
-  final int done;
-  final int total;
-
-  String get label => '($done/$total done)';
 }
 
 class _WorkoutOverviewList extends StatelessWidget {

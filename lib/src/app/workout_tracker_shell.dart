@@ -312,15 +312,8 @@ class _SpreadsheetValidationShellState
                         _ValidationSummary(report: report),
                       if (!showSheetSelection)
                         _WorkoutAndHistorySelection(
-                          activeSheet: report.activeSheet,
+                          setup: _controller.workoutSetup!,
                           screen: _screen,
-                          selectedWorkout: _controller.selectedWorkout,
-                          selectedHistoryBlock:
-                              _controller.selectedHistoryBlock,
-                          loggingPrimarySheetRowNumber:
-                              _controller.loggingPrimarySheetRowNumber,
-                          selectedLoggingSheetRowNumber:
-                              _controller.selectedLoggingSheetRowNumber,
                           newHistoryBlockController: _newHistoryBlockController,
                           onBackToSheetSelection: _returnToSheetSelection,
                           onSelectWorkoutSetup: _selectWorkoutSetup,

@@ -93,6 +93,103 @@ void main() {
   );
 
   test(
+    'workout setup model repairs stale selections and reports progress',
+    () async {
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 2', '', 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2', 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '',
+          'Legs',
+          '',
+          '225x5@8',
+          '',
+          '',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '10',
+          '8',
+          '2 min',
+          '',
+          '',
+          '',
+          'Legs',
+          'TRUE',
+          '',
+          '180x10@8',
+          '',
+        ],
+        [
+          'Bench Press',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          '',
+          '',
+          'Upper',
+          '',
+          '',
+          '',
+          '',
+        ],
+      ]);
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      controller.selectWorkout('Missing');
+      controller.selectHistoryBlock('Missing');
+
+      final setup = controller.workoutSetup;
+
+      expect(setup, isNotNull);
+      expect(setup!.selectedWorkout, 'Legs');
+      expect(setup.selectedHistoryBlock, 'Week 2');
+      expect(setup.overview?.workout, 'Legs');
+      expect(setup.overview?.slots.single.exercise, 'Squat');
+      expect(setup.progressByWorkout['Legs']?.done, 1);
+      expect(setup.progressByWorkout['Legs']?.total, 1);
+      expect(setup.progressByWorkout['Legs']?.label, '(1/1 done)');
+      expect(setup.progressByWorkout['Upper']?.done, 0);
+      expect(setup.progressByWorkout['Upper']?.total, 1);
+      expect(controller.selectedWorkout, 'Missing');
+      expect(controller.selectedHistoryBlock, 'Missing');
+    },
+  );
+
+  test('workout setup model repairs stale logging row targets', () async {
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Leg Press', '3', '10', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
+    ]);
+    final controller = WorkoutTrackerController(validationService: service);
+
+    await controller.validateSpreadsheetSelection('spreadsheet-id');
+    controller.openExercise(3);
+    controller.selectLoggingRow(99);
+
+    final target = controller.workoutSetup?.loggingTarget;
+
+    expect(target, isNotNull);
+    expect(target?.historyBlockLabel, 'Week 1');
+    expect(target?.primarySheetRowNumber, 3);
+    expect(target?.selectedSheetRowNumber, 3);
+    expect(controller.selectedLoggingSheetRowNumber, 99);
+  });
+
+  test(
     'creates a history block and preserves the current workout when it still exists',
     () async {
       final service = TestSpreadsheetValidationService.fromRows([

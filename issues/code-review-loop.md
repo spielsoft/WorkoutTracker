@@ -5,7 +5,7 @@
 - [x] Slice 2: Hide Exercise Logging Flow From Public App Exports
 - [x] Slice 3: Decompose Workout Tracker Shell File
 - [x] Slice 4: Keep Account Switching Scope-Free
-- [ ] Slice 5: Evaluate Controller-Level GUI View Model
+- [x] Slice 5: Add Controller Setup Read Model
 
 ## Slice 0: Compact Spreadsheet Validation Write Interface
 
@@ -132,7 +132,7 @@ None - can start immediately.
 
 - Thermo-nuclear review finding: scope policy leaked into account menu.
 
-## Slice 5: Evaluate Controller-Level GUI View Model
+## Slice 5: Add Controller Setup Read Model
 
 ### Type
 
@@ -140,13 +140,13 @@ None - can start immediately.
 
 ### What to build
 
-Evaluate whether a controller-level app view model should own valid workout/history selection repair, legal screen state, current overview, and per-workout progress counts. Implement only if it demonstrably removes widget-side fallback/progress logic without inflating the Interface.
+Add a compact controller-owned workout setup/read model for valid workout/history selection repair, current overview, per-workout progress counts, and safe logging target rows. Do not build a broad controller-level app view model; keep navigation state, text controllers, account restore, spreadsheet text persistence, and `ExerciseLoggingFlow` in the shell or their existing modules.
 
 ### Acceptance criteria
 
-- [ ] Decision recorded in this issue plan or implemented as a narrow cleanup slice.
-- [ ] If implemented, controller tests cover the view model through the controller public Interface.
-- [ ] If deferred, the reason is documented with the remaining risk.
+- [x] Decision recorded in this issue plan as a setup/read-model-only cleanup.
+- [x] Controller tests cover setup selection repair, progress counts, overview, and safe logging targets through the controller public Interface.
+- [x] Widget-side fallback and progress derivation removed from `workout_tracker_shell_workout.dart`.
 
 ### Blocked by
 
@@ -159,4 +159,4 @@ Evaluate whether a controller-level app view model should own valid workout/hist
 
 ### Review note
 
-The duplicate setup-preview and exercise-picker entry paths are intentionally preserved for now. The user clarified that selecting an exercise from setup should jump forward to the same logging destination as selecting from the exercise-picker screen.
+Implemented the narrow accepted direction as a controller-owned workout setup read model only, not a broad app view model. The duplicate setup-preview and exercise-picker entry paths are intentionally preserved for now. The user clarified that selecting an exercise from setup should jump forward to the same logging destination as selecting from the exercise-picker screen.

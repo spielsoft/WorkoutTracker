@@ -37,6 +37,51 @@ class WorkoutTrackerController extends ChangeNotifier {
 
   bool get isBusy => _isBusy;
 
+  WorkoutSetupReadModel? get workoutSetup {
+    final report = _report;
+    if (report == null) {
+      return null;
+    }
+
+    final activeSheet = report.activeSheet;
+    final workouts = activeSheet.selectableWorkouts;
+    final historyBlocks = activeSheet.historyBlocks;
+    final selectedWorkout = workouts.contains(_selectedWorkout)
+        ? _selectedWorkout
+        : workouts.firstOrNull;
+    final selectedHistoryBlock =
+        historyBlocks.any((block) => block.label == _selectedHistoryBlock)
+        ? _selectedHistoryBlock
+        : historyBlocks.firstOrNull?.label;
+    final overview = selectedWorkout == null || selectedHistoryBlock == null
+        ? null
+        : activeSheet.buildWorkoutOverview(
+            workout: selectedWorkout,
+            historyBlockLabel: selectedHistoryBlock,
+          );
+
+    return WorkoutSetupReadModel(
+      activeSheet: activeSheet,
+      workouts: workouts,
+      historyBlocks: historyBlocks,
+      selectedWorkout: selectedWorkout,
+      selectedHistoryBlock: selectedHistoryBlock,
+      overview: overview,
+      progressByWorkout: {
+        for (final workout in workouts)
+          workout: _progressForWorkout(
+            activeSheet: activeSheet,
+            workout: workout,
+            historyBlockLabel: selectedHistoryBlock,
+          ),
+      },
+      loggingTarget: _loggingTargetForOverview(
+        overview: overview,
+        selectedHistoryBlock: selectedHistoryBlock,
+      ),
+    );
+  }
+
   Future<bool> validateSpreadsheetSelection(String selection) async {
     final spreadsheetId = spreadsheetIdFromSelection(selection);
     if (spreadsheetId.isEmpty) {
@@ -186,6 +231,60 @@ class WorkoutTrackerController extends ChangeNotifier {
     _selectedLoggingSheetRowNumber = null;
   }
 
+  WorkoutLoggingTarget? _loggingTargetForOverview({
+    required WorkoutOverview? overview,
+    required String? selectedHistoryBlock,
+  }) {
+    final primarySheetRowNumber = _loggingPrimarySheetRowNumber;
+    if (overview == null ||
+        selectedHistoryBlock == null ||
+        primarySheetRowNumber == null) {
+      return null;
+    }
+
+    WorkoutOverviewSlot? slot;
+    for (final candidate in overview.slots) {
+      if (candidate.sheetRowNumber == primarySheetRowNumber) {
+        slot = candidate;
+        break;
+      }
+    }
+    if (slot == null) {
+      return null;
+    }
+
+    final requestedLoggingRow =
+        _selectedLoggingSheetRowNumber ?? primarySheetRowNumber;
+    final selectedSheetRowNumber =
+        requestedLoggingRow == primarySheetRowNumber ||
+            slot.backups.any(
+              (backup) => backup.sheetRowNumber == requestedLoggingRow,
+            )
+        ? requestedLoggingRow
+        : primarySheetRowNumber;
+
+    return WorkoutLoggingTarget(
+      historyBlockLabel: selectedHistoryBlock,
+      primarySheetRowNumber: primarySheetRowNumber,
+      selectedSheetRowNumber: selectedSheetRowNumber,
+    );
+  }
+
+  static WorkoutSetupProgress _progressForWorkout({
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required String? historyBlockLabel,
+  }) {
+    final overview = activeSheet.buildWorkoutOverview(
+      workout: workout,
+      historyBlockLabel: historyBlockLabel ?? '',
+    );
+    final done = historyBlockLabel == null
+        ? 0
+        : overview.slots.where((slot) => slot.setCount > 0).length;
+    return WorkoutSetupProgress(done: done, total: overview.slots.length);
+  }
+
   static String _formatServiceFailure({
     required String failurePrefix,
     required Object error,
@@ -209,4 +308,54 @@ class WorkoutTrackerController extends ChangeNotifier {
     }
     return '$failurePrefix: $message';
   }
+}
+
+@immutable
+class WorkoutSetupReadModel {
+  WorkoutSetupReadModel({
+    required this.activeSheet,
+    required Iterable<String> workouts,
+    required Iterable<HistoryBlock> historyBlocks,
+    required this.selectedWorkout,
+    required this.selectedHistoryBlock,
+    required this.overview,
+    required Map<String, WorkoutSetupProgress> progressByWorkout,
+    required this.loggingTarget,
+  }) : workouts = List<String>.unmodifiable(workouts),
+       historyBlocks = List<HistoryBlock>.unmodifiable(historyBlocks),
+       progressByWorkout = Map<String, WorkoutSetupProgress>.unmodifiable(
+         progressByWorkout,
+       );
+
+  final ParsedActiveSheet activeSheet;
+  final List<String> workouts;
+  final List<HistoryBlock> historyBlocks;
+  final String? selectedWorkout;
+  final String? selectedHistoryBlock;
+  final WorkoutOverview? overview;
+  final Map<String, WorkoutSetupProgress> progressByWorkout;
+  final WorkoutLoggingTarget? loggingTarget;
+}
+
+@immutable
+class WorkoutSetupProgress {
+  const WorkoutSetupProgress({required this.done, required this.total});
+
+  final int done;
+  final int total;
+
+  String get label => '($done/$total done)';
+}
+
+@immutable
+class WorkoutLoggingTarget {
+  const WorkoutLoggingTarget({
+    required this.historyBlockLabel,
+    required this.primarySheetRowNumber,
+    required this.selectedSheetRowNumber,
+  });
+
+  final String historyBlockLabel;
+  final int primarySheetRowNumber;
+  final int selectedSheetRowNumber;
 }
