@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/src/app/exercise_logging_flow.dart';
 import 'package:workout_tracker/sheet_contract.dart';
-import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
   test(

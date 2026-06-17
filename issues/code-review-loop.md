@@ -2,7 +2,7 @@
 
 - [x] Slice 0: Compact Spreadsheet Validation Write Interface
 - [x] Slice 1: Use Read-Only Scope For Spreadsheet Validation
-- [ ] Slice 2: Hide Exercise Logging Flow From Public App Exports
+- [x] Slice 2: Hide Exercise Logging Flow From Public App Exports
 - [ ] Slice 3: Evaluate Controller-Level GUI View Model
 
 ## Slice 0: Compact Spreadsheet Validation Write Interface
@@ -68,9 +68,9 @@ Stop exporting the internal exercise logging flow Module from the public app bar
 
 ### Acceptance criteria
 
-- [ ] Public app exports no longer expose `ExerciseLoggingFlow`.
-- [ ] Internal app code and focused logging-flow tests still compile.
-- [ ] Relevant logging-flow and widget tests pass.
+- [x] Public app exports no longer expose `ExerciseLoggingFlow`.
+- [x] Internal app code and focused logging-flow tests still compile.
+- [x] Relevant logging-flow and widget tests pass.
 
 ### Blocked by
 
