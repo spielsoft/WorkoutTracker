@@ -1,7 +1,7 @@
 # Code Review Loop Issues
 
 - [x] Slice 0: Compact Spreadsheet Validation Write Interface
-- [ ] Slice 1: Use Read-Only Scope For Spreadsheet Validation
+- [x] Slice 1: Use Read-Only Scope For Spreadsheet Validation
 - [ ] Slice 2: Hide Exercise Logging Flow From Public App Exports
 - [ ] Slice 3: Evaluate Controller-Level GUI View Model
 
@@ -43,9 +43,9 @@ Use the read-only Google Sheets scope for validation-only spreadsheet loading, w
 
 ### Acceptance criteria
 
-- [ ] Validation requests read-only spreadsheet scope.
-- [ ] History-block creation and write-plan application still request write-capable spreadsheet scope.
-- [ ] Spreadsheet validation tests pass.
+- [x] Validation requests read-only spreadsheet scope.
+- [x] History-block creation and write-plan application still request write-capable spreadsheet scope.
+- [x] Spreadsheet validation tests pass.
 
 ### Blocked by
 
