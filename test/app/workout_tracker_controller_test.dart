@@ -41,10 +41,9 @@ void main() {
       expect(validated, isTrue);
       expect(service.spreadsheetIds, ['spreadsheet-id']);
       expect(controller.report?.spreadsheetId, 'spreadsheet-id');
-      expect(controller.selectedWorkout, 'Legs');
-      expect(controller.selectedHistoryBlock, 'Week 2');
-      expect(controller.loggingPrimarySheetRowNumber, isNull);
-      expect(controller.selectedLoggingSheetRowNumber, isNull);
+      expect(controller.workoutSetup?.selectedWorkout, 'Legs');
+      expect(controller.workoutSetup?.selectedHistoryBlock, 'Week 2');
+      expect(controller.workoutSetup?.loggingTarget, isNull);
       expect(controller.error, isNull);
     },
   );
@@ -79,16 +78,16 @@ void main() {
       controller.openExercise(3);
       controller.selectLoggingRow(4);
 
+      expect(controller.workoutSetup?.loggingTarget?.selectedSheetRowNumber, 4);
+
       controller.selectHistoryBlock('Week 1');
-      expect(controller.loggingPrimarySheetRowNumber, isNull);
-      expect(controller.selectedLoggingSheetRowNumber, isNull);
+      expect(controller.workoutSetup?.loggingTarget, isNull);
 
       controller.openExercise(3);
       controller.selectLoggingRow(4);
       controller.selectWorkout(defaultWorkoutName);
 
-      expect(controller.loggingPrimarySheetRowNumber, isNull);
-      expect(controller.selectedLoggingSheetRowNumber, isNull);
+      expect(controller.workoutSetup?.loggingTarget, isNull);
     },
   );
 
@@ -162,8 +161,6 @@ void main() {
       expect(setup.progressByWorkout['Legs']?.label, '(1/1 done)');
       expect(setup.progressByWorkout['Upper']?.done, 0);
       expect(setup.progressByWorkout['Upper']?.total, 1);
-      expect(controller.selectedWorkout, 'Missing');
-      expect(controller.selectedHistoryBlock, 'Missing');
     },
   );
 
@@ -186,7 +183,6 @@ void main() {
     expect(target?.historyBlockLabel, 'Week 1');
     expect(target?.primarySheetRowNumber, 3);
     expect(target?.selectedSheetRowNumber, 3);
-    expect(controller.selectedLoggingSheetRowNumber, 99);
   });
 
   test(
@@ -204,10 +200,11 @@ void main() {
       controller.selectWorkout('Legs');
 
       final created = await controller.createHistoryBlock('Week 3');
+      final setup = controller.workoutSetup;
 
       expect(created, isTrue);
-      expect(controller.selectedWorkout, 'Legs');
-      expect(controller.selectedHistoryBlock, 'Week 3');
+      expect(setup?.selectedWorkout, 'Legs');
+      expect(setup?.selectedHistoryBlock, 'Week 3');
       expect(
         controller.report?.activeSheet.historyBlocks.map(
           (block) => block.label,

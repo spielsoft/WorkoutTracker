@@ -6,6 +6,7 @@
 - [x] Slice 3: Decompose Workout Tracker Shell File
 - [x] Slice 4: Keep Account Switching Scope-Free
 - [x] Slice 5: Add Controller Setup Read Model
+- [x] Slice 6: Clarify Controller Selection Read Model
 
 ## Slice 0: Compact Spreadsheet Validation Write Interface
 
@@ -160,3 +161,33 @@ Add a compact controller-owned workout setup/read model for valid workout/histor
 ### Review note
 
 Implemented the narrow accepted direction as a controller-owned workout setup read model only, not a broad app view model. The duplicate setup-preview and exercise-picker entry paths are intentionally preserved for now. The user clarified that selecting an exercise from setup should jump forward to the same logging destination as selecting from the exercise-picker screen.
+
+## Slice 6: Clarify Controller Selection Read Model
+
+### Type
+
+`AFK`
+
+### What to build
+
+Make the controller-owned workout setup read model the sole public selection
+read contract by hiding raw workout/history/logging selection getters from the
+controller interface. Keep behavior unchanged and keep internal selection repair
+inside `workoutSetup`.
+
+### Acceptance criteria
+
+- [x] `WorkoutTrackerController` no longer exposes raw selected workout,
+      history block, or logging row getters.
+- [x] Controller tests assert repaired selections and safe logging targets
+      through `workoutSetup`.
+- [x] Relevant controller tests and focused analyzer pass.
+
+### Blocked by
+
+- Slice 5: Add Controller Setup Read Model
+
+### User stories covered
+
+- Architecture review finding: controller setup selection state had two public
+  truths after the setup read model was added.

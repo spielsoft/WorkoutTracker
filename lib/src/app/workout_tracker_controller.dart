@@ -27,14 +27,6 @@ class WorkoutTrackerController extends ChangeNotifier {
 
   String? get error => _error;
 
-  String? get selectedWorkout => _selectedWorkout;
-
-  String? get selectedHistoryBlock => _selectedHistoryBlock;
-
-  int? get loggingPrimarySheetRowNumber => _loggingPrimarySheetRowNumber;
-
-  int? get selectedLoggingSheetRowNumber => _selectedLoggingSheetRowNumber;
-
   bool get isBusy => _isBusy;
 
   WorkoutSetupReadModel? get workoutSetup {
