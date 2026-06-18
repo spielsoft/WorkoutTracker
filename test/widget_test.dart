@@ -216,12 +216,12 @@ void main() {
     await tester.pump();
 
     expect(service.appliedPlans.single.cellUpdates, const [
-      CellUpdate(
+      CellUpdate.formula(
         sheetRowNumber: 3,
         sheetColumnNumber: 1,
         value: '=Exercises!A2',
       ),
-      CellUpdate(
+      CellUpdate.formula(
         sheetRowNumber: 3,
         sheetColumnNumber: 3,
         value: '=Exercises!D2',
@@ -328,7 +328,7 @@ void main() {
       await tester.pump();
 
       expect(service.appliedPlans.single.cellUpdates, const [
-        CellUpdate(
+        CellUpdate.formula(
           sheetRowNumber: 3,
           sheetColumnNumber: 1,
           value: '=Exercises!A2',

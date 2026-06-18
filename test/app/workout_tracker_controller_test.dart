@@ -247,6 +247,67 @@ void main() {
   );
 
   test(
+    'blocks duplicate history block labels before applying a write',
+    () async {
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ]);
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+
+      final created = await controller.createHistoryBlock(' Week 1 ');
+
+      expect(created, isFalse);
+      expect(controller.error, 'History block Week 1 already exists.');
+      expect(service.appliedPlans, isEmpty);
+      expect(controller.workoutSetup, isNotNull);
+    },
+  );
+
+  test('routes to validation when a set write target is rejected', () async {
+    final visibleSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ],
+      ),
+    );
+    final changedSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Deadlift', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ],
+      ),
+    );
+    final service = _RejectingWriteValidationService(
+      visibleSheet: visibleSheet,
+      currentSheet: changedSheet,
+    );
+    final controller = WorkoutTrackerController(validationService: service);
+
+    await controller.validateSpreadsheetSelection('spreadsheet-id');
+    final plan = visibleSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Week 1',
+      sheetRowNumber: 3,
+      fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+    );
+
+    final saved = await controller.applyActiveSheetWritePlan(plan);
+
+    expect(saved, isTrue);
+    expect(controller.report?.hasBlockingIssues, isTrue);
+    expect(controller.workoutSetup, isNull);
+    expect(service.appliedPlans, isEmpty);
+  });
+
+  test(
     'repairs unambiguous formula issues with one flagged-cell write plan',
     () async {
       final damagedSheet = _parseWorkbookFixture(loadFormulaDamageFixture());
@@ -314,11 +375,13 @@ void main() {
         ActiveSheetWritePlan(
           cellUpdates: [
             const CellUpdate(
+              valueKind: CellUpdateValueKind.formula,
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               value: '=Exercises!A2',
             ),
             const CellUpdate(
+              valueKind: CellUpdateValueKind.formula,
               sheetRowNumber: 3,
               sheetColumnNumber: 3,
               value: '=Exercises!D2',
@@ -356,6 +419,7 @@ void main() {
         ActiveSheetWritePlan(
           cellUpdates: [
             const CellUpdate(
+              valueKind: CellUpdateValueKind.formula,
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               value: '=Exercises!A3',
@@ -391,6 +455,7 @@ void main() {
         ActiveSheetWritePlan(
           cellUpdates: [
             const CellUpdate(
+              valueKind: CellUpdateValueKind.formula,
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               value: '=Exercises!A2',
@@ -486,6 +551,48 @@ void main() {
       await expectLater(createFuture, completion(isTrue));
     },
   );
+}
+
+class _RejectingWriteValidationService implements SpreadsheetValidationService {
+  _RejectingWriteValidationService({
+    required this.visibleSheet,
+    required this.currentSheet,
+  });
+
+  final ParsedActiveSheet visibleSheet;
+  final ParsedActiveSheet currentSheet;
+  final List<ActiveSheetWritePlan> appliedPlans = [];
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: visibleSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    final writeRejections = plan.writeRejections(currentSheet);
+    if (writeRejections.isNotEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentSheet,
+        writeRejections: writeRejections,
+      );
+    }
+    appliedPlans.add(plan);
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: currentSheet,
+    );
+  }
 }
 
 class _FailingSpreadsheetValidationService

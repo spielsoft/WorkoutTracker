@@ -48,13 +48,17 @@ class UrlLauncherSpreadsheetOpener implements SpreadsheetOpener {
 }
 
 class SpreadsheetValidationReport {
-  const SpreadsheetValidationReport({
+  SpreadsheetValidationReport({
     required this.spreadsheetId,
     required this.activeSheet,
-  });
+    Iterable<ActiveSheetWriteRejection> writeRejections = const [],
+  }) : writeRejections = List<ActiveSheetWriteRejection>.unmodifiable(
+         writeRejections,
+       );
 
   final String spreadsheetId;
   final ParsedActiveSheet activeSheet;
+  final List<ActiveSheetWriteRejection> writeRejections;
 
   String get spreadsheetUrl {
     return spreadsheetUrlForId(spreadsheetId);
@@ -65,15 +69,20 @@ class SpreadsheetValidationReport {
   }
 
   List<ManualRepairItem> get manualRepairItems {
-    return schemaViolations
-        .map(
-          (violation) => ManualRepairItem(
-            sheetRowNumber: violation.sheetRowNumber,
-            workout: violation.workout,
-            problem: violation.message,
-          ),
-        )
-        .toList(growable: false);
+    return [
+      for (final violation in schemaViolations)
+        ManualRepairItem(
+          sheetRowNumber: violation.sheetRowNumber,
+          workout: violation.workout,
+          problem: violation.message,
+        ),
+      for (final rejection in writeRejections)
+        ManualRepairItem(
+          sheetRowNumber: 1,
+          workout: defaultWorkoutName,
+          problem: rejection.message,
+        ),
+    ];
   }
 
   List<FormulaHealingIssue> get formulaHealingIssues {
@@ -81,11 +90,13 @@ class SpreadsheetValidationReport {
   }
 
   bool get hasBlockingSchemaViolations {
-    return schemaViolations.isNotEmpty;
+    return schemaViolations.isNotEmpty || writeRejections.isNotEmpty;
   }
 
   bool get hasBlockingIssues {
-    return schemaViolations.isNotEmpty || formulaHealingIssues.isNotEmpty;
+    return schemaViolations.isNotEmpty ||
+        formulaHealingIssues.isNotEmpty ||
+        writeRejections.isNotEmpty;
   }
 }
 

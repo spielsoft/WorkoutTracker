@@ -33,6 +33,17 @@ class GoogleSpreadsheetValidationService
     if (writeAdapter == null) {
       throw StateError('Sheet writes require a write adapter.');
     }
+    final currentActiveSheet = await readAdapter.readParsedActiveSheet(
+      spreadsheetId,
+    );
+    final writeRejections = plan.writeRejections(currentActiveSheet);
+    if (writeRejections.isNotEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: writeRejections,
+      );
+    }
     await writeAdapter.applyActiveSheetWritePlan(
       spreadsheetId: spreadsheetId,
       plan: plan,

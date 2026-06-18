@@ -32,6 +32,14 @@ class TestSpreadsheetValidationService implements SpreadsheetValidationService {
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
+    final writeRejections = plan.writeRejections(_activeSheet);
+    if (writeRejections.isNotEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: _activeSheet,
+        writeRejections: writeRejections,
+      );
+    }
     appliedPlans.add(plan);
     _applyPlan(plan);
     return _report(spreadsheetId);

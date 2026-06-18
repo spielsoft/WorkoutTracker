@@ -106,6 +106,13 @@ class WorkoutTrackerController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+    if (report.activeSheet.historyBlocks.any(
+      (block) => block.label == trimmedLabel,
+    )) {
+      _error = 'History block $trimmedLabel already exists.';
+      notifyListeners();
+      return false;
+    }
 
     return _runServiceAction(
       failurePrefix: 'Unable to create history block',
