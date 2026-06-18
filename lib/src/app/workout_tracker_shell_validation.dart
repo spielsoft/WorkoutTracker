@@ -1,12 +1,19 @@
 part of 'workout_tracker_shell.dart';
 
 class _ValidationSummary extends StatelessWidget {
-  const _ValidationSummary({required this.report});
+  const _ValidationSummary({
+    required this.report,
+    this.onRepairUnambiguousFormulaIssues,
+  });
 
   final SpreadsheetValidationReport report;
+  final Future<void> Function()? onRepairUnambiguousFormulaIssues;
 
   @override
   Widget build(BuildContext context) {
+    final unambiguousFormulaIssues = report.formulaHealingIssues.where(
+      (issue) => !issue.requiresUserSelection,
+    );
     final panels = <Widget>[
       if (report.hasBlockingSchemaViolations)
         _IssuePanel(
@@ -22,6 +29,16 @@ class _ValidationSummary extends StatelessWidget {
           lines: report.formulaHealingIssues
               .expand(_formulaHealingIssueLines)
               .toList(),
+          action: unambiguousFormulaIssues.isEmpty
+              ? null
+              : FilledButton.icon(
+                  key: const ValueKey('repair-unambiguous-formulas'),
+                  onPressed: onRepairUnambiguousFormulaIssues == null
+                      ? null
+                      : () => unawaited(onRepairUnambiguousFormulaIssues!()),
+                  icon: const Icon(Icons.build_circle_outlined),
+                  label: const Text('Repair unambiguous formulas'),
+                ),
           tone: _IssueTone.warning,
         ),
     ];
@@ -75,12 +92,14 @@ class _IssuePanel extends StatelessWidget {
     required this.title,
     required this.lines,
     required this.tone,
+    this.action,
   });
 
   final IconData icon;
   final String title;
   final List<String> lines;
   final _IssueTone tone;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +136,10 @@ class _IssuePanel extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(line),
               ),
+            if (action != null) ...[
+              const SizedBox(height: 6),
+              Align(alignment: Alignment.centerLeft, child: action),
+            ],
           ],
         ),
       ),

@@ -247,6 +247,91 @@ void main() {
   );
 
   test(
+    'repairs unambiguous formula issues with one flagged-cell write plan',
+    () async {
+      final damagedSheet = _parseWorkbookFixture(loadFormulaDamageFixture());
+      final repairedSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: loadFormulaDamageFixture().activeSheet.rows,
+          exercisesRows: loadFormulaDamageFixture().exercisesSheet.rows,
+          cellFormulas: const [
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 2,
+              formula: '=Exercises!C2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 3,
+              formula: '=Exercises!D2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 4,
+              formula: '=Exercises!E2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 5,
+              formula: '=Exercises!F2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 6,
+              formula: '=Exercises!G2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 7,
+              formula: '=Exercises!H2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 8,
+              formula: '=Exercises!I2',
+            ),
+          ],
+        ),
+      );
+      final service = _FormulaRepairValidationService(
+        initialSheet: damagedSheet,
+        repairedSheet: repairedSheet,
+      );
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+
+      final repaired = await controller.repairUnambiguousFormulaIssues();
+
+      expect(repaired, isTrue);
+      expect(
+        service.appliedPlans.single,
+        ActiveSheetWritePlan(
+          cellUpdates: [
+            const CellUpdate(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              value: '=Exercises!A2',
+            ),
+            const CellUpdate(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 3,
+              value: '=Exercises!D2',
+            ),
+          ],
+        ),
+      );
+      expect(controller.report?.formulaHealingIssues, isEmpty);
+      expect(controller.workoutSetup, isNotNull);
+    },
+  );
+
+  test(
     'blank spreadsheet selection reports a user error without calling the service',
     () async {
       final controller = WorkoutTrackerController(
@@ -383,6 +468,40 @@ class _PendingCreateHistoryBlockService
     required ActiveSheetWritePlan plan,
   }) {
     return writeCompleter.future;
+  }
+}
+
+class _FormulaRepairValidationService implements SpreadsheetValidationService {
+  _FormulaRepairValidationService({
+    required this.initialSheet,
+    required this.repairedSheet,
+  });
+
+  final ParsedActiveSheet initialSheet;
+  final ParsedActiveSheet repairedSheet;
+  final List<ActiveSheetWritePlan> appliedPlans = [];
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: initialSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: repairedSheet,
+    );
   }
 }
 

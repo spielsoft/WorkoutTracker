@@ -164,6 +164,11 @@ class ParsedActiveSheet {
     );
   }
 
+  /// Plans formula repairs for every issue with exactly one Exercises match.
+  ActiveSheetWritePlan planUnambiguousFormulaHealing() {
+    return _FormulaHealingPlanner(this).planUnambiguousFormulaHealing();
+  }
+
   List<String> _sheetRow(int sheetRowNumber) {
     final rowIndex = sheetRowNumber - 1;
     if (rowIndex < 0 || rowIndex >= _rows.length) {

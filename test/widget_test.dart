@@ -185,6 +185,80 @@ void main() {
     },
   );
 
+  testWidgets('repairs unambiguous formula issues from one grouped action', (
+    tester,
+  ) async {
+    final service = _FormulaRepairValidationService(
+      initialSheet: _parseWorkbookFixture(loadFormulaDamageFixture()),
+      repairedSheet: _repairedFormulaDamageFixtureSheet(),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Formula repair needed'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('repair-unambiguous-formulas')),
+      findsOneWidget,
+    );
+    expect(find.text('Workout setup'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('repair-unambiguous-formulas')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(service.appliedPlans.single.cellUpdates, const [
+      CellUpdate(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 1,
+        value: '=Exercises!A2',
+      ),
+      CellUpdate(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 3,
+        value: '=Exercises!D2',
+      ),
+    ]);
+    expect(find.text('Formula repair needed'), findsNothing);
+    expect(find.text('Workout setup'), findsOneWidget);
+  });
+
+  testWidgets('keeps logging blocked when formula repair leaves other issues', (
+    tester,
+  ) async {
+    final service = _FormulaRepairValidationService(
+      initialSheet: _parseWorkbookFixture(loadFormulaDamageFixture()),
+      repairedSheet: _repairedFormulaDamageFixtureSheetWithBackupViolation(),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('repair-unambiguous-formulas')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Formula repair needed'), findsNothing);
+    expect(find.text('Sheet contract issues'), findsOneWidget);
+    expect(find.text('Workout setup'), findsNothing);
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
+  });
+
   testWidgets('lists every current schema issue on the validation screen', (
     tester,
   ) async {
@@ -751,6 +825,40 @@ class _DamageAfterSaveValidationService
   }
 }
 
+class _FormulaRepairValidationService implements SpreadsheetValidationService {
+  _FormulaRepairValidationService({
+    required this.initialSheet,
+    required this.repairedSheet,
+  });
+
+  final ParsedActiveSheet initialSheet;
+  final ParsedActiveSheet repairedSheet;
+  final List<ActiveSheetWritePlan> appliedPlans = [];
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: initialSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: repairedSheet,
+    );
+  }
+}
+
 ParsedActiveSheet _parseWorkbookFixture(WorkoutWorkbookFixture fixture) {
   return parseActiveSheet(
     ActiveSheetInput(
@@ -764,6 +872,72 @@ ParsedActiveSheet _parseWorkbookFixture(WorkoutWorkbookFixture fixture) {
         ),
       ),
       exercisesRows: fixture.exercisesSheet.rows,
+    ),
+  );
+}
+
+ParsedActiveSheet _repairedFormulaDamageFixtureSheet() {
+  final fixture = loadFormulaDamageFixture();
+  return _parseRepairedFormulaDamageFixtureRows(fixture.activeSheet.rows);
+}
+
+ParsedActiveSheet _repairedFormulaDamageFixtureSheetWithBackupViolation() {
+  final fixture = loadFormulaDamageFixture();
+  final rows = fixture.activeSheet.rows.map((row) => row.toList()).toList();
+  rows[2][9] = 'TRUE';
+  return _parseRepairedFormulaDamageFixtureRows(rows);
+}
+
+ParsedActiveSheet _parseRepairedFormulaDamageFixtureRows(
+  List<List<String>> rows,
+) {
+  final fixture = loadFormulaDamageFixture();
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: rows,
+      exercisesRows: fixture.exercisesSheet.rows,
+      cellFormulas: const [
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          formula: '=Exercises!A2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 2,
+          formula: '=Exercises!C2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 3,
+          formula: '=Exercises!D2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 4,
+          formula: '=Exercises!E2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 5,
+          formula: '=Exercises!F2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 6,
+          formula: '=Exercises!G2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 7,
+          formula: '=Exercises!H2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          formula: '=Exercises!I2',
+        ),
+      ],
     ),
   );
 }

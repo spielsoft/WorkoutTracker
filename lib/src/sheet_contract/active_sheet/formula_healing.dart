@@ -151,6 +151,21 @@ class _FormulaHealingPlanner {
       ],
     );
   }
+
+  ActiveSheetWritePlan planUnambiguousFormulaHealing() {
+    final updates = <CellUpdate>[];
+    for (final issue in sheet.formulaHealingIssues) {
+      if (issue.requiresUserSelection) {
+        continue;
+      }
+      updates.addAll(
+        planFormulaHealing(
+          activeSheetRowNumber: issue.activeSheetRowNumber,
+        ).cellUpdates,
+      );
+    }
+    return ActiveSheetWritePlan(cellUpdates: updates);
+  }
 }
 
 List<FormulaHealingIssue> _formulaHealingIssues(
