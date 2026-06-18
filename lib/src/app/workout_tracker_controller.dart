@@ -221,6 +221,14 @@ class WorkoutTrackerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reportOpenSpreadsheetFailure(Object error) {
+    _error = _formatServiceFailure(
+      failurePrefix: 'Unable to open spreadsheet',
+      error: error,
+    );
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _isDisposed = true;

@@ -29,6 +29,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     this.accountSession,
     this.appStateStore,
     this.initialSpreadsheetText = '',
+    this.spreadsheetOpener = const UrlLauncherSpreadsheetOpener(),
     super.key,
   });
 
@@ -36,6 +37,7 @@ class WorkoutTrackerApp extends StatelessWidget {
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
+  final SpreadsheetOpener spreadsheetOpener;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,7 @@ class WorkoutTrackerApp extends StatelessWidget {
         accountSession: accountSession,
         appStateStore: appStateStore,
         initialSpreadsheetText: initialSpreadsheetText,
+        spreadsheetOpener: spreadsheetOpener,
       ),
     );
   }
@@ -77,6 +80,7 @@ class SpreadsheetValidationShell extends StatefulWidget {
     this.accountSession,
     this.appStateStore,
     required this.initialSpreadsheetText,
+    required this.spreadsheetOpener,
     super.key,
   });
 
@@ -84,6 +88,7 @@ class SpreadsheetValidationShell extends StatefulWidget {
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
+  final SpreadsheetOpener spreadsheetOpener;
 
   @override
   State<SpreadsheetValidationShell> createState() {
@@ -211,6 +216,18 @@ class _SpreadsheetValidationShellState
           ? _WorkoutTrackerScreen.workoutSetup
           : _WorkoutTrackerScreen.sheetSelection;
     });
+  }
+
+  Future<void> _openSelectedSpreadsheet() async {
+    final report = _controller.report;
+    if (report == null) {
+      return;
+    }
+    try {
+      await widget.spreadsheetOpener.openSpreadsheet(report.spreadsheetUrl);
+    } on Object catch (error) {
+      _controller.reportOpenSpreadsheetFailure(error);
+    }
   }
 
   void _returnToSheetSelection() {
@@ -348,6 +365,9 @@ class _SpreadsheetValidationShellState
                           onRepairFormulaIssue: isBusy
                               ? null
                               : _repairFormulaIssue,
+                          onOpenSpreadsheet: isBusy
+                              ? null
+                              : _openSelectedSpreadsheet,
                         ),
                       if (!showSheetSelection)
                         _WorkoutAndHistorySelection(

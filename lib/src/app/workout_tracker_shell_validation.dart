@@ -5,6 +5,7 @@ class _ValidationSummary extends StatelessWidget {
     required this.report,
     this.onRepairUnambiguousFormulaIssues,
     this.onRepairFormulaIssue,
+    this.onOpenSpreadsheet,
   });
 
   final SpreadsheetValidationReport report;
@@ -14,6 +15,7 @@ class _ValidationSummary extends StatelessWidget {
     required int selectedExerciseSheetRowNumber,
   })?
   onRepairFormulaIssue;
+  final Future<void> Function()? onOpenSpreadsheet;
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +29,22 @@ class _ValidationSummary extends StatelessWidget {
       if (report.hasBlockingSchemaViolations)
         _IssuePanel(
           icon: Icons.report_problem_outlined,
-          title: 'Sheet contract issues',
-          lines: report.schemaViolations.map(_schemaViolationLine).toList(),
+          title: 'Manual repair needed',
+          lines: report.manualRepairItems
+              .map((item) => item.displayText)
+              .toList(),
+          action: FilledButton.icon(
+            key: const ValueKey('open-spreadsheet-manual-repair'),
+            onPressed: onOpenSpreadsheet == null
+                ? null
+                : () => unawaited(onOpenSpreadsheet!()),
+            icon: const Icon(Icons.open_in_new_outlined),
+            label: const Text('Open in Google Sheets'),
+          ),
           tone: _IssueTone.error,
         ),
-      if (report.formulaHealingIssues.isNotEmpty)
+      if (!report.hasBlockingSchemaViolations &&
+          report.formulaHealingIssues.isNotEmpty)
         _IssuePanel(
           icon: Icons.build_outlined,
           title: 'Formula repair needed',
@@ -179,11 +192,6 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
       ),
     );
   }
-}
-
-String _schemaViolationLine(SchemaViolation violation) {
-  return 'Row ${violation.sheetRowNumber}, ${violation.workout}: '
-      '${violation.message}';
 }
 
 Iterable<String> _formulaHealingIssueLines(FormulaHealingIssue issue) sync* {

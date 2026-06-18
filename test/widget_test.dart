@@ -362,9 +362,92 @@ void main() {
     await tester.pump();
 
     expect(find.text('Formula repair needed'), findsNothing);
-    expect(find.text('Sheet contract issues'), findsOneWidget);
+    expect(find.text('Manual repair needed'), findsOneWidget);
     expect(find.text('Workout setup'), findsNothing);
     expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
+  });
+
+  testWidgets('shows structural damage as manual repair items with sheet open', (
+    tester,
+  ) async {
+    final cases = <({WorkoutWorkbookFixture fixture, String expectedText})>[
+      (
+        fixture: loadFixedColumnDamageFixture(),
+        expectedText:
+            'Row 1: Fixed column 1 must be "Exercise". '
+            'Open the spreadsheet and edit the active sheet.',
+      ),
+      (
+        fixture: loadMalformedHistoryDamageFixture(),
+        expectedText:
+            'Row 2: History set column S1 has no history block label. '
+            'Open the spreadsheet and edit the active sheet.',
+      ),
+      (
+        fixture: loadInvalidLogFormatDamageFixture(),
+        expectedText:
+            'Row 3: Invalid Log Format: Field labels cannot contain brackets. '
+            'Open the spreadsheet and edit the active sheet.',
+      ),
+      (
+        fixture: loadBackupGroupingDamageFixture(),
+        expectedText:
+            'Row 3: Backup row has no preceding primary row in the same workout. '
+            'Open the spreadsheet and edit the active sheet.',
+      ),
+    ];
+
+    for (final entry in cases) {
+      final opener = _RecordingSpreadsheetOpener();
+      final service = _RevalidatingSpreadsheetValidationService(
+        reports: [
+          _parseWorkbookFixture(entry.fixture),
+          _minimalValidParsedSheet(),
+        ],
+      );
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          key: ValueKey(entry.expectedText),
+          validationService: service,
+          spreadsheetOpener: opener,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Manual repair needed'), findsOneWidget);
+      expect(find.text(entry.expectedText), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('repair-unambiguous-formulas')),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('repair-formula-row-3')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('open-spreadsheet-manual-repair')),
+        findsOneWidget,
+      );
+      expect(find.text('Workout setup'), findsNothing);
+
+      await tester.tap(
+        find.byKey(const ValueKey('open-spreadsheet-manual-repair')),
+      );
+      await tester.pump();
+
+      expect(opener.openedUrls, [
+        'https://docs.google.com/spreadsheets/d/spreadsheet-id/edit?gid=0#gid=0',
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Manual repair needed'), findsNothing);
+      expect(find.text('Workout setup'), findsOneWidget);
+    }
   });
 
   testWidgets('lists every current schema issue on the validation screen', (
@@ -385,26 +468,32 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Sheet contract issues'), findsOneWidget);
+    expect(find.text('Manual repair needed'), findsOneWidget);
     expect(
       find.text(
-        'Row 2, Default: History set column S1 has no history block label.',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Row 1, Default: Duplicate history block label: Week 1.'),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        'Row 2, Default: History block Week 1 skips set label S2 before S3.',
+        'Row 2: History set column S1 has no history block label. '
+        'Open the spreadsheet and edit the active sheet.',
       ),
       findsOneWidget,
     );
     expect(
       find.text(
-        'Row 1, Default: History block Empty Block has no set columns.',
+        'Row 1: Duplicate history block label: Week 1. '
+        'Open the spreadsheet and edit the active sheet.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Row 2: History block Week 1 skips set label S2 before S3. '
+        'Open the spreadsheet and edit the active sheet.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Row 1: History block Empty Block has no set columns. '
+        'Open the spreadsheet and edit the active sheet.',
       ),
       findsOneWidget,
     );
@@ -456,7 +545,7 @@ void main() {
       await tester.pump();
 
       expect(service.appliedPlans, hasLength(1));
-      expect(find.text('Sheet contract issues'), findsOneWidget);
+      expect(find.text('Manual repair needed'), findsOneWidget);
       expect(find.text('Workout setup'), findsNothing);
       expect(find.text('Save set'), findsNothing);
       expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
@@ -896,6 +985,56 @@ class _MemoryAppStateStore implements AppStateStore {
     spreadsheetText = value;
     writes.add(value);
   }
+}
+
+class _RecordingSpreadsheetOpener implements SpreadsheetOpener {
+  final openedUrls = <String>[];
+
+  @override
+  Future<void> openSpreadsheet(String url) async {
+    openedUrls.add(url);
+  }
+}
+
+class _RevalidatingSpreadsheetValidationService
+    implements SpreadsheetValidationService {
+  _RevalidatingSpreadsheetValidationService({required this.reports});
+
+  final List<ParsedActiveSheet> reports;
+  int _reportIndex = 0;
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    final index = _reportIndex.clamp(0, reports.length - 1);
+    _reportIndex += 1;
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: reports[index],
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+ParsedActiveSheet _minimalValidParsedSheet() {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ],
+    ),
+  );
 }
 
 class _DamageAfterSaveValidationService

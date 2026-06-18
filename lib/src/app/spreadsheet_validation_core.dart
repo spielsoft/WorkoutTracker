@@ -1,6 +1,7 @@
 import 'package:workout_tracker/google_sheets.dart'
     show workoutTrackerDevelopmentSpreadsheetId;
 import 'package:workout_tracker/sheet_contract.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const workoutTrackerDevelopmentSpreadsheetUrl =
     'https://docs.google.com/spreadsheets/d/'
@@ -27,6 +28,25 @@ abstract interface class SpreadsheetValidationService {
   });
 }
 
+abstract interface class SpreadsheetOpener {
+  Future<void> openSpreadsheet(String url);
+}
+
+class UrlLauncherSpreadsheetOpener implements SpreadsheetOpener {
+  const UrlLauncherSpreadsheetOpener();
+
+  @override
+  Future<void> openSpreadsheet(String url) async {
+    final opened = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened) {
+      throw StateError('Unable to open Google Sheets URL: $url');
+    }
+  }
+}
+
 class SpreadsheetValidationReport {
   const SpreadsheetValidationReport({
     required this.spreadsheetId,
@@ -36,8 +56,24 @@ class SpreadsheetValidationReport {
   final String spreadsheetId;
   final ParsedActiveSheet activeSheet;
 
+  String get spreadsheetUrl {
+    return spreadsheetUrlForId(spreadsheetId);
+  }
+
   List<SchemaViolation> get schemaViolations {
     return activeSheet.schemaViolations;
+  }
+
+  List<ManualRepairItem> get manualRepairItems {
+    return schemaViolations
+        .map(
+          (violation) => ManualRepairItem(
+            sheetRowNumber: violation.sheetRowNumber,
+            workout: violation.workout,
+            problem: violation.message,
+          ),
+        )
+        .toList(growable: false);
   }
 
   List<FormulaHealingIssue> get formulaHealingIssues {
@@ -53,8 +89,33 @@ class SpreadsheetValidationReport {
   }
 }
 
+class ManualRepairItem {
+  const ManualRepairItem({
+    required this.sheetRowNumber,
+    required this.workout,
+    required this.problem,
+  });
+
+  final int sheetRowNumber;
+  final String workout;
+  final String problem;
+
+  String get instruction {
+    return 'Open the spreadsheet and edit the active sheet.';
+  }
+
+  String get displayText {
+    return 'Row $sheetRowNumber: $problem $instruction';
+  }
+}
+
 String spreadsheetIdFromSelection(String input) {
   final trimmed = input.trim();
   final match = RegExp(r'/spreadsheets/d/([A-Za-z0-9_-]+)').firstMatch(trimmed);
   return match?.group(1) ?? trimmed;
+}
+
+String spreadsheetUrlForId(String spreadsheetId) {
+  return 'https://docs.google.com/spreadsheets/d/'
+      '$spreadsheetId/edit?gid=0#gid=0';
 }
