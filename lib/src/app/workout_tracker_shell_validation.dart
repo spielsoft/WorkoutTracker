@@ -4,15 +4,24 @@ class _ValidationSummary extends StatelessWidget {
   const _ValidationSummary({
     required this.report,
     this.onRepairUnambiguousFormulaIssues,
+    this.onRepairFormulaIssue,
   });
 
   final SpreadsheetValidationReport report;
   final Future<void> Function()? onRepairUnambiguousFormulaIssues;
+  final Future<void> Function({
+    required int activeSheetRowNumber,
+    required int selectedExerciseSheetRowNumber,
+  })?
+  onRepairFormulaIssue;
 
   @override
   Widget build(BuildContext context) {
-    final unambiguousFormulaIssues = report.formulaHealingIssues.where(
-      (issue) => !issue.requiresUserSelection,
+    final unambiguousFormulaIssues = report.formulaHealingIssues
+        .where((issue) => !issue.requiresUserSelection)
+        .toList();
+    final choiceFormulaIssues = report.formulaHealingIssues.where(
+      (issue) => issue.requiresUserSelection,
     );
     final panels = <Widget>[
       if (report.hasBlockingSchemaViolations)
@@ -26,7 +35,7 @@ class _ValidationSummary extends StatelessWidget {
         _IssuePanel(
           icon: Icons.build_outlined,
           title: 'Formula repair needed',
-          lines: report.formulaHealingIssues
+          lines: unambiguousFormulaIssues
               .expand(_formulaHealingIssueLines)
               .toList(),
           action: unambiguousFormulaIssues.isEmpty
@@ -39,6 +48,16 @@ class _ValidationSummary extends StatelessWidget {
                   icon: const Icon(Icons.build_circle_outlined),
                   label: const Text('Repair unambiguous formulas'),
                 ),
+          extraContent: [
+            for (final issue in choiceFormulaIssues)
+              _FormulaChoiceRepairItem(
+                key: ValueKey(
+                  'formula-repair-item-${issue.activeSheetRowNumber}',
+                ),
+                issue: issue,
+                onRepairFormulaIssue: onRepairFormulaIssue,
+              ),
+          ],
           tone: _IssueTone.warning,
         ),
     ];
@@ -55,6 +74,109 @@ class _ValidationSummary extends StatelessWidget {
           panels[index],
         ],
       ],
+    );
+  }
+}
+
+class _FormulaChoiceRepairItem extends StatefulWidget {
+  const _FormulaChoiceRepairItem({
+    super.key,
+    required this.issue,
+    this.onRepairFormulaIssue,
+  });
+
+  final FormulaHealingIssue issue;
+  final Future<void> Function({
+    required int activeSheetRowNumber,
+    required int selectedExerciseSheetRowNumber,
+  })?
+  onRepairFormulaIssue;
+
+  @override
+  State<_FormulaChoiceRepairItem> createState() {
+    return _FormulaChoiceRepairItemState();
+  }
+}
+
+class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
+  int? _selectedExerciseSheetRowNumber;
+
+  @override
+  Widget build(BuildContext context) {
+    final issue = widget.issue;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFB28A00)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Row ${issue.activeSheetRowNumber}, '
+                '${issue.displayedExerciseName}: choose the Exercises row to use.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              for (final cell in issue.cells)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '${cell.columnName}: ${_formulaReasonLabel(cell.reason)}',
+                  ),
+                ),
+              const SizedBox(height: 8),
+              DropdownMenu<int>(
+                key: ValueKey(
+                  'formula-repair-picker-${issue.activeSheetRowNumber}',
+                ),
+                expandedInsets: EdgeInsets.zero,
+                enableFilter: true,
+                enableSearch: true,
+                label: const Text('Exercises row'),
+                dropdownMenuEntries: [
+                  for (final choice in issue.exerciseChoices)
+                    DropdownMenuEntry<int>(
+                      value: choice.sheetRowNumber,
+                      label: choice.label,
+                    ),
+                ],
+                onSelected: (value) {
+                  setState(() {
+                    _selectedExerciseSheetRowNumber = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                key: ValueKey(
+                  'repair-formula-row-${issue.activeSheetRowNumber}',
+                ),
+                onPressed:
+                    _selectedExerciseSheetRowNumber == null ||
+                        widget.onRepairFormulaIssue == null
+                    ? null
+                    : () => unawaited(
+                        widget.onRepairFormulaIssue!(
+                          activeSheetRowNumber: issue.activeSheetRowNumber,
+                          selectedExerciseSheetRowNumber:
+                              _selectedExerciseSheetRowNumber!,
+                        ),
+                      ),
+                icon: const Icon(Icons.build_circle_outlined),
+                label: const Text('Repair selected row'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -93,6 +215,7 @@ class _IssuePanel extends StatelessWidget {
     required this.lines,
     required this.tone,
     this.action,
+    this.extraContent = const [],
   });
 
   final IconData icon;
@@ -100,6 +223,7 @@ class _IssuePanel extends StatelessWidget {
   final List<String> lines;
   final _IssueTone tone;
   final Widget? action;
+  final List<Widget> extraContent;
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +260,7 @@ class _IssuePanel extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(line),
               ),
+            ...extraContent,
             if (action != null) ...[
               const SizedBox(height: 6),
               Align(alignment: Alignment.centerLeft, child: action),

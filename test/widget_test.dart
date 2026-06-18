@@ -231,6 +231,114 @@ void main() {
     expect(find.text('Workout setup'), findsOneWidget);
   });
 
+  testWidgets('shows duplicate formula repairs as individual row choices', (
+    tester,
+  ) async {
+    final service = _FormulaRepairValidationService(
+      initialSheet: _parseWorkbookFixture(
+        loadAmbiguousFormulaRepairDamageFixture(),
+      ),
+      repairedSheet: _repairedFormulaDamageFixtureSheet(),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('repair-unambiguous-formulas')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('formula-repair-item-3')), findsOneWidget);
+    expect(
+      find.text('Row 3, Squat: choose the Exercises row to use.'),
+      findsOneWidget,
+    );
+
+    final picker = tester.widget<DropdownMenu<int>>(
+      find.byKey(const ValueKey('formula-repair-picker-3')),
+    );
+    expect(picker.enableFilter, isTrue);
+    expect(picker.dropdownMenuEntries.map((entry) => entry.label), [
+      'Row 2: Squat - Back squat',
+      'Row 3: Squat - Safety-bar squat',
+    ]);
+
+    final fixButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('repair-formula-row-3')),
+    );
+    expect(fixButton.onPressed, isNull);
+  });
+
+  testWidgets(
+    'repairs a no-match formula row after choosing an Exercises row',
+    (tester) async {
+      final service = _FormulaRepairValidationService(
+        initialSheet: _parseWorkbookFixture(
+          loadNoExactMatchFormulaRepairDamageFixture(),
+        ),
+        repairedSheet: _repairedFormulaDamageFixtureSheet(),
+      );
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('repair-unambiguous-formulas')),
+        findsNothing,
+      );
+      expect(
+        find.text('Row 3, Front Squat: choose the Exercises row to use.'),
+        findsOneWidget,
+      );
+
+      final picker = tester.widget<DropdownMenu<int>>(
+        find.byKey(const ValueKey('formula-repair-picker-3')),
+      );
+      expect(picker.enableFilter, isTrue);
+      expect(picker.dropdownMenuEntries.map((entry) => entry.label), [
+        'Row 2: Squat - Back squat',
+      ]);
+
+      picker.onSelected?.call(2);
+      await tester.pump();
+
+      final fixButton = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('repair-formula-row-3')),
+      );
+      expect(fixButton.onPressed, isNotNull);
+
+      await tester.tap(find.byKey(const ValueKey('repair-formula-row-3')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans.single.cellUpdates, const [
+        CellUpdate(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A2',
+        ),
+      ]);
+      expect(find.text('Formula repair needed'), findsNothing);
+      expect(find.text('Workout setup'), findsOneWidget);
+    },
+  );
+
   testWidgets('keeps logging blocked when formula repair leaves other issues', (
     tester,
   ) async {

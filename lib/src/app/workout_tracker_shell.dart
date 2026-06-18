@@ -194,6 +194,25 @@ class _SpreadsheetValidationShellState
     });
   }
 
+  Future<void> _repairFormulaIssue({
+    required int activeSheetRowNumber,
+    required int selectedExerciseSheetRowNumber,
+  }) async {
+    final repaired = await _controller.repairFormulaIssue(
+      activeSheetRowNumber: activeSheetRowNumber,
+      selectedExerciseSheetRowNumber: selectedExerciseSheetRowNumber,
+    );
+    final report = _controller.report;
+    if (!mounted || !repaired) {
+      return;
+    }
+    setState(() {
+      _screen = report != null && !report.hasBlockingIssues
+          ? _WorkoutTrackerScreen.workoutSetup
+          : _WorkoutTrackerScreen.sheetSelection;
+    });
+  }
+
   void _returnToSheetSelection() {
     _controller.closeExercise();
     setState(() {
@@ -326,6 +345,9 @@ class _SpreadsheetValidationShellState
                           onRepairUnambiguousFormulaIssues: isBusy
                               ? null
                               : _repairUnambiguousFormulaIssues,
+                          onRepairFormulaIssue: isBusy
+                              ? null
+                              : _repairFormulaIssue,
                         ),
                       if (!showSheetSelection)
                         _WorkoutAndHistorySelection(

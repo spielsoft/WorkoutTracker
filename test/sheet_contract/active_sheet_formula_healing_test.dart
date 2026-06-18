@@ -22,6 +22,7 @@ void main() {
           preselectedExerciseSheetRowNumber: 2,
           requiresUserSelection: false,
           candidateExerciseSheetRowNumbers: const [2],
+          exerciseChoices: _squatExerciseChoices,
           cells: const [
             FormulaHealingCellIssue(
               sheetRowNumber: 3,
@@ -72,6 +73,7 @@ void main() {
         preselectedExerciseSheetRowNumber: 2,
         requiresUserSelection: false,
         candidateExerciseSheetRowNumbers: const [2],
+        exerciseChoices: _squatExerciseChoices,
         cells: const [
           FormulaHealingCellIssue(
             sheetRowNumber: 3,
@@ -348,6 +350,14 @@ const _squatExerciseRows = [
     'Stay braced.',
     '{Weight}[x]{Reps}[@]{RPE}',
   ],
+];
+
+const _squatExerciseChoices = [
+  FormulaHealingExerciseChoice(
+    sheetRowNumber: 2,
+    exerciseName: 'Squat',
+    description: 'Back squat',
+  ),
 ];
 
 const _missingExerciseFormulaCells = [

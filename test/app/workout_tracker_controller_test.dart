@@ -332,6 +332,76 @@ void main() {
   );
 
   test(
+    'repairs an ambiguous formula issue after the user chooses an Exercises row',
+    () async {
+      final damagedSheet = _parseWorkbookFixture(
+        loadAmbiguousFormulaRepairDamageFixture(),
+      );
+      final service = _FormulaRepairValidationService(
+        initialSheet: damagedSheet,
+        repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
+      );
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+
+      final repaired = await controller.repairFormulaIssue(
+        activeSheetRowNumber: 3,
+        selectedExerciseSheetRowNumber: 3,
+      );
+
+      expect(repaired, isTrue);
+      expect(
+        service.appliedPlans.single,
+        ActiveSheetWritePlan(
+          cellUpdates: [
+            const CellUpdate(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              value: '=Exercises!A3',
+            ),
+          ],
+        ),
+      );
+    },
+  );
+
+  test(
+    'repairs a no-match formula issue after the user chooses an Exercises row',
+    () async {
+      final damagedSheet = _parseWorkbookFixture(
+        loadNoExactMatchFormulaRepairDamageFixture(),
+      );
+      final service = _FormulaRepairValidationService(
+        initialSheet: damagedSheet,
+        repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
+      );
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+
+      final repaired = await controller.repairFormulaIssue(
+        activeSheetRowNumber: 3,
+        selectedExerciseSheetRowNumber: 2,
+      );
+
+      expect(repaired, isTrue);
+      expect(
+        service.appliedPlans.single,
+        ActiveSheetWritePlan(
+          cellUpdates: [
+            const CellUpdate(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              value: '=Exercises!A2',
+            ),
+          ],
+        ),
+      );
+    },
+  );
+
+  test(
     'blank spreadsheet selection reports a user error without calling the service',
     () async {
       final controller = WorkoutTrackerController(

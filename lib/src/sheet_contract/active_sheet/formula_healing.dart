@@ -8,10 +8,14 @@ class FormulaHealingIssue {
     required this.displayedExerciseName,
     required this.requiresUserSelection,
     required Iterable<int> candidateExerciseSheetRowNumbers,
+    Iterable<FormulaHealingExerciseChoice> exerciseChoices = const [],
     this.preselectedExerciseSheetRowNumber,
     Iterable<FormulaHealingCellIssue> cells = const [],
   }) : candidateExerciseSheetRowNumbers = List<int>.unmodifiable(
          candidateExerciseSheetRowNumbers,
+       ),
+       exerciseChoices = List<FormulaHealingExerciseChoice>.unmodifiable(
+         exerciseChoices,
        ),
        cells = List<FormulaHealingCellIssue>.unmodifiable(cells);
 
@@ -20,6 +24,7 @@ class FormulaHealingIssue {
   final int? preselectedExerciseSheetRowNumber;
   final bool requiresUserSelection;
   final List<int> candidateExerciseSheetRowNumbers;
+  final List<FormulaHealingExerciseChoice> exerciseChoices;
   final List<FormulaHealingCellIssue> cells;
 
   @override
@@ -35,6 +40,7 @@ class FormulaHealingIssue {
               candidateExerciseSheetRowNumbers,
               other.candidateExerciseSheetRowNumbers,
             ) &&
+            _listEquals(exerciseChoices, other.exerciseChoices) &&
             _listEquals(cells, other.cells);
   }
 
@@ -45,6 +51,7 @@ class FormulaHealingIssue {
     preselectedExerciseSheetRowNumber,
     requiresUserSelection,
     Object.hashAll(candidateExerciseSheetRowNumbers),
+    Object.hashAll(exerciseChoices),
     Object.hashAll(cells),
   );
 
@@ -56,7 +63,49 @@ class FormulaHealingIssue {
         'preselectedExerciseSheetRowNumber: $preselectedExerciseSheetRowNumber, '
         'requiresUserSelection: $requiresUserSelection, '
         'candidateExerciseSheetRowNumbers: $candidateExerciseSheetRowNumbers, '
+        'exerciseChoices: $exerciseChoices, '
         'cells: $cells'
+        ')';
+  }
+}
+
+class FormulaHealingExerciseChoice {
+  const FormulaHealingExerciseChoice({
+    required this.sheetRowNumber,
+    required this.exerciseName,
+    required this.description,
+  });
+
+  final int sheetRowNumber;
+  final String exerciseName;
+  final String description;
+
+  String get label {
+    final trimmedDescription = description.trim();
+    if (trimmedDescription.isEmpty) {
+      return 'Row $sheetRowNumber: $exerciseName';
+    }
+    return 'Row $sheetRowNumber: $exerciseName - $trimmedDescription';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is FormulaHealingExerciseChoice &&
+            sheetRowNumber == other.sheetRowNumber &&
+            exerciseName == other.exerciseName &&
+            description == other.description;
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, exerciseName, description);
+
+  @override
+  String toString() {
+    return 'FormulaHealingExerciseChoice('
+        'sheetRowNumber: $sheetRowNumber, '
+        'exerciseName: $exerciseName, '
+        'description: $description'
         ')';
   }
 }
@@ -179,6 +228,10 @@ List<FormulaHealingIssue> _formulaHealingIssues(
   final exerciseColumns = _ExercisesColumnIndexes.fromHeader(
     sheet.exercisesRows.first,
   );
+  final exerciseChoices = _exerciseChoices(
+    sheet.exercisesRows,
+    exerciseColumns.exercise,
+  );
   final formulas = {
     for (final cellFormula in sheet.cellFormulas)
       _CellAddress(cellFormula.sheetRowNumber, cellFormula.sheetColumnNumber):
@@ -253,12 +306,37 @@ List<FormulaHealingIssue> _formulaHealingIssues(
             : null,
         requiresUserSelection: candidates.length != 1,
         candidateExerciseSheetRowNumbers: candidates,
+        exerciseChoices: exerciseChoices,
         cells: cells,
       ),
     );
   }
 
   return issues;
+}
+
+List<FormulaHealingExerciseChoice> _exerciseChoices(
+  List<List<String>> exercisesRows,
+  int exerciseColumnIndex,
+) {
+  final choices = <FormulaHealingExerciseChoice>[];
+  for (var rowIndex = 1; rowIndex < exercisesRows.length; rowIndex += 1) {
+    final exerciseName = _cell(
+      exercisesRows[rowIndex],
+      exerciseColumnIndex,
+    ).trim();
+    if (exerciseName.isEmpty) {
+      continue;
+    }
+    choices.add(
+      FormulaHealingExerciseChoice(
+        sheetRowNumber: rowIndex + 1,
+        exerciseName: exerciseName,
+        description: _cell(exercisesRows[rowIndex], 1).trim(),
+      ),
+    );
+  }
+  return List<FormulaHealingExerciseChoice>.unmodifiable(choices);
 }
 
 List<int> _matchingExerciseRows(

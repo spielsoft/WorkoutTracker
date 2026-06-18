@@ -148,6 +148,32 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
+  Future<bool> repairFormulaIssue({
+    required int activeSheetRowNumber,
+    required int selectedExerciseSheetRowNumber,
+  }) async {
+    final report = _report;
+    if (report == null) {
+      return false;
+    }
+
+    return _runServiceAction(
+      failurePrefix: 'Unable to repair formula',
+      action: () async {
+        _adoptReport(
+          await validationService.applyActiveSheetWritePlan(
+            spreadsheetId: report.spreadsheetId,
+            activeSheet: report.activeSheet,
+            plan: report.activeSheet.planFormulaHealing(
+              activeSheetRowNumber: activeSheetRowNumber,
+              selectedExerciseSheetRowNumber: selectedExerciseSheetRowNumber,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<bool> applyActiveSheetWritePlan(ActiveSheetWritePlan plan) async {
     final report = _report;
     if (report == null) {
