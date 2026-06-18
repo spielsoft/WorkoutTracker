@@ -6,6 +6,7 @@ import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
 import 'app/test_spreadsheet_validation_service.dart';
+import 'fixtures/workout_sheet_fixtures.dart';
 
 void main() {
   testWidgets('renders the main logging flow and sends a save to the service', (
@@ -152,6 +153,147 @@ void main() {
     expect(behavior.dragDevices, contains(PointerDeviceKind.mouse));
     expect(behavior.dragDevices, contains(PointerDeviceKind.trackpad));
   });
+
+  testWidgets(
+    'blocks logging and lists formula issues on the validation screen',
+    (tester) async {
+      final service = TestSpreadsheetValidationService(
+        _parseWorkbookFixture(loadFormulaDamageFixture()),
+      );
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Formula repair needed'), findsOneWidget);
+      expect(
+        find.text('Row 3, Squat: preselects Exercises row 2.'),
+        findsOneWidget,
+      );
+      expect(find.text('Exercise: missing formula'), findsOneWidget);
+      expect(find.text('Reps: broken formula'), findsOneWidget);
+      expect(find.text('Workout setup'), findsNothing);
+      expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
+      expect(find.text('Save set'), findsNothing);
+    },
+  );
+
+  testWidgets('lists every current schema issue on the validation screen', (
+    tester,
+  ) async {
+    final service = TestSpreadsheetValidationService(
+      _parseWorkbookFixture(loadMalformedHistoryDamageFixture()),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Sheet contract issues'), findsOneWidget);
+    expect(
+      find.text(
+        'Row 2, Default: History set column S1 has no history block label.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Row 1, Default: Duplicate history block label: Week 1.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Row 2, Default: History block Week 1 skips set label S2 before S3.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Row 1, Default: History block Empty Block has no set columns.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Workout setup'), findsNothing);
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
+  });
+
+  testWidgets(
+    'returns to validation and drops typed logging input after damage',
+    (tester) async {
+      final validSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            [...activeSheetFixedColumns, 'Week 1'],
+            [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+            ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+          ],
+        ),
+      );
+      final damagedSheet = _parseWorkbookFixture(
+        loadBackupGroupingDamageFixture(),
+      );
+      final service = _DamageAfterSaveValidationService(
+        validSheet: validSheet,
+        damagedSheet: damagedSheet,
+      );
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Squat'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('set-field-Weight')),
+        '155',
+      );
+      await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
+      await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
+
+      await tester.tap(find.text('Save set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans, hasLength(1));
+      expect(find.text('Sheet contract issues'), findsOneWidget);
+      expect(find.text('Workout setup'), findsNothing);
+      expect(find.text('Save set'), findsNothing);
+      expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Squat'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+            .controller
+            ?.text,
+        isEmpty,
+      );
+    },
+  );
 
   testWidgets('restores and persists the spreadsheet field', (tester) async {
     final store = _MemoryAppStateStore('saved-spreadsheet-id');
@@ -572,4 +714,56 @@ class _MemoryAppStateStore implements AppStateStore {
     spreadsheetText = value;
     writes.add(value);
   }
+}
+
+class _DamageAfterSaveValidationService
+    implements SpreadsheetValidationService {
+  _DamageAfterSaveValidationService({
+    required this.validSheet,
+    required this.damagedSheet,
+  });
+
+  final ParsedActiveSheet validSheet;
+  final ParsedActiveSheet damagedSheet;
+  final appliedPlans = <ActiveSheetWritePlan>[];
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: validSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: damagedSheet,
+    );
+  }
+}
+
+ParsedActiveSheet _parseWorkbookFixture(WorkoutWorkbookFixture fixture) {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: fixture.activeSheet.rows,
+      mergedFirstColumnRows: fixture.activeSheet.mergedFirstColumnRows,
+      cellFormulas: fixture.activeSheet.cellFormulas.map(
+        (formula) => CellFormula(
+          sheetRowNumber: formula.sheetRowNumber,
+          sheetColumnNumber: formula.sheetColumnNumber,
+          formula: formula.formula,
+        ),
+      ),
+      exercisesRows: fixture.exercisesSheet.rows,
+    ),
+  );
 }

@@ -47,6 +47,10 @@ class SpreadsheetValidationReport {
   bool get hasBlockingSchemaViolations {
     return schemaViolations.isNotEmpty;
   }
+
+  bool get hasBlockingIssues {
+    return schemaViolations.isNotEmpty || formulaHealingIssues.isNotEmpty;
+  }
 }
 
 String spreadsheetIdFromSelection(String input) {

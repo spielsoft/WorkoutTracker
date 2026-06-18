@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
+import '../fixtures/workout_sheet_fixtures.dart';
 import 'test_spreadsheet_validation_service.dart';
 
 void main() {
@@ -45,6 +46,33 @@ void main() {
       expect(controller.workoutSetup?.selectedHistoryBlock, 'Week 2');
       expect(controller.workoutSetup?.loggingTarget, isNull);
       expect(controller.error, isNull);
+    },
+  );
+
+  test(
+    'blocks workout setup when the selected sheet has structural damage',
+    () async {
+      final fixtures = [
+        loadFixedColumnDamageFixture(),
+        loadMalformedHistoryDamageFixture(),
+        loadInvalidLogFormatDamageFixture(),
+        loadBackupGroupingDamageFixture(),
+      ];
+
+      for (final fixture in fixtures) {
+        final service = TestSpreadsheetValidationService(
+          _parseWorkbookFixture(fixture),
+        );
+        final controller = WorkoutTrackerController(validationService: service);
+
+        final validated = await controller.validateSpreadsheetSelection(
+          'spreadsheet-id',
+        );
+
+        expect(validated, isTrue);
+        expect(controller.report?.schemaViolations, isNotEmpty);
+        expect(controller.workoutSetup, isNull);
+      }
     },
   );
 
@@ -356,4 +384,21 @@ class _PendingCreateHistoryBlockService
   }) {
     return writeCompleter.future;
   }
+}
+
+ParsedActiveSheet _parseWorkbookFixture(WorkoutWorkbookFixture fixture) {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: fixture.activeSheet.rows,
+      mergedFirstColumnRows: fixture.activeSheet.mergedFirstColumnRows,
+      cellFormulas: fixture.activeSheet.cellFormulas.map(
+        (formula) => CellFormula(
+          sheetRowNumber: formula.sheetRowNumber,
+          sheetColumnNumber: formula.sheetColumnNumber,
+          formula: formula.formula,
+        ),
+      ),
+      exercisesRows: fixture.exercisesSheet.rows,
+    ),
+  );
 }

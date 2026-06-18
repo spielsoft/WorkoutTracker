@@ -166,8 +166,7 @@ class _SpreadsheetValidationShellState
       return;
     }
     setState(() {
-      _screen =
-          selected && report != null && !report.hasBlockingSchemaViolations
+      _screen = selected && report != null && !report.hasBlockingIssues
           ? _WorkoutTrackerScreen.workoutSetup
           : _WorkoutTrackerScreen.sheetSelection;
     });
@@ -243,7 +242,7 @@ class _SpreadsheetValidationShellState
             final showSheetSelection =
                 _screen == _WorkoutTrackerScreen.sheetSelection ||
                 report == null ||
-                report.hasBlockingSchemaViolations;
+                report.hasBlockingIssues;
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [

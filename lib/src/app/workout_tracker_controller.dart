@@ -34,6 +34,9 @@ class WorkoutTrackerController extends ChangeNotifier {
     if (report == null) {
       return null;
     }
+    if (report.hasBlockingIssues) {
+      return null;
+    }
 
     final activeSheet = report.activeSheet;
     final workouts = activeSheet.selectableWorkouts;
