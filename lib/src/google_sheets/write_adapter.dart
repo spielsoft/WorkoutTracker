@@ -34,22 +34,58 @@ class GoogleSheetsWriteAdapter {
       for (final insertion in plan.columnInsertions)
         ..._headerWritesForInsertion(insertion),
       for (final update in plan.cellUpdates)
-        GoogleSheetsCellWrite(
-          sheetRowNumber: update.sheetRowNumber,
-          sheetColumnNumber: update.sheetColumnNumber,
-          value: update.value,
-        ),
+        if (update.value.isNotEmpty)
+          GoogleSheetsCellWrite(
+            sheetRowNumber: update.sheetRowNumber,
+            sheetColumnNumber: update.sheetColumnNumber,
+            value: update.value,
+            mode: _modeForCellUpdate(update),
+          ),
+    ];
+    final clears = <GoogleSheetsCellClear>[
+      for (final update in plan.cellUpdates)
+        if (update.value.isEmpty &&
+            update.valueKind == CellUpdateValueKind.literalText)
+          GoogleSheetsCellClear(
+            sheetRowNumber: update.sheetRowNumber,
+            sheetColumnNumber: update.sheetColumnNumber,
+          ),
     ];
 
-    if (cells.isEmpty) {
+    if (cells.isEmpty && clears.isEmpty) {
       return;
     }
 
-    await client.writeCells(
-      spreadsheetId: spreadsheetId,
-      sheetTitle: activeSheet.title,
-      cells: cells,
-    );
+    final literalCells = cells
+        .where((cell) => cell.mode == GoogleSheetsValueInputMode.literalText)
+        .toList();
+    final userEnteredCells = cells
+        .where((cell) => cell.mode == GoogleSheetsValueInputMode.userEntered)
+        .toList();
+
+    if (literalCells.isNotEmpty) {
+      await client.writeCells(
+        spreadsheetId: spreadsheetId,
+        sheetTitle: activeSheet.title,
+        cells: literalCells,
+        mode: GoogleSheetsValueInputMode.literalText,
+      );
+    }
+    if (userEnteredCells.isNotEmpty) {
+      await client.writeCells(
+        spreadsheetId: spreadsheetId,
+        sheetTitle: activeSheet.title,
+        cells: userEnteredCells,
+        mode: GoogleSheetsValueInputMode.userEntered,
+      );
+    }
+    if (clears.isNotEmpty) {
+      await client.clearCells(
+        spreadsheetId: spreadsheetId,
+        sheetTitle: activeSheet.title,
+        cells: clears,
+      );
+    }
   }
 
   Iterable<GoogleSheetsCellWrite> _headerWritesForInsertion(
@@ -60,6 +96,7 @@ class GoogleSheetsWriteAdapter {
         sheetRowNumber: 1,
         sheetColumnNumber: insertion.sheetColumnNumber + offset,
         value: insertion.headers[offset],
+        mode: GoogleSheetsValueInputMode.literalText,
       );
     }
     for (var offset = 0; offset < insertion.setLabels.length; offset += 1) {
@@ -67,8 +104,16 @@ class GoogleSheetsWriteAdapter {
         sheetRowNumber: 2,
         sheetColumnNumber: insertion.sheetColumnNumber + offset,
         value: insertion.setLabels[offset],
+        mode: GoogleSheetsValueInputMode.literalText,
       );
     }
+  }
+
+  GoogleSheetsValueInputMode _modeForCellUpdate(CellUpdate update) {
+    return switch (update.valueKind) {
+      CellUpdateValueKind.literalText => GoogleSheetsValueInputMode.literalText,
+      CellUpdateValueKind.formula => GoogleSheetsValueInputMode.userEntered,
+    };
   }
 }
 
@@ -88,6 +133,13 @@ abstract interface class GoogleSheetsWriteClient {
     required String spreadsheetId,
     required String sheetTitle,
     required Iterable<GoogleSheetsCellWrite> cells,
+    required GoogleSheetsValueInputMode mode,
+  });
+
+  Future<void> clearCells({
+    required String spreadsheetId,
+    required String sheetTitle,
+    required Iterable<GoogleSheetsCellClear> cells,
   });
 }
 
@@ -106,12 +158,26 @@ class GoogleSheetsCellWrite {
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.value,
+    required this.mode,
   });
 
   final int sheetRowNumber;
   final int sheetColumnNumber;
   final String value;
+  final GoogleSheetsValueInputMode mode;
 }
+
+class GoogleSheetsCellClear {
+  const GoogleSheetsCellClear({
+    required this.sheetRowNumber,
+    required this.sheetColumnNumber,
+  });
+
+  final int sheetRowNumber;
+  final int sheetColumnNumber;
+}
+
+enum GoogleSheetsValueInputMode { literalText, userEntered }
 
 class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
   GoogleApisSheetsWriteClient(this._api);
@@ -188,6 +254,7 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
     required String spreadsheetId,
     required String sheetTitle,
     required Iterable<GoogleSheetsCellWrite> cells,
+    required GoogleSheetsValueInputMode mode,
   }) async {
     final valueRanges = [
       for (final cell in cells)
@@ -207,12 +274,41 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
     await _api.spreadsheets.values.batchUpdate(
       sheets.BatchUpdateValuesRequest(
         data: valueRanges,
-        valueInputOption: 'USER_ENTERED',
+        valueInputOption: _valueInputOption(mode),
       ),
       spreadsheetId,
       $fields: 'spreadsheetId,totalUpdatedCells',
     );
   }
+
+  @override
+  Future<void> clearCells({
+    required String spreadsheetId,
+    required String sheetTitle,
+    required Iterable<GoogleSheetsCellClear> cells,
+  }) async {
+    final ranges = [
+      for (final cell in cells)
+        '${_quotedSheetTitle(sheetTitle)}!'
+            '${_cellReference(cell.sheetRowNumber, cell.sheetColumnNumber)}',
+    ];
+    if (ranges.isEmpty) {
+      return;
+    }
+
+    await _api.spreadsheets.values.batchClear(
+      sheets.BatchClearValuesRequest(ranges: ranges),
+      spreadsheetId,
+      $fields: 'spreadsheetId,clearedRanges',
+    );
+  }
+}
+
+String _valueInputOption(GoogleSheetsValueInputMode mode) {
+  return switch (mode) {
+    GoogleSheetsValueInputMode.literalText => 'RAW',
+    GoogleSheetsValueInputMode.userEntered => 'USER_ENTERED',
+  };
 }
 
 String _cellReference(int sheetRowNumber, int sheetColumnNumber) {

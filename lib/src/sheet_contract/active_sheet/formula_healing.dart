@@ -187,7 +187,7 @@ class _FormulaHealingPlanner {
     return ActiveSheetWritePlan(
       cellUpdates: [
         for (final cell in issue.cells)
-          CellUpdate(
+          CellUpdate.formula(
             sheetRowNumber: cell.sheetRowNumber,
             sheetColumnNumber: cell.sheetColumnNumber,
             value: _directExercisesFormula(

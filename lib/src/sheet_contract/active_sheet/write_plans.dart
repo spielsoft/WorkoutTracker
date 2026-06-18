@@ -117,11 +117,19 @@ class CellUpdate {
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.value,
+    this.valueKind = CellUpdateValueKind.literalText,
   });
+
+  const CellUpdate.formula({
+    required this.sheetRowNumber,
+    required this.sheetColumnNumber,
+    required this.value,
+  }) : valueKind = CellUpdateValueKind.formula;
 
   final int sheetRowNumber;
   final int sheetColumnNumber;
   final String value;
+  final CellUpdateValueKind valueKind;
 
   @override
   bool operator ==(Object other) {
@@ -129,21 +137,27 @@ class CellUpdate {
         other is CellUpdate &&
             sheetRowNumber == other.sheetRowNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
-            value == other.value;
+            value == other.value &&
+            valueKind == other.valueKind;
   }
 
   @override
-  int get hashCode => Object.hash(sheetRowNumber, sheetColumnNumber, value);
+  int get hashCode {
+    return Object.hash(sheetRowNumber, sheetColumnNumber, value, valueKind);
+  }
 
   @override
   String toString() {
     return 'CellUpdate('
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
-        'value: $value'
+        'value: $value, '
+        'valueKind: $valueKind'
         ')';
   }
 }
+
+enum CellUpdateValueKind { literalText, formula }
 
 class HistoryColumnInsertion {
   HistoryColumnInsertion({

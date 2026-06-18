@@ -89,7 +89,7 @@ void main() {
     expect(
       activeSheet.planFormulaHealing(activeSheetRowNumber: 3).cellUpdates,
       [
-        const CellUpdate(
+        const CellUpdate.formula(
           sheetRowNumber: 3,
           sheetColumnNumber: 8,
           value: '=Exercises!I2',
@@ -147,7 +147,7 @@ void main() {
       );
 
       expect(plan.cellUpdates, const [
-        CellUpdate(
+        CellUpdate.formula(
           sheetRowNumber: 3,
           sheetColumnNumber: 8,
           value: '=Exercises!I3',
@@ -240,7 +240,7 @@ void main() {
 
     expect(plan.columnInsertions, isEmpty);
     expect(plan.cellUpdates, const [
-      CellUpdate(
+      CellUpdate.formula(
         sheetRowNumber: 3,
         sheetColumnNumber: 1,
         value: '=Exercises!A2',
@@ -295,7 +295,7 @@ void main() {
 
       expect(plan.columnInsertions, isEmpty);
       expect(plan.cellUpdates, const [
-        CellUpdate(
+        CellUpdate.formula(
           sheetRowNumber: 3,
           sheetColumnNumber: 1,
           value: '=Exercises!A3',
