@@ -6,6 +6,14 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   }
 
   final columns = _FixedColumnIndexes.fromHeader(sheet.rows.first);
+  final schemaViolations = <SchemaViolation>[
+    ..._fixedColumnViolations(sheet.rows.first),
+    ..._historyBlockViolations(
+      header: sheet.rows.first,
+      setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
+      firstHistoryColumn: columns.isBackup + 1,
+    ),
+  ];
   final historyBlocks = _discoverHistoryBlocks(
     header: sheet.rows.first,
     setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
@@ -13,7 +21,6 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   );
   final slots = <WorkoutSlot>[];
   final primarySlotBuilders = <_PrimarySlotBuilder>[];
-  final schemaViolations = <SchemaViolation>[];
   _PrimarySlotBuilder? currentPrimary;
 
   for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex += 1) {
@@ -97,6 +104,110 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
           },
     rows: sheet.rows,
   );
+}
+
+List<SchemaViolation> _fixedColumnViolations(List<String> header) {
+  final violations = <SchemaViolation>[];
+  for (var index = 0; index < activeSheetFixedColumns.length; index += 1) {
+    if (_cell(header, index) == activeSheetFixedColumns[index]) {
+      continue;
+    }
+    violations.add(
+      SchemaViolation(
+        sheetRowNumber: 1,
+        workout: defaultWorkoutName,
+        message:
+            'Fixed column ${index + 1} must be '
+            '"${activeSheetFixedColumns[index]}".',
+      ),
+    );
+  }
+  return violations;
+}
+
+List<SchemaViolation> _historyBlockViolations({
+  required List<String> header,
+  required List<String> setHeader,
+  required int firstHistoryColumn,
+}) {
+  final violations = <SchemaViolation>[];
+  final seenBlockLabels = <String>{};
+  final builders = <_HistoryBlockValidationBuilder>[];
+
+  for (
+    var columnIndex = firstHistoryColumn;
+    columnIndex < header.length;
+    columnIndex += 1
+  ) {
+    final blockLabel = header[columnIndex].trim();
+    if (blockLabel.isNotEmpty) {
+      if (!seenBlockLabels.add(blockLabel)) {
+        violations.add(
+          SchemaViolation(
+            sheetRowNumber: 1,
+            workout: defaultWorkoutName,
+            message: 'Duplicate history block label: $blockLabel.',
+          ),
+        );
+      }
+      builders.add(_HistoryBlockValidationBuilder(blockLabel));
+    }
+
+    final setLabel = _cell(setHeader, columnIndex).trim();
+    if (setLabel.isEmpty) {
+      continue;
+    }
+    if (builders.isEmpty) {
+      violations.add(
+        SchemaViolation(
+          sheetRowNumber: 2,
+          workout: defaultWorkoutName,
+          message: 'History set column $setLabel has no history block label.',
+        ),
+      );
+      continue;
+    }
+    builders.last.setLabels.add(setLabel);
+  }
+
+  for (final builder in builders) {
+    if (builder.setLabels.isEmpty) {
+      violations.add(
+        SchemaViolation(
+          sheetRowNumber: 1,
+          workout: defaultWorkoutName,
+          message: 'History block ${builder.label} has no set columns.',
+        ),
+      );
+      continue;
+    }
+
+    for (var index = 0; index < builder.setLabels.length; index += 1) {
+      final expected = 'S${index + 1}';
+      final actual = builder.setLabels[index];
+      if (actual != expected) {
+        violations.add(
+          SchemaViolation(
+            sheetRowNumber: 2,
+            workout: defaultWorkoutName,
+            message:
+                'History block ${builder.label} skips set label '
+                '$expected before $actual.',
+          ),
+        );
+        break;
+      }
+    }
+  }
+
+  return violations;
+}
+
+class _HistoryBlockValidationBuilder {
+  _HistoryBlockValidationBuilder(this.label);
+
+  final String label;
+  final List<String> setLabels = [];
 }
 
 class SchemaViolation {

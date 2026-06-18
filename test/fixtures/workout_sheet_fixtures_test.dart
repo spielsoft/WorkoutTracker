@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/sheet_contract.dart';
 
 import 'workout_sheet_fixtures.dart';
 
@@ -86,6 +87,156 @@ void main() {
       '1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E/edit?gid=0#gid=0',
     );
   });
+
+  test('fixed-column damage fixture exposes schema violations', () {
+    final fixture = loadFixedColumnDamageFixture();
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(rows: fixture.activeSheet.rows),
+    );
+
+    expect(
+      fixture.toSnapshot(),
+      equals(loadFixedColumnDamageFixture().toSnapshot()),
+    );
+    expect(
+      activeSheet.schemaViolations.map((violation) => violation.message),
+      containsAll([
+        'Fixed column 1 must be "Exercise".',
+        'Fixed column 8 must be "Log Format".',
+      ]),
+    );
+  });
+
+  test('malformed history damage fixture exposes schema violations', () {
+    final fixture = loadMalformedHistoryDamageFixture();
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(rows: fixture.activeSheet.rows),
+    );
+
+    expect(
+      fixture.toSnapshot(),
+      equals(loadMalformedHistoryDamageFixture().toSnapshot()),
+    );
+    expect(
+      activeSheet.schemaViolations.map((violation) => violation.message),
+      containsAll([
+        'History set column S1 has no history block label.',
+        'Duplicate history block label: Week 1.',
+        'History block Week 1 skips set label S2 before S3.',
+        'History block Empty Block has no set columns.',
+      ]),
+    );
+  });
+
+  test('invalid log format damage fixture exposes schema violations', () {
+    final fixture = loadInvalidLogFormatDamageFixture();
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(rows: fixture.activeSheet.rows),
+    );
+
+    expect(
+      fixture.toSnapshot(),
+      equals(loadInvalidLogFormatDamageFixture().toSnapshot()),
+    );
+    expect(activeSheet.slots.single.logFormat, isA<InvalidLogFormat>());
+    expect(
+      activeSheet.schemaViolations.single.message,
+      startsWith('Invalid Log Format:'),
+    );
+  });
+
+  test('backup grouping damage fixture exposes schema violations', () {
+    final fixture = loadBackupGroupingDamageFixture();
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(rows: fixture.activeSheet.rows),
+    );
+
+    expect(
+      fixture.toSnapshot(),
+      equals(loadBackupGroupingDamageFixture().toSnapshot()),
+    );
+    expect(activeSheet.schemaViolations, [
+      SchemaViolation(
+        sheetRowNumber: 3,
+        workout: 'Legs',
+        message: 'Backup row has no preceding primary row in the same workout.',
+      ),
+    ]);
+  });
+
+  test('missing and broken formula damage fixture exposes healing issues', () {
+    final fixture = loadFormulaDamageFixture();
+    final activeSheet = _parseWorkbookFixture(fixture);
+
+    expect(
+      fixture.toSnapshot(),
+      equals(loadFormulaDamageFixture().toSnapshot()),
+    );
+    expect(activeSheet.schemaViolations, isEmpty);
+    expect(activeSheet.formulaHealingIssues.single.cells, [
+      FormulaHealingCellIssue(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 1,
+        columnName: 'Exercise',
+        reason: FormulaHealingIssueReason.missingFormula,
+        currentFormula: '',
+      ),
+      FormulaHealingCellIssue(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 3,
+        columnName: 'Reps',
+        reason: FormulaHealingIssueReason.brokenFormula,
+        currentFormula: '=Exercises!D99',
+      ),
+    ]);
+  });
+
+  test('ambiguous formula repair fixture requires user selection', () {
+    final fixture = loadAmbiguousFormulaRepairDamageFixture();
+    final activeSheet = _parseWorkbookFixture(fixture);
+    final issue = activeSheet.formulaHealingIssues.single;
+
+    expect(
+      fixture.toSnapshot(),
+      equals(loadAmbiguousFormulaRepairDamageFixture().toSnapshot()),
+    );
+    expect(issue.displayedExerciseName, 'Squat');
+    expect(issue.requiresUserSelection, isTrue);
+    expect(issue.preselectedExerciseSheetRowNumber, isNull);
+    expect(issue.candidateExerciseSheetRowNumbers, [2, 3]);
+  });
+
+  test('no-exact-match formula repair fixture requires user selection', () {
+    final fixture = loadNoExactMatchFormulaRepairDamageFixture();
+    final activeSheet = _parseWorkbookFixture(fixture);
+    final issue = activeSheet.formulaHealingIssues.single;
+
+    expect(
+      fixture.toSnapshot(),
+      equals(loadNoExactMatchFormulaRepairDamageFixture().toSnapshot()),
+    );
+    expect(issue.displayedExerciseName, 'Front Squat');
+    expect(issue.requiresUserSelection, isTrue);
+    expect(issue.preselectedExerciseSheetRowNumber, isNull);
+    expect(issue.candidateExerciseSheetRowNumbers, isEmpty);
+  });
+}
+
+ParsedActiveSheet _parseWorkbookFixture(WorkoutWorkbookFixture fixture) {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: fixture.activeSheet.rows,
+      mergedFirstColumnRows: fixture.activeSheet.mergedFirstColumnRows,
+      cellFormulas: fixture.activeSheet.cellFormulas.map(
+        (formula) => CellFormula(
+          sheetRowNumber: formula.sheetRowNumber,
+          sheetColumnNumber: formula.sheetColumnNumber,
+          formula: formula.formula,
+        ),
+      ),
+      exercisesRows: fixture.exercisesSheet.rows,
+    ),
+  );
 }
 
 bool _isExerciseRow(List<String> row) =>

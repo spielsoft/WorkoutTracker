@@ -17,14 +17,17 @@ class SheetGridFixture {
   SheetGridFixture({
     required this.name,
     required Iterable<Iterable<String>> rows,
+    Iterable<SheetCellFormulaFixture> cellFormulas = const [],
     Set<int> mergedFirstColumnRows = const {},
   }) : rows = List<List<String>>.unmodifiable(
          rows.map((row) => List<String>.unmodifiable(row)),
        ),
+       cellFormulas = List<SheetCellFormulaFixture>.unmodifiable(cellFormulas),
        mergedFirstColumnRows = Set.unmodifiable(mergedFirstColumnRows);
 
   final String name;
   final List<List<String>> rows;
+  final List<SheetCellFormulaFixture> cellFormulas;
 
   /// 1-based sheet row numbers whose first display cell is merged for humans.
   final Set<int> mergedFirstColumnRows;
@@ -32,7 +35,28 @@ class SheetGridFixture {
   Map<String, Object> toSnapshot() => {
     'name': name,
     'rows': rows,
+    'cellFormulas': cellFormulas
+        .map((formula) => formula.toSnapshot())
+        .toList(),
     'mergedFirstColumnRows': mergedFirstColumnRows.toList()..sort(),
+  };
+}
+
+class SheetCellFormulaFixture {
+  const SheetCellFormulaFixture({
+    required this.sheetRowNumber,
+    required this.sheetColumnNumber,
+    required this.formula,
+  });
+
+  final int sheetRowNumber;
+  final int sheetColumnNumber;
+  final String formula;
+
+  Map<String, Object> toSnapshot() => {
+    'sheetRowNumber': sheetRowNumber,
+    'sheetColumnNumber': sheetColumnNumber,
+    'formula': formula,
   };
 }
 
@@ -63,6 +87,292 @@ IntegrationSheetFixture writableDevelopmentSheetFixture() {
     isWritable: true,
   );
 }
+
+WorkoutWorkbookFixture loadFixedColumnDamageFixture() {
+  return WorkoutWorkbookFixture(
+    activeSheet: SheetGridFixture(
+      name: 'Active Workout',
+      rows: [
+        [
+          'Exercise Name',
+          'Sets',
+          'Reps',
+          'RPE',
+          'Rest',
+          'Tempo',
+          'Notes',
+          'Format',
+          'Workout',
+          'is_backup',
+          'Week 1',
+        ],
+        ['', '', '', '', '', '', '', '', '', '', 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay braced.',
+          '',
+          'Legs',
+          '',
+          '',
+        ],
+      ],
+    ),
+    exercisesSheet: _minimalExercisesSheet(),
+  );
+}
+
+WorkoutWorkbookFixture loadMalformedHistoryDamageFixture() {
+  return WorkoutWorkbookFixture(
+    activeSheet: SheetGridFixture(
+      name: 'Active Workout',
+      rows: [
+        [
+          ...activeSheetFixedColumnsForFixtures,
+          '',
+          'Week 1',
+          '',
+          'Week 1',
+          'Empty Block',
+        ],
+        ['', '', '', '', '', '', '', '', '', '', 'S1', 'S1', 'S3', 'S1', ''],
+        ['Squat', '3', '5', '8', '3 min', '', 'Stay braced.', '', 'Legs', ''],
+      ],
+    ),
+    exercisesSheet: _minimalExercisesSheet(),
+  );
+}
+
+WorkoutWorkbookFixture loadInvalidLogFormatDamageFixture() {
+  return WorkoutWorkbookFixture(
+    activeSheet: SheetGridFixture(
+      name: 'Active Workout',
+      rows: [
+        [...activeSheetFixedColumnsForFixtures, 'Week 1'],
+        ['', '', '', '', '', '', '', '', '', '', 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay braced.',
+          '{Weight[x]{Reps}',
+          'Legs',
+          '',
+          '',
+        ],
+      ],
+    ),
+    exercisesSheet: _minimalExercisesSheet(),
+  );
+}
+
+WorkoutWorkbookFixture loadBackupGroupingDamageFixture() {
+  return WorkoutWorkbookFixture(
+    activeSheet: SheetGridFixture(
+      name: 'Active Workout',
+      rows: [
+        [...activeSheetFixedColumnsForFixtures, 'Week 1'],
+        ['', '', '', '', '', '', '', '', '', '', 'S1'],
+        [
+          'Reverse Lunge',
+          '3',
+          '10/side',
+          '8',
+          '90s',
+          '',
+          'Backup before a primary row.',
+          '',
+          'Legs',
+          'TRUE',
+          '',
+        ],
+        ['Squat', '3', '5', '8', '3 min', '', 'Stay braced.', '', 'Legs', ''],
+      ],
+    ),
+    exercisesSheet: _minimalExercisesSheet(),
+  );
+}
+
+WorkoutWorkbookFixture loadFormulaDamageFixture() {
+  return WorkoutWorkbookFixture(
+    activeSheet: SheetGridFixture(
+      name: 'Active Workout',
+      rows: [
+        [...activeSheetFixedColumnsForFixtures, 'Week 1'],
+        ['', '', '', '', '', '', '', '', '', '', 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay braced.',
+          '{Weight}[x]{Reps}[@]{RPE}',
+          'Legs',
+          '',
+          '',
+        ],
+      ],
+      cellFormulas: [
+        SheetCellFormulaFixture(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 2,
+          formula: '=Exercises!C2',
+        ),
+        SheetCellFormulaFixture(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 3,
+          formula: '=Exercises!D99',
+        ),
+        SheetCellFormulaFixture(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 4,
+          formula: '=Exercises!E2',
+        ),
+        SheetCellFormulaFixture(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 5,
+          formula: '=Exercises!F2',
+        ),
+        SheetCellFormulaFixture(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 6,
+          formula: '=Exercises!G2',
+        ),
+        SheetCellFormulaFixture(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 7,
+          formula: '=Exercises!H2',
+        ),
+        SheetCellFormulaFixture(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          formula: '=Exercises!I2',
+        ),
+      ],
+    ),
+    exercisesSheet: _minimalExercisesSheet(),
+  );
+}
+
+WorkoutWorkbookFixture loadAmbiguousFormulaRepairDamageFixture() {
+  return WorkoutWorkbookFixture(
+    activeSheet: SheetGridFixture(
+      name: 'Active Workout',
+      rows: [
+        [...activeSheetFixedColumnsForFixtures, 'Week 1'],
+        ['', '', '', '', '', '', '', '', '', '', 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay braced.',
+          '{Weight}[x]{Reps}[@]{RPE}',
+          'Legs',
+          '',
+          '',
+        ],
+      ],
+      cellFormulas: _formulaDrivenCellsForActiveRow(
+        rowNumber: 3,
+        exercisesRowNumber: 2,
+        omittedColumns: {1},
+      ),
+    ),
+    exercisesSheet: _minimalExercisesSheet(
+      rows: const [
+        [
+          'Exercise',
+          'Description',
+          'Default Sets',
+          'Default Reps',
+          'Default RPE',
+          'Default Rest',
+          'Default Tempo',
+          'Notes',
+          'Log Format',
+        ],
+        [
+          'Squat',
+          'Back squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay braced.',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+        [
+          'Squat',
+          'Safety-bar squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay tall.',
+          '{Reps}[@]{RPE}',
+        ],
+      ],
+    ),
+  );
+}
+
+WorkoutWorkbookFixture loadNoExactMatchFormulaRepairDamageFixture() {
+  return WorkoutWorkbookFixture(
+    activeSheet: SheetGridFixture(
+      name: 'Active Workout',
+      rows: [
+        [...activeSheetFixedColumnsForFixtures, 'Week 1'],
+        ['', '', '', '', '', '', '', '', '', '', 'S1'],
+        [
+          'Front Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay upright.',
+          '{Weight}[x]{Reps}[@]{RPE}',
+          'Legs',
+          '',
+          '',
+        ],
+      ],
+      cellFormulas: _formulaDrivenCellsForActiveRow(
+        rowNumber: 3,
+        exercisesRowNumber: 2,
+        omittedColumns: {1},
+      ),
+    ),
+    exercisesSheet: _minimalExercisesSheet(),
+  );
+}
+
+const activeSheetFixedColumnsForFixtures = [
+  'Exercise',
+  'Sets',
+  'Reps',
+  'RPE',
+  'Rest',
+  'Tempo',
+  'Notes',
+  'Log Format',
+  'Workout',
+  'is_backup',
+];
 
 WorkoutWorkbookFixture loadLocalWorkoutWorkbookFixture() {
   return WorkoutWorkbookFixture(
@@ -663,4 +973,60 @@ WorkoutWorkbookFixture loadLocalWorkoutWorkbookFixture() {
       ],
     ),
   );
+}
+
+SheetGridFixture _minimalExercisesSheet({
+  Iterable<Iterable<String>> rows = const [
+    [
+      'Exercise',
+      'Description',
+      'Default Sets',
+      'Default Reps',
+      'Default RPE',
+      'Default Rest',
+      'Default Tempo',
+      'Notes',
+      'Log Format',
+    ],
+    [
+      'Squat',
+      'Back squat',
+      '3',
+      '5',
+      '8',
+      '3 min',
+      '',
+      'Stay braced.',
+      '{Weight}[x]{Reps}[@]{RPE}',
+    ],
+  ],
+}) {
+  return SheetGridFixture(name: 'Exercises', rows: rows);
+}
+
+List<SheetCellFormulaFixture> _formulaDrivenCellsForActiveRow({
+  required int rowNumber,
+  required int exercisesRowNumber,
+  Set<int> omittedColumns = const {},
+}) {
+  final exercisesColumnsByActiveColumn = {
+    1: 'A',
+    2: 'C',
+    3: 'D',
+    4: 'E',
+    5: 'F',
+    6: 'G',
+    7: 'H',
+    8: 'I',
+  };
+
+  return [
+    for (final entry in exercisesColumnsByActiveColumn.entries)
+      if (!omittedColumns.contains(entry.key))
+        SheetCellFormulaFixture(
+          sheetRowNumber: rowNumber,
+          sheetColumnNumber: entry.key,
+          formula: '=Exercises!${entry.value}$exercisesRowNumber',
+        ),
+  ];
 }
