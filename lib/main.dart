@@ -10,7 +10,11 @@ void main() {
       ),
       accountSession: googleSignInGateway,
       appStateStore: const FileAppStateStore(),
-      spreadsheetPicker: const MobileGoogleDriveSpreadsheetPicker(),
+      spreadsheetPicker: MobileGoogleDriveSpreadsheetPicker(
+        spreadsheetCreator: GoogleSheetsSpreadsheetCreator(
+          authorizationGateway: googleSignInGateway,
+        ),
+      ),
     ),
   );
 }

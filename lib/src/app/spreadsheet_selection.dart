@@ -2,7 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:workout_tracker/google_sheets.dart';
+
+import 'google_account_session.dart';
+import 'google_authorization_client.dart';
 
 const workoutTrackerGooglePickerClientIdDartDefine =
     'WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID';
@@ -82,6 +87,10 @@ abstract interface class SpreadsheetPicker {
   Future<SelectedSpreadsheet?> createSpreadsheet();
 }
 
+abstract interface class GoogleSpreadsheetCreator {
+  Future<SelectedSpreadsheet> createWorkoutSpreadsheet();
+}
+
 class SpreadsheetPickerAvailability {
   const SpreadsheetPickerAvailability.available()
     : chooseUnavailableReason = null,
@@ -139,10 +148,12 @@ class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
   const MobileGoogleDriveSpreadsheetPicker({
     this.clientId = workoutTrackerGooglePickerClientId,
     this.callbackTimeout = workoutTrackerGooglePickerCallbackTimeout,
+    this.spreadsheetCreator,
   });
 
   final String clientId;
   final Duration callbackTimeout;
+  final GoogleSpreadsheetCreator? spreadsheetCreator;
 
   @override
   SpreadsheetPickerAvailability get availability {
@@ -151,8 +162,9 @@ class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
       chooseUnavailableReason: trimmedClientId.isEmpty
           ? 'Google Drive Picker is missing an OAuth client ID.'
           : null,
-      createUnavailableReason:
-          'Google Drive sheet creation is not connected yet.',
+      createUnavailableReason: spreadsheetCreator == null
+          ? 'Google Drive sheet creation is not connected yet.'
+          : null,
     );
   }
 
@@ -198,7 +210,11 @@ class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
 
   @override
   Future<SelectedSpreadsheet?> createSpreadsheet() async {
-    throw StateError('Google Drive sheet creation is not connected yet.');
+    final creator = spreadsheetCreator;
+    if (creator == null) {
+      throw StateError('Google Drive sheet creation is not connected yet.');
+    }
+    return creator.createWorkoutSpreadsheet();
   }
 
   static Uri _googlePickerAuthorizationUrl({
@@ -214,6 +230,67 @@ class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
       'allow_multiple': 'false',
       'mimetypes': 'application/vnd.google-apps.spreadsheet',
     });
+  }
+}
+
+class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
+  GoogleSheetsSpreadsheetCreator({
+    required this.authorizationGateway,
+    GoogleAuthorizationClientFactory? authorizationClientFactory,
+    String Function()? titleFactory,
+  }) : authorizationClientFactory =
+           authorizationClientFactory ??
+           ((headers) => GoogleAuthorizationHeadersClient(headers: headers)),
+       titleFactory = titleFactory ?? _defaultWorkoutSpreadsheetTitle;
+
+  final GoogleSignInAuthorizationGateway authorizationGateway;
+  final GoogleAuthorizationClientFactory authorizationClientFactory;
+  final String Function() titleFactory;
+
+  @override
+  Future<SelectedSpreadsheet> createWorkoutSpreadsheet() async {
+    final requestedTitle = titleFactory().trim();
+    final title = requestedTitle.isEmpty
+        ? _defaultWorkoutSpreadsheetTitle()
+        : requestedTitle;
+    final headers = await authorizationGateway.authorizationHeaders(
+      GoogleApisDevelopmentSheetResetClient.writeScopes,
+    );
+    final client = authorizationClientFactory(headers);
+    try {
+      final api = sheets.SheetsApi(client);
+      final created = await api.spreadsheets.create(
+        sheets.Spreadsheet(
+          properties: sheets.SpreadsheetProperties(title: title),
+        ),
+        $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
+      );
+      final spreadsheetId = created.spreadsheetId;
+      if (spreadsheetId == null || spreadsheetId.trim().isEmpty) {
+        throw StateError('Google Sheets did not return a spreadsheet ID.');
+      }
+
+      await GoogleApisDevelopmentSheetResetClient(api).resetSpreadsheet(
+        spreadsheetId: spreadsheetId,
+        fixture: developmentSheetResetFixture(),
+      );
+
+      return SelectedSpreadsheet(
+        spreadsheetId: spreadsheetId,
+        name: created.properties?.title ?? title,
+        webViewLink: created.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
+        accountEmail: authorizationGateway.currentAccount?.email,
+      );
+    } finally {
+      client.close();
+    }
+  }
+
+  static String _defaultWorkoutSpreadsheetTitle() {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    return 'WorkoutTracker ${now.year}-$month-$day';
   }
 }
 
