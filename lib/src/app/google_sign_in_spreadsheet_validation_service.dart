@@ -80,6 +80,7 @@ class GoogleSignInSpreadsheetValidationService
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int exercisesSheetRowNumber,
+    required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   }) async {
     return _withGoogleSheetsService(
@@ -91,6 +92,7 @@ class GoogleSignInSpreadsheetValidationService
             spreadsheetId: spreadsheetId,
             activeSheet: activeSheet,
             exercisesSheetRowNumber: exercisesSheetRowNumber,
+            metadata: metadata,
             placement: placement,
           );
         }

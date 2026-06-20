@@ -33,7 +33,8 @@ The spreadsheet must remain useful without the app. This drives the core design:
 - The first tab is the active workout/log sheet.
 - The active sheet is canonical for workout rows and visible history.
 - The `Exercises` tab stores canonical exercise metadata.
-- Active sheet display cells use direct spreadsheet formulas into `Exercises`.
+- Active sheet exercise identity and log-format cells use direct spreadsheet
+  formulas into `Exercises`; per-workout target metadata is row-local.
 - The app can heal missing or broken formulas, and the MVP app can append new
   canonical rows to `Exercises`.
 - Workout history is stored horizontally in visible set columns such as `S1`, `S2`, and `S3`.
@@ -80,7 +81,8 @@ The app should supply sensible defaults, including the default log format:
 ```
 
 Adding a primary exercise to a workout should let the user choose an existing
-canonical exercise, then append a non-backup active-sheet row for the selected
+canonical exercise, adjust row-local targets such as sets, reps, RPE, rest,
+tempo, and notes, then append a non-backup active-sheet row for the selected
 workout. Adding a backup exercise should be launched from an existing primary
 row, should also choose an existing canonical exercise, and should append a
 backup row attached to that primary exercise by sheet order. Workout-level add

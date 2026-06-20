@@ -270,6 +270,7 @@ class WorkoutTrackerController extends ChangeNotifier {
 
   Future<bool> addExistingExerciseToWorkout({
     required CanonicalExercise exercise,
+    required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   }) async {
     final report = _report;
@@ -287,6 +288,7 @@ class WorkoutTrackerController extends ChangeNotifier {
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           exercisesSheetRowNumber: exercise.sheetRowNumber,
+          metadata: metadata,
           placement: placement,
         );
         _error = null;

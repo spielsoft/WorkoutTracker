@@ -114,7 +114,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final _AddExercisePlacementIntent? addExercisePlacementIntent;
   final VoidCallback onCloseExerciseAdd;
   final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExercise;
-  final ValueChanged<CanonicalExercise> onSubmitExercisePlacement;
+  final ValueChanged<_ExercisePlacementDraft> onSubmitExercisePlacement;
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
@@ -535,7 +535,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   final _AddExercisePlacementIntent intent;
   final List<CanonicalExercise> exercises;
   final VoidCallback onBack;
-  final ValueChanged<CanonicalExercise> onSubmit;
+  final ValueChanged<_ExercisePlacementDraft> onSubmit;
 
   @override
   Widget build(BuildContext context) {
@@ -571,7 +571,7 @@ class _ExercisePlacementForm extends StatefulWidget {
 
   final List<CanonicalExercise> exercises;
   final CanonicalExercise? initialExercise;
-  final ValueChanged<CanonicalExercise> onSubmit;
+  final ValueChanged<_ExercisePlacementDraft> onSubmit;
 
   @override
   State<_ExercisePlacementForm> createState() => _ExercisePlacementFormState();
@@ -579,11 +579,24 @@ class _ExercisePlacementForm extends StatefulWidget {
 
 class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
   CanonicalExercise? _selectedExercise;
+  late final TextEditingController _setsController;
+  late final TextEditingController _repsController;
+  late final TextEditingController _rpeController;
+  late final TextEditingController _restController;
+  late final TextEditingController _tempoController;
+  late final TextEditingController _notesController;
 
   @override
   void initState() {
     super.initState();
+    _setsController = TextEditingController();
+    _repsController = TextEditingController();
+    _rpeController = TextEditingController();
+    _restController = TextEditingController();
+    _tempoController = TextEditingController();
+    _notesController = TextEditingController();
     _selectedExercise = widget.initialExercise;
+    _loadExerciseDefaults(_selectedExercise);
   }
 
   @override
@@ -591,7 +604,39 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
     super.didUpdateWidget(oldWidget);
     if (!widget.exercises.contains(_selectedExercise)) {
       _selectedExercise = widget.initialExercise;
+      _loadExerciseDefaults(_selectedExercise);
     }
+  }
+
+  @override
+  void dispose() {
+    _setsController.dispose();
+    _repsController.dispose();
+    _rpeController.dispose();
+    _restController.dispose();
+    _tempoController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _loadExerciseDefaults(CanonicalExercise? exercise) {
+    _setsController.text = exercise?.defaultSets ?? '';
+    _repsController.text = exercise?.defaultReps ?? '';
+    _rpeController.text = exercise?.defaultRpe ?? '';
+    _restController.text = exercise?.defaultRest ?? '';
+    _tempoController.text = exercise?.defaultTempo ?? '';
+    _notesController.text = exercise?.notes ?? '';
+  }
+
+  WorkoutPlacementMetadata _metadataFromControllers() {
+    return WorkoutPlacementMetadata(
+      sets: _setsController.text.trim(),
+      reps: _repsController.text.trim(),
+      rpe: _rpeController.text.trim(),
+      rest: _restController.text.trim(),
+      tempo: _tempoController.text.trim(),
+      notes: _notesController.text.trim(),
+    );
   }
 
   @override
@@ -625,6 +670,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
               : (exercise) {
                   setState(() {
                     _selectedExercise = exercise;
+                    _loadExerciseDefaults(exercise);
                   });
                 },
         ),
@@ -632,23 +678,49 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
-            runSpacing: 8,
+            runSpacing: 12,
             children: [
-              _ExerciseMetadataChip(
-                label: 'Sets',
-                value: selectedExercise.defaultSets,
+              SizedBox(
+                width: 120,
+                child: _PlacementMetadataField(
+                  controller: _setsController,
+                  labelText: 'Sets',
+                ),
               ),
-              _ExerciseMetadataChip(
-                label: 'Reps',
-                value: selectedExercise.defaultReps,
+              SizedBox(
+                width: 120,
+                child: _PlacementMetadataField(
+                  controller: _repsController,
+                  labelText: 'Reps',
+                ),
               ),
-              _ExerciseMetadataChip(
-                label: 'RPE',
-                value: selectedExercise.defaultRpe,
+              SizedBox(
+                width: 120,
+                child: _PlacementMetadataField(
+                  controller: _rpeController,
+                  labelText: 'RPE',
+                ),
               ),
-              _ExerciseMetadataChip(
-                label: 'Rest',
-                value: selectedExercise.defaultRest,
+              SizedBox(
+                width: 160,
+                child: _PlacementMetadataField(
+                  controller: _restController,
+                  labelText: 'Rest',
+                ),
+              ),
+              SizedBox(
+                width: 160,
+                child: _PlacementMetadataField(
+                  controller: _tempoController,
+                  labelText: 'Tempo',
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _PlacementMetadataField(
+                  controller: _notesController,
+                  labelText: 'Notes',
+                ),
               ),
             ],
           ),
@@ -658,7 +730,12 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
           key: const ValueKey('place-existing-exercise'),
           onPressed: selectedExercise == null
               ? null
-              : () => widget.onSubmit(selectedExercise),
+              : () => widget.onSubmit(
+                  _ExercisePlacementDraft(
+                    exercise: selectedExercise,
+                    metadata: _metadataFromControllers(),
+                  ),
+                ),
           icon: const Icon(Icons.playlist_add_outlined),
           label: const Text('Add to workout'),
         ),
@@ -667,19 +744,35 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
   }
 }
 
-class _ExerciseMetadataChip extends StatelessWidget {
-  const _ExerciseMetadataChip({required this.label, required this.value});
+class _ExercisePlacementDraft {
+  const _ExercisePlacementDraft({
+    required this.exercise,
+    required this.metadata,
+  });
 
-  final String label;
-  final String value;
+  final CanonicalExercise exercise;
+  final WorkoutPlacementMetadata metadata;
+}
+
+class _PlacementMetadataField extends StatelessWidget {
+  const _PlacementMetadataField({
+    required this.controller,
+    required this.labelText,
+  });
+
+  final TextEditingController controller;
+  final String labelText;
 
   @override
   Widget build(BuildContext context) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return InputChip(label: Text('$label: $trimmed'));
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: const OutlineInputBorder(),
+      ),
+      textInputAction: TextInputAction.next,
+    );
   }
 }
 

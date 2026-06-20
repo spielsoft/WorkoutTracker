@@ -16,16 +16,17 @@ The active sheet starts with fixed columns, followed by visible history blocks:
 Exercise | Sets | Reps | RPE | Rest | Tempo | Notes | Log Format | Workout | is_backup | history blocks...
 ```
 
-Display cells in the active sheet are direct spreadsheet formulas into
-`Exercises` wherever the sheet needs canonical exercise metadata. The app may
-repair those formulas, but it must preserve the sheet as human-readable data.
-For the MVP formula-healing planner, the active sheet's formula-driven columns
-are `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, and
-`Log Format`. They map to `Exercises` columns `Exercise`, `Default Sets`,
-`Default Reps`, `Default RPE`, `Default Rest`, `Default Tempo`, `Notes`, and
-`Log Format` respectively. `Workout` and `is_backup` remain active-sheet
-context and are not healed from `Exercises`; `is_backup` remains the final
-metadata column before history blocks.
+Display cells in the active sheet use direct spreadsheet formulas into
+`Exercises` for globally owned exercise identity and row-local logging format.
+The app may repair those formulas, but it must preserve the sheet as
+human-readable data. For the MVP formula-healing planner, the active sheet's
+formula-driven columns are `Exercise` and `Log Format`; they map to `Exercises`
+columns `Exercise` and `Log Format` respectively. `Sets`, `Reps`, `RPE`,
+`Rest`, `Tempo`, and `Notes` are row-local workout-placement metadata. They are
+initialized from the selected canonical exercise defaults but may differ per
+workout row. `Workout` and `is_backup` also remain active-sheet context and are
+not healed from `Exercises`; `is_backup` remains the final metadata column
+before history blocks.
 
 ## Exercise Authoring
 
@@ -36,8 +37,9 @@ support two separate concepts:
   exercise name, description, default sets, default reps, default RPE, default
   rest, default tempo, notes, and log format.
 - **Workout placement**: a row added to the active sheet that points its
-  formula-driven display cells at an existing canonical `Exercises` row and
-  stores active-sheet-only context in `Workout` and `is_backup`.
+  formula-driven identity/log-format cells at an existing canonical `Exercises`
+  row and stores row-local metadata in `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`,
+  `Notes`, `Workout`, and `is_backup`.
 
 The global exercise-creation screen should capture all canonical metadata while
 providing sensible defaults. A blank log format uses the default literal format,
@@ -57,9 +59,10 @@ should therefore make the parent primary row explicit instead of asking the user
 to infer attachment from raw sheet order.
 
 When adding a workout placement, the active-sheet formula-driven columns must
-use direct formulas to the selected `Exercises` row. The app owns only the
-active-sheet context cells (`Workout` and `is_backup`) and empty history cells
-for the new placement.
+use direct formulas to the selected `Exercises` row. The app owns the
+active-sheet placement metadata cells (`Sets`, `Reps`, `RPE`, `Rest`, `Tempo`,
+`Notes`, `Workout`, and `is_backup`) and empty history cells for the new
+placement.
 
 ## Literal Log Formats
 

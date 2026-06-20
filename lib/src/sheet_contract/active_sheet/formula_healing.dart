@@ -434,36 +434,6 @@ List<_FormulaDrivenColumn> _formulaDrivenColumns(
       activeSheetColumnIndex: active.exercise,
       exercisesSheetColumnIndex: exercises.exercise,
     ),
-    _FormulaDrivenColumn(
-      activeColumnName: 'Sets',
-      activeSheetColumnIndex: active.sets,
-      exercisesSheetColumnIndex: exercises.defaultSets,
-    ),
-    _FormulaDrivenColumn(
-      activeColumnName: 'Reps',
-      activeSheetColumnIndex: active.reps,
-      exercisesSheetColumnIndex: exercises.defaultReps,
-    ),
-    _FormulaDrivenColumn(
-      activeColumnName: 'RPE',
-      activeSheetColumnIndex: active.rpe,
-      exercisesSheetColumnIndex: exercises.defaultRpe,
-    ),
-    _FormulaDrivenColumn(
-      activeColumnName: 'Rest',
-      activeSheetColumnIndex: active.rest,
-      exercisesSheetColumnIndex: exercises.defaultRest,
-    ),
-    _FormulaDrivenColumn(
-      activeColumnName: 'Tempo',
-      activeSheetColumnIndex: active.tempo,
-      exercisesSheetColumnIndex: exercises.defaultTempo,
-    ),
-    _FormulaDrivenColumn(
-      activeColumnName: 'Notes',
-      activeSheetColumnIndex: active.notes,
-      exercisesSheetColumnIndex: exercises.notes,
-    ),
     if (active.logFormat != null && exercises.logFormat != null)
       _FormulaDrivenColumn(
         activeColumnName: 'Log Format',

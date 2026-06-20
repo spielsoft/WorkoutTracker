@@ -85,6 +85,7 @@ class GoogleSpreadsheetValidationService
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int exercisesSheetRowNumber,
+    required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   }) async {
     final writeAdapter = this.writeAdapter;
@@ -99,10 +100,12 @@ class GoogleSpreadsheetValidationService
         ? currentActiveSheet.planBackupWorkoutPlacement(
             primarySheetRowNumber: placement.primarySheetRowNumber!,
             exercisesSheetRowNumber: exercisesSheetRowNumber,
+            metadata: metadata,
           )
         : currentActiveSheet.planPrimaryWorkoutPlacement(
             exercisesSheetRowNumber: exercisesSheetRowNumber,
             workout: placement.workout ?? defaultWorkoutName,
+            metadata: metadata,
           );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {

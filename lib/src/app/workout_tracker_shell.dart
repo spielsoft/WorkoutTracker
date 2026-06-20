@@ -695,13 +695,14 @@ class _SpreadsheetValidationShellState
     });
   }
 
-  Future<void> _handleExercisePlacement(CanonicalExercise exercise) async {
+  Future<void> _handleExercisePlacement(_ExercisePlacementDraft draft) async {
     final intent = _addExercisePlacementIntent;
     if (intent == null) {
       return;
     }
     final added = await _controller.addExistingExerciseToWorkout(
-      exercise: exercise,
+      exercise: draft.exercise,
+      metadata: draft.metadata,
       placement: switch (intent.kind) {
         _ExercisePlacementKind.primary => ExercisePlacementTarget.primary(
           workout: intent.workout,

@@ -39,6 +39,7 @@ abstract interface class ExerciseAuthoringService {
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int exercisesSheetRowNumber,
+    required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   });
 }

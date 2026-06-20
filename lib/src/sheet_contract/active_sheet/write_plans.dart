@@ -568,6 +568,24 @@ class CanonicalExerciseDefinition {
   }
 }
 
+class WorkoutPlacementMetadata {
+  const WorkoutPlacementMetadata({
+    this.sets = '',
+    this.reps = '',
+    this.rpe = '',
+    this.rest = '',
+    this.tempo = '',
+    this.notes = '',
+  });
+
+  final String sets;
+  final String reps;
+  final String rpe;
+  final String rest;
+  final String tempo;
+  final String notes;
+}
+
 class ExercisesWritePlan {
   ExercisesWritePlan({Iterable<ExercisesRowAppend> rowAppends = const []})
     : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends);
@@ -832,6 +850,7 @@ class _ActiveSheetWritePlanner {
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({
     required int exercisesSheetRowNumber,
     required String workout,
+    WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
     if (exercisesSheetRowNumber < 2) {
       return ActiveSheetWritePlan();
@@ -842,12 +861,14 @@ class _ActiveSheetWritePlanner {
       exercisesSheetRowNumber: exercisesSheetRowNumber,
       workout: workout,
       isBackup: false,
+      metadata: metadata,
     );
   }
 
   ActiveSheetWritePlan planBackupWorkoutPlacement({
     required int primarySheetRowNumber,
     required int exercisesSheetRowNumber,
+    WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
     if (exercisesSheetRowNumber < 2) {
       return ActiveSheetWritePlan();
@@ -863,6 +884,7 @@ class _ActiveSheetWritePlanner {
       workout: primary.workout,
       isBackup: true,
       parentPrimary: primary,
+      metadata: metadata,
     );
   }
 
@@ -1096,6 +1118,7 @@ class _ActiveSheetWritePlanner {
     required int exercisesSheetRowNumber,
     required String workout,
     required bool isBackup,
+    required WorkoutPlacementMetadata metadata,
     WorkoutSlot? parentPrimary,
   }) {
     return ActiveSheetWritePlan(
@@ -1110,6 +1133,7 @@ class _ActiveSheetWritePlanner {
         exercisesSheetRowNumber: exercisesSheetRowNumber,
         workout: workout,
         isBackup: isBackup,
+        metadata: metadata,
       ),
       expectations: [
         if (parentPrimary != null) _rowExpectation(parentPrimary),
@@ -1123,6 +1147,7 @@ class _ActiveSheetWritePlanner {
     required int exercisesSheetRowNumber,
     required String workout,
     required bool isBackup,
+    required WorkoutPlacementMetadata metadata,
   }) {
     final activeColumns = _FixedColumnIndexes.fromHeader(sheet._sheetRow(1));
     final formulaColumns = [
@@ -1130,36 +1155,6 @@ class _ActiveSheetWritePlanner {
         activeColumnName: 'Exercise',
         activeSheetColumnIndex: activeColumns.exercise,
         exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Exercise') - 1,
-      ),
-      _FormulaDrivenColumn(
-        activeColumnName: 'Sets',
-        activeSheetColumnIndex: activeColumns.sets,
-        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Sets') - 1,
-      ),
-      _FormulaDrivenColumn(
-        activeColumnName: 'Reps',
-        activeSheetColumnIndex: activeColumns.reps,
-        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Reps') - 1,
-      ),
-      _FormulaDrivenColumn(
-        activeColumnName: 'RPE',
-        activeSheetColumnIndex: activeColumns.rpe,
-        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('RPE') - 1,
-      ),
-      _FormulaDrivenColumn(
-        activeColumnName: 'Rest',
-        activeSheetColumnIndex: activeColumns.rest,
-        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Rest') - 1,
-      ),
-      _FormulaDrivenColumn(
-        activeColumnName: 'Tempo',
-        activeSheetColumnIndex: activeColumns.tempo,
-        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Tempo') - 1,
-      ),
-      _FormulaDrivenColumn(
-        activeColumnName: 'Notes',
-        activeSheetColumnIndex: activeColumns.notes,
-        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Notes') - 1,
       ),
       if (activeColumns.logFormat != null)
         _FormulaDrivenColumn(
@@ -1184,6 +1179,36 @@ class _ActiveSheetWritePlanner {
         sheetRowNumber: sheetRowNumber,
         sheetColumnNumber: activeColumns.workout + 1,
         value: _workoutCellValue(workout),
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.sets + 1,
+        value: metadata.sets,
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.reps + 1,
+        value: metadata.reps,
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.rpe + 1,
+        value: metadata.rpe,
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.rest + 1,
+        value: metadata.rest,
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.tempo + 1,
+        value: metadata.tempo,
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.notes + 1,
+        value: metadata.notes,
       ),
       CellUpdate(
         sheetRowNumber: sheetRowNumber,
