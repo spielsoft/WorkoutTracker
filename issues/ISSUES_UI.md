@@ -14,8 +14,8 @@ This issue plan intentionally references the PRD for full rationale and user-sto
 - [x] Slice 6: Move creation actions out of selectors
 - [x] Slice 7: Simplify first-run sheet setup
 - [x] Slice 8: Make repair flows task-first
-- [ ] Slice 9: Mobile UI review pass
-- [ ] Slice 10: Clean up TDD-only UI tests
+- [x] Slice 9: Mobile UI review pass
+- [x] Slice 10: Clean up TDD-only UI tests
 
 ## Slice 1: Establish mobile visual state language
 
@@ -249,12 +249,12 @@ Perform a final mobile-first review of the completed UI slices against the PRD. 
 
 ### Acceptance criteria
 
-- [ ] The logging flow can be reviewed on a phone-sized viewport from setup through set entry.
-- [ ] Backup management is discoverable without hidden gestures.
-- [ ] Form layouts remain predictable at common phone widths.
-- [ ] Sheet setup and repair flows preserve task-first hierarchy.
-- [ ] Visual states are consistent across logging, overview, setup, and repair surfaces.
-- [ ] Any remaining design gaps are recorded as follow-up issues instead of being folded into this pass.
+- [x] The logging flow can be reviewed on a phone-sized viewport from setup through set entry.
+- [x] Backup management is discoverable without hidden gestures.
+- [x] Form layouts remain predictable at common phone widths.
+- [x] Sheet setup and repair flows preserve task-first hierarchy.
+- [x] Visual states are consistent across logging, overview, setup, and repair surfaces.
+- [x] Any remaining design gaps are recorded as follow-up issues instead of being folded into this pass.
 
 ### Blocked by
 
@@ -285,13 +285,13 @@ This slice should leave future UI work easier, not more fragile. Tests should de
 
 ### Acceptance criteria
 
-- [ ] The `test-cleanup` skill is used before editing the test suite.
-- [ ] TDD-only tests that assert implementation details, private widget structure, call ordering, or temporary helper behavior are removed or rewritten.
-- [ ] Remaining tests enforce desired behavior through public UI, controller interfaces, or intentional seams.
-- [ ] Mobile behavior from the PRD remains covered at the smallest useful test tier.
-- [ ] Tests that remain for visual state semantics avoid exact color or pixel-perfect assertions unless those values are part of a deliberate public design contract.
-- [ ] The final retained test set is documented in the slice report, including why each category remains.
-- [ ] Relevant focused Flutter tests pass after cleanup.
+- [x] The `test-cleanup` skill is used before editing the test suite.
+- [x] TDD-only tests that assert implementation details, private widget structure, call ordering, or temporary helper behavior are removed or rewritten.
+- [x] Remaining tests enforce desired behavior through public UI, controller interfaces, or intentional seams.
+- [x] Mobile behavior from the PRD remains covered at the smallest useful test tier.
+- [x] Tests that remain for visual state semantics avoid exact color or pixel-perfect assertions unless those values are part of a deliberate public design contract.
+- [x] The final retained test set is documented in the slice report, including why each category remains.
+- [x] Relevant focused Flutter tests pass after cleanup.
 
 ### Blocked by
 
