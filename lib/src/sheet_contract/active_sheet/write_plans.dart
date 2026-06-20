@@ -3,11 +3,15 @@ part of '../active_sheet.dart';
 class ActiveSheetWritePlan {
   ActiveSheetWritePlan({
     Iterable<HistoryColumnInsertion> columnInsertions = const [],
+    Iterable<ActiveSheetRowInsertion> rowInsertions = const [],
     Iterable<CellUpdate> cellUpdates = const [],
     Iterable<ActiveSheetWriteExpectation> expectations = const [],
     this.nextSetPosition,
   }) : columnInsertions = List<HistoryColumnInsertion>.unmodifiable(
          columnInsertions,
+       ),
+       rowInsertions = List<ActiveSheetRowInsertion>.unmodifiable(
+         rowInsertions,
        ),
        cellUpdates = List<CellUpdate>.unmodifiable(cellUpdates),
        expectations = List<ActiveSheetWriteExpectation>.unmodifiable(
@@ -15,6 +19,7 @@ class ActiveSheetWritePlan {
        );
 
   final List<HistoryColumnInsertion> columnInsertions;
+  final List<ActiveSheetRowInsertion> rowInsertions;
   final List<CellUpdate> cellUpdates;
   final List<ActiveSheetWriteExpectation> expectations;
   final SetPosition? nextSetPosition;
@@ -28,11 +33,35 @@ class ActiveSheetWritePlan {
 
   List<List<String>> previewRowsAfterApplying(Iterable<Iterable<String>> rows) {
     final preview = rows.map((row) => row.toList()).toList();
+    final sortedRowInsertions = [...rowInsertions]
+      ..sort(
+        (first, second) =>
+            second.sheetRowNumber.compareTo(first.sheetRowNumber),
+      );
     final sortedInsertions = [...columnInsertions]
       ..sort(
         (first, second) =>
             second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
       );
+
+    for (final insertion in sortedRowInsertions) {
+      final rowIndex = insertion.sheetRowNumber - 1;
+      if (rowIndex < 0) {
+        continue;
+      }
+      final insertedRows = List.generate(
+        insertion.rowCount,
+        (_) => List.filled(insertion.cellCount, ''),
+      );
+      if (rowIndex >= preview.length) {
+        while (preview.length < rowIndex) {
+          preview.add([]);
+        }
+        preview.addAll(insertedRows);
+      } else {
+        preview.insertAll(rowIndex, insertedRows);
+      }
+    }
 
     for (final insertion in sortedInsertions) {
       final columnIndex = insertion.sheetColumnNumber - 1;
@@ -70,6 +99,7 @@ class ActiveSheetWritePlan {
     return identical(this, other) ||
         other is ActiveSheetWritePlan &&
             _listEquals(columnInsertions, other.columnInsertions) &&
+            _listEquals(rowInsertions, other.rowInsertions) &&
             _listEquals(cellUpdates, other.cellUpdates) &&
             _listEquals(expectations, other.expectations) &&
             nextSetPosition == other.nextSetPosition;
@@ -78,6 +108,7 @@ class ActiveSheetWritePlan {
   @override
   int get hashCode => Object.hash(
     Object.hashAll(columnInsertions),
+    Object.hashAll(rowInsertions),
     Object.hashAll(cellUpdates),
     Object.hashAll(expectations),
     nextSetPosition,
@@ -87,6 +118,7 @@ class ActiveSheetWritePlan {
   String toString() {
     return 'ActiveSheetWritePlan('
         'columnInsertions: $columnInsertions, '
+        'rowInsertions: $rowInsertions, '
         'cellUpdates: $cellUpdates, '
         'expectations: $expectations, '
         'nextSetPosition: $nextSetPosition'
@@ -354,6 +386,73 @@ class ActiveSheetInsertionPointExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
+class ActiveSheetRowInsertionPointExpectation
+    extends ActiveSheetWriteExpectation {
+  ActiveSheetRowInsertionPointExpectation({
+    required this.sheetRowNumber,
+    Iterable<String>? expectedRowAtInsertionPoint,
+  }) : expectedRowAtInsertionPoint = expectedRowAtInsertionPoint == null
+           ? null
+           : List<String>.unmodifiable(expectedRowAtInsertionPoint);
+
+  final int sheetRowNumber;
+  final List<String>? expectedRowAtInsertionPoint;
+
+  @override
+  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+    final rowIndex = sheetRowNumber - 1;
+    final expectedRow = expectedRowAtInsertionPoint;
+    if (expectedRow == null) {
+      if (rowIndex == sheet._rows.length) {
+        return const [];
+      }
+      return [_rejection()];
+    }
+    if (rowIndex >= 0 &&
+        rowIndex < sheet._rows.length &&
+        _listEquals(sheet._rows[rowIndex], expectedRow)) {
+      return const [];
+    }
+    return [_rejection()];
+  }
+
+  ActiveSheetWriteRejection _rejection() {
+    return ActiveSheetWriteRejection(
+      'Row insertion point at row $sheetRowNumber no longer matches '
+      'the visible sheet.',
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ActiveSheetRowInsertionPointExpectation &&
+            sheetRowNumber == other.sheetRowNumber &&
+            _nullableListEquals(
+              expectedRowAtInsertionPoint,
+              other.expectedRowAtInsertionPoint,
+            );
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      sheetRowNumber,
+      expectedRowAtInsertionPoint == null
+          ? null
+          : Object.hashAll(expectedRowAtInsertionPoint!),
+    );
+  }
+
+  @override
+  String toString() {
+    return 'ActiveSheetRowInsertionPointExpectation('
+        'sheetRowNumber: $sheetRowNumber, '
+        'expectedRowAtInsertionPoint: $expectedRowAtInsertionPoint'
+        ')';
+  }
+}
+
 WorkoutSlot? _slotForRow(ParsedActiveSheet sheet, int sheetRowNumber) {
   for (final slot in sheet.slots) {
     if (slot.sheetRowNumber == sheetRowNumber) {
@@ -392,6 +491,179 @@ class SetPosition {
         'sheetRowNumber: $sheetRowNumber, '
         'setNumber: $setNumber, '
         'sheetColumnNumber: $sheetColumnNumber'
+        ')';
+  }
+}
+
+class CanonicalExerciseDefinition {
+  const CanonicalExerciseDefinition({
+    required this.exercise,
+    this.description = '',
+    this.defaultSets = '',
+    this.defaultReps = '',
+    this.defaultRpe = '',
+    this.defaultRest = '',
+    this.defaultTempo = '',
+    this.notes = '',
+    this.logFormat = defaultExerciseLogFormat,
+  });
+
+  final String exercise;
+  final String description;
+  final String defaultSets;
+  final String defaultReps;
+  final String defaultRpe;
+  final String defaultRest;
+  final String defaultTempo;
+  final String notes;
+  final String logFormat;
+
+  String get resolvedLogFormat {
+    return logFormat.trim().isEmpty ? defaultExerciseLogFormat : logFormat;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is CanonicalExerciseDefinition &&
+            exercise == other.exercise &&
+            description == other.description &&
+            defaultSets == other.defaultSets &&
+            defaultReps == other.defaultReps &&
+            defaultRpe == other.defaultRpe &&
+            defaultRest == other.defaultRest &&
+            defaultTempo == other.defaultTempo &&
+            notes == other.notes &&
+            logFormat == other.logFormat;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      exercise,
+      description,
+      defaultSets,
+      defaultReps,
+      defaultRpe,
+      defaultRest,
+      defaultTempo,
+      notes,
+      logFormat,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'CanonicalExerciseDefinition('
+        'exercise: $exercise, '
+        'description: $description, '
+        'defaultSets: $defaultSets, '
+        'defaultReps: $defaultReps, '
+        'defaultRpe: $defaultRpe, '
+        'defaultRest: $defaultRest, '
+        'defaultTempo: $defaultTempo, '
+        'notes: $notes, '
+        'logFormat: $logFormat'
+        ')';
+  }
+}
+
+class ExercisesWritePlan {
+  ExercisesWritePlan({Iterable<ExercisesRowAppend> rowAppends = const []})
+    : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends);
+
+  final List<ExercisesRowAppend> rowAppends;
+
+  List<List<String>> previewRowsAfterApplying(Iterable<Iterable<String>> rows) {
+    final preview = rows.map((row) => row.toList()).toList();
+    for (final append in rowAppends) {
+      final rowIndex = append.sheetRowNumber - 1;
+      while (preview.length < rowIndex) {
+        preview.add([]);
+      }
+      if (rowIndex == preview.length) {
+        preview.add(append.values.toList());
+      } else {
+        preview.insert(rowIndex, append.values.toList());
+      }
+    }
+    return preview.map((row) => List<String>.unmodifiable(row)).toList();
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ExercisesWritePlan &&
+            _listEquals(rowAppends, other.rowAppends);
+  }
+
+  @override
+  int get hashCode => Object.hashAll(rowAppends);
+
+  @override
+  String toString() {
+    return 'ExercisesWritePlan(rowAppends: $rowAppends)';
+  }
+}
+
+class ExercisesRowAppend {
+  ExercisesRowAppend({
+    required this.sheetRowNumber,
+    required Iterable<String> values,
+  }) : values = List<String>.unmodifiable(values);
+
+  final int sheetRowNumber;
+  final List<String> values;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ExercisesRowAppend &&
+            sheetRowNumber == other.sheetRowNumber &&
+            _listEquals(values, other.values);
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, Object.hashAll(values));
+
+  @override
+  String toString() {
+    return 'ExercisesRowAppend('
+        'sheetRowNumber: $sheetRowNumber, '
+        'values: $values'
+        ')';
+  }
+}
+
+class ActiveSheetRowInsertion {
+  const ActiveSheetRowInsertion({
+    required this.sheetRowNumber,
+    this.rowCount = 1,
+    this.cellCount = 0,
+  });
+
+  final int sheetRowNumber;
+  final int rowCount;
+  final int cellCount;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ActiveSheetRowInsertion &&
+            sheetRowNumber == other.sheetRowNumber &&
+            rowCount == other.rowCount &&
+            cellCount == other.cellCount;
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, rowCount, cellCount);
+
+  @override
+  String toString() {
+    return 'ActiveSheetRowInsertion('
+        'sheetRowNumber: $sheetRowNumber, '
+        'rowCount: $rowCount, '
+        'cellCount: $cellCount'
         ')';
   }
 }
@@ -544,6 +816,53 @@ class _ActiveSheetWritePlanner {
         ),
         _insertionPointExpectation(block.setColumns.last.sheetColumnNumber + 1),
       ],
+    );
+  }
+
+  ExercisesWritePlan planCanonicalExerciseAppend(
+    CanonicalExerciseDefinition exercise,
+  ) {
+    final append = ExercisesRowAppend(
+      sheetRowNumber: sheet._exercisesRows.length + 1,
+      values: _canonicalExerciseRowValues(exercise),
+    );
+    return ExercisesWritePlan(rowAppends: [append]);
+  }
+
+  ActiveSheetWritePlan planPrimaryWorkoutPlacement({
+    required int exercisesSheetRowNumber,
+    required String workout,
+  }) {
+    if (exercisesSheetRowNumber < 2) {
+      return ActiveSheetWritePlan();
+    }
+    final sheetRowNumber = sheet._rows.length + 1;
+    return _workoutPlacementPlan(
+      sheetRowNumber: sheetRowNumber,
+      exercisesSheetRowNumber: exercisesSheetRowNumber,
+      workout: workout,
+      isBackup: false,
+    );
+  }
+
+  ActiveSheetWritePlan planBackupWorkoutPlacement({
+    required int primarySheetRowNumber,
+    required int exercisesSheetRowNumber,
+  }) {
+    if (exercisesSheetRowNumber < 2) {
+      return ActiveSheetWritePlan();
+    }
+    final primary = _primarySlotForRow(primarySheetRowNumber);
+    if (primary == null) {
+      return ActiveSheetWritePlan();
+    }
+
+    return _workoutPlacementPlan(
+      sheetRowNumber: _backupInsertionRowNumber(primary),
+      exercisesSheetRowNumber: exercisesSheetRowNumber,
+      workout: primary.workout,
+      isBackup: true,
+      parentPrimary: primary,
     );
   }
 
@@ -772,6 +1091,181 @@ class _ActiveSheetWritePlanner {
     );
   }
 
+  ActiveSheetWritePlan _workoutPlacementPlan({
+    required int sheetRowNumber,
+    required int exercisesSheetRowNumber,
+    required String workout,
+    required bool isBackup,
+    WorkoutSlot? parentPrimary,
+  }) {
+    return ActiveSheetWritePlan(
+      rowInsertions: [
+        ActiveSheetRowInsertion(
+          sheetRowNumber: sheetRowNumber,
+          cellCount: _activeSheetRowWidth(),
+        ),
+      ],
+      cellUpdates: _workoutPlacementCellUpdates(
+        sheetRowNumber: sheetRowNumber,
+        exercisesSheetRowNumber: exercisesSheetRowNumber,
+        workout: workout,
+        isBackup: isBackup,
+      ),
+      expectations: [
+        if (parentPrimary != null) _rowExpectation(parentPrimary),
+        _rowInsertionPointExpectation(sheetRowNumber),
+      ],
+    );
+  }
+
+  List<CellUpdate> _workoutPlacementCellUpdates({
+    required int sheetRowNumber,
+    required int exercisesSheetRowNumber,
+    required String workout,
+    required bool isBackup,
+  }) {
+    final activeColumns = _FixedColumnIndexes.fromHeader(sheet._sheetRow(1));
+    final formulaColumns = [
+      _FormulaDrivenColumn(
+        activeColumnName: 'Exercise',
+        activeSheetColumnIndex: activeColumns.exercise,
+        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Exercise') - 1,
+      ),
+      _FormulaDrivenColumn(
+        activeColumnName: 'Sets',
+        activeSheetColumnIndex: activeColumns.sets,
+        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Sets') - 1,
+      ),
+      _FormulaDrivenColumn(
+        activeColumnName: 'Reps',
+        activeSheetColumnIndex: activeColumns.reps,
+        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Reps') - 1,
+      ),
+      _FormulaDrivenColumn(
+        activeColumnName: 'RPE',
+        activeSheetColumnIndex: activeColumns.rpe,
+        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('RPE') - 1,
+      ),
+      _FormulaDrivenColumn(
+        activeColumnName: 'Rest',
+        activeSheetColumnIndex: activeColumns.rest,
+        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Rest') - 1,
+      ),
+      _FormulaDrivenColumn(
+        activeColumnName: 'Tempo',
+        activeSheetColumnIndex: activeColumns.tempo,
+        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Tempo') - 1,
+      ),
+      _FormulaDrivenColumn(
+        activeColumnName: 'Notes',
+        activeSheetColumnIndex: activeColumns.notes,
+        exercisesSheetColumnIndex: _exercisesSheetColumnNumber('Notes') - 1,
+      ),
+      if (activeColumns.logFormat != null)
+        _FormulaDrivenColumn(
+          activeColumnName: 'Log Format',
+          activeSheetColumnIndex: activeColumns.logFormat!,
+          exercisesSheetColumnIndex:
+              _exercisesSheetColumnNumber('Log Format') - 1,
+        ),
+    ];
+
+    return [
+      for (final column in formulaColumns)
+        CellUpdate.formula(
+          sheetRowNumber: sheetRowNumber,
+          sheetColumnNumber: column.activeSheetColumnIndex + 1,
+          value: _directExercisesFormula(
+            exercisesSheetColumnNumber: column.exercisesSheetColumnIndex + 1,
+            exercisesSheetRowNumber: exercisesSheetRowNumber,
+          ),
+        ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.workout + 1,
+        value: _workoutCellValue(workout),
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.isBackup + 1,
+        value: isBackup ? 'TRUE' : '',
+      ),
+    ];
+  }
+
+  List<String> _canonicalExerciseRowValues(
+    CanonicalExerciseDefinition exercise,
+  ) {
+    final header = sheet._exercisesRows.isEmpty
+        ? exercisesSheetColumns
+        : sheet._exercisesRows.first;
+    final columns = _ExercisesColumnIndexes.fromHeader(header);
+    final logFormatColumn = columns.logFormat ?? 8;
+    final row = List.filled(_exerciseRowWidth(header, logFormatColumn), '');
+    _setRowValue(row, columns.exercise, exercise.exercise);
+    _setRowValue(row, columns.description, exercise.description);
+    _setRowValue(row, columns.defaultSets, exercise.defaultSets);
+    _setRowValue(row, columns.defaultReps, exercise.defaultReps);
+    _setRowValue(row, columns.defaultRpe, exercise.defaultRpe);
+    _setRowValue(row, columns.defaultRest, exercise.defaultRest);
+    _setRowValue(row, columns.defaultTempo, exercise.defaultTempo);
+    _setRowValue(row, columns.notes, exercise.notes);
+    _setRowValue(row, logFormatColumn, exercise.resolvedLogFormat);
+    return row;
+  }
+
+  int _exerciseRowWidth(List<String> header, int logFormatColumn) {
+    var width = header.length;
+    if (width < exercisesSheetColumns.length) {
+      width = exercisesSheetColumns.length;
+    }
+    if (width <= logFormatColumn) {
+      width = logFormatColumn + 1;
+    }
+    return width;
+  }
+
+  void _setRowValue(List<String> row, int index, String value) {
+    while (row.length <= index) {
+      row.add('');
+    }
+    row[index] = value;
+  }
+
+  int _activeSheetRowWidth() {
+    final headerWidth = sheet._sheetRow(1).length;
+    return headerWidth < activeSheetFixedColumns.length
+        ? activeSheetFixedColumns.length
+        : headerWidth;
+  }
+
+  int _exercisesSheetColumnNumber(String activeColumnName) {
+    return sheet._formulaExerciseColumnNumbers[activeColumnName] ??
+        _defaultExerciseColumnNumber(activeColumnName);
+  }
+
+  String _workoutCellValue(String workout) {
+    final trimmed = workout.trim();
+    return trimmed == defaultWorkoutName ? '' : trimmed;
+  }
+
+  WorkoutSlot? _primarySlotForRow(int sheetRowNumber) {
+    for (final slot in sheet.primarySlots) {
+      if (slot.sheetRowNumber == sheetRowNumber && !slot.isBackup) {
+        return slot;
+      }
+    }
+    return null;
+  }
+
+  int _backupInsertionRowNumber(WorkoutSlot primary) {
+    var sheetRowNumber = primary.sheetRowNumber + 1;
+    for (final backup in primary.backups) {
+      sheetRowNumber = backup.sheetRowNumber + 1;
+    }
+    return sheetRowNumber;
+  }
+
   SetPosition _nextSetPosition({
     required HistoryBlock block,
     required int sheetRowNumber,
@@ -842,6 +1336,19 @@ class _ActiveSheetWritePlanner {
       sheetColumnNumber: sheetColumnNumber,
       expectedHeaderValue: _cell(sheet._sheetRow(1), sheetColumnNumber - 1),
       expectedSetLabel: _cell(sheet._sheetRow(2), sheetColumnNumber - 1),
+    );
+  }
+
+  ActiveSheetRowInsertionPointExpectation _rowInsertionPointExpectation(
+    int sheetRowNumber,
+  ) {
+    final rowIndex = sheetRowNumber - 1;
+    return ActiveSheetRowInsertionPointExpectation(
+      sheetRowNumber: sheetRowNumber,
+      expectedRowAtInsertionPoint:
+          rowIndex >= 0 && rowIndex < sheet._rows.length
+          ? sheet._rows[rowIndex]
+          : null,
     );
   }
 }

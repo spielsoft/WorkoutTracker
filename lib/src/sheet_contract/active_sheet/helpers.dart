@@ -23,3 +23,10 @@ bool _listEquals<T>(List<T> first, List<T> second) {
   }
   return true;
 }
+
+bool _nullableListEquals<T>(List<T>? first, List<T>? second) {
+  if (first == null || second == null) {
+    return first == second;
+  }
+  return _listEquals(first, second);
+}

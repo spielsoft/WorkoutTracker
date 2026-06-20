@@ -15,6 +15,20 @@ const activeSheetFixedColumns = [
   'is_backup',
 ];
 
+const exercisesSheetColumns = [
+  'Exercise',
+  'Description',
+  'Default Sets',
+  'Default Reps',
+  'Default RPE',
+  'Default Rest',
+  'Default Tempo',
+  'Notes',
+  'Log Format',
+];
+
+const defaultExerciseLogFormat = '{Weight}[x]{Reps}[@]{RPE}';
+
 class ActiveSheetInput {
   ActiveSheetInput({
     required Iterable<Iterable<String>> rows,

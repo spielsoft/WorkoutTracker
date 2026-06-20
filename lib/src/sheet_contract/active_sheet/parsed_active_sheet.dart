@@ -9,6 +9,7 @@ class ParsedActiveSheet {
     Iterable<FormulaHealingIssue> formulaHealingIssues = const [],
     Map<String, int> formulaExerciseColumnNumbers = const {},
     Iterable<Iterable<String>> rows = const [],
+    Iterable<Iterable<String>> exercisesRows = const [],
   }) : slots = List<WorkoutSlot>.unmodifiable(slots),
        historyBlocks = List<HistoryBlock>.unmodifiable(historyBlocks),
        primarySlots = List<WorkoutSlot>.unmodifiable(primarySlots),
@@ -21,6 +22,9 @@ class ParsedActiveSheet {
        ),
        _rows = List<List<String>>.unmodifiable(
          rows.map((row) => List<String>.unmodifiable(row)),
+       ),
+       _exercisesRows = List<List<String>>.unmodifiable(
+         exercisesRows.map((row) => List<String>.unmodifiable(row)),
        );
 
   final List<WorkoutSlot> slots;
@@ -30,6 +34,7 @@ class ParsedActiveSheet {
   final List<FormulaHealingIssue> formulaHealingIssues;
   final Map<String, int> _formulaExerciseColumnNumbers;
   final List<List<String>> _rows;
+  final List<List<String>> _exercisesRows;
 
   List<String> get selectableWorkouts {
     return _WorkoutReadModelBuilder(this).selectableWorkouts;
@@ -151,6 +156,32 @@ class ParsedActiveSheet {
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
+    );
+  }
+
+  ExercisesWritePlan planCanonicalExerciseAppend(
+    CanonicalExerciseDefinition exercise,
+  ) {
+    return _ActiveSheetWritePlanner(this).planCanonicalExerciseAppend(exercise);
+  }
+
+  ActiveSheetWritePlan planPrimaryWorkoutPlacement({
+    required int exercisesSheetRowNumber,
+    required String workout,
+  }) {
+    return _ActiveSheetWritePlanner(this).planPrimaryWorkoutPlacement(
+      exercisesSheetRowNumber: exercisesSheetRowNumber,
+      workout: workout,
+    );
+  }
+
+  ActiveSheetWritePlan planBackupWorkoutPlacement({
+    required int primarySheetRowNumber,
+    required int exercisesSheetRowNumber,
+  }) {
+    return _ActiveSheetWritePlanner(this).planBackupWorkoutPlacement(
+      primarySheetRowNumber: primarySheetRowNumber,
+      exercisesSheetRowNumber: exercisesSheetRowNumber,
     );
   }
 

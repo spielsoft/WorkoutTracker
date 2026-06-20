@@ -103,6 +103,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
                   formulaColumn.exercisesSheetColumnIndex + 1,
           },
     rows: sheet.rows,
+    exercisesRows: sheet.exercisesRows,
   );
 }
 
@@ -302,6 +303,7 @@ String _logFormatCell(List<String> row, _FixedColumnIndexes columns) {
 class _ExercisesColumnIndexes {
   const _ExercisesColumnIndexes({
     required this.exercise,
+    required this.description,
     required this.defaultSets,
     required this.defaultReps,
     required this.defaultRpe,
@@ -319,6 +321,7 @@ class _ExercisesColumnIndexes {
 
     return _ExercisesColumnIndexes(
       exercise: indexes['Exercise'] ?? 0,
+      description: indexes['Description'] ?? 1,
       defaultSets: indexes['Default Sets'] ?? 2,
       defaultReps: indexes['Default Reps'] ?? 3,
       defaultRpe: indexes['Default RPE'] ?? 4,
@@ -330,6 +333,7 @@ class _ExercisesColumnIndexes {
   }
 
   final int exercise;
+  final int description;
   final int defaultSets;
   final int defaultReps;
   final int defaultRpe;
