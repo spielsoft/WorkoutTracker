@@ -79,7 +79,7 @@ class GoogleSignInSpreadsheetValidationService
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int exercisesSheetRowNumber,
+    required CanonicalExercise exercise,
     required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   }) async {
@@ -91,7 +91,7 @@ class GoogleSignInSpreadsheetValidationService
           return authoringService.addExistingExerciseToWorkout(
             spreadsheetId: spreadsheetId,
             activeSheet: activeSheet,
-            exercisesSheetRowNumber: exercisesSheetRowNumber,
+            exercise: exercise,
             metadata: metadata,
             placement: placement,
           );

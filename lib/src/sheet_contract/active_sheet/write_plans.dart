@@ -848,10 +848,11 @@ class _ActiveSheetWritePlanner {
   }
 
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({
-    required int exercisesSheetRowNumber,
+    required CanonicalExercise exercise,
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
+    final exercisesSheetRowNumber = exercise.sheetRowNumber;
     if (exercisesSheetRowNumber < 2) {
       return ActiveSheetWritePlan();
     }
@@ -867,9 +868,10 @@ class _ActiveSheetWritePlanner {
 
   ActiveSheetWritePlan planBackupWorkoutPlacement({
     required int primarySheetRowNumber,
-    required int exercisesSheetRowNumber,
+    required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
+    final exercisesSheetRowNumber = exercise.sheetRowNumber;
     if (exercisesSheetRowNumber < 2) {
       return ActiveSheetWritePlan();
     }

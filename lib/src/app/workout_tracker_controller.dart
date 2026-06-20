@@ -287,7 +287,7 @@ class WorkoutTrackerController extends ChangeNotifier {
         _report = await exerciseAuthoringService.addExistingExerciseToWorkout(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
-          exercisesSheetRowNumber: exercise.sheetRowNumber,
+          exercise: exercise,
           metadata: metadata,
           placement: placement,
         );

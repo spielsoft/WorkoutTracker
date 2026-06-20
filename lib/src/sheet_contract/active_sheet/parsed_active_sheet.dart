@@ -170,12 +170,12 @@ class ParsedActiveSheet {
   }
 
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({
-    required int exercisesSheetRowNumber,
+    required CanonicalExercise exercise,
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
     return _ActiveSheetWritePlanner(this).planPrimaryWorkoutPlacement(
-      exercisesSheetRowNumber: exercisesSheetRowNumber,
+      exercise: exercise,
       workout: workout,
       metadata: metadata,
     );
@@ -183,12 +183,12 @@ class ParsedActiveSheet {
 
   ActiveSheetWritePlan planBackupWorkoutPlacement({
     required int primarySheetRowNumber,
-    required int exercisesSheetRowNumber,
+    required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
     return _ActiveSheetWritePlanner(this).planBackupWorkoutPlacement(
       primarySheetRowNumber: primarySheetRowNumber,
-      exercisesSheetRowNumber: exercisesSheetRowNumber,
+      exercise: exercise,
       metadata: metadata,
     );
   }

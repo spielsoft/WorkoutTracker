@@ -418,11 +418,12 @@ void main() {
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
+      final selectedExercise = report.activeSheet.canonicalExercises.single;
 
       final rejected = await service.addExistingExerciseToWorkout(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
-        exercisesSheetRowNumber: 2,
+        exercise: selectedExercise,
         metadata: const WorkoutPlacementMetadata(),
         placement: const ExercisePlacementTarget.primary(workout: 'Legs'),
       );

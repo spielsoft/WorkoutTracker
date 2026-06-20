@@ -84,7 +84,7 @@ class GoogleSpreadsheetValidationService
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int exercisesSheetRowNumber,
+    required CanonicalExercise exercise,
     required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   }) async {
@@ -97,9 +97,8 @@ class GoogleSpreadsheetValidationService
       spreadsheetId,
     );
     final canonicalExerciseRejection = _canonicalExerciseRowRejection(
-      originalSheet: activeSheet,
       currentSheet: currentActiveSheet,
-      exercisesSheetRowNumber: exercisesSheetRowNumber,
+      selectedExercise: exercise,
     );
     if (canonicalExerciseRejection != null) {
       return SpreadsheetValidationReport(
@@ -111,11 +110,11 @@ class GoogleSpreadsheetValidationService
     final activePlan = placement.isBackup
         ? currentActiveSheet.planBackupWorkoutPlacement(
             primarySheetRowNumber: placement.primarySheetRowNumber!,
-            exercisesSheetRowNumber: exercisesSheetRowNumber,
+            exercise: exercise,
             metadata: metadata,
           )
         : currentActiveSheet.planPrimaryWorkoutPlacement(
-            exercisesSheetRowNumber: exercisesSheetRowNumber,
+            exercise: exercise,
             workout: placement.workout ?? defaultWorkoutName,
             metadata: metadata,
           );
@@ -137,25 +136,19 @@ class GoogleSpreadsheetValidationService
 }
 
 ActiveSheetWriteRejection? _canonicalExerciseRowRejection({
-  required ParsedActiveSheet originalSheet,
   required ParsedActiveSheet currentSheet,
-  required int exercisesSheetRowNumber,
+  required CanonicalExercise selectedExercise,
 }) {
-  final original = _canonicalExerciseForRow(
-    originalSheet,
-    exercisesSheetRowNumber,
-  );
   final current = _canonicalExerciseForRow(
     currentSheet,
-    exercisesSheetRowNumber,
+    selectedExercise.sheetRowNumber,
   );
-  if (original != null &&
-      current != null &&
-      _sameCanonicalExercise(original, current)) {
+  if (current != null && _sameCanonicalExercise(selectedExercise, current)) {
     return null;
   }
 
-  final label = original?.displayName ?? 'selected exercise';
+  final exercisesSheetRowNumber = selectedExercise.sheetRowNumber;
+  final label = selectedExercise.displayName;
   return ActiveSheetWriteRejection(
     'Exercises row $exercisesSheetRowNumber no longer matches $label.',
   );

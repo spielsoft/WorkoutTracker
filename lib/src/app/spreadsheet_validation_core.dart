@@ -38,7 +38,7 @@ abstract interface class ExerciseAuthoringService {
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int exercisesSheetRowNumber,
+    required CanonicalExercise exercise,
     required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   });
