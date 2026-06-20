@@ -670,7 +670,9 @@ void main() {
       WorkoutTrackerApp(
         validationService: service,
         appStateStore: store,
-        spreadsheetPicker: _FakeSpreadsheetPicker(),
+        spreadsheetPicker: const DisabledSpreadsheetPicker(
+          reason: 'Google Drive Picker is missing an OAuth client ID.',
+        ),
       ),
     );
     await tester.pump();
@@ -757,6 +759,10 @@ void main() {
     expect(find.text('saved@example.com'), findsOneWidget);
     expect(find.text('Return to workout'), findsOneWidget);
     expect(find.text('Change sheet'), findsOneWidget);
+    expect(
+      find.text('Google Drive Picker is missing an OAuth client ID.'),
+      findsNothing,
+    );
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
@@ -1945,14 +1951,16 @@ void main() {
 
     expect(find.text('Workout'), findsOneWidget);
     expect(find.text('History block'), findsOneWidget);
-    expect(find.text('Add workout'), findsOneWidget);
-    expect(find.text('Add history'), findsOneWidget);
+    expect(find.text('Add workout'), findsNothing);
+    expect(find.text('Add history'), findsNothing);
+    expect(find.text('Edit exercises'), findsNothing);
+    expect(find.byTooltip('Edit exercises'), findsOneWidget);
     expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets(
-    'shows setup creation actions outside selectors and selects created values',
+    'shows setup creation actions in selectors and selects created values',
     (tester) async {
       final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
@@ -1971,25 +1979,25 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.byKey(const ValueKey('add-workout')), findsOneWidget);
-      expect(find.byKey(const ValueKey('add-history-block')), findsOneWidget);
+      expect(find.byKey(const ValueKey('add-workout')), findsNothing);
+      expect(find.byKey(const ValueKey('add-history-block')), findsNothing);
 
       await tester.tap(find.text('Legs (0/1 done)').first);
       await tester.pumpAndSettle();
-      expect(find.text('Add new...'), findsNothing);
-      await tester.tap(find.text('Legs (0/1 done)').last);
+      await tester.tap(find.text('Add workout...').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const ValueKey('add-workout')));
-      await tester.pumpAndSettle();
       await tester.enterText(_textFieldWithLabel('Workout name'), 'Push');
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
 
       expect(find.text('Push (0/0 done)'), findsOneWidget);
 
-      await tester.tap(find.byKey(const ValueKey('add-history-block')));
+      await tester.tap(find.text('Week 1').first);
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Add history block...').last);
+      await tester.pumpAndSettle();
+
       await tester.enterText(
         _textFieldWithLabel('History block label'),
         'Week 2',
@@ -2207,7 +2215,9 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
       await tester.pump();
       await tester.pump();
-      await tester.tap(find.byKey(const ValueKey('create-canonical-exercise')));
+      await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('add-canonical-exercise')));
       await tester.pumpAndSettle();
 
       for (final key in const [

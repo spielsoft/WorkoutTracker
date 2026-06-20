@@ -1,5 +1,8 @@
 part of 'workout_tracker_shell.dart';
 
+const _addWorkoutMenuValue = '__workout_tracker_add_workout__';
+const _addHistoryBlockMenuValue = '__workout_tracker_add_history_block__';
+
 class _ScreenHeader extends StatelessWidget {
   const _ScreenHeader({
     required this.title,
@@ -243,14 +246,12 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
           compactTitle: true,
           backTooltip: 'Back to sheet selection',
           onBack: onBackToSheetSelection,
-          trailing: onCreateCanonicalExercise == null
-              ? null
-              : IconButton.filledTonal(
-                  key: const ValueKey('create-canonical-exercise'),
-                  tooltip: 'Create exercise',
-                  onPressed: onCreateCanonicalExercise,
-                  icon: const Icon(Icons.fitness_center_outlined),
-                ),
+          trailing: IconButton.filledTonal(
+            key: const ValueKey('open-exercise-manager'),
+            tooltip: 'Edit exercises',
+            onPressed: onOpenExerciseManager,
+            icon: const Icon(Icons.fitness_center_outlined),
+          ),
         ),
         const SizedBox(height: 16),
         LayoutBuilder(
@@ -265,72 +266,92 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
               children: [
                 SizedBox(
                   width: fieldWidth,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedWorkout,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Workout',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.fitness_center_outlined),
+                  child: DropdownButtonFormField<String>(
+                    initialValue: selectedWorkout,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Workout',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.fitness_center_outlined),
+                    ),
+                    items: [
+                      for (final workout in workouts)
+                        DropdownMenuItem(
+                          value: workout,
+                          child: Text(
+                            '$workout ${setup.progressByWorkout[workout]!.label}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        items: [
-                          for (final workout in workouts)
-                            DropdownMenuItem(
-                              value: workout,
-                              child: Text(
-                                '$workout ${setup.progressByWorkout[workout]!.label}',
-                                overflow: TextOverflow.ellipsis,
+                      if (onAddWorkout != null)
+                        const DropdownMenuItem(
+                          value: _addWorkoutMenuValue,
+                          child: Row(
+                            children: [
+                              Icon(Icons.add_outlined),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Add workout...',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                        ],
-                        onChanged: onWorkoutChanged,
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        key: const ValueKey('add-workout'),
-                        onPressed: onAddWorkout,
-                        icon: const Icon(Icons.add_outlined),
-                        label: const Text('Add workout'),
-                      ),
+                            ],
+                          ),
+                        ),
                     ],
+                    onChanged: (value) {
+                      if (value == _addWorkoutMenuValue) {
+                        onAddWorkout?.call();
+                        return;
+                      }
+                      onWorkoutChanged(value);
+                    },
                   ),
                 ),
                 SizedBox(
                   width: fieldWidth,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedHistoryBlock,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'History block',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.history_outlined),
+                  child: DropdownButtonFormField<String>(
+                    initialValue: selectedHistoryBlock,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'History block',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.history_outlined),
+                    ),
+                    items: [
+                      for (final block in historyBlocks)
+                        DropdownMenuItem(
+                          value: block.label,
+                          child: Text(
+                            block.label,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        items: [
-                          for (final block in historyBlocks)
-                            DropdownMenuItem(
-                              value: block.label,
-                              child: Text(
-                                block.label,
-                                overflow: TextOverflow.ellipsis,
+                      if (onAddHistoryBlock != null)
+                        const DropdownMenuItem(
+                          value: _addHistoryBlockMenuValue,
+                          child: Row(
+                            children: [
+                              Icon(Icons.add_outlined),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Add history block...',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                        ],
-                        onChanged: onHistoryBlockChanged,
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        key: const ValueKey('add-history-block'),
-                        onPressed: onAddHistoryBlock,
-                        icon: const Icon(Icons.add_outlined),
-                        label: const Text('Add history'),
-                      ),
+                            ],
+                          ),
+                        ),
                     ],
+                    onChanged: (value) {
+                      if (value == _addHistoryBlockMenuValue) {
+                        onAddHistoryBlock?.call();
+                        return;
+                      }
+                      onHistoryBlockChanged(value);
+                    },
                   ),
                 ),
               ],
@@ -338,13 +359,6 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
           },
         ),
         const SizedBox(height: 24),
-        OutlinedButton.icon(
-          key: const ValueKey('open-exercise-manager'),
-          onPressed: onOpenExerciseManager,
-          icon: const Icon(Icons.edit_note_outlined),
-          label: const Text('Edit exercises'),
-        ),
-        const SizedBox(height: 12),
         FilledButton.icon(
           key: const ValueKey('select-workout-setup'),
           onPressed: overview == null ? null : onSelectWorkoutSetup,

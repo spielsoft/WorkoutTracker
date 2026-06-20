@@ -114,6 +114,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
   const _SelectedSpreadsheetChooser({
     required this.selectedSpreadsheet,
     required this.availability,
+    required this.showAvailabilitySummary,
     required this.isBusy,
     this.accountSession,
     this.onReturnToWorkout,
@@ -123,6 +124,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
 
   final SelectedSpreadsheet? selectedSpreadsheet;
   final SpreadsheetPickerAvailability availability;
+  final bool showAvailabilitySummary;
   final bool isBusy;
   final GoogleAccountSession? accountSession;
   final VoidCallback? onReturnToWorkout;
@@ -212,10 +214,10 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
                 ),
               ],
             ),
-            if (availability.summary case final String summary) ...[
+            if (showAvailabilitySummary && availability.summary != null) ...[
               const SizedBox(height: 8),
               Text(
-                summary,
+                availability.summary!,
                 key: const ValueKey('spreadsheet-picker-availability'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -894,6 +896,8 @@ class _SpreadsheetValidationShellState
             final pickerAvailability = spreadsheetPicker?.availability;
             final hasLoadedWorkout =
                 report != null && !report.hasBlockingIssues;
+            final showPickerAvailability =
+                _selectedSpreadsheet == null && pickerAvailability != null;
             final showSheetSelection =
                 _screen == _WorkoutTrackerScreen.sheetSelection ||
                 report == null ||
@@ -912,6 +916,7 @@ class _SpreadsheetValidationShellState
                           _SelectedSpreadsheetChooser(
                             selectedSpreadsheet: _selectedSpreadsheet,
                             availability: pickerAvailability!,
+                            showAvailabilitySummary: showPickerAvailability,
                             isBusy: isBusy,
                             accountSession: widget.accountSession,
                             onReturnToWorkout: hasLoadedWorkout
