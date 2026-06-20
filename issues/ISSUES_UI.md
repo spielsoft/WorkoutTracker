@@ -6,7 +6,7 @@ This issue plan intentionally references the PRD for full rationale and user-sto
 
 ## Checklist
 
-- [ ] Slice 1: Establish mobile visual state language
+- [x] Slice 1: Establish mobile visual state language
 - [ ] Slice 2: Make logging entry thumb-first
 - [ ] Slice 3: Compress logging context and history
 - [ ] Slice 4: Expose backup row actions
@@ -15,6 +15,7 @@ This issue plan intentionally references the PRD for full rationale and user-sto
 - [ ] Slice 7: Simplify first-run sheet setup
 - [ ] Slice 8: Make repair flows task-first
 - [ ] Slice 9: Mobile UI review pass
+- [ ] Slice 10: Clean up TDD-only UI tests
 
 ## Slice 1: Establish mobile visual state language
 
@@ -28,12 +29,12 @@ Introduce a compact, data-first visual language for workout logging states. The 
 
 ### Acceptance criteria
 
-- [ ] Logged, current, backup, warning, and error states have distinct user-visible treatments.
-- [ ] Set progress can be represented compactly as a reusable visual pattern.
-- [ ] Common mobile action labels use concise sentence case.
-- [ ] Icons reinforce recurring concepts such as exercise, set progress, rest, backup, sheet, warning, and repair where appropriate.
-- [ ] Existing behavior is preserved.
-- [ ] Widget tests verify semantic state presentation without relying on private implementation details.
+- [x] Logged, current, backup, warning, and error states have distinct user-visible treatments.
+- [x] Set progress can be represented compactly as a reusable visual pattern.
+- [x] Common mobile action labels use concise sentence case.
+- [x] Icons reinforce recurring concepts such as exercise, set progress, rest, backup, sheet, warning, and repair where appropriate.
+- [x] Existing behavior is preserved.
+- [x] Widget tests verify semantic state presentation without relying on private implementation details.
 
 ### Blocked by
 
@@ -269,3 +270,34 @@ Perform a final mobile-first review of the completed UI slices against the PRD. 
 
 - PRD user stories 1-40
 - PRD sections: Solution, Implementation Decisions, Testing Decisions, Further Notes
+
+## Slice 10: Clean up TDD-only UI tests
+
+### Type
+
+`AFK`
+
+### What to build
+
+Use the `test-cleanup` skill to review the tests created during the UI implementation slices and remove or rewrite TDD leftovers that over-constrain implementation details. The goal is to keep durable tests that protect user-facing behavior, public UI/controller interfaces, and intentional seams, while deleting almost all tests that only existed to drive intermediate TDD steps.
+
+This slice should leave future UI work easier, not more fragile. Tests should describe the desired mobile behavior from the PRD: logging priority, discoverable backup actions, predictable mobile forms, visible creation actions, task-first setup and repair flows, and semantic visual states. Tests should not pin private widget structure, exact helper decomposition, incidental layout widgets, or temporary implementation paths.
+
+### Acceptance criteria
+
+- [ ] The `test-cleanup` skill is used before editing the test suite.
+- [ ] TDD-only tests that assert implementation details, private widget structure, call ordering, or temporary helper behavior are removed or rewritten.
+- [ ] Remaining tests enforce desired behavior through public UI, controller interfaces, or intentional seams.
+- [ ] Mobile behavior from the PRD remains covered at the smallest useful test tier.
+- [ ] Tests that remain for visual state semantics avoid exact color or pixel-perfect assertions unless those values are part of a deliberate public design contract.
+- [ ] The final retained test set is documented in the slice report, including why each category remains.
+- [ ] Relevant focused Flutter tests pass after cleanup.
+
+### Blocked by
+
+- Slice 9: Mobile UI review pass
+
+### User stories covered
+
+- PRD user stories 39, 40
+- PRD sections: Testing Decisions, Further Notes

@@ -13,6 +13,7 @@ import 'workout_tracker_controller.dart';
 part 'workout_tracker_shell_account.dart';
 part 'workout_tracker_shell_workout.dart';
 part 'workout_tracker_shell_exercise_authoring.dart';
+part 'workout_tracker_shell_visual_states.dart';
 part 'workout_tracker_shell_logging.dart';
 part 'workout_tracker_shell_validation.dart';
 

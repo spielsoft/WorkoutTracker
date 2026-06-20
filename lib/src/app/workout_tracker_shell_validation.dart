@@ -117,13 +117,17 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
   @override
   Widget build(BuildContext context) {
     final issue = widget.issue;
+    final warningStyle = _stateStyle(
+      Theme.of(context).colorScheme,
+      _WorkoutVisualState.warning,
+    );
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFB28A00)),
+          border: Border.all(color: warningStyle.border),
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -235,67 +239,19 @@ class _IssuePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _colorsForTone(Theme.of(context).colorScheme, tone);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: colors.foreground),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: colors.foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            for (final line in lines)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(line),
-              ),
-            ...extraContent,
-            if (action != null) ...[
-              const SizedBox(height: 6),
-              Align(alignment: Alignment.centerLeft, child: action),
-            ],
-          ],
-        ),
-      ),
+    return _StateCallout(
+      state: switch (tone) {
+        _IssueTone.error => _WorkoutVisualState.error,
+        _IssueTone.warning => _WorkoutVisualState.warning,
+      },
+      icon: icon,
+      title: title,
+      action: action,
+      children: [
+        for (final line in lines)
+          Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(line)),
+        ...extraContent,
+      ],
     );
-  }
-}
-
-({Color background, Color border, Color foreground}) _colorsForTone(
-  ColorScheme colorScheme,
-  _IssueTone tone,
-) {
-  switch (tone) {
-    case _IssueTone.error:
-      return (
-        background: colorScheme.errorContainer,
-        border: colorScheme.error.withValues(alpha: 0.5),
-        foreground: colorScheme.onErrorContainer,
-      );
-    case _IssueTone.warning:
-      return (
-        background: const Color(0xFFFFF6D6),
-        border: const Color(0xFFB28A00),
-        foreground: const Color(0xFF5F4600),
-      );
   }
 }

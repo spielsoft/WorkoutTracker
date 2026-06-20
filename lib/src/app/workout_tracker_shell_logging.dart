@@ -132,6 +132,13 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     final viewModel = _flow.viewModel;
     final loggingContext = viewModel.context;
     final selectedChoice = loggingContext.selectedChoice;
+    final loggedSetNumbers = {
+      for (final entry in viewModel.loggedEntries) entry.setNumber,
+    };
+    final totalSetCount =
+        loggingContext.selectedHistory.entries.length < viewModel.nextSetNumber
+        ? viewModel.nextSetNumber
+        : loggingContext.selectedHistory.entries.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,10 +171,22 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
                 for (final choice in loggingContext.choices)
                   ButtonSegment(
                     value: choice.sheetRowNumber,
-                    label: Text(
-                      choice.exercise,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    label: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          choice.exercise,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (choice.isBackup)
+                          const _StateChip(
+                            state: _WorkoutVisualState.backup,
+                            label: 'Backup',
+                          ),
+                      ],
                     ),
                     icon: Icon(
                       choice.isBackup
@@ -187,6 +206,12 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
         _ExerciseContextPanel(
           context: loggingContext,
           latestHistoryValue: viewModel.latestHistoryValue,
+        ),
+        const SizedBox(height: 12),
+        _SetProgressStrip(
+          loggedSetNumbers: loggedSetNumbers,
+          currentSetNumber: viewModel.nextSetNumber,
+          totalSetCount: totalSetCount,
         ),
         const SizedBox(height: 16),
         Text(
