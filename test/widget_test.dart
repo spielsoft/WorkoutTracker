@@ -706,7 +706,7 @@ void main() {
 
       expect(find.text('Choose workout sheet'), findsOneWidget);
       expect(find.text('Create sheet'), findsOneWidget);
-      expect(find.text('Paste link'), findsOneWidget);
+      expect(find.text('Paste link'), findsNothing);
       expect(
         find.byKey(const ValueKey('spreadsheet-selection-input')),
         findsNothing,
@@ -719,13 +719,6 @@ void main() {
       await tester.tap(find.text('Create sheet'));
       await tester.pump();
       expect(picker.createCount, 1);
-
-      await tester.tap(find.text('Paste link'));
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(const ValueKey('spreadsheet-selection-input')),
-        findsOneWidget,
-      );
     },
   );
 
@@ -770,31 +763,36 @@ void main() {
     );
   });
 
-  testWidgets('shows text fallback when picker choosing is unavailable', (
-    tester,
-  ) async {
-    const picker = DisabledSpreadsheetPicker(reason: 'Selection disabled.');
-    final service = TestSpreadsheetValidationService.fromRows([
-      [...activeSheetFixedColumns, 'Week 1'],
-      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
-    ]);
+  testWidgets(
+    'does not expose text fallback when picker choosing is unavailable',
+    (tester) async {
+      const picker = DisabledSpreadsheetPicker(reason: 'Selection disabled.');
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ]);
 
-    await tester.pumpWidget(
-      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          spreadsheetPicker: picker,
+        ),
+      );
+      await tester.pump();
 
-    expect(
-      find.byKey(const ValueKey('spreadsheet-url-fallback')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('spreadsheet-selection-input')),
-      findsOneWidget,
-    );
-    expect(find.text('Selection disabled.'), findsOneWidget);
-  });
+      expect(
+        find.byKey(const ValueKey('spreadsheet-url-fallback')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('spreadsheet-selection-input')),
+        findsNothing,
+      );
+      expect(find.text('Selection disabled.'), findsOneWidget);
+      expect(find.text('Paste link'), findsNothing);
+    },
+  );
 
   testWidgets('does not launch duplicate picker actions while choosing', (
     tester,

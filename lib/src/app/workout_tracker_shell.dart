@@ -119,7 +119,6 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
     this.onReturnToWorkout,
     required this.onChooseSpreadsheet,
     required this.onCreateSpreadsheet,
-    required this.onShowTextFallback,
   });
 
   final SelectedSpreadsheet? selectedSpreadsheet;
@@ -129,7 +128,6 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
   final VoidCallback? onReturnToWorkout;
   final Future<void> Function() onChooseSpreadsheet;
   final Future<void> Function() onCreateSpreadsheet;
-  final VoidCallback onShowTextFallback;
 
   @override
   Widget build(BuildContext context) {
@@ -211,12 +209,6 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
                       : onCreateSpreadsheet,
                   icon: const Icon(Icons.add_to_drive_outlined),
                   label: const Text('Create sheet'),
-                ),
-                TextButton.icon(
-                  key: const ValueKey('show-spreadsheet-url-fallback'),
-                  onPressed: isBusy ? null : onShowTextFallback,
-                  icon: const Icon(Icons.link_outlined),
-                  label: const Text('Paste link'),
                 ),
               ],
             ),
@@ -390,7 +382,6 @@ class _SpreadsheetValidationShellState
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
   CanonicalExercise? _canonicalExerciseBeingEdited;
   bool _isPickingSpreadsheet = false;
-  bool _showSpreadsheetTextFallback = false;
 
   @override
   void initState() {
@@ -533,7 +524,6 @@ class _SpreadsheetValidationShellState
       setState(() {
         _selectedSpreadsheet = selectedSpreadsheet;
         _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
-        _showSpreadsheetTextFallback = false;
       });
       try {
         await widget.appStateStore?.writeSelectedSpreadsheet(
@@ -557,13 +547,6 @@ class _SpreadsheetValidationShellState
   void _usePastedSpreadsheetText() {
     setState(() {
       _selectedSpreadsheet = null;
-    });
-  }
-
-  void _showPastedSpreadsheetTextFallback() {
-    setState(() {
-      _selectedSpreadsheet = null;
-      _showSpreadsheetTextFallback = true;
     });
   }
 
@@ -915,10 +898,7 @@ class _SpreadsheetValidationShellState
                 _screen == _WorkoutTrackerScreen.sheetSelection ||
                 report == null ||
                 report.hasBlockingIssues;
-            final showSpreadsheetTextFallback =
-                spreadsheetPicker == null ||
-                pickerAvailability?.canChoose == false ||
-                _showSpreadsheetTextFallback;
+            final showSpreadsheetTextFallback = spreadsheetPicker == null;
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
@@ -939,8 +919,6 @@ class _SpreadsheetValidationShellState
                                 : null,
                             onChooseSpreadsheet: _chooseSpreadsheet,
                             onCreateSpreadsheet: _createSpreadsheet,
-                            onShowTextFallback:
-                                _showPastedSpreadsheetTextFallback,
                           ),
                         ],
                         if (showSpreadsheetTextFallback)
