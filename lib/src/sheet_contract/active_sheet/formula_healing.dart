@@ -184,6 +184,7 @@ class _FormulaHealingPlanner {
       return ActiveSheetWritePlan();
     }
 
+    final slot = _slotForRow(sheet, activeSheetRowNumber);
     return ActiveSheetWritePlan(
       cellUpdates: [
         for (final cell in issue.cells)
@@ -198,22 +199,35 @@ class _FormulaHealingPlanner {
             ),
           ),
       ],
+      expectations: [
+        if (slot != null)
+          ActiveSheetRowExpectation(
+            sheetRowNumber: slot.sheetRowNumber,
+            exercise: slot.exercise,
+            workout: slot.workout,
+            isBackup: slot.isBackup,
+          ),
+      ],
     );
   }
 
   ActiveSheetWritePlan planUnambiguousFormulaHealing() {
     final updates = <CellUpdate>[];
+    final expectations = <ActiveSheetWriteExpectation>[];
     for (final issue in sheet.formulaHealingIssues) {
       if (issue.requiresUserSelection) {
         continue;
       }
-      updates.addAll(
-        planFormulaHealing(
-          activeSheetRowNumber: issue.activeSheetRowNumber,
-        ).cellUpdates,
+      final plan = planFormulaHealing(
+        activeSheetRowNumber: issue.activeSheetRowNumber,
       );
+      updates.addAll(plan.cellUpdates);
+      expectations.addAll(plan.expectations);
     }
-    return ActiveSheetWritePlan(cellUpdates: updates);
+    return ActiveSheetWritePlan(
+      cellUpdates: updates,
+      expectations: expectations,
+    );
   }
 }
 

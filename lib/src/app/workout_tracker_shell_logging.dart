@@ -27,6 +27,7 @@ class _ExerciseLoggingScreen extends StatefulWidget {
 
 class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
   late final ExerciseLoggingFlow _flow;
+  bool _isWriting = false;
 
   @override
   void initState() {
@@ -66,32 +67,64 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
   }
 
   Future<void> _saveStructuredSet() async {
+    if (_isWriting) {
+      return;
+    }
     final plan = _flow.planStructuredSetSave();
     if (plan == null) {
       return;
     }
 
-    final saved = await widget.onApplyWritePlan(plan);
-    if (!saved) {
+    await _runWrite(() async {
+      final saved = await widget.onApplyWritePlan(plan);
+      if (!saved) {
+        return;
+      }
+      _flow.clearNewSetControllers();
+    });
+  }
+
+  Future<void> _runWrite(Future<void> Function() action) async {
+    if (_isWriting) {
       return;
     }
-    _flow.clearNewSetControllers();
+    setState(() {
+      _isWriting = true;
+    });
+    try {
+      await action();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isWriting = false;
+        });
+      }
+    }
   }
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
-    await widget.onApplyWritePlan(_flow.planRawSetEdit(entry));
+    await _runWrite(() async {
+      await widget.onApplyWritePlan(_flow.planRawSetEdit(entry));
+    });
   }
 
   Future<void> _saveStructuredSetEdit(RowHistoryEntry entry) async {
+    if (_isWriting) {
+      return;
+    }
     final plan = _flow.planStructuredSetEdit(entry);
     if (plan == null) {
       return;
     }
-    await widget.onApplyWritePlan(plan);
+    await _runWrite(() async {
+      await widget.onApplyWritePlan(plan);
+    });
   }
 
   Future<void> _clearSet(RowHistoryEntry entry) async {
-    await widget.onApplyWritePlan(_flow.planSetClear(entry));
+    await _runWrite(() async {
+      await widget.onApplyWritePlan(_flow.planSetClear(entry));
+    });
   }
 
   @override
@@ -164,6 +197,7 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
         _StructuredSetEditor(
           logFormat: loggingContext.logFormat,
           controllers: viewModel.newSetControllers,
+          isBusy: _isWriting,
           onSave: _saveStructuredSet,
         ),
         const SizedBox(height: 16),
@@ -179,6 +213,7 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
                 fieldLabels: fieldLabels,
                 controllers:
                     viewModel.loggedFormattedControllers[entry.setNumber]!,
+                isBusy: _isWriting,
                 onSave: () => _saveStructuredSetEdit(entry),
                 onClear: () => _clearSet(entry),
               )
@@ -186,6 +221,7 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
               _LoggedSetEditor(
                 entry: entry,
                 controller: viewModel.rawControllers[entry.setNumber]!,
+                isBusy: _isWriting,
                 onSave: () => _saveRawSet(entry),
                 onClear: () => _clearSet(entry),
               ),
@@ -244,11 +280,13 @@ class _StructuredSetEditor extends StatelessWidget {
   const _StructuredSetEditor({
     required this.logFormat,
     required this.controllers,
+    required this.isBusy,
     required this.onSave,
   });
 
   final LogFormatParseResult logFormat;
   final Map<String, TextEditingController> controllers;
+  final bool isBusy;
   final VoidCallback onSave;
 
   @override
@@ -275,7 +313,7 @@ class _StructuredSetEditor extends StatelessWidget {
             ),
           ),
         FilledButton.icon(
-          onPressed: onSave,
+          onPressed: isBusy ? null : onSave,
           icon: const Icon(Icons.save_outlined),
           label: const Text('Save set'),
         ),
@@ -288,12 +326,14 @@ class _LoggedSetEditor extends StatelessWidget {
   const _LoggedSetEditor({
     required this.entry,
     required this.controller,
+    required this.isBusy,
     required this.onSave,
     required this.onClear,
   });
 
   final RowHistoryEntry entry;
   final TextEditingController controller;
+  final bool isBusy;
   final VoidCallback onSave;
   final VoidCallback onClear;
 
@@ -319,13 +359,13 @@ class _LoggedSetEditor extends StatelessWidget {
           IconButton(
             key: ValueKey('save-${entry.setLabel}'),
             tooltip: 'Save raw set text',
-            onPressed: onSave,
+            onPressed: isBusy ? null : onSave,
             icon: const Icon(Icons.check_outlined),
           ),
           IconButton(
             key: ValueKey('clear-${entry.setLabel}'),
             tooltip: 'Clear set',
-            onPressed: onClear,
+            onPressed: isBusy ? null : onClear,
             icon: const Icon(Icons.delete_outline),
           ),
         ],
@@ -339,6 +379,7 @@ class _LoggedFormattedSetEditor extends StatelessWidget {
     required this.entry,
     required this.fieldLabels,
     required this.controllers,
+    required this.isBusy,
     required this.onSave,
     required this.onClear,
   });
@@ -346,6 +387,7 @@ class _LoggedFormattedSetEditor extends StatelessWidget {
   final RowHistoryEntry entry;
   final List<String> fieldLabels;
   final Map<String, TextEditingController> controllers;
+  final bool isBusy;
   final VoidCallback onSave;
   final VoidCallback onClear;
 
@@ -374,13 +416,13 @@ class _LoggedFormattedSetEditor extends StatelessWidget {
           IconButton(
             key: ValueKey('save-${entry.setLabel}'),
             tooltip: 'Save structured set',
-            onPressed: onSave,
+            onPressed: isBusy ? null : onSave,
             icon: const Icon(Icons.check_outlined),
           ),
           IconButton(
             key: ValueKey('clear-${entry.setLabel}'),
             tooltip: 'Clear set',
-            onPressed: onClear,
+            onPressed: isBusy ? null : onClear,
             icon: const Icon(Icons.delete_outline),
           ),
         ],

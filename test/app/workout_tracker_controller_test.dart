@@ -370,25 +370,21 @@ void main() {
       final repaired = await controller.repairUnambiguousFormulaIssues();
 
       expect(repaired, isTrue);
-      expect(
-        service.appliedPlans.single,
-        ActiveSheetWritePlan(
-          cellUpdates: [
-            const CellUpdate(
-              valueKind: CellUpdateValueKind.formula,
-              sheetRowNumber: 3,
-              sheetColumnNumber: 1,
-              value: '=Exercises!A2',
-            ),
-            const CellUpdate(
-              valueKind: CellUpdateValueKind.formula,
-              sheetRowNumber: 3,
-              sheetColumnNumber: 3,
-              value: '=Exercises!D2',
-            ),
-          ],
+      expect(service.appliedPlans.single.cellUpdates, const [
+        CellUpdate(
+          valueKind: CellUpdateValueKind.formula,
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A2',
         ),
-      );
+        CellUpdate(
+          valueKind: CellUpdateValueKind.formula,
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          value: '=Exercises!I2',
+        ),
+      ]);
+      expect(service.appliedPlans.single.expectations, isNotEmpty);
       expect(controller.report?.formulaHealingIssues, isEmpty);
       expect(controller.workoutSetup, isNotNull);
     },
@@ -414,19 +410,15 @@ void main() {
       );
 
       expect(repaired, isTrue);
-      expect(
-        service.appliedPlans.single,
-        ActiveSheetWritePlan(
-          cellUpdates: [
-            const CellUpdate(
-              valueKind: CellUpdateValueKind.formula,
-              sheetRowNumber: 3,
-              sheetColumnNumber: 1,
-              value: '=Exercises!A3',
-            ),
-          ],
+      expect(service.appliedPlans.single.cellUpdates, const [
+        CellUpdate(
+          valueKind: CellUpdateValueKind.formula,
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A3',
         ),
-      );
+      ]);
+      expect(service.appliedPlans.single.expectations, isNotEmpty);
     },
   );
 
@@ -450,19 +442,15 @@ void main() {
       );
 
       expect(repaired, isTrue);
-      expect(
-        service.appliedPlans.single,
-        ActiveSheetWritePlan(
-          cellUpdates: [
-            const CellUpdate(
-              valueKind: CellUpdateValueKind.formula,
-              sheetRowNumber: 3,
-              sheetColumnNumber: 1,
-              value: '=Exercises!A2',
-            ),
-          ],
+      expect(service.appliedPlans.single.cellUpdates, const [
+        CellUpdate(
+          valueKind: CellUpdateValueKind.formula,
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A2',
         ),
-      );
+      ]);
+      expect(service.appliedPlans.single.expectations, isNotEmpty);
     },
   );
 

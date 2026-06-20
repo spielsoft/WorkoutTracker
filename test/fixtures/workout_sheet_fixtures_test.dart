@@ -183,10 +183,10 @@ void main() {
       ),
       FormulaHealingCellIssue(
         sheetRowNumber: 3,
-        sheetColumnNumber: 3,
-        columnName: 'Reps',
+        sheetColumnNumber: 8,
+        columnName: 'Log Format',
         reason: FormulaHealingIssueReason.brokenFormula,
-        currentFormula: '=Exercises!D99',
+        currentFormula: '=Exercises!I99',
       ),
     ]);
   });

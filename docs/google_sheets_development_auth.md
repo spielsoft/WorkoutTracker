@@ -50,10 +50,12 @@ client:
 https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=657151291920
 ```
 
-Google Drive Picker and Google-backed sheet creation are temporarily disabled
-while the sheet selection UX is redesigned. Keep the existing local credential
-exports for reference, but current macOS builds do not use Picker-specific
-`--dart-define` values.
+Google Drive Picker is used for choosing an existing spreadsheet, and
+Google-backed sheet creation initializes a new WorkoutTracker spreadsheet in
+Drive. Picker selection uses the web OAuth client ID supplied through the
+`WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID` dart define. Development builds that
+omit this value still expose the pasted Google Sheets URL/ID fallback so a
+known development sheet can be selected.
 
 ## Sheets Scopes
 
@@ -84,7 +86,9 @@ The app does not request full-drive access for the MVP sheet contract.
 For macOS native Google Sign-In, open `macos/Runner.xcworkspace` in Xcode,
 select the `Runner` target, and choose a development team under Signing &
 Capabilities. The plugin requires keychain sharing, which cannot be used by an
-unsigned macOS target. The entitlements are already present in the project.
+unsigned macOS target. The Picker loopback callback also requires local network
+server entitlement in macOS builds. The entitlements are already present in the
+project.
 
 Build the macOS bundle:
 

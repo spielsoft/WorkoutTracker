@@ -896,7 +896,10 @@ class _ActiveSheetWritePlanner {
     final slot = _slotForRow(sheetRowNumber);
     final expectations = slot == null
         ? const <ActiveSheetWriteExpectation>[]
-        : <ActiveSheetWriteExpectation>[_rowExpectation(slot)];
+        : <ActiveSheetWriteExpectation>[
+            _rowExpectation(slot),
+            _logFormatExpectation(slot),
+          ];
     final renderedSet = _renderSetForRow(
       sheetRowNumber: sheetRowNumber,
       fieldValues: fieldValues,
@@ -1003,7 +1006,10 @@ class _ActiveSheetWritePlanner {
         ),
       ],
       expectations: [
-        if (slot != null) _rowExpectation(slot),
+        if (slot != null) ...[
+          _rowExpectation(slot),
+          _logFormatExpectation(slot),
+        ],
         ActiveSheetSetColumnExpectation(
           historyBlockLabel: historyBlockLabel,
           setNumber: setNumber,
@@ -1351,6 +1357,18 @@ class _ActiveSheetWritePlanner {
       exercise: slot.exercise,
       workout: slot.workout,
       isBackup: slot.isBackup,
+    );
+  }
+
+  ActiveSheetCellExpectation _logFormatExpectation(WorkoutSlot slot) {
+    final sheetColumnNumber = activeSheetFixedColumns.indexOf('Log Format') + 1;
+    return ActiveSheetCellExpectation(
+      sheetRowNumber: slot.sheetRowNumber,
+      sheetColumnNumber: sheetColumnNumber,
+      expectedValue: _cell(
+        sheet._sheetRow(slot.sheetRowNumber),
+        sheetColumnNumber - 1,
+      ),
     );
   }
 

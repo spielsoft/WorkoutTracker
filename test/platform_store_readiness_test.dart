@@ -19,31 +19,21 @@ void main() {
       );
     });
 
-    test('documents future store submission needs before GUI work starts', () {
-      final readiness = File(
-        'docs/slice_17_app_store_readiness_validation.md',
-      ).readAsStringSync();
+    test('documents future App Store submission needs', () {
+      final readiness = File('APP_STORE.md').readAsStringSync();
 
       for (final requiredTopic in [
         'iOS App Store',
-        'macOS App Store',
-        'Android Play Store',
         'bundle identifiers',
         'signing',
-        'entitlements',
+        'TestFlight',
         'OAuth consent',
-        'privacy disclosures',
-        'store metadata',
-        'No blocking dependencies',
+        'privacy policy',
+        'App Store Metadata',
+        'Google Sheet',
       ]) {
         expect(readiness, contains(requiredTopic));
       }
-
-      final blockers = File(
-        'docs/slice_17_toolchain_blockers.md',
-      ).readAsStringSync();
-      expect(blockers, contains('Xcode CoreSimulator Framework Missing'));
-      expect(blockers, contains('Android SDK Not Configured'));
     });
 
     test('documents iOS simulator validation alongside macOS validation', () {
@@ -59,7 +49,7 @@ void main() {
     });
 
     test(
-      'macOS release app keeps Google network access without a local server',
+      'macOS release app keeps Google network and Picker callback access',
       () {
         final releaseEntitlements = File(
           'macos/Runner/Release.entitlements',
@@ -71,17 +61,20 @@ void main() {
         );
         expect(
           releaseEntitlements,
-          isNot(contains('<key>com.apple.security.network.server</key>')),
+          contains('<key>com.apple.security.network.server</key>'),
         );
       },
     );
 
-    test('documents disabled sheet selection while auth remains wired', () {
-      final readme = File('README.md').readAsStringSync();
+    test(
+      'documents Google-backed sheet selection while auth remains wired',
+      () {
+        final readme = File('README.md').readAsStringSync();
 
-      expect(readme, contains('Native Google Sign-In remains wired'));
-      expect(readme, contains('temporarily disabled'));
-      expect(readme, contains('selection controls'));
-    });
+        expect(readme, contains('Native Google Sign-In remains wired'));
+        expect(readme, contains('Google Drive Picker is used'));
+        expect(readme, contains('Google-backed sheet creation'));
+      },
+    );
   });
 }

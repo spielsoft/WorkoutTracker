@@ -212,6 +212,27 @@ void main() {
     ]);
   });
 
+  test('rejects structured set writes if the row log format changed', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+    );
+
+    final changedRows = rows.map((row) => [...row]).toList();
+    changedRows[2][7] = '{Reps}[@]{RPE}';
+    final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
+
+    expect(plan.writeRejections(changedSheet), isNotEmpty);
+  });
+
   test('plans clearing an existing set cell', () {
     final activeSheet = parseFixtureActiveSheet();
 

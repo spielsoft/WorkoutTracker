@@ -41,7 +41,7 @@ void main() {
     final activeSheet = parseActiveSheet(
       ActiveSheetInput(
         rows: _squatRows(),
-        cellFormulas: _brokenRepsFormulaCells,
+        cellFormulas: _brokenLogFormatFormulaCells,
         exercisesRows: _squatExerciseRows,
       ),
     );
@@ -49,10 +49,10 @@ void main() {
     expect(activeSheet.formulaHealingIssues.single.cells, const [
       FormulaHealingCellIssue(
         sheetRowNumber: 3,
-        sheetColumnNumber: 3,
-        columnName: 'Reps',
+        sheetColumnNumber: 8,
+        columnName: 'Log Format',
         reason: FormulaHealingIssueReason.brokenFormula,
-        currentFormula: '=Exercises!D99',
+        currentFormula: '=Exercises!I99',
       ),
     ]);
   });
@@ -200,7 +200,7 @@ void main() {
     final activeSheet = parseActiveSheet(
       ActiveSheetInput(
         rows: _squatRows(),
-        cellFormulas: _brokenRepsFormulaCells,
+        cellFormulas: _brokenLogFormatFormulaCells,
         exercisesRows: const [
           _exercisesHeader,
           [
@@ -234,10 +234,10 @@ void main() {
     expect(issue.cells, const [
       FormulaHealingCellIssue(
         sheetRowNumber: 3,
-        sheetColumnNumber: 3,
-        columnName: 'Reps',
+        sheetColumnNumber: 8,
+        columnName: 'Log Format',
         reason: FormulaHealingIssueReason.brokenFormula,
-        currentFormula: '=Exercises!D99',
+        currentFormula: '=Exercises!I99',
       ),
     ]);
   });
@@ -292,7 +292,7 @@ void main() {
             '',
           ],
         ],
-        cellFormulas: _brokenRepsFormulaCells,
+        cellFormulas: _brokenLogFormatFormulaCells,
         exercisesRows: _squatExerciseRows,
       ),
     );
@@ -302,10 +302,10 @@ void main() {
     expect(issue.cells, const [
       FormulaHealingCellIssue(
         sheetRowNumber: 3,
-        sheetColumnNumber: 3,
-        columnName: 'Reps',
+        sheetColumnNumber: 8,
+        columnName: 'Log Format',
         reason: FormulaHealingIssueReason.brokenFormula,
-        currentFormula: '=Exercises!D99',
+        currentFormula: '=Exercises!I99',
       ),
     ]);
   });
@@ -386,6 +386,31 @@ void main() {
       ]);
     },
   );
+
+  test('rejects formula healing if the active sheet row changed', () {
+    final rows = _squatRows();
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: rows,
+        cellFormulas: _missingExerciseFormulaCells,
+        exercisesRows: _squatExerciseRows,
+      ),
+    );
+
+    final plan = activeSheet.planFormulaHealing(activeSheetRowNumber: 3);
+
+    final changedRows = rows.map((row) => [...row]).toList();
+    changedRows[2][0] = 'Bench Press';
+    final changedSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: changedRows,
+        cellFormulas: _missingExerciseFormulaCells,
+        exercisesRows: _squatExerciseRows,
+      ),
+    );
+
+    expect(plan.writeRejections(changedSheet), isNotEmpty);
+  });
 }
 
 List<List<String>> _squatRows() {
@@ -519,7 +544,7 @@ const _missingLogFormatFormulaCells = [
   ),
 ];
 
-const _brokenRepsFormulaCells = [
+const _brokenLogFormatFormulaCells = [
   CellFormula(
     sheetRowNumber: 3,
     sheetColumnNumber: 1,
@@ -533,7 +558,7 @@ const _brokenRepsFormulaCells = [
   CellFormula(
     sheetRowNumber: 3,
     sheetColumnNumber: 3,
-    formula: '=Exercises!D99',
+    formula: '=Exercises!D2',
   ),
   CellFormula(
     sheetRowNumber: 3,
@@ -558,6 +583,6 @@ const _brokenRepsFormulaCells = [
   CellFormula(
     sheetRowNumber: 3,
     sheetColumnNumber: 8,
-    formula: '=Exercises!I2',
+    formula: '=Exercises!I99',
   ),
 ];

@@ -232,6 +232,7 @@ class _SpreadsheetTextFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      key: const ValueKey('spreadsheet-url-fallback'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
@@ -311,6 +312,7 @@ class _SpreadsheetValidationShellState
   _WorkoutTrackerScreen _exerciseAddReturnScreen =
       _WorkoutTrackerScreen.exercisePicker;
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
+  bool _isPickingSpreadsheet = false;
 
   @override
   void initState() {
@@ -439,9 +441,12 @@ class _SpreadsheetValidationShellState
     Future<SelectedSpreadsheet?> Function(SpreadsheetPicker picker) action,
   ) async {
     final picker = widget.spreadsheetPicker;
-    if (picker == null || _controller.isBusy) {
+    if (picker == null || _controller.isBusy || _isPickingSpreadsheet) {
       return;
     }
+    setState(() {
+      _isPickingSpreadsheet = true;
+    });
     try {
       final selectedSpreadsheet = await action(picker);
       if (!mounted || selectedSpreadsheet == null) {
@@ -461,6 +466,12 @@ class _SpreadsheetValidationShellState
       await _validateSelectedSpreadsheet();
     } on Object catch (error) {
       _controller.reportSpreadsheetSelectionFailure(error);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingSpreadsheet = false;
+        });
+      }
     }
   }
 
@@ -779,7 +790,9 @@ class _SpreadsheetValidationShellState
           builder: (context, _) {
             final report = _controller.report;
             final error = _controller.error;
-            final isBusy = _controller.isBusy;
+            final isBusy = _controller.isBusy || _isPickingSpreadsheet;
+            final spreadsheetPicker = widget.spreadsheetPicker;
+            final pickerAvailability = spreadsheetPicker?.availability;
             final hasLoadedWorkout =
                 report != null && !report.hasBlockingIssues;
             final showSheetSelection =
@@ -795,11 +808,10 @@ class _SpreadsheetValidationShellState
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (showSheetSelection) ...[
-                        if (widget.spreadsheetPicker != null) ...[
+                        if (spreadsheetPicker != null) ...[
                           _SelectedSpreadsheetChooser(
                             selectedSpreadsheet: _selectedSpreadsheet,
-                            availability:
-                                widget.spreadsheetPicker!.availability,
+                            availability: pickerAvailability!,
                             isBusy: isBusy,
                             accountSession: widget.accountSession,
                             onReturnToWorkout: hasLoadedWorkout
@@ -808,7 +820,9 @@ class _SpreadsheetValidationShellState
                             onChooseSpreadsheet: _chooseSpreadsheet,
                             onCreateSpreadsheet: _createSpreadsheet,
                           ),
-                        ] else
+                        ],
+                        if (spreadsheetPicker == null ||
+                            pickerAvailability?.canChoose == false)
                           _SpreadsheetTextFallback(
                             controller: _spreadsheetController,
                             isBusy: isBusy,

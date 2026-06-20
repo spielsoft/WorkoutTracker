@@ -230,7 +230,7 @@ WorkoutWorkbookFixture loadFormulaDamageFixture() {
         SheetCellFormulaFixture(
           sheetRowNumber: 3,
           sheetColumnNumber: 3,
-          formula: '=Exercises!D99',
+          formula: '=Exercises!D2',
         ),
         SheetCellFormulaFixture(
           sheetRowNumber: 3,
@@ -255,7 +255,7 @@ WorkoutWorkbookFixture loadFormulaDamageFixture() {
         SheetCellFormulaFixture(
           sheetRowNumber: 3,
           sheetColumnNumber: 8,
-          formula: '=Exercises!I2',
+          formula: '=Exercises!I99',
         ),
       ],
     ),

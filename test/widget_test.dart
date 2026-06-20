@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/sheet_contract.dart';
@@ -48,7 +50,7 @@ void main() {
     await tester.pump();
 
     expect(service.spreadsheetIds, ['spreadsheet-id']);
-    expect(find.text('Workout setup'), findsOneWidget);
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
     expect(find.byTooltip('Back to sheet selection'), findsOneWidget);
     expect(find.text('Workout'), findsOneWidget);
     expect(find.text('History block'), findsOneWidget);
@@ -122,6 +124,39 @@ void main() {
     expect(find.text('Next set S2'), findsOneWidget);
   });
 
+  testWidgets('does not launch duplicate set saves while a write is pending', (
+    tester,
+  ) async {
+    final service = _CompletingWriteValidationService(
+      _minimalValidParsedSheet(),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('set-field-Weight')),
+      '155',
+    );
+    await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
+    await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
+
+    await tester.tap(find.text('Save set'));
+    await tester.tap(find.text('Save set'));
+
+    expect(service.appliedPlans, hasLength(1));
+  });
+
   testWidgets('renders compact spreadsheet selection controls', (tester) async {
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
@@ -167,7 +202,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Exercise: missing formula'), findsOneWidget);
-      expect(find.text('Reps: broken formula'), findsOneWidget);
+      expect(find.text('Log Format: broken formula'), findsOneWidget);
       expect(find.text('Workout setup'), findsNothing);
       expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
       expect(find.text('Save set'), findsNothing);
@@ -212,12 +247,12 @@ void main() {
       ),
       CellUpdate.formula(
         sheetRowNumber: 3,
-        sheetColumnNumber: 3,
-        value: '=Exercises!D2',
+        sheetColumnNumber: 8,
+        value: '=Exercises!I2',
       ),
     ]);
     expect(find.text('Formula repair needed'), findsNothing);
-    expect(find.text('Workout setup'), findsOneWidget);
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
   });
 
   testWidgets('shows duplicate formula repairs as individual row choices', (
@@ -319,7 +354,10 @@ void main() {
         ),
       ]);
       expect(find.text('Formula repair needed'), findsNothing);
-      expect(find.text('Workout setup'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('select-workout-setup')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -430,7 +468,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('Manual repair needed'), findsNothing);
-      expect(find.text('Workout setup'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('select-workout-setup')),
+        findsOneWidget,
+      );
     }
   });
 
@@ -605,7 +646,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('My Drive / Workouts / 2026 Workouts'), findsOneWidget);
-    expect(find.text('saved@example.com'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
@@ -616,7 +656,7 @@ void main() {
     );
   });
 
-  testWidgets('shows disabled sheet selection actions without fallback text', (
+  testWidgets('shows text fallback when picker choosing is unavailable', (
     tester,
   ) async {
     const picker = DisabledSpreadsheetPicker(reason: 'Selection disabled.');
@@ -633,14 +673,34 @@ void main() {
 
     expect(
       find.byKey(const ValueKey('spreadsheet-url-fallback')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
-      findsNothing,
+      findsOneWidget,
     );
-    expect(find.textContaining('pasted Google Sheets'), findsNothing);
     expect(find.text('Selection disabled.'), findsOneWidget);
+  });
+
+  testWidgets('does not launch duplicate picker actions while choosing', (
+    tester,
+  ) async {
+    final picker = _CompletingSpreadsheetPicker();
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Choose from Google Drive'));
+    await tester.tap(find.text('Choose from Google Drive'));
+
+    expect(picker.chooseCount, 1);
   });
 
   testWidgets('restores the Google account session on startup', (tester) async {
@@ -1104,6 +1164,27 @@ class _FakeSpreadsheetPicker implements SpreadsheetPicker {
   }
 }
 
+class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
+  final chooseCompleter = Completer<SelectedSpreadsheet?>();
+  int chooseCount = 0;
+
+  @override
+  SpreadsheetPickerAvailability get availability {
+    return const SpreadsheetPickerAvailability.available();
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> chooseSpreadsheet() {
+    chooseCount += 1;
+    return chooseCompleter.future;
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> createSpreadsheet() async {
+    return null;
+  }
+}
+
 class _RecordingSpreadsheetOpener implements SpreadsheetOpener {
   final openedUrls = <String>[];
 
@@ -1152,6 +1233,35 @@ ParsedActiveSheet _minimalValidParsedSheet() {
       ],
     ),
   );
+}
+
+class _CompletingWriteValidationService
+    implements SpreadsheetValidationService {
+  _CompletingWriteValidationService(this.validSheet);
+
+  final ParsedActiveSheet validSheet;
+  final appliedPlans = <ActiveSheetWritePlan>[];
+  final writeCompleter = Completer<SpreadsheetValidationReport>();
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: validSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) {
+    appliedPlans.add(plan);
+    return writeCompleter.future;
+  }
 }
 
 class _DamageAfterSaveValidationService
