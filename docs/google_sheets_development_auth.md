@@ -25,12 +25,35 @@ macos/Runner/Configs/AppInfo.xcconfig
 The platform `Info.plist` files expose those values to the `google_sign_in`
 plugin as `GIDClientID` and `CFBundleURLTypes`.
 
+Current OAuth clients in the `workouttracker-16285` Google Cloud project:
+
+- iOS/macOS app client:
+  `657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk.apps.googleusercontent.com`
+- Web client:
+  `657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com`
+- MacOS Desktop client:
+  `657151291920-lro68joadl4o0m3h1c537tm94t30eonq.apps.googleusercontent.com`
+
+The exported Desktop OAuth JSON includes a client secret, so local credential
+exports and API keys are stored only in visible, git-ignored JSON files under:
+
+```text
+local_google_credentials/
+```
+
+See `local_google_credentials/README.md` for the current file layout.
+
 Enable the Google Sheets API in the same Google Cloud project as the OAuth
 client:
 
 ```text
 https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=657151291920
 ```
+
+Google Drive Picker and Google-backed sheet creation are temporarily disabled
+while the sheet selection UX is redesigned. Keep the existing local credential
+exports for reference, but current macOS builds do not use Picker-specific
+`--dart-define` values.
 
 ## Sheets Scopes
 
@@ -47,7 +70,14 @@ History block creation and set logging use the Sheets spreadsheet scope:
 https://www.googleapis.com/auth/spreadsheets
 ```
 
-The app does not require Drive scopes for the current MVP sheet contract.
+Future Google Drive sheet selection or creation work may need the Drive file
+scope:
+
+```text
+https://www.googleapis.com/auth/drive.file
+```
+
+The app does not request full-drive access for the MVP sheet contract.
 
 ## macOS GUI validation
 

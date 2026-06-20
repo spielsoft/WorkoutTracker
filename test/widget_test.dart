@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/sheet_contract.dart';
@@ -124,9 +122,7 @@ void main() {
     expect(find.text('Next set S2'), findsOneWidget);
   });
 
-  testWidgets('renders compact spreadsheet controls with desktop scrolling', (
-    tester,
-  ) async {
+  testWidgets('renders compact spreadsheet selection controls', (tester) async {
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -145,13 +141,6 @@ void main() {
     expect(find.byKey(const ValueKey('use-development-sheet')), findsNothing);
     expect(find.text('Select'), findsOneWidget);
     expect(find.text('Development'), findsNothing);
-
-    final behavior = ScrollConfiguration.of(
-      tester.element(find.byKey(const ValueKey('spreadsheet-selection-input'))),
-    );
-    expect(behavior.dragDevices, contains(PointerDeviceKind.touch));
-    expect(behavior.dragDevices, contains(PointerDeviceKind.mouse));
-    expect(behavior.dragDevices, contains(PointerDeviceKind.trackpad));
   });
 
   testWidgets(
@@ -262,19 +251,25 @@ void main() {
       findsOneWidget,
     );
 
-    final picker = tester.widget<DropdownMenu<int>>(
-      find.byKey(const ValueKey('formula-repair-picker-3')),
-    );
-    expect(picker.enableFilter, isTrue);
-    expect(picker.dropdownMenuEntries.map((entry) => entry.label), [
-      'Row 2: Squat - Back squat',
-      'Row 3: Squat - Safety-bar squat',
-    ]);
+    await tester.tap(find.byKey(const ValueKey('formula-repair-picker-3')));
+    await tester.pumpAndSettle();
 
-    final fixButton = tester.widget<FilledButton>(
-      find.byKey(const ValueKey('repair-formula-row-3')),
-    );
-    expect(fixButton.onPressed, isNull);
+    expect(find.text('Row 2: Squat - Back squat'), findsOneWidget);
+    expect(find.text('Row 3: Squat - Safety-bar squat'), findsOneWidget);
+
+    await tester.tap(find.text('Row 3: Squat - Safety-bar squat').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('repair-formula-row-3')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(service.appliedPlans.single.cellUpdates, const [
+      CellUpdate.formula(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 1,
+        value: '=Exercises!A3',
+      ),
+    ]);
   });
 
   testWidgets(
@@ -307,21 +302,10 @@ void main() {
         findsOneWidget,
       );
 
-      final picker = tester.widget<DropdownMenu<int>>(
-        find.byKey(const ValueKey('formula-repair-picker-3')),
-      );
-      expect(picker.enableFilter, isTrue);
-      expect(picker.dropdownMenuEntries.map((entry) => entry.label), [
-        'Row 2: Squat - Back squat',
-      ]);
-
-      picker.onSelected?.call(2);
-      await tester.pump();
-
-      final fixButton = tester.widget<FilledButton>(
-        find.byKey(const ValueKey('repair-formula-row-3')),
-      );
-      expect(fixButton.onPressed, isNotNull);
+      await tester.tap(find.byKey(const ValueKey('formula-repair-picker-3')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Row 2: Squat - Back squat').last);
+      await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const ValueKey('repair-formula-row-3')));
       await tester.pump();
@@ -647,14 +631,6 @@ void main() {
     );
     await tester.pump();
 
-    final chooseButton = tester.widget<FilledButton>(
-      find.byKey(const ValueKey('choose-google-spreadsheet')),
-    );
-    final createButton = tester.widget<OutlinedButton>(
-      find.byKey(const ValueKey('create-google-spreadsheet')),
-    );
-    expect(chooseButton.onPressed, isNull);
-    expect(createButton.onPressed, isNull);
     expect(
       find.byKey(const ValueKey('spreadsheet-url-fallback')),
       findsNothing,
@@ -908,26 +884,7 @@ void main() {
       await tester.tap(find.text('Pull Up'));
       await tester.pumpAndSettle();
 
-      final rowSelector = tester.widget<SegmentedButton<int>>(
-        find.byWidgetPredicate((widget) => widget is SegmentedButton<int>),
-      );
-      expect(rowSelector.direction, Axis.vertical);
-      final shape = rowSelector.style?.shape?.resolve({});
-      expect(shape, isA<RoundedRectangleBorder>());
-      expect(
-        (shape! as RoundedRectangleBorder).borderRadius,
-        BorderRadius.circular(8),
-      );
-      expect(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is Text &&
-              widget.data == 'Front Plank' &&
-              widget.maxLines == 1 &&
-              widget.overflow == TextOverflow.ellipsis,
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('Front Plank'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('logged-S1-field-Reps')),
         findsOneWidget,
@@ -966,6 +923,22 @@ void main() {
             ?.text,
         '8',
       );
+
+      await tester.enterText(
+        find.byKey(const ValueKey('logged-S1-field-Seconds')),
+        '50',
+      );
+      await tester.tap(find.byTooltip('Save structured set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans.single.cellUpdates.single.value, '50s@8');
+
+      await tester.tap(find.byTooltip('Clear set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans.last.cellUpdates.single.value, isEmpty);
     },
   );
 

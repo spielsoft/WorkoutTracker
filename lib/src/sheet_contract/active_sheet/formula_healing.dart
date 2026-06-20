@@ -274,13 +274,13 @@ List<FormulaHealingIssue> _formulaHealingIssues(
             currentFormula: '',
           ),
         );
-      } else if (candidates.length == 1 &&
-          !_formulaMatchesDirectReference(
-            currentFormula,
-            exercisesSheetColumnNumber:
-                formulaColumn.exercisesSheetColumnIndex + 1,
-            exercisesSheetRowNumber: candidates.single,
-          )) {
+      } else if (!_formulaMatchesAnyDirectReference(
+        currentFormula,
+        exercisesSheetColumnNumber: formulaColumn.exercisesSheetColumnIndex + 1,
+        exercisesSheetRowNumbers: candidates.isEmpty
+            ? exerciseChoices.map((choice) => choice.sheetRowNumber)
+            : candidates,
+      )) {
         cells.add(
           FormulaHealingCellIssue(
             sheetRowNumber: sheetRowNumber,
@@ -368,6 +368,23 @@ bool _formulaMatchesDirectReference(
       '$exercisesSheetRowNumber';
   final normalized = formula.trim();
   return normalized == expected || normalized == quotedExpected;
+}
+
+bool _formulaMatchesAnyDirectReference(
+  String formula, {
+  required int exercisesSheetColumnNumber,
+  required Iterable<int> exercisesSheetRowNumbers,
+}) {
+  for (final rowNumber in exercisesSheetRowNumbers) {
+    if (_formulaMatchesDirectReference(
+      formula,
+      exercisesSheetColumnNumber: exercisesSheetColumnNumber,
+      exercisesSheetRowNumber: rowNumber,
+    )) {
+      return true;
+    }
+  }
+  return false;
 }
 
 String _directExercisesFormula({

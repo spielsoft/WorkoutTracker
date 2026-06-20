@@ -196,6 +196,52 @@ void main() {
     expect(issue.candidateExerciseSheetRowNumbers, [2, 3]);
   });
 
+  test('reports broken formulas for ambiguous displayed-name matches', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: _squatRows(),
+        cellFormulas: _brokenRepsFormulaCells,
+        exercisesRows: const [
+          _exercisesHeader,
+          [
+            'Squat',
+            'Back squat',
+            '3',
+            '5',
+            '8',
+            '3 min',
+            '',
+            'Stay braced.',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
+          [
+            'Squat',
+            'Safety-bar squat',
+            '3',
+            '5',
+            '8',
+            '3 min',
+            '',
+            'Stay tall.',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
+        ],
+      ),
+    );
+
+    final issue = activeSheet.formulaHealingIssues.single;
+    expect(issue.requiresUserSelection, isTrue);
+    expect(issue.cells, const [
+      FormulaHealingCellIssue(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 3,
+        columnName: 'Reps',
+        reason: FormulaHealingIssueReason.brokenFormula,
+        currentFormula: '=Exercises!D99',
+      ),
+    ]);
+  });
+
   test('requires user selection for missing displayed-name matches', () {
     final activeSheet = parseActiveSheet(
       ActiveSheetInput(
@@ -225,6 +271,43 @@ void main() {
     expect(issue.requiresUserSelection, isTrue);
     expect(issue.preselectedExerciseSheetRowNumber, isNull);
     expect(issue.candidateExerciseSheetRowNumbers, isEmpty);
+  });
+
+  test('reports broken formulas for missing displayed-name matches', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+          [
+            'Front Squat',
+            '3',
+            '5',
+            '8',
+            '3 min',
+            '',
+            'Stay braced.',
+            '{Weight}[x]{Reps}[@]{RPE}',
+            'Legs',
+            '',
+          ],
+        ],
+        cellFormulas: _brokenRepsFormulaCells,
+        exercisesRows: _squatExerciseRows,
+      ),
+    );
+
+    final issue = activeSheet.formulaHealingIssues.single;
+    expect(issue.requiresUserSelection, isTrue);
+    expect(issue.cells, const [
+      FormulaHealingCellIssue(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 3,
+        columnName: 'Reps',
+        reason: FormulaHealingIssueReason.brokenFormula,
+        currentFormula: '=Exercises!D99',
+      ),
+    ]);
   });
 
   test('plans formula healing updates into the preselected Exercises row', () {

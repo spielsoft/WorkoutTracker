@@ -1,16 +1,24 @@
-# Literal Log Format Implementation Plan
+# MVP Repair and Sheet Interaction Plan
 
-- [x] Slice 0: Define the Literal Log Format Contract
-- [x] Slice 1: Parse and Render Literal Log Formats
-- [x] Slice 2: Read Log Format Metadata From the Sheet Contract
-- [x] Slice 3: Heal and Reset Log Format Formula Columns
-- [x] Slice 4: Parse Existing History Cells With Row-Local Formats
-- [x] Slice 5: Plan Set Writes From Formatted Field Values
-- [x] Slice 6: Render Dynamic Logging Fields in the GUI
-- [x] Slice 7: Validate the End-to-End Logging Flow
-- [x] Slice 8: Architecture and Test Cleanup
+This is the active transient implementation plan for the next MVP pass.
 
-## Slice 0: Define the Literal Log Format Contract
+The goal is app-level MVP usefulness and sheet safety, not App Store submission
+process work. Store distribution tasks, signing, TestFlight, and store metadata
+are intentionally out of scope here.
+
+Every validation or repair slice must create broken sheet fixtures that expose
+the proposed issue and prove the app catches it before writing.
+
+- [x] Slice 0: Repair-Damage Test Fixtures
+- [x] Slice 1: Block Damaged Sheets on the Validation Screen
+- [x] Slice 2: One-Click Unambiguous Formula Repair
+- [x] Slice 3: Choice-Based Ambiguous Formula Repair
+- [x] Slice 4: Manual Repair Items for Structural Damage
+- [x] Slice 5: Literal Writes for User and History Text
+- [x] Slice 6: Narrow Write Sanity Checks and Duplicate Block Prevention
+- [x] Slice 7: MVP Repair and Interaction Validation Gate
+
+## Slice 0: Repair-Damage Test Fixtures
 
 ### Type
 
@@ -18,28 +26,31 @@
 
 ### What to build
 
-Record the new sheet contract for row-local literal log formats. The `Exercises` tab gains a human-readable log format metadata column, and the active workout sheet mirrors it by formula so each exercise row can define the app fields and compact sheet notation used for logging.
+Create reusable local sheet fixtures for the damaged-sheet cases in this plan.
+The fixtures should be small, deterministic, and usable by backend tests,
+controller tests, and widget tests without Google credentials.
 
-The agreed format language is literal:
-
-```text
-{Weight}[x]{Reps}[@]{RPE}
-{Height}[x]{Reps}[@]{RPE}[,]{Pain}
-{Reps}[@]{RPE}
-{Seconds}[s@]{RPE}
-```
-
-Text inside `{}` is an app field label. Text inside `[]` is literal sheet text. Literal text is always rendered, even when an adjacent field value is blank. Blank format means the default format `{Weight}[x]{Reps}[@]{RPE}`. The initial app supports up to four fields per format.
+This slice should not add product behavior by itself. It creates the test
+surface that later slices use to prove damaged sheets are caught and routed
+correctly.
 
 ### Acceptance criteria
 
-- [x] The project documentation describes the literal log format language and its default.
-- [x] The sheet contract names the new metadata column consistently as `Log Format`.
-- [x] The active sheet fixed metadata order is documented as `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, `Log Format`, `Workout`, and `is_backup`, followed by history blocks.
-- [x] The contract states that `is_backup` remains the last metadata column before history blocks.
-- [x] The contract states that literal text inside `[]` is never automatically omitted for blank field values.
-- [x] The contract states that unparseable existing cells remain raw and editable.
-- [x] No production behavior changes are made beyond documentation and tests needed to pin the contract.
+- [x] Local fixtures include missing or renamed fixed columns.
+- [x] Local fixtures include malformed history blocks: duplicate labels, stray
+      set columns, skipped set labels, and empty history blocks.
+- [x] Local fixtures include invalid `Log Format` values.
+- [x] Local fixtures include backup grouping violations.
+- [x] Local fixtures include missing formula-driven cells.
+- [x] Local fixtures include broken formula-driven cells pointing at the wrong
+      `Exercises` row or column.
+- [x] Local fixtures include ambiguous formula repair cases with duplicate
+      `Exercises` matches.
+- [x] Local fixtures include no-exact-match formula repair cases.
+- [x] Fixture tests verify each broken fixture is stable and exposes the
+      intended damaged-sheet condition.
+- [x] No fixture requires Google credentials or writes to the development
+      spreadsheet.
 
 ### Blocked by
 
@@ -47,41 +58,10 @@ None - can start immediately.
 
 ### User stories covered
 
-- MVP PRD user stories 12, 13, 14, 47, 48, 49, 51, 52.
-- Conversation decision: literal `{Field Label}` and `[sheet literal]` syntax with no semantic field mapping.
+- Sheet contract validation and repair reliability.
+- MVP testing requirement: broken sheets must expose each proposed issue.
 
-## Slice 1: Parse and Render Literal Log Formats
-
-### Type
-
-`AFK`
-
-### What to build
-
-Add a backend Module that parses a `Log Format` string into an ordered logging template and renders compact sheet text from entered field values. The Module should be independent of Google access and GUI code. It should treat field labels as exact user-authored strings, not app-owned semantic names.
-
-### Acceptance criteria
-
-- [x] A behavior test fails first for parsing `{Weight}[x]{Reps}[@]{RPE}` into three fields and two literal segments.
-- [x] Blank format parses as the default `{Weight}[x]{Reps}[@]{RPE}`.
-- [x] Formats with one to four fields are accepted.
-- [x] Empty or malformed field labels are rejected through an observable validation result.
-- [x] Formats with more than four fields are rejected through an observable validation result.
-- [x] Rendering concatenates field values and literal segments exactly in format order.
-- [x] Rendering preserves delimiters when field values are blank, such as `{Weight}[x]{Reps}[@]{RPE}[,]{Pain}` rendering `150x10@8,` when `Pain` is blank.
-- [x] Tests cover repeated literal delimiters such as `{A}[,]{B}[,]{C}` so blank middle values are not ambiguous by omission.
-- [x] The existing raw text preservation behavior is not removed.
-
-### Blocked by
-
-- Slice 0: Define the Literal Log Format Contract
-
-### User stories covered
-
-- MVP PRD user stories 47, 48, 49, 51, 52.
-- Conversation decision: literal delimiters are preserved even when data is missing.
-
-## Slice 2: Read Log Format Metadata From the Sheet Contract
+## Slice 1: Block Damaged Sheets on the Validation Screen
 
 ### Type
 
@@ -89,28 +69,44 @@ Add a backend Module that parses a `Log Format` string into an ordered logging t
 
 ### What to build
 
-Extend the active sheet parser and read models so every parsed workout slot carries its row-local `Log Format`. The active sheet receives this value by formula from `Exercises`, just like the other exercise metadata fields. Existing sheets with a blank `Log Format` value use the default format.
+Route every damaged selected sheet to the main validation/repair screen and
+prevent workout logging until the sheet is valid enough to use. If damage is
+detected after an app action, discard transient typed logging input and return
+to the validation/repair screen.
+
+The validation screen should show all known current issues and update after
+revalidation. This slice establishes the damaged-sheet gate before adding
+specific repair actions.
 
 ### Acceptance criteria
 
-- [x] A behavior test fails first for parsing a valid active sheet containing a `Log Format` column.
-- [x] The parser recognizes `Log Format` between `Notes` and `Workout`.
-- [x] `Workout` remains visible near the end of the fixed metadata area.
-- [x] `is_backup` remains the final metadata column before history blocks.
-- [x] Parsed primary and backup rows expose their row-local log format through the public sheet-contract Interface.
-- [x] Blank `Log Format` values are interpreted as the default format.
-- [x] Invalid `Log Format` values produce schema violations that prevent unsafe structured logging for that row.
-- [x] Workout overview behavior, backup grouping, history block discovery, and set counts continue to work with the added metadata column.
+- [x] A behavior test fails first with a broken fixed-column fixture and proves
+      the app does not enter workout logging.
+- [x] A behavior test fails first with a broken history-block fixture and proves
+      the app does not enter workout logging.
+- [x] A behavior test fails first with an invalid `Log Format` fixture and
+      proves the app does not enter workout logging.
+- [x] A behavior test fails first with a backup grouping violation fixture and
+      proves the app does not enter workout logging.
+- [x] The validation/repair screen lists all currently known issues for the
+      selected sheet.
+- [x] If a later app action produces a validation report with damage, the app
+      returns to the validation/repair screen and no longer exposes logging
+      controls.
+- [x] Transient typed logging input is not preserved when routing back to repair.
+- [x] Tests cross public backend/controller/widget interfaces rather than
+      private helpers.
 
 ### Blocked by
 
-- Slice 1: Parse and Render Literal Log Formats
+- Slice 0: Repair-Damage Test Fixtures
 
 ### User stories covered
 
-- MVP PRD user stories 11, 12, 13, 15, 17, 19, 24, 25, 47, 48.
+- No app editing of a damaged sheet.
+- Repair screen owns sheet validation state.
 
-## Slice 3: Heal and Reset Log Format Formula Columns
+## Slice 2: One-Click Unambiguous Formula Repair
 
 ### Type
 
@@ -118,29 +114,41 @@ Extend the active sheet parser and read models so every parsed workout slot carr
 
 ### What to build
 
-Update formula healing and development sheet reset behavior so the active sheet's `Log Format` cells are direct formulas into `Exercises`. The `Exercises` tab fixture should include representative formats for weighted lifts, bodyweight reps, height-based drills, timed drills, and optional pain. After the parser and reset fixture understand the new column, update the live development/example Google Sheet through the reset harness so the app has a compatible sheet for testing.
+Add MVP click-to-fix behavior for formula repair cases where the correct
+`Exercises` row is unambiguous. The validation/repair screen should group all
+unambiguous formula issues into one action, apply repairs for only the flagged
+cells, re-read the sheet, and shrink the issue list.
+
+This slice only repairs formulas. It must not attempt structural repairs.
 
 ### Acceptance criteria
 
-- [x] A behavior test fails first for a missing active-sheet `Log Format` formula.
-- [x] Formula healing regenerates the `Log Format` formula for exact, ambiguous, and selected exercise repairs using the same user-choice rules as other exercise metadata.
-- [x] The development reset fixture adds `Log Format` to `Exercises`.
-- [x] Active workout rows in the reset fixture link `Log Format` by direct formula.
-- [x] The live development/example Google Sheet is reset or migrated to include the `Log Format` column after app support for the new sheet shape exists.
-- [x] The live sheet update is not performed before Slice 2 support lands, so the currently working app is not broken by a premature schema change.
-- [x] The reset writer continues to write formulas as formulas and non-formula literals as plain text.
-- [x] Fixture tests include at least one weighted format, one bodyweight format, one height-based format, one timed format, and one optional-pain format.
-- [x] Existing Google read/write adapter behavior remains compatible with the expanded fixed metadata area.
+- [x] A behavior test fails first using a broken sheet with missing formula
+      cells that have exact `Exercises` matches.
+- [x] A behavior test fails first using a broken sheet with wrong direct
+      formulas that have exact `Exercises` matches.
+- [x] The repair screen shows one grouped action for all unambiguous formula
+      issues.
+- [x] Applying the grouped action writes direct formulas only into flagged
+      cells.
+- [x] Applying the grouped action does not overwrite unflagged formula-driven
+      cells.
+- [x] Applying the grouped action does not edit the `Exercises` tab.
+- [x] After repair, the app re-reads/revalidates and the repaired issues
+      disappear from the list.
+- [x] Logging remains blocked while any blocking issue remains.
 
 ### Blocked by
 
-- Slice 2: Read Log Format Metadata From the Sheet Contract
+- Slice 0: Repair-Damage Test Fixtures
+- Slice 1: Block Damaged Sheets on the Validation Screen
 
 ### User stories covered
 
-- MVP PRD user stories 7, 8, 9, 10, 13, 14, 47, 48, 49.
+- Click-to-fix common formula damage.
+- Formula repair writes only flagged cells.
 
-## Slice 4: Parse Existing History Cells With Row-Local Formats
+## Slice 3: Choice-Based Ambiguous Formula Repair
 
 ### Type
 
@@ -148,27 +156,41 @@ Update formula healing and development sheet reset behavior so the active sheet'
 
 ### What to build
 
-Use each row's `Log Format` to parse existing selected-history cells into editable field values for the exercise logging context. Parsing should use the literal segments as separators. If a cell cannot be parsed by the row-local format, preserve it as raw text exactly as the app does today.
+Add individual repair items for formula issues where the app cannot infer the
+correct `Exercises` row. Each ambiguous or no-exact-match item should include a
+searchable/filterable `Exercises` row picker and a fix action enabled only after
+the user chooses a row.
+
+This slice only repairs formulas. It must not create exercises or perform
+structural sheet repairs.
 
 ### Acceptance criteria
 
-- [x] A behavior test fails first for parsing `150x10@8,` using `{Weight}[x]{Reps}[@]{RPE}[,]{Pain}` into field values with blank `Pain`.
-- [x] Repeated delimiter formats such as `{A}[,]{B}[,]{C}` parse cells with blank middle fields without dropping delimiters.
-- [x] Existing history entries expose the row-local field labels and parsed field values through the public read model.
-- [x] Existing unparseable cells remain `Raw` entries and preserve their original text.
-- [x] Row-local parsing is used for primary and backup rows independently.
-- [x] Recent history still shows the last three non-empty history blocks for the selected row.
-- [x] Tests cover blank format defaulting during history parsing.
+- [x] A behavior test fails first using a broken sheet where a formula repair
+      row has duplicate exact `Exercises` name matches.
+- [x] A behavior test fails first using a broken sheet where a formula repair
+      row has no exact `Exercises` name match.
+- [x] Ambiguous and no-match formula rows appear as individual repair items, not
+      in the unambiguous grouped action.
+- [x] Each individual item exposes a searchable/filterable picker containing
+      all `Exercises` rows.
+- [x] The fix action is disabled until a row is selected.
+- [x] Applying the fix writes direct formulas only into flagged cells for that
+      active-sheet row.
+- [x] Applying the fix does not overwrite unflagged formula-driven cells.
+- [x] After repair, the app re-reads/revalidates and the fixed item disappears
+      or changes according to the new sheet state.
 
 ### Blocked by
 
-- Slice 3: Heal and Reset Log Format Formula Columns
+- Slice 2: One-Click Unambiguous Formula Repair
 
 ### User stories covered
 
-- MVP PRD user stories 35, 39, 40, 41, 44, 47, 48, 51, 52.
+- User-selected formula repair when the correct exercise row is ambiguous.
+- User-selected formula repair when no exact exercise-name match exists.
 
-## Slice 5: Plan Set Writes From Formatted Field Values
+## Slice 4: Manual Repair Items for Structural Damage
 
 ### Type
 
@@ -176,28 +198,40 @@ Use each row's `Log Format` to parse existing selected-history cells into editab
 
 ### What to build
 
-Change structured set write planning so callers provide field values for the selected row's `Log Format`, and the backend renders the compact sheet cell from that format. This keeps write planning row-local and avoids GUI code assembling compact notation itself.
+For structural sheet damage that is easy for users to fix directly in the
+spreadsheet, provide clear manual repair items on the validation/repair screen
+with an Open in Google Sheets action. Do not build complex structural
+auto-repair in MVP.
+
+Manual repair items should be concise and actionable: what is wrong, where it
+is, and what the user should change in the sheet.
 
 ### Acceptance criteria
 
-- [x] A behavior test fails first for logging field values through `{Weight}[x]{Reps}[@]{RPE}` and planning the cell value `150x10@8`.
-- [x] A blank optional-looking field still renders surrounding literals, such as `150x10@8,`.
-- [x] Primary and backup row writes use the selected row's own format.
-- [x] Logging into the first empty selected-row cell still works.
-- [x] Logging beyond existing set columns still plans history block growth.
-- [x] Editing an existing set cell can use structured field values when the cell parses successfully.
-- [x] Raw edit and clear behavior remain available for unparseable cells.
-- [x] The write planner remains testable without Google access.
+- [x] A broken fixed-column fixture produces a manual repair item with no
+      app-side fix action.
+- [x] A malformed history-block fixture produces a manual repair item with no
+      app-side fix action.
+- [x] An invalid `Log Format` fixture produces a manual repair item with no
+      app-side fix action.
+- [x] A backup grouping violation fixture produces a manual repair item with no
+      app-side fix action.
+- [x] Manual repair items include an Open in Google Sheets action.
+- [x] Opening behavior is abstracted so tests can verify the target spreadsheet
+      URL without launching a real app or browser.
+- [x] Revalidating after the user fixes the sheet externally updates the issue
+      list and can unlock logging.
 
 ### Blocked by
 
-- Slice 4: Parse Existing History Cells With Row-Local Formats
+- Slice 1: Block Damaged Sheets on the Validation Screen
 
 ### User stories covered
 
-- MVP PRD user stories 44, 45, 47, 48, 51, 52, 53, 55.
+- Structural damage is blocked and explained.
+- Users can jump to the source-of-truth sheet for manual repair.
 
-## Slice 6: Render Dynamic Logging Fields in the GUI
+## Slice 5: Literal Writes for User and History Text
 
 ### Type
 
@@ -205,27 +239,38 @@ Change structured set write planning so callers provide field values for the sel
 
 ### What to build
 
-Replace the hard-coded Weight/Reps/RPE logging editor with a dynamic editor driven by the selected row's `Log Format`. The GUI should render one plain text input per `{Field Label}` in order, with labels exactly matching the sheet-authored format.
+Separate formula writes from literal user/history writes. Formula repair writes
+must continue to enter formulas. User set logs, raw edits, clears, history block
+labels, and set labels must be written as literal text so formula-looking user
+values are not executed by Google Sheets.
 
 ### Acceptance criteria
 
-- [x] A widget test fails first for an exercise whose format is `{Reps}[@]{RPE}` and verifies that only `Reps` and `RPE` fields appear.
-- [x] Weighted exercises render `Weight`, `Reps`, and `RPE` fields from the format.
-- [x] Height-based and timed exercises render their sheet-authored labels exactly.
-- [x] Switching from a primary to a backup row refreshes the visible field labels and parsed values using the backup row's format.
-- [x] Saving a structured entry sends field values to the backend write planner rather than assembling notation in the GUI.
-- [x] Unparseable existing cells still provide raw edit controls.
-- [x] The current exercise screen continues to show description, notes, rest, targets, current set rows, prior selected-block rows, and recent history.
+- [x] A write-adapter behavior test fails first when a structured set renders a
+      formula-looking value such as `=1+1`.
+- [x] A write-adapter behavior test fails first when raw set text starts with
+      `=`.
+- [x] A write-adapter behavior test fails first when a new history block label
+      starts with `=`.
+- [x] User log values and history labels/set labels are sent through a literal
+      value path.
+- [x] Formula repair cells are sent through a formula-entered path.
+- [x] Mixed write plans split formula and literal writes if the Google Sheets
+      adapter cannot safely apply both in one request.
+- [x] Clearing a cell still clears the cell rather than writing visible escape
+      text.
+- [x] Existing local write-adapter tests continue to pass.
 
 ### Blocked by
 
-- Slice 5: Plan Set Writes From Formatted Field Values
+- Slice 2: One-Click Unambiguous Formula Repair
 
 ### User stories covered
 
-- MVP PRD user stories 36, 37, 39, 42, 43, 44, 47, 48, 51, 52, 56, 57.
+- User-entered workout text is preserved as text.
+- Formula repair still writes formulas.
 
-## Slice 7: Validate the End-to-End Logging Flow
+## Slice 6: Narrow Write Sanity Checks and Duplicate Block Prevention
 
 ### Type
 
@@ -233,52 +278,89 @@ Replace the hard-coded Weight/Reps/RPE logging editor with a dynamic editor driv
 
 ### What to build
 
-Update the focused GUI and backend integration validation so the app can read a sheet with row-local log formats, render the matching dynamic fields, log structured values, and write compact human-readable notation back to the selected history block.
+Add MVP action-local write safety checks without adding full validation before
+every write and without re-planning to a different visible set target behind the
+user's back.
+
+Before applying a write, the app should check only the target facts needed for
+that action: expected row identity, workout/backup selection, selected history
+block or set column, target cell expectation, and insertion point expectation.
+If the target no longer makes sense, return to validation/repair.
+
+Also prevent app-created duplicate history block labels before writing.
 
 ### Acceptance criteria
 
-- [x] The default local test suite passes.
-- [x] A focused GUI flow test logs a weighted exercise through dynamic fields.
-- [x] A focused GUI flow test logs a bodyweight or timed exercise without a weight field.
-- [x] A backend integration-style test verifies primary and backup rows can use different formats.
-- [x] The opt-in live Google test is updated to use the development fixture's `Log Format` column but remains skipped unless `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` is set.
-- [x] The live test reset/cleanup path still leaves the development sheet in a known state.
-- [x] A manual or opt-in validation confirms the example sheet opens in the app and shows exercises after the live sheet has been updated.
-- [x] No app-owned exercise metadata database or hidden mapping is introduced.
+- [x] A broken/changed sheet fixture proves a set write is rejected when the
+      target row no longer has the expected exercise display value.
+- [x] A broken/changed sheet fixture proves a set write is rejected when the
+      target row no longer matches the expected workout or backup state.
+- [x] A broken/changed sheet fixture proves an edit/clear is rejected when the
+      target set column no longer exists.
+- [x] A broken/changed sheet fixture proves a new-set save is rejected when the
+      target cell is no longer the value/empty state shown in the UI.
+- [x] A broken/changed sheet fixture proves history block insertion is rejected
+      when the fixed-column/header insertion point no longer matches the plan.
+- [x] Rejected writes route the app to the validation/repair screen.
+- [x] Save behavior trusts the visible UI target and does not silently re-plan
+      to another set cell.
+- [x] Creating a history block with an existing label is blocked inline before
+      any write plan is applied.
+- [x] Duplicate labels already present in the sheet remain a validation/repair
+      issue, not an auto-repair.
 
 ### Blocked by
 
-- Slice 6: Render Dynamic Logging Fields in the GUI
+- Slice 1: Block Damaged Sheets on the Validation Screen
+- Slice 5: Literal Writes for User and History Text
 
 ### User stories covered
 
-- MVP PRD user stories 1, 2, 5, 22, 29, 35, 42, 43, 44, 47, 48, 49, 51, 55.
+- Avoid obvious bad writes without full validation on every write.
+- Prevent app-created duplicate history block damage.
 
-## Slice 8: Architecture and Test Cleanup
+## Slice 7: MVP Repair and Interaction Validation Gate
 
 ### Type
 
-`AFK`
+`HITL`
 
 ### What to build
 
-Run a cleanup pass after the feature lands. Review whether the literal log format Module is deep enough, whether the sheet-contract Interface remains the test surface, and whether GUI tests are still smoke-level rather than duplicating backend format parsing.
+Validate the complete MVP repair and sheet interaction flow. This is the gate
+for the pass: all local tests must pass, the skipped-by-default live integration
+test must still compile/skip without Google credentials, and a HITL live run may
+be performed only when Google login and development-sheet writes are explicitly
+approved.
 
 ### Acceptance criteria
 
-- [x] Run an `improve-codebase-architecture` review focused on the new log format Module, sheet-contract read/write planning, and GUI dynamic field rendering.
-- [x] Remove or consolidate duplicate tests left behind by TDD.
-- [x] Ensure format parsing/rendering tests stay local to the format Module.
-- [x] Ensure sheet-contract tests cover row-local behavior through public Interfaces.
-- [x] Ensure widget tests cover only GUI rendering and interaction smoke behavior.
-- [x] Run the relevant local test tier after cleanup.
-- [x] Commit the cleanup separately from implementation slices.
+- [x] Every broken-sheet fixture introduced in this plan is covered by a
+      behavior test that proves the issue is caught before writing.
+- [x] Formula repair tests cover grouped unambiguous repair and individual
+      choice-based repair.
+- [x] Manual repair tests cover structural issues and Open in Google Sheets
+      action routing.
+- [x] Literal write tests prove formula-looking user/history text is preserved
+      as text.
+- [x] Narrow write sanity tests prove rejected writes route to validation/repair.
+- [x] `flutter test` passes.
+- [x] `flutter analyze` passes.
+- [x] `flutter test integration_test/live_logging_flow_test.dart` builds and
+      skips cleanly without `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1`.
+- [x] If a live run is explicitly approved, the development sheet is reset
+      before and after the run.
+- [x] README or domain docs are updated only if behavior or user-facing repair
+      semantics changed.
 
 ### Blocked by
 
-- Slice 7: Validate the End-to-End Logging Flow
+- Slice 3: Choice-Based Ambiguous Formula Repair
+- Slice 4: Manual Repair Items for Structural Damage
+- Slice 6: Narrow Write Sanity Checks and Duplicate Block Prevention
 
 ### User stories covered
 
-- MVP PRD user story 66.
-- Project testing guidance in `AGENTS.md`.
+- MVP validation and repair flow.
+- MVP sheet interaction safety.
+- Development discipline for broken-sheet coverage.

@@ -7,9 +7,10 @@ This file is the lightweight startup guide for agents working in WorkoutTracker.
 Before doing implementation work, read:
 
 1. `AGENTS.md`
-2. `ISSUES_MVP.md`
-3. `issues/MVP_prd.md`
+2. `README.md`
+3. `docs/domain_contract.md`
 4. `PROMPTS.md` when using a prepared prompt flow
+5. Any active transient plan file explicitly named by the user or task
 
 If future project guidance files are added, read them before choosing work.
 
@@ -21,12 +22,12 @@ The selected implementation direction is Flutter/Dart with a standard package la
 
 ## Development Discipline
 
-- Follow `ISSUES_MVP.md` slice order.
+- Follow the active task plan when one is provided.
 - Use TDD for every implementation slice.
 - Write one failing behavior test through a public interface, then implement the smallest code needed to pass.
 - Refactor only after tests are green.
 - Commit each completed slice separately.
-- Update the `ISSUES_MVP.md` checklist only when the slice is actually complete.
+- Update transient plan checklists only when the slice is actually complete.
 - Preserve unrelated worktree changes.
 - Stage only files that belong to the current slice.
 
@@ -116,7 +117,9 @@ authorization and development-sheet writes.
 
 ## Architecture Expectations
 
-Use the architecture review slices in `ISSUES_MVP.md` seriously. Prefer deep modules with small public interfaces and substantial behavior behind them.
+Use architecture review tasks seriously when they are part of the active plan.
+Prefer deep modules with small public interfaces and substantial behavior behind
+them.
 
 Keep these seams conceptually separate:
 

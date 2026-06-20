@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Cleanup"
+  short_description: "Convert tests to behavior contracts"
+  default_prompt: "Use $test-cleanup to audit and rewrite tests so they verify public behavior and interfaces instead of implementation details."

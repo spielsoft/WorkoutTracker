@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Quality Review"
+  short_description: "Strict maintainability and architecture review"
+  default_prompt: "Use $code-quality-review to review this change for correctness, structural regressions, overbuilt design, and maintainability risks."

@@ -74,7 +74,7 @@ void main() {
       expect(find.text('Reverse Lunge'), findsOneWidget);
 
       await _tapVisible(tester, find.text('Bulgarian Split Squat'));
-      await _waitForFinder(tester, find.text('Bulgarian Split Squat logging'));
+      await _waitForFinder(tester, find.text('Next set S1'));
 
       await tester.enterText(
         find.byKey(const ValueKey('set-field-Weight')),
@@ -143,7 +143,7 @@ void main() {
       expect(primaryContext.selectedHistory.entries.first.rawValue, isEmpty);
 
       await _tapVisible(tester, find.text('Reverse Lunge'));
-      await _waitForFinder(tester, find.text('Reverse Lunge logging'));
+      await _waitForFinder(tester, find.text('Next set S1'));
 
       await tester.enterText(
         find.byKey(const ValueKey('set-field-Weight')),
@@ -174,8 +174,8 @@ void main() {
       );
       expect(backupContext.selectedHistory.entries.first.rawValue, '25x10@8,');
 
-      await _tapVisible(tester, find.text('Back to exercises'));
-      await _waitForFinder(tester, find.text('Legs exercises'));
+      await _tapVisible(tester, find.byTooltip('Back to exercises'));
+      await _waitForFinder(tester, find.text('Legs - Week 2'));
 
       activeSheet = await readAdapter.readParsedActiveSheet(
         workoutTrackerDevelopmentSpreadsheetId,

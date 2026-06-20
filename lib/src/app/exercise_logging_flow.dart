@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_initializing_formals
+
 import 'package:flutter/widgets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 

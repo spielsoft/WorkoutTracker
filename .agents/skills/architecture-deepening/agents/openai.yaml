@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architecture Deepening"
+  short_description: "Find deeper modules and better interfaces"
+  default_prompt: "Use $architecture-deepening to find architecture refactoring candidates with better module depth, leverage, locality, and tests."

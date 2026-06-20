@@ -39,14 +39,8 @@ void main() {
         expect(readiness, contains(requiredTopic));
       }
 
-      final issues = File('ISSUES_MVP.md').readAsStringSync();
-      expect(
-        issues,
-        contains('- [x] Slice 17: App Store Readiness Validation'),
-      );
-
       final blockers = File(
-        'issues/slice_17_toolchain_blockers.md',
+        'docs/slice_17_toolchain_blockers.md',
       ).readAsStringSync();
       expect(blockers, contains('Xcode CoreSimulator Framework Missing'));
       expect(blockers, contains('Android SDK Not Configured'));
@@ -62,6 +56,32 @@ void main() {
       expect(authDocs, contains('flutter build ios --simulator'));
       expect(authDocs, contains('native Google Sign-In'));
       expect(authDocs, contains('account-picker'));
+    });
+
+    test(
+      'macOS release app keeps Google network access without a local server',
+      () {
+        final releaseEntitlements = File(
+          'macos/Runner/Release.entitlements',
+        ).readAsStringSync();
+
+        expect(
+          releaseEntitlements,
+          contains('<key>com.apple.security.network.client</key>'),
+        );
+        expect(
+          releaseEntitlements,
+          isNot(contains('<key>com.apple.security.network.server</key>')),
+        );
+      },
+    );
+
+    test('documents disabled sheet selection while auth remains wired', () {
+      final readme = File('README.md').readAsStringSync();
+
+      expect(readme, contains('Native Google Sign-In remains wired'));
+      expect(readme, contains('temporarily disabled'));
+      expect(readme, contains('selection controls'));
     });
   });
 }
