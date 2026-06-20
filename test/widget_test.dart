@@ -595,6 +595,78 @@ void main() {
     expect(store.writes.last, 'edited-spreadsheet-id');
   });
 
+  testWidgets('restores a selected Google Drive sheet label', (tester) async {
+    final store = _MemoryAppStateStore(
+      'legacy-spreadsheet-id',
+      selectedSpreadsheet: const SelectedSpreadsheet(
+        spreadsheetId: 'selected-spreadsheet-id',
+        name: '2026 Workouts',
+        drivePath: 'My Drive / Workouts / 2026 Workouts',
+        accountEmail: 'saved@example.com',
+      ),
+    );
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        appStateStore: store,
+        spreadsheetPicker: _FakeSpreadsheetPicker(),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('My Drive / Workouts / 2026 Workouts'), findsOneWidget);
+    expect(find.text('saved@example.com'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('spreadsheet-selection-input')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('spreadsheet-url-fallback')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('shows disabled sheet selection actions without fallback text', (
+    tester,
+  ) async {
+    const picker = DisabledSpreadsheetPicker(reason: 'Selection disabled.');
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
+    );
+    await tester.pump();
+
+    final chooseButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('choose-google-spreadsheet')),
+    );
+    final createButton = tester.widget<OutlinedButton>(
+      find.byKey(const ValueKey('create-google-spreadsheet')),
+    );
+    expect(chooseButton.onPressed, isNull);
+    expect(createButton.onPressed, isNull);
+    expect(
+      find.byKey(const ValueKey('spreadsheet-url-fallback')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('spreadsheet-selection-input')),
+      findsNothing,
+    );
+    expect(find.textContaining('pasted Google Sheets'), findsNothing);
+    expect(find.text('Selection disabled.'), findsOneWidget);
+  });
+
   testWidgets('restores the Google account session on startup', (tester) async {
     final accountSession = _FakeGoogleAccountSession(
       null,
@@ -933,6 +1005,35 @@ void main() {
     expect(accountSession.requestedScopes.single, isEmpty);
     expect(accountSession.currentAccount?.email, 'right@example.com');
   });
+
+  testWidgets('shows the Google account menu in picker mode', (tester) async {
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+    final accountSession = _FakeGoogleAccountSession(
+      const GoogleAccountProfile(
+        email: 'saved@example.com',
+        displayName: 'Saved Account',
+      ),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        spreadsheetPicker: _FakeSpreadsheetPicker(),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byTooltip('Google account: saved@example.com'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('spreadsheet-selection-input')),
+      findsNothing,
+    );
+  });
 }
 
 class _FakeGoogleAccountSession extends ChangeNotifier
@@ -970,10 +1071,14 @@ class _FakeGoogleAccountSession extends ChangeNotifier
 }
 
 class _MemoryAppStateStore implements AppStateStore {
-  _MemoryAppStateStore(this.spreadsheetText);
+  _MemoryAppStateStore(this.spreadsheetText, {this.selectedSpreadsheet});
 
   String? spreadsheetText;
+  SelectedSpreadsheet? selectedSpreadsheet;
+  WorkoutSelectionState? workoutSelection;
   final writes = <String>[];
+  final selectedWrites = <SelectedSpreadsheet>[];
+  final workoutSelectionWrites = <WorkoutSelectionState>[];
 
   @override
   Future<String?> readSpreadsheetText() async {
@@ -984,6 +1089,45 @@ class _MemoryAppStateStore implements AppStateStore {
   Future<void> writeSpreadsheetText(String value) async {
     spreadsheetText = value;
     writes.add(value);
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> readSelectedSpreadsheet() async {
+    return selectedSpreadsheet;
+  }
+
+  @override
+  Future<void> writeSelectedSpreadsheet(SelectedSpreadsheet value) async {
+    selectedSpreadsheet = value;
+    selectedWrites.add(value);
+  }
+
+  @override
+  Future<WorkoutSelectionState?> readWorkoutSelection() async {
+    return workoutSelection;
+  }
+
+  @override
+  Future<void> writeWorkoutSelection(WorkoutSelectionState value) async {
+    workoutSelection = value;
+    workoutSelectionWrites.add(value);
+  }
+}
+
+class _FakeSpreadsheetPicker implements SpreadsheetPicker {
+  @override
+  SpreadsheetPickerAvailability get availability {
+    return const SpreadsheetPickerAvailability.available();
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+    return null;
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> createSpreadsheet() async {
+    return null;
   }
 }
 

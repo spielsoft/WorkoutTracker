@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 import 'spreadsheet_validation.dart';
+import 'spreadsheet_selection.dart';
 
 /// Owns the GUI-facing flow state derived from the latest validation report.
 ///
@@ -92,6 +93,19 @@ class WorkoutTrackerController extends ChangeNotifier {
       action: () async {
         final report = await validationService.validateSpreadsheet(
           spreadsheetId,
+        );
+        _adoptReport(report);
+      },
+    );
+  }
+
+  Future<bool> validateSelectedSpreadsheet(SelectedSpreadsheet selection) {
+    return _runServiceAction(
+      clearReport: true,
+      failurePrefix: 'Unable to validate spreadsheet',
+      action: () async {
+        final report = await validationService.validateSpreadsheet(
+          selection.spreadsheetId,
         );
         _adoptReport(report);
       },
@@ -212,6 +226,16 @@ class WorkoutTrackerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void restoreWorkoutSelection({
+    required String? workout,
+    required String? historyBlock,
+  }) {
+    _selectedWorkout = workout;
+    _selectedHistoryBlock = historyBlock;
+    _clearLoggingSelection();
+    notifyListeners();
+  }
+
   void openExercise(int primarySheetRowNumber) {
     _loggingPrimarySheetRowNumber = primarySheetRowNumber;
     _selectedLoggingSheetRowNumber = primarySheetRowNumber;
@@ -231,6 +255,14 @@ class WorkoutTrackerController extends ChangeNotifier {
   void reportOpenSpreadsheetFailure(Object error) {
     _error = _formatServiceFailure(
       failurePrefix: 'Unable to open spreadsheet',
+      error: error,
+    );
+    notifyListeners();
+  }
+
+  void reportSpreadsheetSelectionFailure(Object error) {
+    _error = _formatServiceFailure(
+      failurePrefix: 'Unable to choose spreadsheet',
       error: error,
     );
     notifyListeners();

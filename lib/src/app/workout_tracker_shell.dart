@@ -315,9 +315,12 @@ class _SpreadsheetValidationShellState
 
   Future<void> _restoreSpreadsheetSelection() async {
     SelectedSpreadsheet? savedSelection;
+    WorkoutSelectionState? savedWorkoutSelection;
     String? savedText;
     try {
       savedSelection = await widget.appStateStore?.readSelectedSpreadsheet();
+      savedWorkoutSelection = await widget.appStateStore
+          ?.readWorkoutSelection();
       savedText = await widget.appStateStore?.readSpreadsheetText();
     } on Object {
       return;
@@ -331,6 +334,7 @@ class _SpreadsheetValidationShellState
         _spreadsheetController.text = savedSelection!.spreadsheetId;
       });
       await _validateSelectedSpreadsheet();
+      _restoreWorkoutSelection(savedWorkoutSelection);
       return;
     }
     if (savedText != null && savedText != _spreadsheetController.text) {
@@ -417,6 +421,7 @@ class _SpreadsheetValidationShellState
     );
     if (created && mounted) {
       _newHistoryBlockController.clear();
+      _persistWorkoutSelection();
     }
   }
 
@@ -500,6 +505,7 @@ class _SpreadsheetValidationShellState
 
   void _selectWorkout(String? workout) {
     _controller.selectWorkout(workout);
+    _persistWorkoutSelection();
     setState(() {
       _screen = _WorkoutTrackerScreen.workoutSetup;
     });
@@ -507,9 +513,43 @@ class _SpreadsheetValidationShellState
 
   void _selectHistoryBlock(String? historyBlock) {
     _controller.selectHistoryBlock(historyBlock);
+    _persistWorkoutSelection();
     setState(() {
       _screen = _WorkoutTrackerScreen.workoutSetup;
     });
+  }
+
+  void _restoreWorkoutSelection(WorkoutSelectionState? savedSelection) {
+    final report = _controller.report;
+    if (savedSelection == null ||
+        report == null ||
+        savedSelection.spreadsheetId != report.spreadsheetId) {
+      return;
+    }
+    _controller.restoreWorkoutSelection(
+      workout: savedSelection.workout,
+      historyBlock: savedSelection.historyBlock,
+    );
+  }
+
+  void _persistWorkoutSelection() {
+    final store = widget.appStateStore;
+    final report = _controller.report;
+    final setup = _controller.workoutSetup;
+    if (store == null || report == null || setup == null) {
+      return;
+    }
+    unawaited(
+      store
+          .writeWorkoutSelection(
+            WorkoutSelectionState(
+              spreadsheetId: report.spreadsheetId,
+              workout: setup.selectedWorkout,
+              historyBlock: setup.selectedHistoryBlock,
+            ),
+          )
+          .catchError((_) {}),
+    );
   }
 
   @override
