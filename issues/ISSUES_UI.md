@@ -10,7 +10,7 @@ This issue plan intentionally references the PRD for full rationale and user-sto
 - [x] Slice 2: Make logging entry thumb-first
 - [x] Slice 3: Compress logging context and history
 - [x] Slice 4: Expose backup row actions
-- [ ] Slice 5: Stabilize mobile form layouts
+- [x] Slice 5: Stabilize mobile form layouts
 - [ ] Slice 6: Move creation actions out of selectors
 - [x] Slice 7: Simplify first-run sheet setup
 - [x] Slice 8: Make repair flows task-first
@@ -140,12 +140,12 @@ Replace fragile fixed-width wrapped form layouts with predictable mobile form la
 
 ### Acceptance criteria
 
-- [ ] Logging fields fit predictably on common phone widths without awkward wrapping.
-- [ ] Workout setup controls fit predictably on common phone widths.
-- [ ] Workout placement controls fit predictably on common phone widths.
-- [ ] Exercise authoring remains usable on a phone with a clear submit path.
-- [ ] Numeric and constrained fields request appropriate input types where supported.
-- [ ] Widget tests cover narrow-width behavior and user-visible overflow risk.
+- [x] Logging fields fit predictably on common phone widths without awkward wrapping.
+- [x] Workout setup controls fit predictably on common phone widths.
+- [x] Workout placement controls fit predictably on common phone widths.
+- [x] Exercise authoring remains usable on a phone with a clear submit path.
+- [x] Numeric and constrained fields request appropriate input types where supported.
+- [x] Widget tests cover narrow-width behavior and user-visible overflow risk.
 
 ### Blocked by
 

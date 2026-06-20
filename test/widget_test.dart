@@ -1393,6 +1393,330 @@ void main() {
     );
   });
 
+  testWidgets('stacks logging fields into usable numeric phone inputs', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Step Up',
+        '3',
+        '10',
+        '8',
+        '90s',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+        'Legs',
+        '',
+        '',
+      ],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Step Up'));
+    await tester.pumpAndSettle();
+
+    for (final key in const [
+      ValueKey('set-field-Weight'),
+      ValueKey('set-field-Reps'),
+      ValueKey('set-field-RPE'),
+      ValueKey('set-field-Pain'),
+    ]) {
+      final field = find.byKey(key);
+      expect(field, findsOneWidget);
+      expect(tester.getSize(field).width, greaterThanOrEqualTo(240));
+      expect(
+        tester.widget<TextField>(field).keyboardType,
+        TextInputType.number,
+      );
+    }
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('stacks logged structured set fields on a phone', (tester) async {
+    tester.view.physicalSize = const Size(320, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Step Up',
+        '3',
+        '10',
+        '8',
+        '90s',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}',
+        'Legs',
+        '',
+        '155x10@8',
+      ],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Step Up'));
+    await tester.pumpAndSettle();
+
+    for (final key in const [
+      ValueKey('logged-S1-field-Weight'),
+      ValueKey('logged-S1-field-Reps'),
+      ValueKey('logged-S1-field-RPE'),
+    ]) {
+      final field = find.byKey(key);
+      expect(field, findsOneWidget);
+      expect(tester.getSize(field).width, greaterThanOrEqualTo(240));
+      expect(
+        tester.widget<TextField>(field).keyboardType,
+        TextInputType.number,
+      );
+    }
+    expect(find.byTooltip('Save structured set'), findsOneWidget);
+    expect(find.byTooltip('Clear set'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('stacks workout setup controls across phone width', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
+      ['Bench Press', '4', '6', '8', '3 min', '', '', '', 'Upper', '', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    final selectors = find.byType(DropdownButtonFormField<String>);
+    expect(selectors, findsNWidgets(2));
+    for (final selector in selectors.evaluate()) {
+      final width = tester.getSize(find.byWidget(selector.widget)).width;
+      expect(width, greaterThanOrEqualTo(280));
+      expect(width, lessThanOrEqualTo(360));
+    }
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('stacks workout placement fields into phone-width inputs', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+        ],
+        exercisesRows: const [
+          exercisesSheetColumns,
+          [
+            'Pull Up',
+            'Bodyweight pull',
+            '3',
+            '8',
+            '8',
+            '2 min',
+            '',
+            'Full hang.',
+            '{Reps}',
+          ],
+        ],
+      ),
+    );
+    final service = TestSpreadsheetValidationService(activeSheet);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in const [
+      'Sets',
+      'Reps',
+      'RPE',
+      'Rest',
+      'Tempo',
+      'Notes',
+    ]) {
+      final field = _textFieldWithLabel(label);
+      expect(field, findsOneWidget);
+      final width = tester.getSize(field).width;
+      expect(width, greaterThanOrEqualTo(280));
+      expect(width, lessThanOrEqualTo(360));
+    }
+    for (final label in const ['Sets', 'RPE']) {
+      expect(
+        tester.widget<TextField>(_textFieldWithLabel(label)).keyboardType,
+        TextInputType.number,
+      );
+    }
+    expect(
+      tester.widget<TextField>(_textFieldWithLabel('Reps')).keyboardType,
+      isNot(TextInputType.number),
+    );
+    expect(
+      find.byKey(const ValueKey('place-existing-exercise')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps exercise authoring fields usable on a phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('create-canonical-exercise')));
+    await tester.pumpAndSettle();
+
+    for (final key in const [
+      ValueKey('exercise-authoring-default-sets'),
+      ValueKey('exercise-authoring-default-reps'),
+      ValueKey('exercise-authoring-default-rpe'),
+    ]) {
+      final field = find.byKey(key);
+      expect(field, findsOneWidget);
+      final width = tester.getSize(field).width;
+      expect(width, greaterThanOrEqualTo(280));
+      expect(width, lessThanOrEqualTo(360));
+    }
+    for (final key in const [
+      ValueKey('exercise-authoring-default-sets'),
+      ValueKey('exercise-authoring-default-rpe'),
+    ]) {
+      final field = find.byKey(key);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: field, matching: find.byType(EditableText)),
+            )
+            .keyboardType,
+        TextInputType.number,
+      );
+    }
+    expect(
+      tester
+          .widget<EditableText>(
+            find.descendant(
+              of: find.byKey(const ValueKey('exercise-authoring-default-reps')),
+              matching: find.byType(EditableText),
+            ),
+          )
+          .keyboardType,
+      isNot(TextInputType.number),
+    );
+
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('exercise-authoring-submit')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('presents logged current and backup states in the logging flow', (
     tester,
   ) async {
@@ -1667,6 +1991,14 @@ class _FakeGoogleAccountSession extends ChangeNotifier
     );
     notifyListeners();
   }
+}
+
+Finder _textFieldWithLabel(String labelText) {
+  return find.byWidgetPredicate(
+    (widget) =>
+        widget is TextField && widget.decoration?.labelText == labelText,
+    description: 'TextField with label "$labelText"',
+  );
 }
 
 class _MemoryAppStateStore implements AppStateStore {

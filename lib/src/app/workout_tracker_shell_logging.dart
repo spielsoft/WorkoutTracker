@@ -494,36 +494,51 @@ class _StructuredSetEditor extends StatelessWidget {
       );
     }
 
-    List<Widget> fields() {
+    TextField field(String label) {
+      return TextField(
+        key: ValueKey('set-field-$label'),
+        controller: controllers[label],
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      );
+    }
+
+    List<Widget> compactFields() {
+      return [for (final label in fieldLabels) field(label)];
+    }
+
+    List<Widget> wideFields() {
       return [
         for (final label in fieldLabels)
-          SizedBox(
-            width: 112,
-            child: TextField(
-              key: ValueKey('set-field-$label'),
-              controller: controllers[label],
-              decoration: InputDecoration(
-                labelText: label,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-          ),
+          SizedBox(width: 112, child: field(label)),
       ];
     }
 
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 520) {
+          final compactFieldWidgets = compactFields();
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               saveButton(),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: fields(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (
+                    var index = 0;
+                    index < compactFieldWidgets.length;
+                    index++
+                  ) ...[
+                    compactFieldWidgets[index],
+                    if (index < compactFieldWidgets.length - 1)
+                      const SizedBox(height: 12),
+                  ],
+                ],
               ),
             ],
           );
@@ -533,7 +548,7 @@ class _StructuredSetEditor extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           crossAxisAlignment: WrapCrossAlignment.center,
-          children: [...fields(), saveButton()],
+          children: [...wideFields(), saveButton()],
         );
       },
     );
@@ -611,39 +626,73 @@ class _LoggedFormattedSetEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    TextField field(String label) {
+      return TextField(
+        key: ValueKey('logged-${entry.setLabel}-field-$label'),
+        controller: controllers[label],
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      );
+    }
+
+    Widget saveButton() {
+      return IconButton(
+        key: ValueKey('save-${entry.setLabel}'),
+        tooltip: 'Save structured set',
+        onPressed: isBusy ? null : onSave,
+        icon: const Icon(Icons.check_outlined),
+      );
+    }
+
+    Widget clearButton() {
+      return IconButton(
+        key: ValueKey('clear-${entry.setLabel}'),
+        tooltip: 'Clear set',
+        onPressed: isBusy ? null : onClear,
+        icon: const Icon(Icons.delete_outline),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          SizedBox(width: 36, child: Text(entry.setLabel)),
-          for (final label in fieldLabels)
-            SizedBox(
-              width: 112,
-              child: TextField(
-                key: ValueKey('logged-${entry.setLabel}-field-$label'),
-                controller: controllers[label],
-                decoration: InputDecoration(
-                  labelText: label,
-                  border: const OutlineInputBorder(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 520) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    SizedBox(width: 36, child: Text(entry.setLabel)),
+                    const Spacer(),
+                    saveButton(),
+                    clearButton(),
+                  ],
                 ),
-              ),
-            ),
-          IconButton(
-            key: ValueKey('save-${entry.setLabel}'),
-            tooltip: 'Save structured set',
-            onPressed: isBusy ? null : onSave,
-            icon: const Icon(Icons.check_outlined),
-          ),
-          IconButton(
-            key: ValueKey('clear-${entry.setLabel}'),
-            tooltip: 'Clear set',
-            onPressed: isBusy ? null : onClear,
-            icon: const Icon(Icons.delete_outline),
-          ),
-        ],
+                const SizedBox(height: 8),
+                for (var index = 0; index < fieldLabels.length; index++) ...[
+                  field(fieldLabels[index]),
+                  if (index < fieldLabels.length - 1) const SizedBox(height: 8),
+                ],
+              ],
+            );
+          }
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(width: 36, child: Text(entry.setLabel)),
+              for (final label in fieldLabels)
+                SizedBox(width: 112, child: field(label)),
+              saveButton(),
+              clearButton(),
+            ],
+          );
+        },
       ),
     );
   }

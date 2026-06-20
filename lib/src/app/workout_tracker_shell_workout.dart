@@ -214,74 +214,85 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                 ),
         ),
         const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            SizedBox(
-              width: 260,
-              child: DropdownButtonFormField<String>(
-                initialValue: selectedWorkout,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Workout',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.fitness_center_outlined),
-                ),
-                items: [
-                  for (final workout in workouts)
-                    DropdownMenuItem(
-                      value: workout,
-                      child: Text(
-                        '$workout ${setup.progressByWorkout[workout]!.label}',
-                        overflow: TextOverflow.ellipsis,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final twoColumn = constraints.maxWidth >= 620;
+            final fieldWidth = twoColumn
+                ? (constraints.maxWidth - 12) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: fieldWidth,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: selectedWorkout,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Workout',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.fitness_center_outlined),
+                    ),
+                    items: [
+                      for (final workout in workouts)
+                        DropdownMenuItem(
+                          value: workout,
+                          child: Text(
+                            '$workout ${setup.progressByWorkout[workout]!.label}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      const DropdownMenuItem(
+                        value: _addNewWorkoutDropdownValue,
+                        child: Text('Add new...'),
                       ),
-                    ),
-                  const DropdownMenuItem(
-                    value: _addNewWorkoutDropdownValue,
-                    child: Text('Add new...'),
+                    ],
+                    onChanged: (value) {
+                      if (value == _addNewWorkoutDropdownValue) {
+                        onAddWorkout?.call();
+                        return;
+                      }
+                      onWorkoutChanged(value);
+                    },
                   ),
-                ],
-                onChanged: (value) {
-                  if (value == _addNewWorkoutDropdownValue) {
-                    onAddWorkout?.call();
-                    return;
-                  }
-                  onWorkoutChanged(value);
-                },
-              ),
-            ),
-            SizedBox(
-              width: 260,
-              child: DropdownButtonFormField<String>(
-                initialValue: selectedHistoryBlock,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'History block',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.history_outlined),
                 ),
-                items: [
-                  for (final block in historyBlocks)
-                    DropdownMenuItem(
-                      value: block.label,
-                      child: Text(block.label, overflow: TextOverflow.ellipsis),
+                SizedBox(
+                  width: fieldWidth,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: selectedHistoryBlock,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'History block',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.history_outlined),
                     ),
-                  const DropdownMenuItem(
-                    value: _addNewHistoryBlockDropdownValue,
-                    child: Text('Add new...'),
+                    items: [
+                      for (final block in historyBlocks)
+                        DropdownMenuItem(
+                          value: block.label,
+                          child: Text(
+                            block.label,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      const DropdownMenuItem(
+                        value: _addNewHistoryBlockDropdownValue,
+                        child: Text('Add new...'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == _addNewHistoryBlockDropdownValue) {
+                        onAddHistoryBlock?.call();
+                        return;
+                      }
+                      onHistoryBlockChanged(value);
+                    },
                   ),
-                ],
-                onChanged: (value) {
-                  if (value == _addNewHistoryBlockDropdownValue) {
-                    onAddHistoryBlock?.call();
-                    return;
-                  }
-                  onHistoryBlockChanged(value);
-                },
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
@@ -736,53 +747,63 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
         ),
         if (selectedExercise != null) ...[
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              SizedBox(
-                width: 120,
-                child: _PlacementMetadataField(
-                  controller: _setsController,
-                  labelText: 'Sets',
-                ),
-              ),
-              SizedBox(
-                width: 120,
-                child: _PlacementMetadataField(
-                  controller: _repsController,
-                  labelText: 'Reps',
-                ),
-              ),
-              SizedBox(
-                width: 120,
-                child: _PlacementMetadataField(
-                  controller: _rpeController,
-                  labelText: 'RPE',
-                ),
-              ),
-              SizedBox(
-                width: 160,
-                child: _PlacementMetadataField(
-                  controller: _restController,
-                  labelText: 'Rest',
-                ),
-              ),
-              SizedBox(
-                width: 160,
-                child: _PlacementMetadataField(
-                  controller: _tempoController,
-                  labelText: 'Tempo',
-                ),
-              ),
-              SizedBox(
-                width: 260,
-                child: _PlacementMetadataField(
-                  controller: _notesController,
-                  labelText: 'Notes',
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final twoColumn = constraints.maxWidth >= 620;
+              final fieldWidth = twoColumn
+                  ? (constraints.maxWidth - 12) / 2
+                  : constraints.maxWidth;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _PlacementMetadataField(
+                      controller: _setsController,
+                      labelText: 'Sets',
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _PlacementMetadataField(
+                      controller: _repsController,
+                      labelText: 'Reps',
+                    ),
+                  ),
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _PlacementMetadataField(
+                      controller: _rpeController,
+                      labelText: 'RPE',
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _PlacementMetadataField(
+                      controller: _restController,
+                      labelText: 'Rest',
+                    ),
+                  ),
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _PlacementMetadataField(
+                      controller: _tempoController,
+                      labelText: 'Tempo',
+                    ),
+                  ),
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _PlacementMetadataField(
+                      controller: _notesController,
+                      labelText: 'Notes',
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
         const SizedBox(height: 16),
@@ -818,15 +839,18 @@ class _PlacementMetadataField extends StatelessWidget {
   const _PlacementMetadataField({
     required this.controller,
     required this.labelText,
+    this.keyboardType,
   });
 
   final TextEditingController controller;
   final String labelText;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: labelText,
         border: const OutlineInputBorder(),

@@ -331,6 +331,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       labelText: 'Default sets',
                       icon: Icons.format_list_numbered_outlined,
                       textInputAction: TextInputAction.next,
+                      keyboardType: TextInputType.number,
                     ),
                   ),
                   SizedBox(
@@ -353,6 +354,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       labelText: 'Default RPE',
                       icon: Icons.speed_outlined,
                       textInputAction: TextInputAction.next,
+                      keyboardType: TextInputType.number,
                     ),
                   ),
                   SizedBox(
@@ -445,6 +447,7 @@ class _ExerciseAuthoringTextField extends StatelessWidget {
     required this.labelText,
     required this.icon,
     required this.textInputAction,
+    this.keyboardType,
   });
 
   final TextEditingController controller;
@@ -452,6 +455,7 @@ class _ExerciseAuthoringTextField extends StatelessWidget {
   final String labelText;
   final IconData icon;
   final TextInputAction textInputAction;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
@@ -464,6 +468,7 @@ class _ExerciseAuthoringTextField extends StatelessWidget {
         prefixIcon: Icon(icon),
       ),
       textInputAction: textInputAction,
+      keyboardType: keyboardType,
     );
   }
 }
