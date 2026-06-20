@@ -12,6 +12,7 @@ import 'workout_tracker_controller.dart';
 
 part 'workout_tracker_shell_account.dart';
 part 'workout_tracker_shell_workout.dart';
+part 'workout_tracker_shell_exercise_authoring.dart';
 part 'workout_tracker_shell_logging.dart';
 part 'workout_tracker_shell_validation.dart';
 
@@ -21,7 +22,28 @@ enum _WorkoutTrackerScreen {
   sheetSelection,
   workoutSetup,
   exercisePicker,
+  addExercise,
   exerciseLogging,
+}
+
+enum _ExercisePlacementKind { primary, backup }
+
+class _AddExercisePlacementIntent {
+  const _AddExercisePlacementIntent.primary({required this.workout})
+    : kind = _ExercisePlacementKind.primary,
+      primarySheetRowNumber = null,
+      primaryExercise = null;
+
+  const _AddExercisePlacementIntent.backup({
+    required this.workout,
+    required this.primarySheetRowNumber,
+    required this.primaryExercise,
+  }) : kind = _ExercisePlacementKind.backup;
+
+  final _ExercisePlacementKind kind;
+  final String workout;
+  final int? primarySheetRowNumber;
+  final String? primaryExercise;
 }
 
 class WorkoutTrackerApp extends StatelessWidget {
@@ -273,6 +295,7 @@ class _SpreadsheetValidationShellState
   late final WorkoutTrackerController _controller;
   SelectedSpreadsheet? _selectedSpreadsheet;
   _WorkoutTrackerScreen _screen = _WorkoutTrackerScreen.sheetSelection;
+  _AddExercisePlacementIntent? _addExercisePlacementIntent;
 
   @override
   void initState() {
@@ -471,12 +494,14 @@ class _SpreadsheetValidationShellState
 
   void _returnToSheetSelection() {
     _controller.closeExercise();
+    _addExercisePlacementIntent = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.sheetSelection;
     });
   }
 
   void _selectWorkoutSetup() {
+    _addExercisePlacementIntent = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.exercisePicker;
     });
@@ -484,6 +509,7 @@ class _SpreadsheetValidationShellState
 
   void _returnToWorkoutSetup() {
     _controller.closeExercise();
+    _addExercisePlacementIntent = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.workoutSetup;
     });
@@ -501,6 +527,45 @@ class _SpreadsheetValidationShellState
     setState(() {
       _screen = _WorkoutTrackerScreen.exercisePicker;
     });
+  }
+
+  void _openPrimaryExerciseAdd(String workout) {
+    _controller.closeExercise();
+    setState(() {
+      _addExercisePlacementIntent = _AddExercisePlacementIntent.primary(
+        workout: workout,
+      );
+      _screen = _WorkoutTrackerScreen.addExercise;
+    });
+  }
+
+  void _openBackupExerciseAdd(WorkoutOverviewSlot primarySlot) {
+    final workout = _controller.workoutSetup?.selectedWorkout;
+    if (workout == null) {
+      return;
+    }
+    _controller.closeExercise();
+    setState(() {
+      _addExercisePlacementIntent = _AddExercisePlacementIntent.backup(
+        workout: workout,
+        primarySheetRowNumber: primarySlot.sheetRowNumber,
+        primaryExercise: primarySlot.exercise,
+      );
+      _screen = _WorkoutTrackerScreen.addExercise;
+    });
+  }
+
+  void _closeExerciseAdd() {
+    setState(() {
+      _addExercisePlacementIntent = null;
+      _screen = _WorkoutTrackerScreen.exercisePicker;
+    });
+  }
+
+  void _handleExerciseAddDraft(CanonicalExerciseDraft _) {
+    _controller.reportExerciseAuthoringFailure(
+      StateError('Exercise authoring writes are not connected yet.'),
+    );
   }
 
   void _selectWorkout(String? workout) {
@@ -629,6 +694,12 @@ class _SpreadsheetValidationShellState
                           onWorkoutChanged: _selectWorkout,
                           onHistoryBlockChanged: _selectHistoryBlock,
                           onOpenExercise: _openExercise,
+                          onAddPrimaryExercise: _openPrimaryExerciseAdd,
+                          onAddBackupExercise: _openBackupExerciseAdd,
+                          addExercisePlacementIntent:
+                              _addExercisePlacementIntent,
+                          onCloseExerciseAdd: _closeExerciseAdd,
+                          onSubmitExerciseAdd: _handleExerciseAddDraft,
                           onCloseExercise: _closeExercise,
                           onLoggingRowChanged: _controller.selectLoggingRow,
                           onApplyWritePlan:

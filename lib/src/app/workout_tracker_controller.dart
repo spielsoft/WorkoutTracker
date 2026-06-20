@@ -268,6 +268,14 @@ class WorkoutTrackerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reportExerciseAuthoringFailure(Object error) {
+    _error = _formatServiceFailure(
+      failurePrefix: 'Unable to add exercise',
+      error: error,
+    );
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _isDisposed = true;
