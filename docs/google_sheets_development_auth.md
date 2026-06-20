@@ -54,19 +54,13 @@ Google Drive Picker is used for choosing an existing spreadsheet, and
 Google-backed sheet creation initializes a new WorkoutTracker spreadsheet in
 Drive. Picker selection uses the web OAuth client ID supplied through the
 `WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID` dart define. Development builds that
-omit this value still expose the pasted Google Sheets URL/ID fallback so a
-known development sheet can be selected.
+omit this value cannot choose an existing sheet through Picker; provide the
+dart define when validating sheet selection.
 
 ## Sheets Scopes
 
-Validation reads spreadsheet structure and cell display/formula data with the
-minimum read-only Sheets scope:
-
-```text
-https://www.googleapis.com/auth/spreadsheets.readonly
-```
-
-History block creation and set logging use the Sheets spreadsheet scope:
+Validation, history block creation, set logging, exercise authoring, and app
+spreadsheet initialization all request the writable Sheets spreadsheet scope:
 
 ```text
 https://www.googleapis.com/auth/spreadsheets
