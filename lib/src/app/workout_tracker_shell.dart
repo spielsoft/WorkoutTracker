@@ -234,6 +234,57 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
   }
 }
 
+class _NamePromptDialog extends StatefulWidget {
+  const _NamePromptDialog({required this.title, required this.label});
+
+  final String title;
+  final String label;
+
+  @override
+  State<_NamePromptDialog> createState() => _NamePromptDialogState();
+}
+
+class _NamePromptDialogState extends State<_NamePromptDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    Navigator.of(context).pop(_controller.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(labelText: widget.label),
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Add')),
+      ],
+    );
+  }
+}
+
 class _SpreadsheetTextFallback extends StatelessWidget {
   const _SpreadsheetTextFallback({
     required this.controller,
@@ -516,40 +567,14 @@ class _SpreadsheetValidationShellState
     required String title,
     required String label,
   }) async {
-    final controller = TextEditingController();
-    try {
-      final value = await showDialog<String>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(title),
-            content: TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: InputDecoration(labelText: label),
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) {
-                Navigator.of(context).pop(controller.text);
-              },
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(controller.text),
-                child: const Text('Add'),
-              ),
-            ],
-          );
-        },
-      );
-      final trimmed = value?.trim();
-      return trimmed == null || trimmed.isEmpty ? null : trimmed;
-    } finally {
-      controller.dispose();
-    }
+    final value = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return _NamePromptDialog(title: title, label: label);
+      },
+    );
+    final trimmed = value?.trim();
+    return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
   Future<void> _promptForNewWorkout() async {

@@ -11,7 +11,7 @@ This issue plan intentionally references the PRD for full rationale and user-sto
 - [x] Slice 3: Compress logging context and history
 - [x] Slice 4: Expose backup row actions
 - [x] Slice 5: Stabilize mobile form layouts
-- [ ] Slice 6: Move creation actions out of selectors
+- [x] Slice 6: Move creation actions out of selectors
 - [x] Slice 7: Simplify first-run sheet setup
 - [x] Slice 8: Make repair flows task-first
 - [ ] Slice 9: Mobile UI review pass
@@ -168,11 +168,11 @@ Separate selection from creation for workouts, history blocks, and exercises. Dr
 
 ### Acceptance criteria
 
-- [ ] Existing-value selectors no longer depend on sentinel create items.
-- [ ] Add-workout and add-history actions are visible without opening a selector.
-- [ ] Add-exercise or choose-exercise flows require explicit user selection where needed.
-- [ ] Newly created values become selected when appropriate.
-- [ ] Widget tests verify visible creation actions and post-creation selection behavior.
+- [x] Existing-value selectors no longer depend on sentinel create items.
+- [x] Add-workout and add-history actions are visible without opening a selector.
+- [x] Add-exercise or choose-exercise flows require explicit user selection where needed.
+- [x] Newly created values become selected when appropriate.
+- [x] Widget tests verify visible creation actions and post-creation selection behavior.
 
 ### Blocked by
 

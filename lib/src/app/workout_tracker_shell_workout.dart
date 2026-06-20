@@ -1,9 +1,5 @@
 part of 'workout_tracker_shell.dart';
 
-const _addNewWorkoutDropdownValue = '__workout_tracker_add_new_workout__';
-const _addNewHistoryBlockDropdownValue =
-    '__workout_tracker_add_new_history_block__';
-
 class _ScreenHeader extends StatelessWidget {
   const _ScreenHeader({
     required this.title,
@@ -226,68 +222,72 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
               children: [
                 SizedBox(
                   width: fieldWidth,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedWorkout,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Workout',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.fitness_center_outlined),
-                    ),
-                    items: [
-                      for (final workout in workouts)
-                        DropdownMenuItem(
-                          value: workout,
-                          child: Text(
-                            '$workout ${setup.progressByWorkout[workout]!.label}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedWorkout,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Workout',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.fitness_center_outlined),
                         ),
-                      const DropdownMenuItem(
-                        value: _addNewWorkoutDropdownValue,
-                        child: Text('Add new...'),
+                        items: [
+                          for (final workout in workouts)
+                            DropdownMenuItem(
+                              value: workout,
+                              child: Text(
+                                '$workout ${setup.progressByWorkout[workout]!.label}',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: onWorkoutChanged,
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        key: const ValueKey('add-workout'),
+                        onPressed: onAddWorkout,
+                        icon: const Icon(Icons.add_outlined),
+                        label: const Text('Add workout'),
                       ),
                     ],
-                    onChanged: (value) {
-                      if (value == _addNewWorkoutDropdownValue) {
-                        onAddWorkout?.call();
-                        return;
-                      }
-                      onWorkoutChanged(value);
-                    },
                   ),
                 ),
                 SizedBox(
                   width: fieldWidth,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedHistoryBlock,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'History block',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.history_outlined),
-                    ),
-                    items: [
-                      for (final block in historyBlocks)
-                        DropdownMenuItem(
-                          value: block.label,
-                          child: Text(
-                            block.label,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedHistoryBlock,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'History block',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.history_outlined),
                         ),
-                      const DropdownMenuItem(
-                        value: _addNewHistoryBlockDropdownValue,
-                        child: Text('Add new...'),
+                        items: [
+                          for (final block in historyBlocks)
+                            DropdownMenuItem(
+                              value: block.label,
+                              child: Text(
+                                block.label,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: onHistoryBlockChanged,
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        key: const ValueKey('add-history-block'),
+                        onPressed: onAddHistoryBlock,
+                        icon: const Icon(Icons.add_outlined),
+                        label: const Text('Add history'),
                       ),
                     ],
-                    onChanged: (value) {
-                      if (value == _addNewHistoryBlockDropdownValue) {
-                        onAddHistoryBlock?.call();
-                        return;
-                      }
-                      onHistoryBlockChanged(value);
-                    },
                   ),
                 ),
               ],
@@ -611,7 +611,6 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBackup = intent.kind == _ExercisePlacementKind.backup;
-    final selectedExercise = exercises.firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -625,7 +624,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
         const SizedBox(height: 16),
         _ExercisePlacementForm(
           exercises: exercises,
-          initialExercise: selectedExercise,
+          initialExercise: null,
           onSubmit: onSubmit,
         ),
       ],
@@ -720,6 +719,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
         DropdownButtonFormField<CanonicalExercise>(
           key: const ValueKey('existing-exercise-selector'),
           initialValue: selectedExercise,
+          hint: const Text('Choose exercise'),
           isExpanded: true,
           decoration: const InputDecoration(
             labelText: 'Exercise',
