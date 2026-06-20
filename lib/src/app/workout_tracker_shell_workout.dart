@@ -235,6 +235,10 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
             key: const ValueKey('compact-workout-overview'),
             overview: overview,
             onOpenExercise: onOpenExercise,
+            onAddPrimaryExercise: selectedWorkout == null
+                ? null
+                : () => onAddPrimaryExercise(selectedWorkout),
+            onAddBackupExercise: onAddBackupExercise,
             compact: true,
           ),
       ],
@@ -247,6 +251,7 @@ class _WorkoutOverviewList extends StatelessWidget {
     super.key,
     required this.overview,
     required this.onOpenExercise,
+    this.onAddPrimaryExercise,
     this.onAddBackupExercise,
     this.compact = false,
     this.showTitle = true,
@@ -254,6 +259,7 @@ class _WorkoutOverviewList extends StatelessWidget {
 
   final WorkoutOverview overview;
   final ValueChanged<int> onOpenExercise;
+  final VoidCallback? onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot>? onAddBackupExercise;
   final bool compact;
   final bool showTitle;
@@ -264,9 +270,22 @@ class _WorkoutOverviewList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showTitle) ...[
-          Text(
-            '${overview.workout} exercises',
-            style: Theme.of(context).textTheme.titleLarge,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${overview.workout} exercises',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              if (onAddPrimaryExercise != null)
+                IconButton.filled(
+                  key: const ValueKey('add-primary-exercise-from-setup'),
+                  tooltip: 'Add exercise',
+                  onPressed: onAddPrimaryExercise,
+                  icon: const Icon(Icons.add_outlined),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
         ],

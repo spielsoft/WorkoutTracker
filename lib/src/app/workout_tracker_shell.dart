@@ -300,6 +300,8 @@ class _SpreadsheetValidationShellState
   late final WorkoutTrackerController _controller;
   SelectedSpreadsheet? _selectedSpreadsheet;
   _WorkoutTrackerScreen _screen = _WorkoutTrackerScreen.sheetSelection;
+  _WorkoutTrackerScreen _exerciseAddReturnScreen =
+      _WorkoutTrackerScreen.exercisePicker;
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
 
   @override
@@ -536,8 +538,12 @@ class _SpreadsheetValidationShellState
   }
 
   void _openPrimaryExerciseAdd(String workout) {
+    final returnScreen = _screen == _WorkoutTrackerScreen.workoutSetup
+        ? _WorkoutTrackerScreen.workoutSetup
+        : _WorkoutTrackerScreen.exercisePicker;
     _controller.closeExercise();
     setState(() {
+      _exerciseAddReturnScreen = returnScreen;
       _addExercisePlacementIntent = _AddExercisePlacementIntent.primary(
         workout: workout,
       );
@@ -550,8 +556,12 @@ class _SpreadsheetValidationShellState
     if (workout == null) {
       return;
     }
+    final returnScreen = _screen == _WorkoutTrackerScreen.workoutSetup
+        ? _WorkoutTrackerScreen.workoutSetup
+        : _WorkoutTrackerScreen.exercisePicker;
     _controller.closeExercise();
     setState(() {
+      _exerciseAddReturnScreen = returnScreen;
       _addExercisePlacementIntent = _AddExercisePlacementIntent.backup(
         workout: workout,
         primarySheetRowNumber: primarySlot.sheetRowNumber,
@@ -564,7 +574,7 @@ class _SpreadsheetValidationShellState
   void _closeExerciseAdd() {
     setState(() {
       _addExercisePlacementIntent = null;
-      _screen = _WorkoutTrackerScreen.exercisePicker;
+      _screen = _exerciseAddReturnScreen;
     });
   }
 
@@ -589,7 +599,7 @@ class _SpreadsheetValidationShellState
     }
     _addExercisePlacementIntent = null;
     setState(() {
-      _screen = _WorkoutTrackerScreen.exercisePicker;
+      _screen = _exerciseAddReturnScreen;
     });
   }
 
