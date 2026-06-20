@@ -8,7 +8,7 @@ import 'google_spreadsheet_validation_wiring.dart';
 import 'spreadsheet_validation_core.dart';
 
 class GoogleSignInSpreadsheetValidationService
-    implements SpreadsheetValidationService {
+    implements SpreadsheetValidationService, ExerciseAuthoringService {
   GoogleSignInSpreadsheetValidationService({
     GoogleSignInAuthorizationGateway? authorizationGateway,
     GoogleSpreadsheetValidationServiceFactory? serviceFactory,
@@ -50,6 +50,30 @@ class GoogleSignInSpreadsheetValidationService
         activeSheet: activeSheet,
         plan: plan,
       ),
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> addExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExerciseDefinition exercise,
+    required ExercisePlacementTarget placement,
+  }) async {
+    return _withGoogleSheetsService(
+      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      canWrite: true,
+      action: (service) {
+        if (service case final ExerciseAuthoringService authoringService) {
+          return authoringService.addExerciseToWorkout(
+            spreadsheetId: spreadsheetId,
+            activeSheet: activeSheet,
+            exercise: exercise,
+            placement: placement,
+          );
+        }
+        throw StateError('Exercise authoring service is not configured.');
+      },
     );
   }
 

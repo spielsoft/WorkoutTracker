@@ -11,9 +11,13 @@ import 'spreadsheet_selection.dart';
 /// valid while [report] remains current, so the controller clears them whenever
 /// workout or history selection changes or a new report is adopted.
 class WorkoutTrackerController extends ChangeNotifier {
-  WorkoutTrackerController({required this.validationService});
+  WorkoutTrackerController({
+    required this.validationService,
+    this.exerciseAuthoringService,
+  });
 
   final SpreadsheetValidationService validationService;
+  final ExerciseAuthoringService? exerciseAuthoringService;
 
   SpreadsheetValidationReport? _report;
   String? _error;
@@ -214,6 +218,48 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
+  Future<bool> addExerciseToWorkout({
+    required CanonicalExerciseDefinition exercise,
+    required ExercisePlacementTarget placement,
+  }) async {
+    final report = _report;
+    final exerciseAuthoringService = this.exerciseAuthoringService;
+    if (report == null || exerciseAuthoringService == null) {
+      _error = 'Exercise authoring is not connected yet.';
+      notifyListeners();
+      return false;
+    }
+
+    return _runServiceAction(
+      failurePrefix: 'Unable to add exercise',
+      action: () async {
+        _report = await exerciseAuthoringService.addExerciseToWorkout(
+          spreadsheetId: report.spreadsheetId,
+          activeSheet: report.activeSheet,
+          exercise: exercise,
+          placement: placement,
+        );
+        _error = null;
+        _selectedWorkout = placement.workout ?? _selectedWorkout;
+        if (_selectedWorkout != null &&
+            !_report!.activeSheet.selectableWorkouts.contains(
+              _selectedWorkout,
+            )) {
+          _selectedWorkout =
+              _report!.activeSheet.selectableWorkouts.firstOrNull;
+        }
+        if (_selectedHistoryBlock != null &&
+            !_report!.activeSheet.historyBlocks.any(
+              (block) => block.label == _selectedHistoryBlock,
+            )) {
+          _selectedHistoryBlock =
+              _report!.activeSheet.historyBlocks.firstOrNull?.label;
+        }
+        _clearLoggingSelection();
+      },
+    );
+  }
+
   void selectWorkout(String? workout) {
     _selectedWorkout = workout;
     _clearLoggingSelection();
@@ -263,14 +309,6 @@ class WorkoutTrackerController extends ChangeNotifier {
   void reportSpreadsheetSelectionFailure(Object error) {
     _error = _formatServiceFailure(
       failurePrefix: 'Unable to choose spreadsheet',
-      error: error,
-    );
-    notifyListeners();
-  }
-
-  void reportExerciseAuthoringFailure(Object error) {
-    _error = _formatServiceFailure(
-      failurePrefix: 'Unable to add exercise',
       error: error,
     );
     notifyListeners();

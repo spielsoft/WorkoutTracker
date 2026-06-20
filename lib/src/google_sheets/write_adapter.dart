@@ -10,16 +10,32 @@ class GoogleSheetsWriteAdapter {
     required String spreadsheetId,
     required ActiveSheetWritePlan plan,
   }) async {
-    if (plan.columnInsertions.isEmpty && plan.cellUpdates.isEmpty) {
+    if (plan.columnInsertions.isEmpty &&
+        plan.rowInsertions.isEmpty &&
+        plan.cellUpdates.isEmpty) {
       return;
     }
 
     final activeSheet = await client.fetchActiveSheetTarget(spreadsheetId);
+    final sortedRowInsertions = [...plan.rowInsertions]
+      ..sort(
+        (first, second) =>
+            second.sheetRowNumber.compareTo(first.sheetRowNumber),
+      );
     final sortedInsertions = [...plan.columnInsertions]
       ..sort(
         (first, second) =>
             second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
       );
+
+    for (final insertion in sortedRowInsertions) {
+      await client.insertRows(
+        spreadsheetId: spreadsheetId,
+        sheetId: activeSheet.sheetId,
+        sheetRowNumber: insertion.sheetRowNumber,
+        rowCount: insertion.rowCount,
+      );
+    }
 
     for (final insertion in sortedInsertions) {
       await client.insertColumns(
@@ -88,6 +104,28 @@ class GoogleSheetsWriteAdapter {
     }
   }
 
+  Future<void> applyExercisesWritePlan({
+    required String spreadsheetId,
+    required ExercisesWritePlan plan,
+  }) async {
+    final cells = <GoogleSheetsCellWrite>[
+      for (final append in plan.rowAppends)
+        for (var index = 0; index < append.values.length; index += 1)
+          GoogleSheetsCellWrite(
+            sheetRowNumber: append.sheetRowNumber,
+            sheetColumnNumber: index + 1,
+            value: append.values[index],
+            mode: GoogleSheetsValueInputMode.literalText,
+          ),
+    ];
+    await client.writeCells(
+      spreadsheetId: spreadsheetId,
+      sheetTitle: 'Exercises',
+      cells: cells,
+      mode: GoogleSheetsValueInputMode.literalText,
+    );
+  }
+
   Iterable<GoogleSheetsCellWrite> _headerWritesForInsertion(
     HistoryColumnInsertion insertion,
   ) sync* {
@@ -127,6 +165,13 @@ abstract interface class GoogleSheetsWriteClient {
     required int sheetId,
     required int sheetColumnNumber,
     required int columnCount,
+  });
+
+  Future<void> insertRows({
+    required String spreadsheetId,
+    required int sheetId,
+    required int sheetRowNumber,
+    required int rowCount,
   });
 
   Future<void> writeCells({
@@ -239,6 +284,39 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
                 dimension: 'COLUMNS',
                 startIndex: startIndex,
                 endIndex: startIndex + columnCount,
+              ),
+            ),
+          ),
+        ],
+      ),
+      spreadsheetId,
+      $fields: 'spreadsheetId',
+    );
+  }
+
+  @override
+  Future<void> insertRows({
+    required String spreadsheetId,
+    required int sheetId,
+    required int sheetRowNumber,
+    required int rowCount,
+  }) async {
+    if (rowCount <= 0) {
+      return;
+    }
+
+    final startIndex = sheetRowNumber - 1;
+    await _api.spreadsheets.batchUpdate(
+      sheets.BatchUpdateSpreadsheetRequest(
+        requests: [
+          sheets.Request(
+            insertDimension: sheets.InsertDimensionRequest(
+              inheritFromBefore: startIndex > 0,
+              range: sheets.DimensionRange(
+                sheetId: sheetId,
+                dimension: 'ROWS',
+                startIndex: startIndex,
+                endIndex: startIndex + rowCount,
               ),
             ),
           ),

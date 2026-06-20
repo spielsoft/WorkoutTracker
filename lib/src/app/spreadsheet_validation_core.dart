@@ -28,6 +28,28 @@ abstract interface class SpreadsheetValidationService {
   });
 }
 
+abstract interface class ExerciseAuthoringService {
+  Future<SpreadsheetValidationReport> addExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExerciseDefinition exercise,
+    required ExercisePlacementTarget placement,
+  });
+}
+
+class ExercisePlacementTarget {
+  const ExercisePlacementTarget.primary({required this.workout})
+    : primarySheetRowNumber = null;
+
+  const ExercisePlacementTarget.backup({required this.primarySheetRowNumber})
+    : workout = null;
+
+  final String? workout;
+  final int? primarySheetRowNumber;
+
+  bool get isBackup => primarySheetRowNumber != null;
+}
+
 abstract interface class SpreadsheetOpener {
   Future<void> openSpreadsheet(String url);
 }

@@ -321,6 +321,14 @@ class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
   }
 
   @override
+  Future<void> insertRows({
+    required String spreadsheetId,
+    required int sheetId,
+    required int sheetRowNumber,
+    required int rowCount,
+  }) async {}
+
+  @override
   Future<void> writeCells({
     required String spreadsheetId,
     required String sheetTitle,

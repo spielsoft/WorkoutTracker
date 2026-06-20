@@ -432,6 +432,16 @@ class _RecordingWriteClient implements GoogleSheetsWriteClient {
   }
 
   @override
+  Future<void> insertRows({
+    required String spreadsheetId,
+    required int sheetId,
+    required int sheetRowNumber,
+    required int rowCount,
+  }) async {
+    writeCount += rowCount;
+  }
+
+  @override
   Future<void> writeCells({
     required String spreadsheetId,
     required String sheetTitle,

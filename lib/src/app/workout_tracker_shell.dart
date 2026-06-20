@@ -49,6 +49,7 @@ class _AddExercisePlacementIntent {
 class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
     required this.validationService,
+    this.exerciseAuthoringService,
     this.accountSession,
     this.appStateStore,
     this.initialSpreadsheetText = '',
@@ -59,6 +60,7 @@ class WorkoutTrackerApp extends StatelessWidget {
   });
 
   final SpreadsheetValidationService validationService;
+  final ExerciseAuthoringService? exerciseAuthoringService;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
@@ -77,6 +79,7 @@ class WorkoutTrackerApp extends StatelessWidget {
       scrollBehavior: const WorkoutTrackerScrollBehavior(),
       home: SpreadsheetValidationShell(
         validationService: validationService,
+        exerciseAuthoringService: exerciseAuthoringService,
         accountSession: accountSession,
         appStateStore: appStateStore,
         initialSpreadsheetText: initialSpreadsheetText,
@@ -265,6 +268,7 @@ class _SpreadsheetTextFallback extends StatelessWidget {
 class SpreadsheetValidationShell extends StatefulWidget {
   const SpreadsheetValidationShell({
     required this.validationService,
+    this.exerciseAuthoringService,
     this.accountSession,
     this.appStateStore,
     required this.initialSpreadsheetText,
@@ -275,6 +279,7 @@ class SpreadsheetValidationShell extends StatefulWidget {
   });
 
   final SpreadsheetValidationService validationService;
+  final ExerciseAuthoringService? exerciseAuthoringService;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
@@ -302,6 +307,7 @@ class _SpreadsheetValidationShellState
     super.initState();
     _controller = WorkoutTrackerController(
       validationService: widget.validationService,
+      exerciseAuthoringService: widget.exerciseAuthoringService,
     );
     _selectedSpreadsheet = widget.initialSelectedSpreadsheet;
     _spreadsheetController = TextEditingController(
@@ -562,10 +568,29 @@ class _SpreadsheetValidationShellState
     });
   }
 
-  void _handleExerciseAddDraft(CanonicalExerciseDraft _) {
-    _controller.reportExerciseAuthoringFailure(
-      StateError('Exercise authoring writes are not connected yet.'),
+  Future<void> _handleExerciseAddDraft(CanonicalExerciseDraft draft) async {
+    final intent = _addExercisePlacementIntent;
+    if (intent == null) {
+      return;
+    }
+    final added = await _controller.addExerciseToWorkout(
+      exercise: draft.toCanonicalExerciseDefinition(),
+      placement: switch (intent.kind) {
+        _ExercisePlacementKind.primary => ExercisePlacementTarget.primary(
+          workout: intent.workout,
+        ),
+        _ExercisePlacementKind.backup => ExercisePlacementTarget.backup(
+          primarySheetRowNumber: intent.primarySheetRowNumber!,
+        ),
+      },
     );
+    if (!mounted || !added) {
+      return;
+    }
+    _addExercisePlacementIntent = null;
+    setState(() {
+      _screen = _WorkoutTrackerScreen.exercisePicker;
+    });
   }
 
   void _selectWorkout(String? workout) {

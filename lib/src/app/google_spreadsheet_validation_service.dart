@@ -4,7 +4,7 @@ import 'package:workout_tracker/sheet_contract.dart';
 import 'spreadsheet_validation_core.dart';
 
 class GoogleSpreadsheetValidationService
-    implements SpreadsheetValidationService {
+    implements SpreadsheetValidationService, ExerciseAuthoringService {
   const GoogleSpreadsheetValidationService({
     required this.readAdapter,
     this.writeAdapter,
@@ -47,6 +47,58 @@ class GoogleSpreadsheetValidationService
     await writeAdapter.applyActiveSheetWritePlan(
       spreadsheetId: spreadsheetId,
       plan: plan,
+    );
+    return validateSpreadsheet(spreadsheetId);
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> addExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExerciseDefinition exercise,
+    required ExercisePlacementTarget placement,
+  }) async {
+    final writeAdapter = this.writeAdapter;
+    if (writeAdapter == null) {
+      throw StateError('Exercise authoring requires a write adapter.');
+    }
+
+    final currentActiveSheet = await readAdapter.readParsedActiveSheet(
+      spreadsheetId,
+    );
+    final exercisesPlan = currentActiveSheet.planCanonicalExerciseAppend(
+      exercise,
+    );
+    final exercisesRow = exercisesPlan.rowAppends.singleOrNull;
+    if (exercisesRow == null) {
+      throw StateError('No exercise row was planned.');
+    }
+
+    final activePlan = placement.isBackup
+        ? currentActiveSheet.planBackupWorkoutPlacement(
+            primarySheetRowNumber: placement.primarySheetRowNumber!,
+            exercisesSheetRowNumber: exercisesRow.sheetRowNumber,
+          )
+        : currentActiveSheet.planPrimaryWorkoutPlacement(
+            exercisesSheetRowNumber: exercisesRow.sheetRowNumber,
+            workout: placement.workout ?? defaultWorkoutName,
+          );
+    final writeRejections = activePlan.writeRejections(currentActiveSheet);
+    if (writeRejections.isNotEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: writeRejections,
+      );
+    }
+
+    await writeAdapter.applyExercisesWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: exercisesPlan,
+    );
+    await writeAdapter.applyActiveSheetWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: activePlan,
     );
     return validateSpreadsheet(spreadsheetId);
   }

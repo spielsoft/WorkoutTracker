@@ -56,6 +56,21 @@ class CanonicalExerciseDraft {
     );
   }
 
+  CanonicalExerciseDefinition toCanonicalExerciseDefinition() {
+    final draft = normalized();
+    return CanonicalExerciseDefinition(
+      exercise: draft.exerciseName,
+      description: draft.description,
+      defaultSets: draft.defaultSets,
+      defaultReps: draft.defaultReps,
+      defaultRpe: draft.defaultRPE,
+      defaultRest: draft.defaultRest,
+      defaultTempo: draft.defaultTempo,
+      notes: draft.notes,
+      logFormat: draft.logFormat,
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
