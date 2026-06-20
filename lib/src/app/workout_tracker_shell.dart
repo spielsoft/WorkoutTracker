@@ -305,7 +305,6 @@ class SpreadsheetValidationShell extends StatefulWidget {
 class _SpreadsheetValidationShellState
     extends State<SpreadsheetValidationShell> {
   late final TextEditingController _spreadsheetController;
-  late final TextEditingController _newHistoryBlockController;
   late final WorkoutTrackerController _controller;
   SelectedSpreadsheet? _selectedSpreadsheet;
   _WorkoutTrackerScreen _screen = _WorkoutTrackerScreen.sheetSelection;
@@ -327,7 +326,6 @@ class _SpreadsheetValidationShellState
           widget.initialSpreadsheetText,
     );
     _spreadsheetController.addListener(_persistSpreadsheetText);
-    _newHistoryBlockController = TextEditingController();
     unawaited(_restoreStartupState());
   }
 
@@ -336,7 +334,6 @@ class _SpreadsheetValidationShellState
     _controller.dispose();
     _spreadsheetController.removeListener(_persistSpreadsheetText);
     _spreadsheetController.dispose();
-    _newHistoryBlockController.dispose();
     super.dispose();
   }
 
@@ -473,12 +470,70 @@ class _SpreadsheetValidationShellState
     });
   }
 
-  Future<void> _createHistoryBlock() async {
-    final created = await _controller.createHistoryBlock(
-      _newHistoryBlockController.text,
+  Future<String?> _promptForName({
+    required String title,
+    required String label,
+  }) async {
+    final controller = TextEditingController();
+    try {
+      final value = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(title),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(labelText: label),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                Navigator.of(context).pop(controller.text);
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: const Text('Add'),
+              ),
+            ],
+          );
+        },
+      );
+      final trimmed = value?.trim();
+      return trimmed == null || trimmed.isEmpty ? null : trimmed;
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<void> _promptForNewWorkout() async {
+    final name = await _promptForName(
+      title: 'Add workout',
+      label: 'Workout name',
     );
+    if (!mounted || name == null) {
+      return;
+    }
+    final created = _controller.createWorkout(name);
+    if (created) {
+      _persistWorkoutSelection();
+    }
+  }
+
+  Future<void> _promptForNewHistoryBlock() async {
+    final name = await _promptForName(
+      title: 'Add history block',
+      label: 'History block label',
+    );
+    if (!mounted || name == null) {
+      return;
+    }
+    final created = await _controller.createHistoryBlock(name);
     if (created && mounted) {
-      _newHistoryBlockController.clear();
       _persistWorkoutSelection();
     }
   }
@@ -769,12 +824,15 @@ class _SpreadsheetValidationShellState
                               _selectedSpreadsheet?.displayLabel ??
                               report.spreadsheetId,
                           screen: _screen,
-                          newHistoryBlockController: _newHistoryBlockController,
                           onBackToSheetSelection: _returnToSheetSelection,
                           onSelectWorkoutSetup: _selectWorkoutSetup,
                           onBackToWorkoutSetup: _returnToWorkoutSetup,
                           onWorkoutChanged: _selectWorkout,
                           onHistoryBlockChanged: _selectHistoryBlock,
+                          onAddWorkout: isBusy ? null : _promptForNewWorkout,
+                          onAddHistoryBlock: isBusy
+                              ? null
+                              : _promptForNewHistoryBlock,
                           onOpenExercise: _openExercise,
                           onAddPrimaryExercise: _openPrimaryExerciseAdd,
                           onAddBackupExercise: _openBackupExerciseAdd,
@@ -786,9 +844,6 @@ class _SpreadsheetValidationShellState
                           onLoggingRowChanged: _controller.selectLoggingRow,
                           onApplyWritePlan:
                               _controller.applyActiveSheetWritePlan,
-                          onCreateHistoryBlock: isBusy
-                              ? null
-                              : _createHistoryBlock,
                         ),
                     ],
                   ),

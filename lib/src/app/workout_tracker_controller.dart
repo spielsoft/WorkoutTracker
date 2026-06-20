@@ -23,6 +23,7 @@ class WorkoutTrackerController extends ChangeNotifier {
   String? _error;
   String? _selectedWorkout;
   String? _selectedHistoryBlock;
+  final List<String> _pendingWorkouts = [];
   int? _loggingPrimarySheetRowNumber;
   int? _selectedLoggingSheetRowNumber;
   bool _isBusy = false;
@@ -44,7 +45,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     }
 
     final activeSheet = report.activeSheet;
-    final workouts = activeSheet.selectableWorkouts;
+    final workouts = _workoutsFor(activeSheet);
     final historyBlocks = activeSheet.historyBlocks;
     final selectedWorkout = workouts.contains(_selectedWorkout)
         ? _selectedWorkout
@@ -143,14 +144,38 @@ class WorkoutTrackerController extends ChangeNotifier {
         _report = updatedReport;
         _error = null;
         _selectedHistoryBlock = trimmedLabel;
-        if (!updatedReport.activeSheet.selectableWorkouts.contains(
-          _selectedWorkout,
-        )) {
-          _selectedWorkout =
-              updatedReport.activeSheet.selectableWorkouts.firstOrNull;
+        if (!_workoutsFor(
+          updatedReport.activeSheet,
+        ).contains(_selectedWorkout)) {
+          _selectedWorkout = _workoutsFor(
+            updatedReport.activeSheet,
+          ).firstOrNull;
         }
       },
     );
+  }
+
+  bool createWorkout(String label) {
+    final report = _report;
+    final trimmedLabel = label.trim();
+    if (report == null || trimmedLabel.isEmpty) {
+      _error = 'Enter a visible workout name.';
+      notifyListeners();
+      return false;
+    }
+    final workouts = _workoutsFor(report.activeSheet);
+    if (workouts.contains(trimmedLabel)) {
+      _error = 'Workout $trimmedLabel already exists.';
+      notifyListeners();
+      return false;
+    }
+
+    _pendingWorkouts.add(trimmedLabel);
+    _selectedWorkout = trimmedLabel;
+    _error = null;
+    _clearLoggingSelection();
+    notifyListeners();
+    return true;
   }
 
   Future<bool> repairUnambiguousFormulaIssues() async {
@@ -240,13 +265,11 @@ class WorkoutTrackerController extends ChangeNotifier {
           placement: placement,
         );
         _error = null;
+        _prunePendingWorkouts(_report!.activeSheet);
         _selectedWorkout = placement.workout ?? _selectedWorkout;
         if (_selectedWorkout != null &&
-            !_report!.activeSheet.selectableWorkouts.contains(
-              _selectedWorkout,
-            )) {
-          _selectedWorkout =
-              _report!.activeSheet.selectableWorkouts.firstOrNull;
+            !_workoutsFor(_report!.activeSheet).contains(_selectedWorkout)) {
+          _selectedWorkout = _workoutsFor(_report!.activeSheet).firstOrNull;
         }
         if (_selectedHistoryBlock != null &&
             !_report!.activeSheet.historyBlocks.any(
@@ -355,9 +378,25 @@ class WorkoutTrackerController extends ChangeNotifier {
   void _adoptReport(SpreadsheetValidationReport report) {
     _report = report;
     _error = null;
+    _pendingWorkouts.clear();
     _selectedWorkout = report.activeSheet.selectableWorkouts.firstOrNull;
     _selectedHistoryBlock = report.activeSheet.historyBlocks.firstOrNull?.label;
     _clearLoggingSelection();
+  }
+
+  List<String> _workoutsFor(ParsedActiveSheet activeSheet) {
+    final workouts = [...activeSheet.selectableWorkouts];
+    for (final workout in _pendingWorkouts) {
+      if (!workouts.contains(workout)) {
+        workouts.add(workout);
+      }
+    }
+    return List<String>.unmodifiable(workouts);
+  }
+
+  void _prunePendingWorkouts(ParsedActiveSheet activeSheet) {
+    final durableWorkouts = activeSheet.selectableWorkouts;
+    _pendingWorkouts.removeWhere(durableWorkouts.contains);
   }
 
   void _clearLoggingSelection() {

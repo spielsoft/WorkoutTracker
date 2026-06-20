@@ -1,5 +1,9 @@
 part of 'workout_tracker_shell.dart';
 
+const _addNewWorkoutDropdownValue = '__workout_tracker_add_new_workout__';
+const _addNewHistoryBlockDropdownValue =
+    '__workout_tracker_add_new_history_block__';
+
 class _ScreenHeader extends StatelessWidget {
   const _ScreenHeader({
     required this.title,
@@ -73,12 +77,13 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.setup,
     required this.sheetLabel,
     required this.screen,
-    required this.newHistoryBlockController,
     required this.onBackToSheetSelection,
     required this.onSelectWorkoutSetup,
     required this.onBackToWorkoutSetup,
     required this.onWorkoutChanged,
     required this.onHistoryBlockChanged,
+    required this.onAddWorkout,
+    required this.onAddHistoryBlock,
     required this.onOpenExercise,
     required this.onAddPrimaryExercise,
     required this.onAddBackupExercise,
@@ -88,18 +93,18 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onCloseExercise,
     required this.onLoggingRowChanged,
     required this.onApplyWritePlan,
-    required this.onCreateHistoryBlock,
   });
 
   final WorkoutSetupReadModel setup;
   final String sheetLabel;
   final _WorkoutTrackerScreen screen;
-  final TextEditingController newHistoryBlockController;
   final VoidCallback onBackToSheetSelection;
   final VoidCallback onSelectWorkoutSetup;
   final VoidCallback onBackToWorkoutSetup;
   final ValueChanged<String?> onWorkoutChanged;
   final ValueChanged<String?> onHistoryBlockChanged;
+  final VoidCallback? onAddWorkout;
+  final VoidCallback? onAddHistoryBlock;
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
@@ -109,7 +114,6 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
-  final VoidCallback? onCreateHistoryBlock;
 
   @override
   Widget build(BuildContext context) {
@@ -213,8 +217,18 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  const DropdownMenuItem(
+                    value: _addNewWorkoutDropdownValue,
+                    child: Text('Add new...'),
+                  ),
                 ],
-                onChanged: onWorkoutChanged,
+                onChanged: (value) {
+                  if (value == _addNewWorkoutDropdownValue) {
+                    onAddWorkout?.call();
+                    return;
+                  }
+                  onWorkoutChanged(value);
+                },
               ),
             ),
             SizedBox(
@@ -233,35 +247,19 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                       value: block.label,
                       child: Text(block.label, overflow: TextOverflow.ellipsis),
                     ),
+                  const DropdownMenuItem(
+                    value: _addNewHistoryBlockDropdownValue,
+                    child: Text('Add new...'),
+                  ),
                 ],
-                onChanged: onHistoryBlockChanged,
+                onChanged: (value) {
+                  if (value == _addNewHistoryBlockDropdownValue) {
+                    onAddHistoryBlock?.call();
+                    return;
+                  }
+                  onHistoryBlockChanged(value);
+                },
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            SizedBox(
-              width: 260,
-              child: TextField(
-                key: const ValueKey('new-history-block-label'),
-                controller: newHistoryBlockController,
-                decoration: const InputDecoration(
-                  labelText: 'New history block label',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.add_chart_outlined),
-                ),
-                textInputAction: TextInputAction.done,
-              ),
-            ),
-            FilledButton.icon(
-              onPressed: onCreateHistoryBlock,
-              icon: const Icon(Icons.add_outlined),
-              label: const Text('Create history block'),
             ),
           ],
         ),
