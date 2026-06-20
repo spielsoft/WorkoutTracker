@@ -665,6 +665,15 @@ class _SpreadsheetValidationShellState
     });
   }
 
+  void _openCanonicalExerciseCreation() {
+    _controller.closeExercise();
+    setState(() {
+      _exerciseAddReturnScreen = _WorkoutTrackerScreen.workoutSetup;
+      _addExercisePlacementIntent = null;
+      _screen = _WorkoutTrackerScreen.addExercise;
+    });
+  }
+
   void _closeExerciseAdd() {
     setState(() {
       _addExercisePlacementIntent = null;
@@ -672,13 +681,27 @@ class _SpreadsheetValidationShellState
     });
   }
 
-  Future<void> _handleExerciseAddDraft(CanonicalExerciseDraft draft) async {
+  Future<void> _handleCanonicalExerciseDraft(
+    CanonicalExerciseDraft draft,
+  ) async {
+    final created = await _controller.createCanonicalExercise(
+      exercise: draft.toCanonicalExerciseDefinition(),
+    );
+    if (!mounted || !created) {
+      return;
+    }
+    setState(() {
+      _screen = _exerciseAddReturnScreen;
+    });
+  }
+
+  Future<void> _handleExercisePlacement(CanonicalExercise exercise) async {
     final intent = _addExercisePlacementIntent;
     if (intent == null) {
       return;
     }
-    final added = await _controller.addExerciseToWorkout(
-      exercise: draft.toCanonicalExerciseDefinition(),
+    final added = await _controller.addExistingExerciseToWorkout(
+      exercise: exercise,
       placement: switch (intent.kind) {
         _ExercisePlacementKind.primary => ExercisePlacementTarget.primary(
           workout: intent.workout,
@@ -833,13 +856,18 @@ class _SpreadsheetValidationShellState
                           onAddHistoryBlock: isBusy
                               ? null
                               : _promptForNewHistoryBlock,
+                          onCreateCanonicalExercise: isBusy
+                              ? null
+                              : _openCanonicalExerciseCreation,
                           onOpenExercise: _openExercise,
                           onAddPrimaryExercise: _openPrimaryExerciseAdd,
                           onAddBackupExercise: _openBackupExerciseAdd,
                           addExercisePlacementIntent:
                               _addExercisePlacementIntent,
                           onCloseExerciseAdd: _closeExerciseAdd,
-                          onSubmitExerciseAdd: _handleExerciseAddDraft,
+                          onSubmitCanonicalExercise:
+                              _handleCanonicalExerciseDraft,
+                          onSubmitExercisePlacement: _handleExercisePlacement,
                           onCloseExercise: _closeExercise,
                           onLoggingRowChanged: _controller.selectLoggingRow,
                           onApplyWritePlan:

@@ -14,8 +14,10 @@ The app should let a user:
 3. Validate and repair the active workout sheet when needed.
 4. Select a workout such as Legs, Upper, or a default workout.
 5. Select or create a visible history block such as `Week 1`.
-6. Add canonical exercise definitions to the `Exercises` tab.
-7. Add primary exercises to a workout from the workout exercise list.
+6. Add canonical exercise definitions to the `Exercises` tab from a global
+   exercise-creation action.
+7. Add primary exercises to a workout by selecting an existing canonical
+   exercise from the workout exercise list.
 8. Add backup exercises from an existing primary exercise when the gym is busy.
 9. Open an exercise, see recent row-local history, and log sets quickly.
 10. Write compact set notation back to the sheet.
@@ -61,8 +63,8 @@ Important rules:
 ## Exercise Editing MVP
 
 App-created spreadsheets make exercise authoring part of the MVP. The app must
-provide a reusable add-exercise screen that can be opened from both the workout
-setup context and the add-to-workout context.
+provide a global exercise-creation tool for adding canonical rows to
+`Exercises`.
 
 The add-exercise screen captures canonical `Exercises` metadata:
 
@@ -78,10 +80,11 @@ The app should supply sensible defaults, including the default log format:
 ```
 
 Adding a primary exercise to a workout should let the user choose an existing
-canonical exercise or create a new one through the same add-exercise screen,
-then append a non-backup active-sheet row for the selected workout. Adding a
-backup exercise should be launched from an existing primary row and should
-append a backup row attached to that primary exercise by sheet order.
+canonical exercise, then append a non-backup active-sheet row for the selected
+workout. Adding a backup exercise should be launched from an existing primary
+row, should also choose an existing canonical exercise, and should append a
+backup row attached to that primary exercise by sheet order. Workout-level add
+flows must not edit canonical `Exercises` metadata.
 
 ## Set Notation
 

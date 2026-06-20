@@ -243,8 +243,33 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
-  Future<bool> addExerciseToWorkout({
+  Future<bool> createCanonicalExercise({
     required CanonicalExerciseDefinition exercise,
+  }) async {
+    final report = _report;
+    final exerciseAuthoringService = this.exerciseAuthoringService;
+    if (report == null || exerciseAuthoringService == null) {
+      _error = 'Exercise authoring is not connected yet.';
+      notifyListeners();
+      return false;
+    }
+
+    return _runServiceAction(
+      failurePrefix: 'Unable to create exercise',
+      action: () async {
+        _report = await exerciseAuthoringService.createCanonicalExercise(
+          spreadsheetId: report.spreadsheetId,
+          activeSheet: report.activeSheet,
+          exercise: exercise,
+        );
+        _error = null;
+        _clearLoggingSelection();
+      },
+    );
+  }
+
+  Future<bool> addExistingExerciseToWorkout({
+    required CanonicalExercise exercise,
     required ExercisePlacementTarget placement,
   }) async {
     final report = _report;
@@ -258,10 +283,10 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to add exercise',
       action: () async {
-        _report = await exerciseAuthoringService.addExerciseToWorkout(
+        _report = await exerciseAuthoringService.addExistingExerciseToWorkout(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
-          exercise: exercise,
+          exercisesSheetRowNumber: exercise.sheetRowNumber,
           placement: placement,
         );
         _error = null;

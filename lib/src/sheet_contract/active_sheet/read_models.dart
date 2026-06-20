@@ -38,6 +38,37 @@ class WorkoutChoice {
   final LogFormatParseResult logFormat;
 }
 
+class CanonicalExercise {
+  const CanonicalExercise({
+    required this.sheetRowNumber,
+    required this.exercise,
+    this.description = '',
+    this.defaultSets = '',
+    this.defaultReps = '',
+    this.defaultRpe = '',
+    this.defaultRest = '',
+    this.defaultTempo = '',
+    this.notes = '',
+    this.logFormat = defaultExerciseLogFormat,
+  });
+
+  final int sheetRowNumber;
+  final String exercise;
+  final String description;
+  final String defaultSets;
+  final String defaultReps;
+  final String defaultRpe;
+  final String defaultRest;
+  final String defaultTempo;
+  final String notes;
+  final String logFormat;
+
+  String get displayName {
+    final trimmed = exercise.trim();
+    return trimmed.isEmpty ? 'Row $sheetRowNumber' : trimmed;
+  }
+}
+
 class ExerciseLoggingContext {
   ExerciseLoggingContext({
     required this.selectedChoice,
@@ -116,6 +147,58 @@ class _WorkoutReadModelBuilder {
       }
     }
     return List<String>.unmodifiable(workouts);
+  }
+
+  List<CanonicalExercise> get canonicalExercises {
+    if (sheet._exercisesRows.length < 2) {
+      return const [];
+    }
+    final columns = _ExercisesColumnIndexes.fromHeader(
+      sheet._exercisesRows.first,
+    );
+    return [
+      for (
+        var rowIndex = 1;
+        rowIndex < sheet._exercisesRows.length;
+        rowIndex += 1
+      )
+        if (_cell(
+          sheet._exercisesRows[rowIndex],
+          columns.exercise,
+        ).trim().isNotEmpty)
+          CanonicalExercise(
+            sheetRowNumber: rowIndex + 1,
+            exercise: _cell(sheet._exercisesRows[rowIndex], columns.exercise),
+            description: _cell(
+              sheet._exercisesRows[rowIndex],
+              columns.description,
+            ),
+            defaultSets: _cell(
+              sheet._exercisesRows[rowIndex],
+              columns.defaultSets,
+            ),
+            defaultReps: _cell(
+              sheet._exercisesRows[rowIndex],
+              columns.defaultReps,
+            ),
+            defaultRpe: _cell(
+              sheet._exercisesRows[rowIndex],
+              columns.defaultRpe,
+            ),
+            defaultRest: _cell(
+              sheet._exercisesRows[rowIndex],
+              columns.defaultRest,
+            ),
+            defaultTempo: _cell(
+              sheet._exercisesRows[rowIndex],
+              columns.defaultTempo,
+            ),
+            notes: _cell(sheet._exercisesRows[rowIndex], columns.notes),
+            logFormat: columns.logFormat == null
+                ? defaultExerciseLogFormat
+                : _cell(sheet._exercisesRows[rowIndex], columns.logFormat!),
+          ),
+    ];
   }
 
   WorkoutOverview buildWorkoutOverview({

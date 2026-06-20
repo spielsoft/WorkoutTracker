@@ -29,10 +29,16 @@ abstract interface class SpreadsheetValidationService {
 }
 
 abstract interface class ExerciseAuthoringService {
-  Future<SpreadsheetValidationReport> addExerciseToWorkout({
+  Future<SpreadsheetValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExerciseDefinition exercise,
+  });
+
+  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int exercisesSheetRowNumber,
     required ExercisePlacementTarget placement,
   });
 }

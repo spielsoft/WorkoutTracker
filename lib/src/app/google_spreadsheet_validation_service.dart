@@ -52,11 +52,10 @@ class GoogleSpreadsheetValidationService
   }
 
   @override
-  Future<SpreadsheetValidationReport> addExerciseToWorkout({
+  Future<SpreadsheetValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExerciseDefinition exercise,
-    required ExercisePlacementTarget placement,
   }) async {
     final writeAdapter = this.writeAdapter;
     if (writeAdapter == null) {
@@ -74,13 +73,35 @@ class GoogleSpreadsheetValidationService
       throw StateError('No exercise row was planned.');
     }
 
+    await writeAdapter.applyExercisesWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: exercisesPlan,
+    );
+    return validateSpreadsheet(spreadsheetId);
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int exercisesSheetRowNumber,
+    required ExercisePlacementTarget placement,
+  }) async {
+    final writeAdapter = this.writeAdapter;
+    if (writeAdapter == null) {
+      throw StateError('Exercise placement requires a write adapter.');
+    }
+
+    final currentActiveSheet = await readAdapter.readParsedActiveSheet(
+      spreadsheetId,
+    );
     final activePlan = placement.isBackup
         ? currentActiveSheet.planBackupWorkoutPlacement(
             primarySheetRowNumber: placement.primarySheetRowNumber!,
-            exercisesSheetRowNumber: exercisesRow.sheetRowNumber,
+            exercisesSheetRowNumber: exercisesSheetRowNumber,
           )
         : currentActiveSheet.planPrimaryWorkoutPlacement(
-            exercisesSheetRowNumber: exercisesRow.sheetRowNumber,
+            exercisesSheetRowNumber: exercisesSheetRowNumber,
             workout: placement.workout ?? defaultWorkoutName,
           );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
@@ -92,10 +113,6 @@ class GoogleSpreadsheetValidationService
       );
     }
 
-    await writeAdapter.applyExercisesWritePlan(
-      spreadsheetId: spreadsheetId,
-      plan: exercisesPlan,
-    );
     await writeAdapter.applyActiveSheetWritePlan(
       spreadsheetId: spreadsheetId,
       plan: activePlan,

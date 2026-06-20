@@ -84,12 +84,14 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onHistoryBlockChanged,
     required this.onAddWorkout,
     required this.onAddHistoryBlock,
+    required this.onCreateCanonicalExercise,
     required this.onOpenExercise,
     required this.onAddPrimaryExercise,
     required this.onAddBackupExercise,
     required this.addExercisePlacementIntent,
     required this.onCloseExerciseAdd,
-    required this.onSubmitExerciseAdd,
+    required this.onSubmitCanonicalExercise,
+    required this.onSubmitExercisePlacement,
     required this.onCloseExercise,
     required this.onLoggingRowChanged,
     required this.onApplyWritePlan,
@@ -105,12 +107,14 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final ValueChanged<String?> onHistoryBlockChanged;
   final VoidCallback? onAddWorkout;
   final VoidCallback? onAddHistoryBlock;
+  final VoidCallback? onCreateCanonicalExercise;
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
   final _AddExercisePlacementIntent? addExercisePlacementIntent;
   final VoidCallback onCloseExerciseAdd;
-  final ValueChanged<CanonicalExerciseDraft> onSubmitExerciseAdd;
+  final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExercise;
+  final ValueChanged<CanonicalExercise> onSubmitExercisePlacement;
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
@@ -139,13 +143,21 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       );
     }
 
-    if (screen == _WorkoutTrackerScreen.addExercise &&
-        addExercisePlacementIntent != null) {
-      return _AddExercisePlacementScreen(
+    if (screen == _WorkoutTrackerScreen.addExercise) {
+      final intent = addExercisePlacementIntent;
+      if (intent != null) {
+        return _AddExercisePlacementScreen(
+          sheetLabel: sheetLabel,
+          intent: intent,
+          exercises: activeSheet.canonicalExercises,
+          onBack: onCloseExerciseAdd,
+          onSubmit: onSubmitExercisePlacement,
+        );
+      }
+      return _CanonicalExerciseCreationScreen(
         sheetLabel: sheetLabel,
-        intent: addExercisePlacementIntent!,
         onBack: onCloseExerciseAdd,
-        onSubmit: onSubmitExerciseAdd,
+        onSubmit: onSubmitCanonicalExercise,
       );
     }
 
@@ -192,6 +204,14 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
           compactTitle: true,
           backTooltip: 'Back to sheet selection',
           onBack: onBackToSheetSelection,
+          trailing: onCreateCanonicalExercise == null
+              ? null
+              : IconButton.filledTonal(
+                  key: const ValueKey('create-canonical-exercise'),
+                  tooltip: 'Create exercise',
+                  onPressed: onCreateCanonicalExercise,
+                  icon: const Icon(Icons.fitness_center_outlined),
+                ),
         ),
         const SizedBox(height: 16),
         Wrap(
@@ -506,18 +526,21 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   const _AddExercisePlacementScreen({
     required this.sheetLabel,
     required this.intent,
+    required this.exercises,
     required this.onBack,
     required this.onSubmit,
   });
 
   final String sheetLabel;
   final _AddExercisePlacementIntent intent;
+  final List<CanonicalExercise> exercises;
   final VoidCallback onBack;
-  final ValueChanged<CanonicalExerciseDraft> onSubmit;
+  final ValueChanged<CanonicalExercise> onSubmit;
 
   @override
   Widget build(BuildContext context) {
     final isBackup = intent.kind == _ExercisePlacementKind.backup;
+    final selectedExercise = exercises.firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -529,30 +552,163 @@ class _AddExercisePlacementScreen extends StatelessWidget {
           onBack: onBack,
         ),
         const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: Theme.of(context).colorScheme.outline),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                children: [
-                  Text('Workout: ${intent.workout}'),
-                  if (isBackup) Text('Backup for: ${intent.primaryExercise}'),
-                  if (isBackup)
-                    Text('Primary row: ${intent.primarySheetRowNumber}'),
-                ],
-              ),
-            ),
-          ),
+        _ExercisePlacementForm(
+          exercises: exercises,
+          initialExercise: selectedExercise,
+          onSubmit: onSubmit,
         ),
+      ],
+    );
+  }
+}
+
+class _ExercisePlacementForm extends StatefulWidget {
+  const _ExercisePlacementForm({
+    required this.exercises,
+    required this.initialExercise,
+    required this.onSubmit,
+  });
+
+  final List<CanonicalExercise> exercises;
+  final CanonicalExercise? initialExercise;
+  final ValueChanged<CanonicalExercise> onSubmit;
+
+  @override
+  State<_ExercisePlacementForm> createState() => _ExercisePlacementFormState();
+}
+
+class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
+  CanonicalExercise? _selectedExercise;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedExercise = widget.initialExercise;
+  }
+
+  @override
+  void didUpdateWidget(_ExercisePlacementForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.exercises.contains(_selectedExercise)) {
+      _selectedExercise = widget.initialExercise;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final exercises = widget.exercises;
+    final selectedExercise = _selectedExercise;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<CanonicalExercise>(
+          key: const ValueKey('existing-exercise-selector'),
+          initialValue: selectedExercise,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Exercise',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.fitness_center_outlined),
+          ),
+          items: [
+            for (final exercise in exercises)
+              DropdownMenuItem(
+                value: exercise,
+                child: Text(
+                  exercise.displayName,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          onChanged: exercises.isEmpty
+              ? null
+              : (exercise) {
+                  setState(() {
+                    _selectedExercise = exercise;
+                  });
+                },
+        ),
+        if (selectedExercise != null) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              _ExerciseMetadataChip(
+                label: 'Sets',
+                value: selectedExercise.defaultSets,
+              ),
+              _ExerciseMetadataChip(
+                label: 'Reps',
+                value: selectedExercise.defaultReps,
+              ),
+              _ExerciseMetadataChip(
+                label: 'RPE',
+                value: selectedExercise.defaultRpe,
+              ),
+              _ExerciseMetadataChip(
+                label: 'Rest',
+                value: selectedExercise.defaultRest,
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 16),
+        FilledButton.icon(
+          key: const ValueKey('place-existing-exercise'),
+          onPressed: selectedExercise == null
+              ? null
+              : () => widget.onSubmit(selectedExercise),
+          icon: const Icon(Icons.playlist_add_outlined),
+          label: const Text('Add to workout'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExerciseMetadataChip extends StatelessWidget {
+  const _ExerciseMetadataChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return InputChip(label: Text('$label: $trimmed'));
+  }
+}
+
+class _CanonicalExerciseCreationScreen extends StatelessWidget {
+  const _CanonicalExerciseCreationScreen({
+    required this.sheetLabel,
+    required this.onBack,
+    required this.onSubmit,
+  });
+
+  final String sheetLabel;
+  final VoidCallback onBack;
+  final ValueChanged<CanonicalExerciseDraft> onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ScreenHeader(
+          title: sheetLabel,
+          subtitle: 'New exercise',
+          compactTitle: true,
+          backTooltip: 'Back to workout setup',
+          onBack: onBack,
+        ),
+        const SizedBox(height: 16),
         ExerciseAuthoringForm(
-          authoringContext: ExerciseAuthoringContext.workoutPlacement,
+          authoringContext: ExerciseAuthoringContext.canonicalExercise,
           onCancel: onBack,
           onSubmit: onSubmit,
         ),

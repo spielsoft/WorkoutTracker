@@ -39,7 +39,7 @@ support two separate concepts:
   formula-driven display cells at an existing canonical `Exercises` row and
   stores active-sheet-only context in `Workout` and `is_backup`.
 
-The reusable add-exercise screen should capture all canonical metadata while
+The global exercise-creation screen should capture all canonical metadata while
 providing sensible defaults. A blank log format uses the default literal format,
 but new app-authored exercises should default to:
 
@@ -47,10 +47,11 @@ but new app-authored exercises should default to:
 {Weight}[x]{Reps}[@]{RPE}
 ```
 
-Adding from the workout exercise list always creates a primary row by writing a
-blank or false `is_backup` value. Adding a backup must start from an existing
-primary row through a row-specific action such as right-click on macOS or
-long-press on mobile. Backup insertion must preserve the contract that backup
+Adding from the workout exercise list chooses an existing canonical exercise and
+creates a primary row by writing a blank or false `is_backup` value. Adding a
+backup must start from an existing primary row through a row-specific action
+such as right-click on macOS or long-press on mobile, then choose an existing
+canonical exercise. Backup insertion must preserve the contract that backup
 rows attach to the nearest preceding primary row in the same workout. The UI
 should therefore make the parent primary row explicit instead of asking the user
 to infer attachment from raw sheet order.

@@ -40,6 +40,10 @@ class ParsedActiveSheet {
     return _WorkoutReadModelBuilder(this).selectableWorkouts;
   }
 
+  List<CanonicalExercise> get canonicalExercises {
+    return _WorkoutReadModelBuilder(this).canonicalExercises;
+  }
+
   HistoryBlock? selectHistoryBlock(String label) {
     for (final block in historyBlocks) {
       if (block.label == label) {
