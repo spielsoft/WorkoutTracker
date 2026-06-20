@@ -1,4 +1,9 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
@@ -32,4 +37,115 @@ void main() {
       await expectLater(picker.createSpreadsheet(), throwsA(isA<StateError>()));
     },
   );
+
+  test(
+    'created spreadsheets are initialized as WorkoutTracker workbooks',
+    () async {
+      final gateway = _RecordingAuthorizationGateway();
+      final client = _CreateSpreadsheetClient();
+      final initializer = _RecordingWorkbookInitializer();
+      final creator = GoogleSheetsSpreadsheetCreator(
+        authorizationGateway: gateway,
+        authorizationClientFactory: (_) => client,
+        titleFactory: () => ' New Workout Book ',
+        workbookInitializerFactory: (_) => initializer,
+      );
+
+      final selected = await creator.createWorkoutSpreadsheet();
+
+      expect(
+        gateway.requestedScopes.single,
+        GoogleApisWorkoutTrackerWorkbookInitializer.writeScopes,
+      );
+      expect(client.createRequestTitles, ['New Workout Book']);
+      expect(initializer.initializedSpreadsheetIds, ['created-spreadsheet-id']);
+      final workbook = initializer.workbooks.single;
+      expect(workbook.activeSheet.title, 'Active Workout');
+      expect(workbook.exercisesSheet.title, 'Exercises');
+      expect(selected.spreadsheetId, 'created-spreadsheet-id');
+      expect(selected.name, 'New Workout Book');
+      expect(selected.accountEmail, 'user@example.com');
+      expect(client.isClosed, isTrue);
+    },
+  );
+}
+
+class _RecordingAuthorizationGateway extends ChangeNotifier
+    implements GoogleSignInAuthorizationGateway {
+  final requestedScopes = <List<String>>[];
+
+  @override
+  GoogleAccountProfile? get currentAccount {
+    return const GoogleAccountProfile(email: 'user@example.com');
+  }
+
+  @override
+  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
+    requestedScopes.add(List<String>.unmodifiable(scopes));
+    return const {'Authorization': 'Bearer token'};
+  }
+
+  @override
+  Future<void> restoreAccount() async {}
+
+  @override
+  Future<void> switchAccount({List<String> scopes = const []}) async {}
+}
+
+class _RecordingWorkbookInitializer
+    implements WorkoutTrackerWorkbookInitializer {
+  final initializedSpreadsheetIds = <String>[];
+  final workbooks = <WorkoutTrackerWorkbook>[];
+
+  @override
+  Future<void> initializeWorkbook({
+    required String spreadsheetId,
+    required WorkoutTrackerWorkbook workbook,
+  }) async {
+    initializedSpreadsheetIds.add(spreadsheetId);
+    workbooks.add(workbook);
+  }
+}
+
+class _CreateSpreadsheetClient extends http.BaseClient {
+  final createRequestTitles = <String>[];
+  var isClosed = false;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (request.method != 'POST' ||
+        !request.url.path.endsWith('/spreadsheets')) {
+      throw StateError(
+        'Unexpected request: ${request.runtimeType} '
+        '${request.method} ${request.url}',
+      );
+    }
+
+    final body = utf8.decode(await request.finalize().toBytes());
+    final decoded = jsonDecode(body) as Map<String, Object?>;
+    final properties = decoded['properties'] as Map<String, Object?>;
+    createRequestTitles.add(properties['title']! as String);
+
+    return http.StreamedResponse(
+      Stream<List<int>>.value(
+        utf8.encode(
+          jsonEncode({
+            'spreadsheetId': 'created-spreadsheet-id',
+            'spreadsheetUrl':
+                'https://docs.google.com/spreadsheets/d/created-spreadsheet-id/edit',
+            'properties': {'title': properties['title']},
+          }),
+        ),
+      ),
+      200,
+      headers: {'content-type': 'application/json; charset=utf-8'},
+      request: request,
+    );
+  }
+
+  @override
+  void close() {
+    isClosed = true;
+    super.close();
+  }
 }

@@ -1,20 +1,20 @@
 import 'package:googleapis/sheets/v4.dart' as sheets;
 
-import 'development_reset_fixture.dart';
+import 'workout_tracker_workbook_template.dart';
 
-class DevelopmentSheetResetPlanner {
-  const DevelopmentSheetResetPlanner();
+class WorkoutTrackerWorkbookInitializationPlanner {
+  const WorkoutTrackerWorkbookInitializationPlanner();
 
-  int usableRowCount(DevelopmentSheetResetTab tab) {
-    return _usableResetRowCount(tab);
+  int usableRowCount(WorkoutTrackerWorkbookTab tab) {
+    return _usableWorkbookRowCount(tab);
   }
 
-  DevelopmentSheetResetTabRewritePlan planTabRewrite({
+  WorkoutTrackerWorkbookTabRewritePlan planTabRewrite({
     required int sheetId,
-    required DevelopmentSheetResetTab tab,
+    required WorkoutTrackerWorkbookTab tab,
     required int frozenRowCount,
   }) {
-    return DevelopmentSheetResetTabRewritePlan(
+    return WorkoutTrackerWorkbookTabRewritePlan(
       sheetId: sheetId,
       tab: tab,
       frozenRowCount: frozenRowCount,
@@ -22,10 +22,10 @@ class DevelopmentSheetResetPlanner {
   }
 }
 
-class DevelopmentSheetResetTabRewritePlan {
-  DevelopmentSheetResetTabRewritePlan({
+class WorkoutTrackerWorkbookTabRewritePlan {
+  WorkoutTrackerWorkbookTabRewritePlan({
     required int sheetId,
-    required DevelopmentSheetResetTab tab,
+    required WorkoutTrackerWorkbookTab tab,
     required int frozenRowCount,
   }) : requests = List<sheets.Request>.unmodifiable([
          sheets.Request(
@@ -38,7 +38,7 @@ class DevelopmentSheetResetTabRewritePlan {
              properties: sheets.SheetProperties(
                sheetId: sheetId,
                gridProperties: sheets.GridProperties(
-                 rowCount: _usableResetRowCount(tab),
+                 rowCount: _usableWorkbookRowCount(tab),
                  columnCount: tab.columnCount,
                  frozenRowCount: frozenRowCount,
                ),
@@ -51,7 +51,7 @@ class DevelopmentSheetResetTabRewritePlan {
              range: sheets.GridRange(
                sheetId: sheetId,
                startRowIndex: 0,
-               endRowIndex: _usableResetRowCount(tab),
+               endRowIndex: _usableWorkbookRowCount(tab),
                startColumnIndex: 0,
                endColumnIndex: tab.columnCount,
              ),
@@ -85,7 +85,7 @@ class DevelopmentSheetResetTabRewritePlan {
                rowIndex: 0,
                columnIndex: 0,
              ),
-             rows: _rowDataForReset(tab.rows),
+             rows: _rowDataForWorkbookInitialization(tab.rows),
              fields: 'userEnteredValue',
            ),
          ),
@@ -94,24 +94,28 @@ class DevelopmentSheetResetTabRewritePlan {
   final List<sheets.Request> requests;
 }
 
-int _usableResetRowCount(DevelopmentSheetResetTab tab) {
+int _usableWorkbookRowCount(WorkoutTrackerWorkbookTab tab) {
   final minimumRows = tab.title == 'Exercises' ? 25 : 50;
   return tab.rows.length > minimumRows ? tab.rows.length : minimumRows;
 }
 
-List<sheets.RowData> _rowDataForReset(List<List<String>> rows) {
+List<sheets.RowData> _rowDataForWorkbookInitialization(
+  List<List<String>> rows,
+) {
   return [
     for (final row in rows)
       sheets.RowData(
         values: [
           for (final value in row)
-            sheets.CellData(userEnteredValue: _extendedValueForReset(value)),
+            sheets.CellData(
+              userEnteredValue: _extendedValueForWorkbookInitialization(value),
+            ),
         ],
       ),
   ];
 }
 
-sheets.ExtendedValue? _extendedValueForReset(String value) {
+sheets.ExtendedValue? _extendedValueForWorkbookInitialization(String value) {
   if (value.isEmpty) {
     return null;
   }

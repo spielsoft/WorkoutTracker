@@ -1,17 +1,17 @@
 import 'package:workout_tracker/sheet_contract.dart';
 
-class DevelopmentSheetResetFixture {
-  DevelopmentSheetResetFixture({
+class WorkoutTrackerWorkbook {
+  WorkoutTrackerWorkbook({
     required this.activeSheet,
     required this.exercisesSheet,
   });
 
-  final DevelopmentSheetResetTab activeSheet;
-  final DevelopmentSheetResetTab exercisesSheet;
+  final WorkoutTrackerWorkbookTab activeSheet;
+  final WorkoutTrackerWorkbookTab exercisesSheet;
 }
 
-class DevelopmentSheetResetTab {
-  DevelopmentSheetResetTab({
+class WorkoutTrackerWorkbookTab {
+  WorkoutTrackerWorkbookTab({
     required this.title,
     required Iterable<Iterable<String>> rows,
   }) : rows = List<List<String>>.unmodifiable(
@@ -32,13 +32,13 @@ class DevelopmentSheetResetTab {
   }
 }
 
-DevelopmentSheetResetFixture developmentSheetResetFixture() {
-  final exercisesSheet = DevelopmentSheetResetTab(
+WorkoutTrackerWorkbook workoutTrackerWorkbookTemplate() {
+  final exercisesSheet = WorkoutTrackerWorkbookTab(
     title: 'Exercises',
     rows: _exerciseRows,
   );
-  return DevelopmentSheetResetFixture(
-    activeSheet: DevelopmentSheetResetTab(
+  return WorkoutTrackerWorkbook(
+    activeSheet: WorkoutTrackerWorkbookTab(
       title: 'Active Workout',
       rows: [
         [...activeSheetFixedColumns, 'Week 2', '', 'Week 1'],

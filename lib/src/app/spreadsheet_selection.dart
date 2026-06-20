@@ -9,6 +9,9 @@ import 'package:workout_tracker/google_sheets.dart';
 import 'google_account_session.dart';
 import 'google_authorization_client.dart';
 
+typedef WorkoutTrackerWorkbookInitializerFactory =
+    WorkoutTrackerWorkbookInitializer Function(sheets.SheetsApi api);
+
 const workoutTrackerGooglePickerClientIdDartDefine =
     'WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID';
 const workoutTrackerGooglePickerClientId = String.fromEnvironment(
@@ -290,14 +293,19 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
   GoogleSheetsSpreadsheetCreator({
     required this.authorizationGateway,
     GoogleAuthorizationClientFactory? authorizationClientFactory,
+    WorkoutTrackerWorkbookInitializerFactory? workbookInitializerFactory,
     String Function()? titleFactory,
   }) : authorizationClientFactory =
            authorizationClientFactory ??
            ((headers) => GoogleAuthorizationHeadersClient(headers: headers)),
+       workbookInitializerFactory =
+           workbookInitializerFactory ??
+           ((api) => GoogleApisWorkoutTrackerWorkbookInitializer(api)),
        titleFactory = titleFactory ?? _defaultWorkoutSpreadsheetTitle;
 
   final GoogleSignInAuthorizationGateway authorizationGateway;
   final GoogleAuthorizationClientFactory authorizationClientFactory;
+  final WorkoutTrackerWorkbookInitializerFactory workbookInitializerFactory;
   final String Function() titleFactory;
 
   @override
@@ -307,7 +315,7 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
         ? _defaultWorkoutSpreadsheetTitle()
         : requestedTitle;
     final headers = await authorizationGateway.authorizationHeaders(
-      GoogleApisDevelopmentSheetResetClient.writeScopes,
+      GoogleApisWorkoutTrackerWorkbookInitializer.writeScopes,
     );
     final client = authorizationClientFactory(headers);
     try {
@@ -323,9 +331,9 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
         throw StateError('Google Sheets did not return a spreadsheet ID.');
       }
 
-      await GoogleApisDevelopmentSheetResetClient(api).resetSpreadsheet(
+      await workbookInitializerFactory(api).initializeWorkbook(
         spreadsheetId: spreadsheetId,
-        fixture: developmentSheetResetFixture(),
+        workbook: workoutTrackerWorkbookTemplate(),
       );
 
       return SelectedSpreadsheet(

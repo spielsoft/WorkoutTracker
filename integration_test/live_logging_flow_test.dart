@@ -35,7 +35,7 @@ void main() {
     client = authenticatedClient;
     final api = sheets.SheetsApi(authenticatedClient);
     resetHarness = DevelopmentSheetResetHarness(
-      client: GoogleApisDevelopmentSheetResetClient(api),
+      initializer: GoogleApisWorkoutTrackerWorkbookInitializer(api),
     );
     readAdapter = GoogleSheetsReadAdapter(
       client: GoogleApisSheetsSpreadsheetClient(api),

@@ -6,19 +6,19 @@ void main() {
   test(
     'resets only the known development spreadsheet to a deterministic fixture',
     () async {
-      final client = _FakeDevelopmentSheetResetClient();
-      final harness = DevelopmentSheetResetHarness(client: client);
+      final initializer = _FakeWorkbookInitializer();
+      final harness = DevelopmentSheetResetHarness(initializer: initializer);
 
       await harness.reset();
 
-      expect(client.resetSpreadsheetIds, [
+      expect(initializer.initializedSpreadsheetIds, [
         workoutTrackerDevelopmentSpreadsheetId,
       ]);
-      final fixture = client.fixtures.single;
-      expect(fixture.activeSheet.title, 'Active Workout');
-      expect(fixture.exercisesSheet.title, 'Exercises');
+      final workbook = initializer.workbooks.single;
+      expect(workbook.activeSheet.title, 'Active Workout');
+      expect(workbook.exercisesSheet.title, 'Exercises');
 
-      final activeRows = fixture.activeSheet.rows;
+      final activeRows = workbook.activeSheet.rows;
       expect(
         activeRows.first.take(activeSheetFixedColumns.length),
         activeSheetFixedColumns,
@@ -34,7 +34,7 @@ void main() {
         'S1',
       ]);
 
-      final displayRows = _activeRowsWithExerciseDisplayValues(fixture);
+      final displayRows = _activeRowsWithExerciseDisplayValues(workbook);
       final parsedActiveSheet = parseActiveSheet(
         ActiveSheetInput(rows: displayRows),
       );
@@ -73,7 +73,7 @@ void main() {
       expect(formulaRows, isNotEmpty);
       expect(formulaRows.every(_usesDirectExerciseDisplayFormulas), isTrue);
 
-      final exercisesRows = fixture.exercisesSheet.rows;
+      final exercisesRows = workbook.exercisesSheet.rows;
       expect(exercisesRows.first, [
         'Exercise',
         'Description',
@@ -112,7 +112,7 @@ void main() {
 
   test('rejects non-development spreadsheet IDs by default', () async {
     final harness = DevelopmentSheetResetHarness(
-      client: _FakeDevelopmentSheetResetClient(),
+      initializer: _FakeWorkbookInitializer(),
     );
 
     expect(
@@ -121,9 +121,9 @@ void main() {
     );
   });
 
-  test('plans reset writes with typed cell values and text formatting', () {
-    final planner = DevelopmentSheetResetPlanner();
-    final tab = DevelopmentSheetResetTab(
+  test('plans workbook writes with typed cell values and text formatting', () {
+    final planner = WorkoutTrackerWorkbookInitializationPlanner();
+    final tab = WorkoutTrackerWorkbookTab(
       title: 'Active Workout',
       rows: [
         ['Exercise', 'Tempo', 'History'],
@@ -168,33 +168,33 @@ void main() {
   });
 }
 
-class _FakeDevelopmentSheetResetClient implements DevelopmentSheetResetClient {
-  final resetSpreadsheetIds = <String>[];
-  final fixtures = <DevelopmentSheetResetFixture>[];
+class _FakeWorkbookInitializer implements WorkoutTrackerWorkbookInitializer {
+  final initializedSpreadsheetIds = <String>[];
+  final workbooks = <WorkoutTrackerWorkbook>[];
 
   @override
-  Future<void> resetSpreadsheet({
+  Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required DevelopmentSheetResetFixture fixture,
+    required WorkoutTrackerWorkbook workbook,
   }) async {
-    resetSpreadsheetIds.add(spreadsheetId);
-    fixtures.add(fixture);
+    initializedSpreadsheetIds.add(spreadsheetId);
+    workbooks.add(workbook);
   }
 }
 
 List<List<String>> _activeRowsWithExerciseDisplayValues(
-  DevelopmentSheetResetFixture fixture,
+  WorkoutTrackerWorkbook workbook,
 ) {
-  return fixture.activeSheet.rows
+  return workbook.activeSheet.rows
       .map(
         (row) => row
-            .map((cell) => _exerciseDisplayValue(cell, fixture.exercisesSheet))
+            .map((cell) => _exerciseDisplayValue(cell, workbook.exercisesSheet))
             .toList(),
       )
       .toList();
 }
 
-String _exerciseDisplayValue(String cell, DevelopmentSheetResetTab exercises) {
+String _exerciseDisplayValue(String cell, WorkoutTrackerWorkbookTab exercises) {
   final formula = _exerciseFormula(cell);
   if (formula == null) {
     return cell;
