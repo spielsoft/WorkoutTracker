@@ -369,6 +369,7 @@ class _SpreadsheetValidationShellState
       return;
     }
     if (savedSelection != null) {
+      savedSelection = await _resolveSelectedSpreadsheet(savedSelection);
       setState(() {
         _selectedSpreadsheet = savedSelection;
         _spreadsheetController.text = savedSelection!.spreadsheetId;
@@ -379,6 +380,23 @@ class _SpreadsheetValidationShellState
     }
     if (savedText != null && savedText != _spreadsheetController.text) {
       _spreadsheetController.text = savedText;
+    }
+  }
+
+  Future<SelectedSpreadsheet> _resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    final picker = widget.spreadsheetPicker;
+    if (picker == null || picker is! SelectedSpreadsheetResolver) {
+      return selected;
+    }
+    final resolver = picker as SelectedSpreadsheetResolver;
+    try {
+      final resolved = await resolver.resolveSelectedSpreadsheet(selected);
+      await widget.appStateStore?.writeSelectedSpreadsheet(resolved);
+      return resolved;
+    } on Object {
+      return selected;
     }
   }
 

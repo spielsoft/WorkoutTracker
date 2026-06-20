@@ -13,6 +13,7 @@ void main() {
       accountSession: googleSignInGateway,
       appStateStore: const FileAppStateStore(),
       spreadsheetPicker: MobileGoogleDriveSpreadsheetPicker(
+        authorizationGateway: googleSignInGateway,
         spreadsheetCreator: GoogleSheetsSpreadsheetCreator(
           authorizationGateway: googleSignInGateway,
         ),

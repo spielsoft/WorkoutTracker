@@ -5,16 +5,22 @@ class _ScreenHeader extends StatelessWidget {
     required this.title,
     required this.backTooltip,
     required this.onBack,
+    this.subtitle,
+    this.compactTitle = false,
     this.trailing,
   });
 
   final String title;
   final String backTooltip;
   final VoidCallback onBack;
+  final String? subtitle;
+  final bool compactTitle;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final subtitle = this.subtitle;
     return Row(
       children: [
         IconButton(
@@ -24,61 +30,39 @@ class _ScreenHeader extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
-        ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-      ],
-    );
-  }
-}
-
-class _SelectedSheetStrip extends StatelessWidget {
-  const _SelectedSheetStrip({required this.sheetLabel});
-
-  final String sheetLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(
-          Icons.table_chart_outlined,
-          size: 18,
-          color: colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            sheetLabel,
-            key: const ValueKey('current-workout-sheet-label'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            softWrap: false,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                key: compactTitle
+                    ? const ValueKey('current-workout-sheet-label')
+                    : null,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: compactTitle
+                    ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      )
+                    : Theme.of(context).textTheme.headlineSmall,
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _WorkoutScreenFrame extends StatelessWidget {
-  const _WorkoutScreenFrame({required this.sheetLabel, required this.child});
-
-  final String sheetLabel;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SelectedSheetStrip(sheetLabel: sheetLabel),
-        const SizedBox(height: 12),
-        child,
+        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
       ],
     );
   }
@@ -139,29 +123,25 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     if (screen == _WorkoutTrackerScreen.exerciseLogging &&
         setup.loggingTarget != null) {
       final target = setup.loggingTarget!;
-      return _WorkoutScreenFrame(
+      return _ExerciseLoggingScreen(
         sheetLabel: sheetLabel,
-        child: _ExerciseLoggingScreen(
-          activeSheet: activeSheet,
-          historyBlockLabel: target.historyBlockLabel,
-          primarySheetRowNumber: target.primarySheetRowNumber,
-          selectedSheetRowNumber: target.selectedSheetRowNumber,
-          onChoiceChanged: onLoggingRowChanged,
-          onClose: onCloseExercise,
-          onApplyWritePlan: onApplyWritePlan,
-        ),
+        activeSheet: activeSheet,
+        historyBlockLabel: target.historyBlockLabel,
+        primarySheetRowNumber: target.primarySheetRowNumber,
+        selectedSheetRowNumber: target.selectedSheetRowNumber,
+        onChoiceChanged: onLoggingRowChanged,
+        onClose: onCloseExercise,
+        onApplyWritePlan: onApplyWritePlan,
       );
     }
 
     if (screen == _WorkoutTrackerScreen.addExercise &&
         addExercisePlacementIntent != null) {
-      return _WorkoutScreenFrame(
+      return _AddExercisePlacementScreen(
         sheetLabel: sheetLabel,
-        child: _AddExercisePlacementScreen(
-          intent: addExercisePlacementIntent!,
-          onBack: onCloseExerciseAdd,
-          onSubmit: onSubmitExerciseAdd,
-        ),
+        intent: addExercisePlacementIntent!,
+        onBack: onCloseExerciseAdd,
+        onSubmit: onSubmitExerciseAdd,
       );
     }
 
@@ -169,148 +149,142 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       final title = selectedWorkout == null || selectedHistoryBlock == null
           ? 'Exercises'
           : '$selectedWorkout - $selectedHistoryBlock';
-      return _WorkoutScreenFrame(
-        sheetLabel: sheetLabel,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _ScreenHeader(
-              title: title,
-              backTooltip: 'Back to workout setup',
-              onBack: onBackToWorkoutSetup,
-              trailing: selectedWorkout == null
-                  ? null
-                  : IconButton.filled(
-                      key: const ValueKey('add-primary-exercise'),
-                      tooltip: 'Add exercise',
-                      onPressed: () => onAddPrimaryExercise(selectedWorkout),
-                      icon: const Icon(Icons.add_outlined),
-                    ),
-            ),
-            const SizedBox(height: 12),
-            if (overview != null)
-              _WorkoutOverviewList(
-                key: const ValueKey('full-workout-overview'),
-                overview: overview,
-                onOpenExercise: onOpenExercise,
-                onAddBackupExercise: onAddBackupExercise,
-                showTitle: false,
-              ),
-          ],
-        ),
-      );
-    }
-
-    return _WorkoutScreenFrame(
-      sheetLabel: sheetLabel,
-      child: Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ScreenHeader(
-            title: 'Workout setup',
-            backTooltip: 'Back to sheet selection',
-            onBack: onBackToSheetSelection,
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              SizedBox(
-                width: 260,
-                child: DropdownButtonFormField<String>(
-                  initialValue: selectedWorkout,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Workout',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.fitness_center_outlined),
+            title: sheetLabel,
+            subtitle: title,
+            compactTitle: true,
+            backTooltip: 'Back to workout setup',
+            onBack: onBackToWorkoutSetup,
+            trailing: selectedWorkout == null
+                ? null
+                : IconButton.filled(
+                    key: const ValueKey('add-primary-exercise'),
+                    tooltip: 'Add exercise',
+                    onPressed: () => onAddPrimaryExercise(selectedWorkout),
+                    icon: const Icon(Icons.add_outlined),
                   ),
-                  items: [
-                    for (final workout in workouts)
-                      DropdownMenuItem(
-                        value: workout,
-                        child: Text(
-                          '$workout ${setup.progressByWorkout[workout]!.label}',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                  onChanged: onWorkoutChanged,
-                ),
-              ),
-              SizedBox(
-                width: 260,
-                child: DropdownButtonFormField<String>(
-                  initialValue: selectedHistoryBlock,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'History block',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.history_outlined),
-                  ),
-                  items: [
-                    for (final block in historyBlocks)
-                      DropdownMenuItem(
-                        value: block.label,
-                        child: Text(
-                          block.label,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                  onChanged: onHistoryBlockChanged,
-                ),
-              ),
-            ],
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                width: 260,
-                child: TextField(
-                  key: const ValueKey('new-history-block-label'),
-                  controller: newHistoryBlockController,
-                  decoration: const InputDecoration(
-                    labelText: 'New history block label',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.add_chart_outlined),
-                  ),
-                  textInputAction: TextInputAction.done,
-                ),
-              ),
-              FilledButton.icon(
-                onPressed: onCreateHistoryBlock,
-                icon: const Icon(Icons.add_outlined),
-                label: const Text('Create history block'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            key: const ValueKey('select-workout-setup'),
-            onPressed: overview == null ? null : onSelectWorkoutSetup,
-            icon: const Icon(Icons.check_circle_outline),
-            label: const Text('Select'),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (overview != null)
             _WorkoutOverviewList(
-              key: const ValueKey('compact-workout-overview'),
+              key: const ValueKey('full-workout-overview'),
               overview: overview,
               onOpenExercise: onOpenExercise,
-              onAddPrimaryExercise: selectedWorkout == null
-                  ? null
-                  : () => onAddPrimaryExercise(selectedWorkout),
               onAddBackupExercise: onAddBackupExercise,
-              compact: true,
+              showTitle: false,
             ),
         ],
-      ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ScreenHeader(
+          title: sheetLabel,
+          compactTitle: true,
+          backTooltip: 'Back to sheet selection',
+          onBack: onBackToSheetSelection,
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            SizedBox(
+              width: 260,
+              child: DropdownButtonFormField<String>(
+                initialValue: selectedWorkout,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Workout',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.fitness_center_outlined),
+                ),
+                items: [
+                  for (final workout in workouts)
+                    DropdownMenuItem(
+                      value: workout,
+                      child: Text(
+                        '$workout ${setup.progressByWorkout[workout]!.label}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onChanged: onWorkoutChanged,
+              ),
+            ),
+            SizedBox(
+              width: 260,
+              child: DropdownButtonFormField<String>(
+                initialValue: selectedHistoryBlock,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'History block',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.history_outlined),
+                ),
+                items: [
+                  for (final block in historyBlocks)
+                    DropdownMenuItem(
+                      value: block.label,
+                      child: Text(block.label, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+                onChanged: onHistoryBlockChanged,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            SizedBox(
+              width: 260,
+              child: TextField(
+                key: const ValueKey('new-history-block-label'),
+                controller: newHistoryBlockController,
+                decoration: const InputDecoration(
+                  labelText: 'New history block label',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.add_chart_outlined),
+                ),
+                textInputAction: TextInputAction.done,
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: onCreateHistoryBlock,
+              icon: const Icon(Icons.add_outlined),
+              label: const Text('Create history block'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          key: const ValueKey('select-workout-setup'),
+          onPressed: overview == null ? null : onSelectWorkoutSetup,
+          icon: const Icon(Icons.check_circle_outline),
+          label: const Text('Select'),
+        ),
+        const SizedBox(height: 16),
+        if (overview != null)
+          _WorkoutOverviewList(
+            key: const ValueKey('compact-workout-overview'),
+            overview: overview,
+            onOpenExercise: onOpenExercise,
+            onAddPrimaryExercise: selectedWorkout == null
+                ? null
+                : () => onAddPrimaryExercise(selectedWorkout),
+            onAddBackupExercise: onAddBackupExercise,
+            compact: true,
+          ),
+      ],
     );
   }
 }
@@ -532,11 +506,13 @@ enum _PrimaryExerciseAction { addBackup }
 
 class _AddExercisePlacementScreen extends StatelessWidget {
   const _AddExercisePlacementScreen({
+    required this.sheetLabel,
     required this.intent,
     required this.onBack,
     required this.onSubmit,
   });
 
+  final String sheetLabel;
   final _AddExercisePlacementIntent intent;
   final VoidCallback onBack;
   final ValueChanged<CanonicalExerciseDraft> onSubmit;
@@ -548,7 +524,9 @@ class _AddExercisePlacementScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ScreenHeader(
-          title: isBackup ? 'Add backup exercise' : 'Add exercise',
+          title: sheetLabel,
+          subtitle: isBackup ? 'Add backup exercise' : 'Add exercise',
+          compactTitle: true,
           backTooltip: 'Back to exercises',
           onBack: onBack,
         ),

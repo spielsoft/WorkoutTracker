@@ -2,6 +2,7 @@ part of 'workout_tracker_shell.dart';
 
 class _ExerciseLoggingScreen extends StatefulWidget {
   const _ExerciseLoggingScreen({
+    required this.sheetLabel,
     required this.activeSheet,
     required this.historyBlockLabel,
     required this.primarySheetRowNumber,
@@ -11,6 +12,7 @@ class _ExerciseLoggingScreen extends StatefulWidget {
     required this.onApplyWritePlan,
   });
 
+  final String sheetLabel;
   final ParsedActiveSheet activeSheet;
   final String historyBlockLabel;
   final int primarySheetRowNumber;
@@ -101,20 +103,12 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            IconButton(
-              tooltip: 'Back to exercises',
-              onPressed: widget.onClose,
-              icon: const Icon(Icons.arrow_back_outlined),
-            ),
-            Expanded(
-              child: Text(
-                selectedChoice.exercise,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-          ],
+        _ScreenHeader(
+          title: widget.sheetLabel,
+          subtitle: selectedChoice.exercise,
+          compactTitle: true,
+          backTooltip: 'Back to exercises',
+          onBack: widget.onClose,
         ),
         const SizedBox(height: 12),
         LayoutBuilder(

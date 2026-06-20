@@ -91,6 +91,12 @@ abstract interface class GoogleSpreadsheetCreator {
   Future<SelectedSpreadsheet> createWorkoutSpreadsheet();
 }
 
+abstract interface class SelectedSpreadsheetResolver {
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  );
+}
+
 class SpreadsheetPickerAvailability {
   const SpreadsheetPickerAvailability.available()
     : chooseUnavailableReason = null,
@@ -144,15 +150,20 @@ class DisabledSpreadsheetPicker implements SpreadsheetPicker {
   }
 }
 
-class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
+class MobileGoogleDriveSpreadsheetPicker
+    implements SpreadsheetPicker, SelectedSpreadsheetResolver {
   const MobileGoogleDriveSpreadsheetPicker({
     this.clientId = workoutTrackerGooglePickerClientId,
     this.callbackTimeout = workoutTrackerGooglePickerCallbackTimeout,
+    this.authorizationGateway,
+    this.authorizationClientFactory,
     this.spreadsheetCreator,
   });
 
   final String clientId;
   final Duration callbackTimeout;
+  final GoogleSignInAuthorizationGateway? authorizationGateway;
+  final GoogleAuthorizationClientFactory? authorizationClientFactory;
   final GoogleSpreadsheetCreator? spreadsheetCreator;
 
   @override
@@ -198,11 +209,7 @@ class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
       if (spreadsheetId == null) {
         return null;
       }
-      return SelectedSpreadsheet(
-        spreadsheetId: spreadsheetId,
-        name: 'Selected Google Sheet',
-        webViewLink: googleSheetsUrl(spreadsheetId),
-      );
+      return _selectedSpreadsheetForPickedId(spreadsheetId);
     } finally {
       await callbackReceiver.close();
     }
@@ -215,6 +222,13 @@ class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
       throw StateError('Google Drive sheet creation is not connected yet.');
     }
     return creator.createWorkoutSpreadsheet();
+  }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) {
+    return _selectedSpreadsheetForPickedId(selected.spreadsheetId);
   }
 
   static Uri _googlePickerAuthorizationUrl({
@@ -230,6 +244,45 @@ class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
       'allow_multiple': 'false',
       'mimetypes': 'application/vnd.google-apps.spreadsheet',
     });
+  }
+
+  Future<SelectedSpreadsheet> _selectedSpreadsheetForPickedId(
+    String spreadsheetId,
+  ) async {
+    final authorizationGateway = this.authorizationGateway;
+    if (authorizationGateway == null) {
+      return SelectedSpreadsheet(
+        spreadsheetId: spreadsheetId,
+        name: spreadsheetId,
+        webViewLink: googleSheetsUrl(spreadsheetId),
+      );
+    }
+
+    final headers = await authorizationGateway.authorizationHeaders(
+      GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
+    );
+    final clientFactory =
+        authorizationClientFactory ??
+        ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
+    final client = clientFactory(headers);
+    try {
+      final api = sheets.SheetsApi(client);
+      final spreadsheet = await api.spreadsheets.get(
+        spreadsheetId,
+        includeGridData: false,
+        $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
+      );
+      final title = spreadsheet.properties?.title?.trim();
+      return SelectedSpreadsheet(
+        spreadsheetId: spreadsheetId,
+        name: title == null || title.isEmpty ? spreadsheetId : title,
+        webViewLink:
+            spreadsheet.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
+        accountEmail: authorizationGateway.currentAccount?.email,
+      );
+    } finally {
+      client.close();
+    }
   }
 }
 
