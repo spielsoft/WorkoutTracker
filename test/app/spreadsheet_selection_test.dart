@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -96,6 +97,73 @@ void main() {
       expect(client.isClosed, isTrue);
     },
   );
+
+  test(
+    'google picker authorization URL carries callback path and request state',
+    () {
+      final authorizationUrl =
+          MobileGoogleDriveSpreadsheetPicker.googlePickerAuthorizationUrl(
+            clientId: 'client-id.apps.googleusercontent.com',
+            redirectUri: Uri.parse(
+              'http://localhost:1234/google-picker-callback',
+            ),
+            state: 'request-state',
+          );
+
+      expect(authorizationUrl.host, 'accounts.google.com');
+      expect(
+        authorizationUrl.queryParameters['redirect_uri'],
+        'http://localhost:1234/google-picker-callback',
+      );
+      expect(authorizationUrl.queryParameters['state'], 'request-state');
+    },
+  );
+
+  test('google picker callback accepts only matching path and state', () {
+    final accepted = validateGooglePickerLoopbackCallback(
+      Uri.parse(
+        'http://localhost:1234/google-picker-callback'
+        '?state=request-state&picked_file_ids=first,%20second',
+      ),
+      expectedState: 'request-state',
+    );
+
+    expect(accepted.result?.pickedSpreadsheetIds, ['first', 'second']);
+    expect(accepted.errorMessage, isNull);
+
+    final wrongPath = validateGooglePickerLoopbackCallback(
+      Uri.parse(
+        'http://localhost:1234/'
+        '?state=request-state&picked_file_ids=spreadsheet-id',
+      ),
+      expectedState: 'request-state',
+    );
+    expect(wrongPath.result, isNull);
+    expect(wrongPath.statusCode, HttpStatus.notFound);
+    expect(wrongPath.errorMessage, contains('/google-picker-callback'));
+
+    final wrongState = validateGooglePickerLoopbackCallback(
+      Uri.parse(
+        'http://localhost:1234/google-picker-callback'
+        '?state=other-state&picked_file_ids=spreadsheet-id',
+      ),
+      expectedState: 'request-state',
+    );
+    expect(wrongState.result, isNull);
+    expect(wrongState.statusCode, HttpStatus.badRequest);
+    expect(wrongState.errorMessage, contains('state'));
+
+    final missingState = validateGooglePickerLoopbackCallback(
+      Uri.parse(
+        'http://localhost:1234/google-picker-callback'
+        '?picked_file_ids=spreadsheet-id',
+      ),
+      expectedState: 'request-state',
+    );
+    expect(missingState.result, isNull);
+    expect(missingState.statusCode, HttpStatus.badRequest);
+    expect(missingState.errorMessage, contains('missing request state'));
+  });
 }
 
 class _RecordingAuthorizationGateway extends ChangeNotifier

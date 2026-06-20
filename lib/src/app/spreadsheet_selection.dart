@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:workout_tracker/google_sheets.dart';
@@ -18,6 +20,8 @@ const workoutTrackerGooglePickerClientId = String.fromEnvironment(
   workoutTrackerGooglePickerClientIdDartDefine,
 );
 const workoutTrackerGooglePickerCallbackTimeout = Duration(minutes: 5);
+const _googlePickerCallbackPath = '/google-picker-callback';
+const _googlePickerCallbackStateBytes = 16;
 
 class SelectedSpreadsheet {
   const SelectedSpreadsheet({
@@ -189,13 +193,16 @@ class MobileGoogleDriveSpreadsheetPicker
       throw StateError('Google Drive Picker is missing an OAuth client ID.');
     }
 
+    final callbackState = _newGooglePickerCallbackState();
     final callbackReceiver = await _LoopbackGooglePickerCallbackReceiver.bind(
       timeout: callbackTimeout,
+      state: callbackState,
     );
     try {
-      final authorizationUrl = _googlePickerAuthorizationUrl(
+      final authorizationUrl = googlePickerAuthorizationUrl(
         clientId: trimmedClientId,
         redirectUri: callbackReceiver.redirectUri,
+        state: callbackState,
       );
       final launched = await launchUrl(
         authorizationUrl,
@@ -234,14 +241,17 @@ class MobileGoogleDriveSpreadsheetPicker
     return _selectedSpreadsheetForPickedId(selected.spreadsheetId);
   }
 
-  static Uri _googlePickerAuthorizationUrl({
+  @visibleForTesting
+  static Uri googlePickerAuthorizationUrl({
     required String clientId,
     required Uri redirectUri,
+    required String state,
   }) {
     return Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
       'client_id': clientId,
       'redirect_uri': redirectUri.toString(),
       'response_type': 'code',
+      'state': state,
       'scope': 'https://www.googleapis.com/auth/drive.file',
       'trigger_onepick': 'true',
       'allow_multiple': 'false',
@@ -359,12 +369,23 @@ String googleSheetsUrl(String spreadsheetId) {
   return 'https://docs.google.com/spreadsheets/d/$spreadsheetId/edit';
 }
 
+String _newGooglePickerCallbackState() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(
+    _googlePickerCallbackStateBytes,
+    (_) => random.nextInt(256),
+    growable: false,
+  );
+  return base64UrlEncode(bytes).replaceAll('=', '');
+}
+
 class _LoopbackGooglePickerCallbackReceiver {
   _LoopbackGooglePickerCallbackReceiver._({
     required this._server,
     required this.redirectUri,
+    required this._state,
     required Duration timeout,
-  }) : _completion = Completer<_GooglePickerCallbackResult>() {
+  }) : _completion = Completer<GooglePickerCallbackResult>() {
     _subscription = _server.listen(_handleRequest);
     _timeout = Timer(timeout, () {
       if (!_completion.isCompleted) {
@@ -380,19 +401,24 @@ class _LoopbackGooglePickerCallbackReceiver {
 
   final HttpServer _server;
   final Uri redirectUri;
-  final Completer<_GooglePickerCallbackResult> _completion;
+  final String _state;
+  final Completer<GooglePickerCallbackResult> _completion;
   late final StreamSubscription<HttpRequest> _subscription;
   late final Timer _timeout;
 
-  Future<_GooglePickerCallbackResult> get result => _completion.future;
+  Future<GooglePickerCallbackResult> get result => _completion.future;
 
   static Future<_LoopbackGooglePickerCallbackReceiver> bind({
     required Duration timeout,
+    required String state,
   }) async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     return _LoopbackGooglePickerCallbackReceiver._(
       server: server,
-      redirectUri: Uri.parse('http://localhost:${server.port}'),
+      redirectUri: Uri.parse(
+        'http://localhost:${server.port}$_googlePickerCallbackPath',
+      ),
+      state: state,
       timeout: timeout,
     );
   }
@@ -404,17 +430,28 @@ class _LoopbackGooglePickerCallbackReceiver {
   }
 
   void _handleRequest(HttpRequest request) {
-    final result = _GooglePickerCallbackResult.fromQueryParameters(
-      request.uri.queryParameters,
+    final validation = validateGooglePickerLoopbackCallback(
+      request.uri,
+      expectedState: _state,
     );
+    final result = validation.result;
     request.response
-      ..statusCode = HttpStatus.ok
+      ..statusCode = validation.statusCode
       ..headers.contentType = ContentType.html
-      ..write(_callbackHtml(result))
+      ..write(
+        result == null
+            ? _callbackErrorHtml(validation.errorMessage!)
+            : _callbackHtml(result),
+      )
       ..close();
 
-    if (!_completion.isCompleted) {
-      if (result.error != null) {
+    if (!_completion.isCompleted &&
+        request.uri.path == _googlePickerCallbackPath) {
+      if (result == null) {
+        _completion.completeError(
+          StateError('Google Drive Picker failed: ${validation.errorMessage}.'),
+        );
+      } else if (result.error != null) {
         _completion.completeError(
           StateError('Google Drive Picker failed: ${result.error}.'),
         );
@@ -424,7 +461,7 @@ class _LoopbackGooglePickerCallbackReceiver {
     }
   }
 
-  String _callbackHtml(_GooglePickerCallbackResult result) {
+  String _callbackHtml(GooglePickerCallbackResult result) {
     final title = result.error == null ? 'Selection received' : 'Picker failed';
     final body = result.error == null
         ? 'You can return to Workout Tracker.'
@@ -450,10 +487,85 @@ class _LoopbackGooglePickerCallbackReceiver {
 </html>
 ''';
   }
+
+  String _callbackErrorHtml(String errorMessage) {
+    final escapedError = htmlEscape.convert(errorMessage);
+    return '''
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Picker failed</title>
+    <style>
+      body {
+        color: #202124;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 48px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Picker failed</h1>
+    <p>$escapedError</p>
+  </body>
+</html>
+''';
+  }
 }
 
-class _GooglePickerCallbackResult {
-  const _GooglePickerCallbackResult({
+@visibleForTesting
+final class GooglePickerLoopbackCallbackValidation {
+  const GooglePickerLoopbackCallbackValidation.accepted(this.result)
+    : errorMessage = null,
+      statusCode = HttpStatus.ok;
+
+  const GooglePickerLoopbackCallbackValidation.rejected({
+    required this.errorMessage,
+    required this.statusCode,
+  }) : result = null;
+
+  final GooglePickerCallbackResult? result;
+  final String? errorMessage;
+  final int statusCode;
+}
+
+@visibleForTesting
+GooglePickerLoopbackCallbackValidation validateGooglePickerLoopbackCallback(
+  Uri requestUri, {
+  required String expectedState,
+}) {
+  if (requestUri.path != _googlePickerCallbackPath) {
+    return GooglePickerLoopbackCallbackValidation.rejected(
+      errorMessage:
+          'Unexpected Google Drive Picker callback path '
+          '${requestUri.path}; expected $_googlePickerCallbackPath.',
+      statusCode: HttpStatus.notFound,
+    );
+  }
+
+  final returnedState = requestUri.queryParameters['state'];
+  if (returnedState == null || returnedState.isEmpty) {
+    return const GooglePickerLoopbackCallbackValidation.rejected(
+      errorMessage: 'Google Drive Picker callback is missing request state.',
+      statusCode: HttpStatus.badRequest,
+    );
+  }
+  if (returnedState != expectedState) {
+    return const GooglePickerLoopbackCallbackValidation.rejected(
+      errorMessage:
+          'Google Drive Picker callback state did not match the active request.',
+      statusCode: HttpStatus.badRequest,
+    );
+  }
+
+  return GooglePickerLoopbackCallbackValidation.accepted(
+    GooglePickerCallbackResult.fromQueryParameters(requestUri.queryParameters),
+  );
+}
+
+@visibleForTesting
+class GooglePickerCallbackResult {
+  const GooglePickerCallbackResult({
     required this.pickedSpreadsheetIds,
     this.error,
   });
@@ -463,11 +575,11 @@ class _GooglePickerCallbackResult {
 
   bool get cancelled => error == 'access_denied';
 
-  static _GooglePickerCallbackResult fromQueryParameters(
+  static GooglePickerCallbackResult fromQueryParameters(
     Map<String, String> queryParameters,
   ) {
     final pickedFileIds = queryParameters['picked_file_ids'] ?? '';
-    return _GooglePickerCallbackResult(
+    return GooglePickerCallbackResult(
       pickedSpreadsheetIds: pickedFileIds
           .split(',')
           .map((id) => id.trim())
