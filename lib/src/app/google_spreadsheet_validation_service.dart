@@ -213,6 +213,49 @@ class GoogleSpreadsheetValidationService
     );
     return validateSpreadsheet(spreadsheetId);
   }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required ReorderIntent intent,
+  }) async {
+    final writeAdapter = this.writeAdapter;
+    if (writeAdapter == null) {
+      throw StateError('Workout reorder requires a write adapter.');
+    }
+
+    final currentActiveSheet = await readAdapter.readParsedActiveSheet(
+      spreadsheetId,
+    );
+    final activePlan = activeSheet.planWorkoutExerciseReorder(
+      workout: workout,
+      intent: intent,
+    );
+    final writeRejections = activePlan.writeRejections(currentActiveSheet);
+    if (writeRejections.isNotEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: writeRejections,
+      );
+    }
+    if (activePlan.cellUpdates.isEmpty &&
+        activePlan.columnInsertions.isEmpty &&
+        activePlan.rowInsertions.isEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+      );
+    }
+
+    await writeAdapter.applyActiveSheetWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: activePlan,
+    );
+    return validateSpreadsheet(spreadsheetId);
+  }
 }
 
 ActiveSheetWriteRejection? _canonicalExerciseRowRejection({

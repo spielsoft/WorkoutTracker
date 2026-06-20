@@ -186,6 +186,15 @@ class ParsedActiveSheet {
     return _ActiveSheetWritePlanner(this).planCanonicalExerciseReorder(intent);
   }
 
+  ActiveSheetWritePlan planWorkoutExerciseReorder({
+    required String workout,
+    required ReorderIntent intent,
+  }) {
+    return _ActiveSheetWritePlanner(
+      this,
+    ).planWorkoutExerciseReorder(workout: workout, intent: intent);
+  }
+
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({
     required CanonicalExercise exercise,
     required String workout,

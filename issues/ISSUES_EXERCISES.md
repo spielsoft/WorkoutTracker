@@ -10,7 +10,7 @@ This issue plan references the PRD for full rationale and user-story detail. Eac
 - [x] Slice 2: Launch add exercise from the manager
 - [x] Slice 3: Edit existing canonical exercises
 - [x] Slice 4: Reorder canonical exercises through a generic seam
-- [ ] Slice 5: Reuse reorder behavior for workout exercise order
+- [x] Slice 5: Reuse reorder behavior for workout exercise order
 - [ ] Slice 6: Exercise management mobile review
 - [ ] Slice 7: Clean up TDD-only exercise-management tests
 
@@ -143,13 +143,13 @@ Apply the generic reorder seam to exercises within a workout. Users should be ab
 
 ### Acceptance criteria
 
-- [ ] Workout exercise rows expose a discoverable reorder affordance consistent with the exercise manager.
-- [ ] Workout exercise reorder uses the same generic reorder seam as canonical exercise reorder.
-- [ ] Moving a primary exercise moves its attached backup rows with it.
-- [ ] Backup attachment remains correct after reorder.
-- [ ] Workout reorder persists to the active sheet-backed source.
-- [ ] Existing set history and row-local target metadata are preserved.
-- [ ] Tests verify primary movement, backup-group movement, metadata preservation, persistence, and no unsafe cross-workout attachment changes.
+- [x] Workout exercise rows expose a discoverable reorder affordance consistent with the exercise manager.
+- [x] Workout exercise reorder uses the same generic reorder seam as canonical exercise reorder.
+- [x] Moving a primary exercise moves its attached backup rows with it.
+- [x] Backup attachment remains correct after reorder.
+- [x] Workout reorder persists to the active sheet-backed source.
+- [x] Existing set history and row-local target metadata are preserved.
+- [x] Tests verify primary movement, backup-group movement, metadata preservation, persistence, and no unsafe cross-workout attachment changes.
 
 ### Blocked by
 

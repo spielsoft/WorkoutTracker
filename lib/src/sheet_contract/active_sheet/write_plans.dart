@@ -253,6 +253,53 @@ class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
+class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
+  ActiveSheetRowValuesExpectation({
+    required this.sheetRowNumber,
+    required Iterable<String> expectedValues,
+  }) : expectedValues = List<String>.unmodifiable(expectedValues);
+
+  final int sheetRowNumber;
+  final List<String> expectedValues;
+
+  @override
+  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+    final rowIndex = sheetRowNumber - 1;
+    if (rowIndex >= 0 &&
+        rowIndex < sheet._rows.length &&
+        _listEquals(sheet._rows[rowIndex], expectedValues)) {
+      return const [];
+    }
+    return [
+      ActiveSheetWriteRejection(
+        'Active sheet row $sheetRowNumber no longer matches the planned '
+        'reorder.',
+      ),
+    ];
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ActiveSheetRowValuesExpectation &&
+            sheetRowNumber == other.sheetRowNumber &&
+            _listEquals(expectedValues, other.expectedValues);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(sheetRowNumber, Object.hashAll(expectedValues));
+  }
+
+  @override
+  String toString() {
+    return 'ActiveSheetRowValuesExpectation('
+        'sheetRowNumber: $sheetRowNumber, '
+        'expectedValues: $expectedValues'
+        ')';
+  }
+}
+
 class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
   const ActiveSheetCellExpectation({
     required this.sheetRowNumber,
@@ -1099,6 +1146,63 @@ class _ActiveSheetWritePlanner {
     );
   }
 
+  ActiveSheetWritePlan planWorkoutExerciseReorder({
+    required String workout,
+    required ReorderIntent intent,
+  }) {
+    final groups = [
+      for (final primary in sheet.primarySlots) _WorkoutExerciseGroup(primary),
+    ];
+    final workoutGroups = [
+      for (final group in groups)
+        if (group.primary.workout == workout) group,
+    ];
+    final reorderedWorkoutGroups = _reordered(workoutGroups, intent);
+    if (_listEquals(workoutGroups, reorderedWorkoutGroups)) {
+      return ActiveSheetWritePlan();
+    }
+
+    var reorderedWorkoutIndex = 0;
+    final reorderedGroups = [
+      for (final group in groups)
+        if (group.primary.workout == workout)
+          reorderedWorkoutGroups[reorderedWorkoutIndex++]
+        else
+          group,
+    ];
+    final targetRowNumbers = [
+      for (final group in groups) ...group.sheetRowNumbers,
+    ];
+    final sourceRowNumbers = [
+      for (final group in reorderedGroups) ...group.sheetRowNumbers,
+    ];
+
+    return ActiveSheetWritePlan(
+      cellUpdates: [
+        for (var index = 0; index < targetRowNumbers.length; index += 1)
+          if (targetRowNumbers[index] != sourceRowNumbers[index])
+            ..._rowReorderCellUpdates(
+              targetSheetRowNumber: targetRowNumbers[index],
+              sourceSheetRowNumber: sourceRowNumbers[index],
+            ),
+      ],
+      expectations: [
+        for (final rowNumber in targetRowNumbers)
+          ActiveSheetRowValuesExpectation(
+            sheetRowNumber: rowNumber,
+            expectedValues: sheet._sheetRow(rowNumber),
+          ),
+        for (final formula in sheet._cellFormulas)
+          if (targetRowNumbers.contains(formula.sheetRowNumber))
+            ActiveSheetFormulaExpectation(
+              sheetRowNumber: formula.sheetRowNumber,
+              sheetColumnNumber: formula.sheetColumnNumber,
+              expectedFormula: formula.formula,
+            ),
+      ],
+    );
+  }
+
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({
     required CanonicalExercise exercise,
     required String workout,
@@ -1478,6 +1582,52 @@ class _ActiveSheetWritePlanner {
     ];
   }
 
+  List<CellUpdate> _rowReorderCellUpdates({
+    required int targetSheetRowNumber,
+    required int sourceSheetRowNumber,
+  }) {
+    final sourceRow = sheet._sheetRow(sourceSheetRowNumber);
+    final targetRow = sheet._sheetRow(targetSheetRowNumber);
+    var width = _activeSheetRowWidth();
+    if (width < sourceRow.length) {
+      width = sourceRow.length;
+    }
+    if (width < targetRow.length) {
+      width = targetRow.length;
+    }
+
+    return [
+      for (
+        var sheetColumnNumber = 1;
+        sheetColumnNumber <= width;
+        sheetColumnNumber += 1
+      )
+        if (_formulaForCell(sourceSheetRowNumber, sheetColumnNumber)
+            case final formula?)
+          CellUpdate.formula(
+            sheetRowNumber: targetSheetRowNumber,
+            sheetColumnNumber: sheetColumnNumber,
+            value: formula,
+          )
+        else
+          CellUpdate(
+            sheetRowNumber: targetSheetRowNumber,
+            sheetColumnNumber: sheetColumnNumber,
+            value: _cell(sourceRow, sheetColumnNumber - 1),
+          ),
+    ];
+  }
+
+  String? _formulaForCell(int sheetRowNumber, int sheetColumnNumber) {
+    for (final formula in sheet._cellFormulas) {
+      if (formula.sheetRowNumber == sheetRowNumber &&
+          formula.sheetColumnNumber == sheetColumnNumber) {
+        return formula.formula;
+      }
+    }
+    return null;
+  }
+
   List<String> _canonicalExerciseRowValues(
     CanonicalExerciseDefinition exercise,
   ) {
@@ -1688,6 +1838,28 @@ class _ActiveSheetWritePlanner {
           : null,
     );
   }
+}
+
+class _WorkoutExerciseGroup {
+  _WorkoutExerciseGroup(this.primary);
+
+  final WorkoutSlot primary;
+
+  Iterable<int> get sheetRowNumbers sync* {
+    yield primary.sheetRowNumber;
+    for (final backup in primary.backups) {
+      yield backup.sheetRowNumber;
+    }
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is _WorkoutExerciseGroup && primary == other.primary;
+  }
+
+  @override
+  int get hashCode => primary.hashCode;
 }
 
 List<T> _reordered<T>(List<T> items, ReorderIntent intent) {

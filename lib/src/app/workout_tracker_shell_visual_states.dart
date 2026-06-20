@@ -87,7 +87,14 @@ class _StateChip extends StatelessWidget {
               color: style.foreground,
             ),
             const SizedBox(width: 5),
-            Text(label, style: textStyle),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textStyle,
+              ),
+            ),
           ],
         ),
       ),

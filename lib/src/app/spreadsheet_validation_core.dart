@@ -55,6 +55,13 @@ abstract interface class ExerciseAuthoringService {
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
   });
+
+  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required ReorderIntent intent,
+  });
 }
 
 class ExercisePlacementTarget {

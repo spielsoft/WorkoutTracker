@@ -1005,6 +1005,10 @@ class _SpreadsheetValidationShellState
                               isBusy || widget.exerciseAuthoringService == null
                               ? null
                               : _controller.reorderCanonicalExercises,
+                          onReorderWorkoutExercises:
+                              isBusy || widget.exerciseAuthoringService == null
+                              ? null
+                              : _controller.reorderWorkoutExercises,
                           onOpenExercise: _openExercise,
                           onAddPrimaryExercise: _openPrimaryExerciseAdd,
                           onAddBackupExercise: _openBackupExerciseAdd,

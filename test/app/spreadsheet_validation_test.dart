@@ -556,6 +556,196 @@ void main() {
   );
 
   test(
+    'reorders workout exercises and rereads backup attachment safely',
+    () async {
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'primary notes',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '225x5@8',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '12',
+          '8',
+          '2 min',
+          '',
+          'backup notes',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          'TRUE',
+          '12@8',
+        ],
+        [
+          'Bench Press',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          'upper notes',
+          defaultExerciseLogFormat,
+          'Upper',
+          '',
+          '185x6@8',
+        ],
+        [
+          'Chest Press',
+          '3',
+          '10',
+          '8',
+          '2 min',
+          '',
+          'upper backup',
+          '{Reps}[@]{RPE}',
+          'Upper',
+          'TRUE',
+          '10@8',
+        ],
+        [
+          'Lunge',
+          '2',
+          '10',
+          '7',
+          '90s',
+          '',
+          'single leg',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '50x10@7',
+        ],
+      ];
+      final reorderedActiveRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Lunge',
+          '2',
+          '10',
+          '7',
+          '90s',
+          '',
+          'single leg',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '50x10@7',
+        ],
+        [
+          'Bench Press',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          'upper notes',
+          defaultExerciseLogFormat,
+          'Upper',
+          '',
+          '185x6@8',
+        ],
+        [
+          'Chest Press',
+          '3',
+          '10',
+          '8',
+          '2 min',
+          '',
+          'upper backup',
+          '{Reps}[@]{RPE}',
+          'Upper',
+          'TRUE',
+          '10@8',
+        ],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'primary notes',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '225x5@8',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '12',
+          '8',
+          '2 min',
+          '',
+          'backup notes',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          'TRUE',
+          '12@8',
+        ],
+      ];
+      final exercisesRows = [
+        exercisesSheetColumns,
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Leg Press', description: 'Machine press'),
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+        _exerciseRow('Lunge', description: 'Single leg'),
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, exercisesRows),
+        _workbookSnapshot(activeRows, exercisesRows),
+        _workbookSnapshot(reorderedActiveRows, exercisesRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final reordered = await service.reorderWorkoutExercises(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        workout: 'Legs',
+        intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
+      );
+      final overview = reordered.activeSheet.buildWorkoutOverview(
+        workout: 'Legs',
+        historyBlockLabel: 'Week 1',
+      );
+
+      expect(writeClient.writeCount, greaterThan(0));
+      expect(overview.slots.map((slot) => slot.exercise), ['Lunge', 'Squat']);
+      expect(overview.slots[1].backups.map((backup) => backup.exercise), [
+        'Leg Press',
+      ]);
+      expect(reordered.activeSheet.primarySlots.map((slot) => slot.exercise), [
+        'Lunge',
+        'Bench Press',
+        'Squat',
+      ]);
+      expect(
+        reordered.activeSheet.primarySlots[1].backups.map(
+          (backup) => backup.exercise,
+        ),
+        ['Chest Press'],
+      );
+    },
+  );
+
+  test(
     'rejects canonical exercise reorder when the sheet changed after the UI snapshot',
     () async {
       final activeRows = [

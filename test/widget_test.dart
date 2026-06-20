@@ -1510,6 +1510,90 @@ void main() {
     );
   });
 
+  testWidgets('reorders workout exercises from the workout list', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final rows = [
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '',
+      ],
+      [
+        'Leg Press',
+        '3',
+        '12',
+        '8',
+        '2 min',
+        '',
+        '',
+        '{Reps}[@]{RPE}',
+        'Legs',
+        'TRUE',
+        '',
+      ],
+      [
+        'Lunge',
+        '2',
+        '10',
+        '7',
+        '90s',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '',
+      ],
+    ];
+    final validationService = TestSpreadsheetValidationService.fromRows(rows);
+    final authoringService = _ReorderingWorkoutExerciseAuthoringService(rows);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: validationService,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byTooltip('Reorder Squat'), findsOneWidget);
+    expect(find.byIcon(Icons.drag_handle_outlined), findsNWidgets(2));
+
+    await tester.drag(find.byTooltip('Reorder Squat'), const Offset(0, 240));
+    await tester.pumpAndSettle();
+
+    expect(authoringService.reorderIntents, [
+      const ReorderIntent(fromIndex: 0, toIndex: 1),
+    ]);
+    expect(
+      tester.getTopLeft(find.text('Lunge')).dy,
+      lessThan(tester.getTopLeft(find.text('Squat')).dy),
+    );
+    expect(find.text('1 backup'), findsOneWidget);
+  });
+
   testWidgets('compresses logging context and history until expanded', (
     tester,
   ) async {
@@ -2573,6 +2657,16 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
   }) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required ReorderIntent intent,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 class _EditingExerciseAuthoringService
@@ -2648,6 +2742,48 @@ class _ReorderingExerciseAuthoringService
             )
             .toList(),
       ),
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required ReorderIntent intent,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+class _ReorderingWorkoutExerciseAuthoringService
+    extends _AppendingExerciseAuthoringService {
+  _ReorderingWorkoutExerciseAuthoringService(List<List<String>> rows)
+    : _rows = rows.map((row) => row.toList()).toList(),
+      super(const []);
+
+  final List<List<String>> _rows;
+  final reorderIntents = <ReorderIntent>[];
+
+  @override
+  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required ReorderIntent intent,
+  }) async {
+    reorderIntents.add(intent);
+    final plan = activeSheet.planWorkoutExerciseReorder(
+      workout: workout,
+      intent: intent,
+    );
+    final previewRows = plan.previewRowsAfterApplying(_rows);
+    _rows
+      ..clear()
+      ..addAll(previewRows.map((row) => row.toList()));
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: parseActiveSheet(ActiveSheetInput(rows: _rows)),
     );
   }
 }

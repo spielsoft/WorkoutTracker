@@ -506,6 +506,352 @@ void main() {
   });
 
   test(
+    'plans workout exercise reorder as metadata-preserving primary group moves',
+    () {
+      final rows = [
+        historyHeaderRow(['Session A', '']),
+        setLabelRow(['S1', 'S2']),
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          'controlled',
+          'primary notes',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '225x5@8',
+          '',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '12',
+          '8',
+          '2 min',
+          '',
+          'backup notes',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          'TRUE',
+          '12@8',
+          '',
+        ],
+        [
+          'Bench Press',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          'upper notes',
+          defaultExerciseLogFormat,
+          'Upper',
+          '',
+          '185x6@8',
+          '',
+        ],
+        [
+          'Chest Press',
+          '3',
+          '10',
+          '8',
+          '2 min',
+          '',
+          'upper backup',
+          '{Reps}[@]{RPE}',
+          'Upper',
+          'TRUE',
+          '10@8',
+          '',
+        ],
+        [
+          'Lunge',
+          '2',
+          '10',
+          '7',
+          '90s',
+          '',
+          'single leg',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '50x10@7',
+          '55x10@8',
+        ],
+      ];
+      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+      final plan = activeSheet.planWorkoutExerciseReorder(
+        workout: 'Legs',
+        intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
+      );
+      final previewRows = plan.previewRowsAfterApplying(rows);
+      final reordered = parseActiveSheet(ActiveSheetInput(rows: previewRows));
+      final overview = reordered.buildWorkoutOverview(
+        workout: 'Legs',
+        historyBlockLabel: 'Session A',
+      );
+
+      expect(overview.slots.map((slot) => slot.exercise), ['Lunge', 'Squat']);
+      expect(overview.slots[1].backups.map((backup) => backup.exercise), [
+        'Leg Press',
+      ]);
+      expect(reordered.primarySlots.map((slot) => slot.exercise), [
+        'Lunge',
+        'Bench Press',
+        'Squat',
+      ]);
+      expect(
+        reordered.primarySlots[1].backups.map((backup) => backup.exercise),
+        ['Chest Press'],
+      );
+
+      final movedPrimary = reordered.buildExerciseLoggingContext(
+        primarySheetRowNumber: 6,
+        selectedSheetRowNumber: 6,
+        historyBlockLabel: 'Session A',
+      );
+      final movedBackup = reordered.buildExerciseLoggingContext(
+        primarySheetRowNumber: 6,
+        selectedSheetRowNumber: 7,
+        historyBlockLabel: 'Session A',
+      );
+
+      expect(movedPrimary.targets.sets, '3');
+      expect(movedPrimary.targets.reps, '5');
+      expect(movedPrimary.rest, '3 min');
+      expect(movedPrimary.notes, 'primary notes');
+      expect(movedPrimary.selectedHistory.entries.first.rawValue, '225x5@8');
+      expect(movedBackup.targets.reps, '12');
+      expect(movedBackup.rest, '2 min');
+      expect(movedBackup.notes, 'backup notes');
+      expect(movedBackup.selectedHistory.entries.first.rawValue, '12@8');
+    },
+  );
+
+  test('rejects workout exercise reorder when source rows are stale', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        'primary notes',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '225x5@8',
+      ],
+      [
+        'Lunge',
+        '2',
+        '10',
+        '7',
+        '90s',
+        '',
+        'single leg',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '50x10@7',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planWorkoutExerciseReorder(
+      workout: 'Legs',
+      intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
+    );
+    final changedRows = rows.map((row) => [...row]).toList();
+    changedRows[2][6] = 'manual sheet edit';
+    final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'Active sheet row 3 no longer matches the planned reorder.',
+      ),
+    ]);
+  });
+
+  test('preserves active-sheet formulas when reordering workout exercises', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '',
+      ],
+      [
+        'Lunge',
+        '2',
+        '10',
+        '7',
+        '90s',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: rows,
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+          CellFormula(
+            sheetRowNumber: 4,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A3',
+          ),
+          CellFormula(
+            sheetRowNumber: 4,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I3',
+          ),
+        ],
+      ),
+    );
+
+    final plan = activeSheet.planWorkoutExerciseReorder(
+      workout: 'Legs',
+      intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
+    );
+
+    expect(
+      plan.cellUpdates.where(
+        (update) => update.valueKind == CellUpdateValueKind.formula,
+      ),
+      [
+        CellUpdate.formula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A3',
+        ),
+        CellUpdate.formula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          value: '=Exercises!I3',
+        ),
+        CellUpdate.formula(
+          sheetRowNumber: 4,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A2',
+        ),
+        CellUpdate.formula(
+          sheetRowNumber: 4,
+          sheetColumnNumber: 8,
+          value: '=Exercises!I2',
+        ),
+      ],
+    );
+  });
+
+  test('rejects workout exercise reorder when active formulas are stale', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '',
+      ],
+      [
+        'Lunge',
+        '2',
+        '10',
+        '7',
+        '90s',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: rows,
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 4,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A3',
+          ),
+        ],
+      ),
+    );
+
+    final plan = activeSheet.planWorkoutExerciseReorder(
+      workout: 'Legs',
+      intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
+    );
+    final changedSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: rows,
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A4',
+          ),
+          CellFormula(
+            sheetRowNumber: 4,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A3',
+          ),
+        ],
+      ),
+    );
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'Formula row 3 column 1 no longer matches the planned reorder.',
+      ),
+    ]);
+  });
+
+  test(
     'plans canonical exercise reorder as metadata-preserving row updates with formula repairs',
     () {
       final activeRows = [

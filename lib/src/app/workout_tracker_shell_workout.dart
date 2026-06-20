@@ -85,6 +85,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onCreateCanonicalExercise,
     required this.onEditCanonicalExercise,
     required this.onReorderCanonicalExercises,
+    required this.onReorderWorkoutExercises,
     required this.onOpenExercise,
     required this.onAddPrimaryExercise,
     required this.onAddBackupExercise,
@@ -116,6 +117,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final ValueChanged<CanonicalExercise>? onEditCanonicalExercise;
   final Future<bool> Function(ReorderIntent intent)?
   onReorderCanonicalExercises;
+  final Future<bool> Function(ReorderIntent intent)? onReorderWorkoutExercises;
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
@@ -226,6 +228,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
               overview: overview,
               onOpenExercise: onOpenExercise,
               onAddBackupExercise: onAddBackupExercise,
+              onReorderExercises: onReorderWorkoutExercises,
               showTitle: false,
             ),
         ],
@@ -358,6 +361,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                 ? null
                 : () => onAddPrimaryExercise(selectedWorkout),
             onAddBackupExercise: onAddBackupExercise,
+            onReorderExercises: onReorderWorkoutExercises,
             compact: true,
           ),
       ],
@@ -372,6 +376,7 @@ class _WorkoutOverviewList extends StatelessWidget {
     required this.onOpenExercise,
     this.onAddPrimaryExercise,
     this.onAddBackupExercise,
+    this.onReorderExercises,
     this.compact = false,
     this.showTitle = true,
   });
@@ -380,6 +385,7 @@ class _WorkoutOverviewList extends StatelessWidget {
   final ValueChanged<int> onOpenExercise;
   final VoidCallback? onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot>? onAddBackupExercise;
+  final Future<bool> Function(ReorderIntent intent)? onReorderExercises;
   final bool compact;
   final bool showTitle;
 
@@ -408,12 +414,34 @@ class _WorkoutOverviewList extends StatelessWidget {
           ),
           const SizedBox(height: 8),
         ],
-        for (final slot in overview.slots)
-          _WorkoutOverviewTile(
-            slot: slot,
-            onOpenExercise: onOpenExercise,
-            onAddBackupExercise: onAddBackupExercise,
-            compact: compact,
+        if (overview.slots.isNotEmpty)
+          ReorderableListView.builder(
+            buildDefaultDragHandles: false,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: overview.slots.length,
+            onReorderItem: onReorderExercises == null
+                ? (_, _) {}
+                : (oldIndex, newIndex) {
+                    onReorderExercises!(
+                      ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
+                    );
+                  },
+            itemBuilder: (context, index) {
+              final slot = overview.slots[index];
+              return Padding(
+                key: ValueKey('workout-exercise-${slot.sheetRowNumber}'),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _WorkoutOverviewTile(
+                  index: index,
+                  slot: slot,
+                  onOpenExercise: onOpenExercise,
+                  onAddBackupExercise: onAddBackupExercise,
+                  canReorder: onReorderExercises != null,
+                  compact: compact,
+                ),
+              );
+            },
           ),
       ],
     );
@@ -422,15 +450,19 @@ class _WorkoutOverviewList extends StatelessWidget {
 
 class _WorkoutOverviewTile extends StatelessWidget {
   const _WorkoutOverviewTile({
+    required this.index,
     required this.slot,
     required this.onOpenExercise,
     required this.onAddBackupExercise,
+    required this.canReorder,
     required this.compact,
   });
 
+  final int index;
   final WorkoutOverviewSlot slot;
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<WorkoutOverviewSlot>? onAddBackupExercise;
+  final bool canReorder;
   final bool compact;
 
   @override
@@ -504,6 +536,13 @@ class _WorkoutOverviewTile extends StatelessWidget {
                           const SizedBox(width: 4),
                           backupActionButton,
                         ],
+                        if (canReorder) ...[
+                          const SizedBox(width: 4),
+                          _WorkoutReorderHandle(
+                            index: index,
+                            label: slot.exercise,
+                          ),
+                        ],
                       ],
                     )
                   : Column(
@@ -535,6 +574,13 @@ class _WorkoutOverviewTile extends StatelessWidget {
                             if (backupActionButton != null) ...[
                               const SizedBox(width: 4),
                               backupActionButton,
+                            ],
+                            if (canReorder) ...[
+                              const SizedBox(width: 4),
+                              _WorkoutReorderHandle(
+                                index: index,
+                                label: slot.exercise,
+                              ),
                             ],
                           ],
                         ),
@@ -611,6 +657,30 @@ class _WorkoutOverviewTile extends StatelessWidget {
     if (selected == _PrimaryExerciseAction.addBackup) {
       onAddBackupExercise(slot);
     }
+  }
+}
+
+class _WorkoutReorderHandle extends StatelessWidget {
+  const _WorkoutReorderHandle({required this.index, required this.label});
+
+  final int index;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableDragStartListener(
+      index: index,
+      child: Tooltip(
+        message: 'Reorder $label',
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            Icons.drag_handle_outlined,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
   }
 }
 
