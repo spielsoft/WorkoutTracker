@@ -5,11 +5,13 @@ class _ExerciseManagerInventory extends StatelessWidget {
     required this.sheetLabel,
     required this.exercises,
     required this.onBack,
+    required this.onAddExercise,
   });
 
   final String sheetLabel;
   final List<CanonicalExercise> exercises;
   final VoidCallback onBack;
+  final VoidCallback? onAddExercise;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +24,14 @@ class _ExerciseManagerInventory extends StatelessWidget {
           compactTitle: true,
           backTooltip: 'Back to workout setup',
           onBack: onBack,
+          trailing: onAddExercise == null
+              ? null
+              : IconButton.filled(
+                  key: const ValueKey('add-canonical-exercise'),
+                  tooltip: 'Add Exercise',
+                  onPressed: onAddExercise,
+                  icon: const Icon(Icons.add_outlined),
+                ),
         ),
         const SizedBox(height: 16),
         Text('Edit exercises', style: Theme.of(context).textTheme.titleLarge),

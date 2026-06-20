@@ -7,7 +7,7 @@ This issue plan references the PRD for full rationale and user-story detail. Eac
 ## Checklist
 
 - [x] Slice 1: Add the exercise manager inventory
-- [ ] Slice 2: Launch add exercise from the manager
+- [x] Slice 2: Launch add exercise from the manager
 - [ ] Slice 3: Edit existing canonical exercises
 - [ ] Slice 4: Reorder canonical exercises through a generic seam
 - [ ] Slice 5: Reuse reorder behavior for workout exercise order
@@ -54,12 +54,12 @@ Add a clear Add Exercise action to the exercise manager. It should open the exis
 
 ### Acceptance criteria
 
-- [ ] The exercise manager exposes a visible Add Exercise action.
-- [ ] Add mode uses the existing exercise authoring experience rather than a duplicate form.
-- [ ] Add mode starts with blank/default authoring values.
-- [ ] Saving creates one new canonical exercise and returns to an updated exercise list.
-- [ ] Canceling add mode leaves canonical exercise data unchanged.
-- [ ] Tests verify the add flow through public UI/controller behavior without pinning private widget structure.
+- [x] The exercise manager exposes a visible Add Exercise action.
+- [x] Add mode uses the existing exercise authoring experience rather than a duplicate form.
+- [x] Add mode starts with blank/default authoring values.
+- [x] Saving creates one new canonical exercise and returns to an updated exercise list.
+- [x] Canceling add mode leaves canonical exercise data unchanged.
+- [x] Tests verify the add flow through public UI/controller behavior without pinning private widget structure.
 
 ### Blocked by
 

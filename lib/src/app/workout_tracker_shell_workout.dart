@@ -85,6 +85,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onOpenExercise,
     required this.onAddPrimaryExercise,
     required this.onAddBackupExercise,
+    required this.exerciseAddReturnScreen,
     required this.addExercisePlacementIntent,
     required this.onCloseExerciseAdd,
     required this.onSubmitCanonicalExercise,
@@ -109,6 +110,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
+  final _WorkoutTrackerScreen exerciseAddReturnScreen;
   final _AddExercisePlacementIntent? addExercisePlacementIntent;
   final VoidCallback onCloseExerciseAdd;
   final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExercise;
@@ -154,6 +156,10 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       }
       return _CanonicalExerciseCreationScreen(
         sheetLabel: sheetLabel,
+        backTooltip:
+            exerciseAddReturnScreen == _WorkoutTrackerScreen.exerciseManager
+            ? 'Back to edit exercises'
+            : 'Back to workout setup',
         onBack: onCloseExerciseAdd,
         onSubmit: onSubmitCanonicalExercise,
       );
@@ -164,6 +170,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
         sheetLabel: sheetLabel,
         exercises: activeSheet.canonicalExercises,
         onBack: onBackToWorkoutSetup,
+        onAddExercise: onCreateCanonicalExercise,
       );
     }
 
@@ -880,11 +887,13 @@ class _PlacementMetadataField extends StatelessWidget {
 class _CanonicalExerciseCreationScreen extends StatelessWidget {
   const _CanonicalExerciseCreationScreen({
     required this.sheetLabel,
+    required this.backTooltip,
     required this.onBack,
     required this.onSubmit,
   });
 
   final String sheetLabel;
+  final String backTooltip;
   final VoidCallback onBack;
   final ValueChanged<CanonicalExerciseDraft> onSubmit;
 
@@ -897,7 +906,7 @@ class _CanonicalExerciseCreationScreen extends StatelessWidget {
           title: sheetLabel,
           subtitle: 'New exercise',
           compactTitle: true,
-          backTooltip: 'Back to workout setup',
+          backTooltip: backTooltip,
           onBack: onBack,
         ),
         const SizedBox(height: 16),

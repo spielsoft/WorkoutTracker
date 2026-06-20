@@ -745,7 +745,10 @@ class _SpreadsheetValidationShellState
   void _openCanonicalExerciseCreation() {
     _controller.closeExercise();
     setState(() {
-      _exerciseAddReturnScreen = _WorkoutTrackerScreen.workoutSetup;
+      _exerciseAddReturnScreen =
+          _screen == _WorkoutTrackerScreen.exerciseManager
+          ? _WorkoutTrackerScreen.exerciseManager
+          : _WorkoutTrackerScreen.workoutSetup;
       _addExercisePlacementIntent = null;
       _screen = _WorkoutTrackerScreen.addExercise;
     });
@@ -949,6 +952,7 @@ class _SpreadsheetValidationShellState
                           onOpenExercise: _openExercise,
                           onAddPrimaryExercise: _openPrimaryExerciseAdd,
                           onAddBackupExercise: _openBackupExerciseAdd,
+                          exerciseAddReturnScreen: _exerciseAddReturnScreen,
                           addExercisePlacementIntent:
                               _addExercisePlacementIntent,
                           onCloseExerciseAdd: _closeExerciseAdd,
