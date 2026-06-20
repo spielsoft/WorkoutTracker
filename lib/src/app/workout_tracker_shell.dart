@@ -7,6 +7,7 @@ import 'package:workout_tracker/sheet_contract.dart';
 import 'app_state_store.dart';
 import 'exercise_logging_flow.dart';
 import 'spreadsheet_validation.dart';
+import 'spreadsheet_selection.dart';
 import 'workout_tracker_controller.dart';
 
 part 'workout_tracker_shell_account.dart';
@@ -29,6 +30,8 @@ class WorkoutTrackerApp extends StatelessWidget {
     this.accountSession,
     this.appStateStore,
     this.initialSpreadsheetText = '',
+    this.initialSelectedSpreadsheet,
+    this.spreadsheetPicker,
     this.spreadsheetOpener = const UrlLauncherSpreadsheetOpener(),
     super.key,
   });
@@ -37,6 +40,8 @@ class WorkoutTrackerApp extends StatelessWidget {
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
+  final SelectedSpreadsheet? initialSelectedSpreadsheet;
+  final SpreadsheetPicker? spreadsheetPicker;
   final SpreadsheetOpener spreadsheetOpener;
 
   @override
@@ -53,6 +58,8 @@ class WorkoutTrackerApp extends StatelessWidget {
         accountSession: accountSession,
         appStateStore: appStateStore,
         initialSpreadsheetText: initialSpreadsheetText,
+        initialSelectedSpreadsheet: initialSelectedSpreadsheet,
+        spreadsheetPicker: spreadsheetPicker,
         spreadsheetOpener: spreadsheetOpener,
       ),
     );
@@ -74,12 +81,173 @@ class WorkoutTrackerScrollBehavior extends MaterialScrollBehavior {
   }
 }
 
+class _SelectedSpreadsheetChooser extends StatelessWidget {
+  const _SelectedSpreadsheetChooser({
+    required this.selectedSpreadsheet,
+    required this.availability,
+    required this.isBusy,
+    this.accountSession,
+    required this.onChooseSpreadsheet,
+    required this.onCreateSpreadsheet,
+  });
+
+  final SelectedSpreadsheet? selectedSpreadsheet;
+  final SpreadsheetPickerAvailability availability;
+  final bool isBusy;
+  final GoogleAccountSession? accountSession;
+  final Future<void> Function() onChooseSpreadsheet;
+  final Future<void> Function() onCreateSpreadsheet;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = selectedSpreadsheet;
+    final colorScheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.table_chart_outlined, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    selected?.displayLabel ?? 'No workout sheet selected',
+                    key: const ValueKey('selected-spreadsheet-label'),
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (accountSession != null) ...[
+                  const SizedBox(width: 8),
+                  _GoogleAccountMenu(accountSession: accountSession!),
+                ],
+              ],
+            ),
+            if (selected?.accountEmail != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                selected!.accountEmail!,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  key: const ValueKey('choose-google-spreadsheet'),
+                  onPressed: isBusy || !availability.canChoose
+                      ? null
+                      : onChooseSpreadsheet,
+                  icon: const Icon(Icons.drive_folder_upload_outlined),
+                  label: const Text('Choose from Google Drive'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('create-google-spreadsheet'),
+                  onPressed: isBusy || !availability.canCreate
+                      ? null
+                      : onCreateSpreadsheet,
+                  icon: const Icon(Icons.add_to_drive_outlined),
+                  label: const Text('Create in Google Drive'),
+                ),
+              ],
+            ),
+            if (availability.summary case final String summary) ...[
+              const SizedBox(height: 8),
+              Text(
+                summary,
+                key: const ValueKey('spreadsheet-picker-availability'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SpreadsheetTextFallback extends StatelessWidget {
+  const _SpreadsheetTextFallback({
+    required this.controller,
+    required this.isBusy,
+    required this.onChanged,
+    required this.onSubmitted,
+    required this.onValidate,
+    this.accountSession,
+  });
+
+  final TextEditingController controller;
+  final bool isBusy;
+  final VoidCallback onChanged;
+  final VoidCallback onSubmitted;
+  final Future<void> Function() onValidate;
+  final GoogleAccountSession? accountSession;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                key: const ValueKey('spreadsheet-selection-input'),
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Paste Google Sheets URL or ID',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.table_chart_outlined),
+                ),
+                onChanged: (_) => onChanged(),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => onSubmitted(),
+              ),
+            ),
+            if (accountSession != null) ...[
+              const SizedBox(width: 8),
+              _GoogleAccountMenu(accountSession: accountSession!),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          key: const ValueKey('validate-spreadsheet'),
+          onPressed: isBusy ? null : onValidate,
+          icon: isBusy
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.verified_outlined),
+          label: const Text('Select'),
+        ),
+      ],
+    );
+  }
+}
+
 class SpreadsheetValidationShell extends StatefulWidget {
   const SpreadsheetValidationShell({
     required this.validationService,
     this.accountSession,
     this.appStateStore,
     required this.initialSpreadsheetText,
+    this.initialSelectedSpreadsheet,
+    this.spreadsheetPicker,
     required this.spreadsheetOpener,
     super.key,
   });
@@ -88,6 +256,8 @@ class SpreadsheetValidationShell extends StatefulWidget {
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
+  final SelectedSpreadsheet? initialSelectedSpreadsheet;
+  final SpreadsheetPicker? spreadsheetPicker;
   final SpreadsheetOpener spreadsheetOpener;
 
   @override
@@ -101,6 +271,7 @@ class _SpreadsheetValidationShellState
   late final TextEditingController _spreadsheetController;
   late final TextEditingController _newHistoryBlockController;
   late final WorkoutTrackerController _controller;
+  SelectedSpreadsheet? _selectedSpreadsheet;
   _WorkoutTrackerScreen _screen = _WorkoutTrackerScreen.sheetSelection;
 
   @override
@@ -109,13 +280,15 @@ class _SpreadsheetValidationShellState
     _controller = WorkoutTrackerController(
       validationService: widget.validationService,
     );
+    _selectedSpreadsheet = widget.initialSelectedSpreadsheet;
     _spreadsheetController = TextEditingController(
-      text: widget.initialSpreadsheetText,
+      text:
+          widget.initialSelectedSpreadsheet?.spreadsheetId ??
+          widget.initialSpreadsheetText,
     );
     _spreadsheetController.addListener(_persistSpreadsheetText);
     _newHistoryBlockController = TextEditingController();
-    unawaited(_restoreAccount());
-    unawaited(_restoreSpreadsheetText());
+    unawaited(_restoreStartupState());
   }
 
   @override
@@ -135,19 +308,34 @@ class _SpreadsheetValidationShellState
     }
   }
 
-  Future<void> _restoreSpreadsheetText() async {
+  Future<void> _restoreStartupState() async {
+    await _restoreAccount();
+    await _restoreSpreadsheetSelection();
+  }
+
+  Future<void> _restoreSpreadsheetSelection() async {
+    SelectedSpreadsheet? savedSelection;
     String? savedText;
     try {
+      savedSelection = await widget.appStateStore?.readSelectedSpreadsheet();
       savedText = await widget.appStateStore?.readSpreadsheetText();
     } on Object {
       return;
     }
-    if (!mounted ||
-        savedText == null ||
-        savedText == _spreadsheetController.text) {
+    if (!mounted) {
       return;
     }
-    _spreadsheetController.text = savedText;
+    if (savedSelection != null) {
+      setState(() {
+        _selectedSpreadsheet = savedSelection;
+        _spreadsheetController.text = savedSelection!.spreadsheetId;
+      });
+      await _validateSelectedSpreadsheet();
+      return;
+    }
+    if (savedText != null && savedText != _spreadsheetController.text) {
+      _spreadsheetController.text = savedText;
+    }
   }
 
   void _persistSpreadsheetText() {
@@ -163,9 +351,12 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _validateSelectedSpreadsheet() async {
-    final selected = await _controller.validateSpreadsheetSelection(
-      _spreadsheetController.text,
-    );
+    final selectedSpreadsheet = _selectedSpreadsheet;
+    final selected = selectedSpreadsheet == null
+        ? await _controller.validateSpreadsheetSelection(
+            _spreadsheetController.text,
+          )
+        : await _controller.validateSelectedSpreadsheet(selectedSpreadsheet);
     final report = _controller.report;
     if (!mounted) {
       return;
@@ -174,6 +365,49 @@ class _SpreadsheetValidationShellState
       _screen = selected && report != null && !report.hasBlockingIssues
           ? _WorkoutTrackerScreen.workoutSetup
           : _WorkoutTrackerScreen.sheetSelection;
+    });
+  }
+
+  Future<void> _chooseSpreadsheet() async {
+    await _pickSpreadsheet((picker) => picker.chooseSpreadsheet());
+  }
+
+  Future<void> _createSpreadsheet() async {
+    await _pickSpreadsheet((picker) => picker.createSpreadsheet());
+  }
+
+  Future<void> _pickSpreadsheet(
+    Future<SelectedSpreadsheet?> Function(SpreadsheetPicker picker) action,
+  ) async {
+    final picker = widget.spreadsheetPicker;
+    if (picker == null || _controller.isBusy) {
+      return;
+    }
+    try {
+      final selectedSpreadsheet = await action(picker);
+      if (!mounted || selectedSpreadsheet == null) {
+        return;
+      }
+      setState(() {
+        _selectedSpreadsheet = selectedSpreadsheet;
+        _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
+      });
+      try {
+        await widget.appStateStore?.writeSelectedSpreadsheet(
+          selectedSpreadsheet,
+        );
+      } on Object {
+        // Selection still works for this session if persistence fails.
+      }
+      await _validateSelectedSpreadsheet();
+    } on Object catch (error) {
+      _controller.reportSpreadsheetSelectionFailure(error);
+    }
+  }
+
+  void _usePastedSpreadsheetText() {
+    setState(() {
+      _selectedSpreadsheet = null;
     });
   }
 
@@ -301,50 +535,25 @@ class _SpreadsheetValidationShellState
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (showSheetSelection) ...[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                key: const ValueKey(
-                                  'spreadsheet-selection-input',
-                                ),
-                                controller: _spreadsheetController,
-                                decoration: const InputDecoration(
-                                  labelText:
-                                      'Google Sheets URL or spreadsheet ID',
-                                  border: OutlineInputBorder(),
-                                  prefixIcon: Icon(Icons.table_chart_outlined),
-                                ),
-                                textInputAction: TextInputAction.done,
-                                onSubmitted: (_) =>
-                                    _validateSelectedSpreadsheet(),
-                              ),
-                            ),
-                            if (widget.accountSession != null) ...[
-                              const SizedBox(width: 8),
-                              _GoogleAccountMenu(
-                                accountSession: widget.accountSession!,
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        FilledButton.icon(
-                          key: const ValueKey('validate-spreadsheet'),
-                          onPressed: isBusy
-                              ? null
-                              : _validateSelectedSpreadsheet,
-                          icon: isBusy
-                              ? const SizedBox.square(
-                                  dimension: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.verified_outlined),
-                          label: const Text('Select'),
-                        ),
+                        if (widget.spreadsheetPicker != null) ...[
+                          _SelectedSpreadsheetChooser(
+                            selectedSpreadsheet: _selectedSpreadsheet,
+                            availability:
+                                widget.spreadsheetPicker!.availability,
+                            isBusy: isBusy,
+                            accountSession: widget.accountSession,
+                            onChooseSpreadsheet: _chooseSpreadsheet,
+                            onCreateSpreadsheet: _createSpreadsheet,
+                          ),
+                        ] else
+                          _SpreadsheetTextFallback(
+                            controller: _spreadsheetController,
+                            isBusy: isBusy,
+                            accountSession: widget.accountSession,
+                            onChanged: _usePastedSpreadsheetText,
+                            onSubmitted: _validateSelectedSpreadsheet,
+                            onValidate: _validateSelectedSpreadsheet,
+                          ),
                         const SizedBox(height: 24),
                       ],
                       if (error != null) ...[
