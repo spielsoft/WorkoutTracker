@@ -21,7 +21,11 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
     } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to switch Google accounts: $error')),
+          SnackBar(
+            content: Text(
+              'Unable to update Google Sheets authorization: $error',
+            ),
+          ),
         );
       }
     } finally {
@@ -41,8 +45,8 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
         final account = widget.accountSession.currentAccount;
         return PopupMenuButton<_GoogleAccountAction>(
           tooltip: account == null
-              ? 'Google account'
-              : 'Google account: ${account.email}',
+              ? 'Connect Google Sheets'
+              : 'Google Sheets account: ${account.email}',
           enabled: !_isSwitching,
           icon: _GoogleAccountAvatar(account: account, isBusy: _isSwitching),
           onSelected: (action) {
@@ -64,7 +68,14 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
                   children: [
                     const Icon(Icons.switch_account_outlined),
                     const SizedBox(width: 12),
-                    Text(account == null ? 'Sign in' : 'Switch account'),
+                    Flexible(
+                      child: Text(
+                        account == null
+                            ? 'Connect Google Sheets'
+                            : 'Switch Google Sheets account',
+                        maxLines: 2,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -88,7 +99,10 @@ class _GoogleAccountSummary extends StatelessWidget {
     final account = this.account;
     final textTheme = Theme.of(context).textTheme;
     if (account == null) {
-      return Text('No Google account selected', style: textTheme.bodyMedium);
+      return Text(
+        'No Google Sheets account connected',
+        style: textTheme.bodyMedium,
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

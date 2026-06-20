@@ -845,7 +845,10 @@ void main() {
     await tester.pump();
 
     expect(accountSession.restoreCount, 1);
-    expect(find.byTooltip('Google account: saved@example.com'), findsOneWidget);
+    expect(
+      find.byTooltip('Google Sheets account: saved@example.com'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -2414,7 +2417,7 @@ void main() {
     },
   );
 
-  testWidgets('shows a top-right Google account menu for account switching', (
+  testWidgets('shows a top-right Google Sheets authorization menu', (
     tester,
   ) async {
     final service = TestSpreadsheetValidationService.fromRows([
@@ -2437,13 +2440,15 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip('Google account: wrong@example.com'));
+    await tester.tap(
+      find.byTooltip('Google Sheets account: wrong@example.com'),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Wrong Account'), findsOneWidget);
     expect(find.text('wrong@example.com'), findsOneWidget);
 
-    await tester.tap(find.text('Switch account'));
+    await tester.tap(find.text('Switch Google Sheets account'));
     await tester.pumpAndSettle();
 
     expect(accountSession.switchCount, 1);
@@ -2451,7 +2456,39 @@ void main() {
     expect(accountSession.currentAccount?.email, 'right@example.com');
   });
 
-  testWidgets('shows the Google account menu in picker mode', (tester) async {
+  testWidgets('frames missing account state as Google Sheets authorization', (
+    tester,
+  ) async {
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+    final accountSession = _FakeGoogleAccountSession(null);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Connect Google Sheets'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No Google Sheets account connected'), findsOneWidget);
+
+    await tester.tap(find.text('Connect Google Sheets'));
+    await tester.pumpAndSettle();
+
+    expect(accountSession.switchCount, 1);
+    expect(accountSession.currentAccount?.email, 'right@example.com');
+  });
+
+  testWidgets('shows the Google Sheets account menu in picker mode', (
+    tester,
+  ) async {
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -2473,7 +2510,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byTooltip('Google account: saved@example.com'), findsOneWidget);
+    expect(
+      find.byTooltip('Google Sheets account: saved@example.com'),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
