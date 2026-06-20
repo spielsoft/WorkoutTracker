@@ -7,7 +7,8 @@ the source of truth; the app does not maintain a separate workout database.
 
 The first spreadsheet tab is the active workout sheet. It stores the current
 workout rows and visible workout history. The `Exercises` tab stores canonical
-exercise metadata and is read-only for the MVP.
+exercise metadata. The MVP app may append new canonical exercise rows to
+`Exercises`, but it does not otherwise behave as a broad spreadsheet editor.
 
 The active sheet starts with fixed columns, followed by visible history blocks:
 
@@ -25,6 +26,39 @@ are `Exercise`, `Sets`, `Reps`, `RPE`, `Rest`, `Tempo`, `Notes`, and
 `Log Format` respectively. `Workout` and `is_backup` remain active-sheet
 context and are not healed from `Exercises`; `is_backup` remains the final
 metadata column before history blocks.
+
+## Exercise Authoring
+
+App-created spreadsheets require MVP support for adding exercises. The app must
+support two separate concepts:
+
+- **Canonical exercise definition**: a row appended to `Exercises` containing
+  exercise name, description, default sets, default reps, default RPE, default
+  rest, default tempo, notes, and log format.
+- **Workout placement**: a row added to the active sheet that points its
+  formula-driven display cells at an existing canonical `Exercises` row and
+  stores active-sheet-only context in `Workout` and `is_backup`.
+
+The reusable add-exercise screen should capture all canonical metadata while
+providing sensible defaults. A blank log format uses the default literal format,
+but new app-authored exercises should default to:
+
+```text
+{Weight}[x]{Reps}[@]{RPE}
+```
+
+Adding from the workout exercise list always creates a primary row by writing a
+blank or false `is_backup` value. Adding a backup must start from an existing
+primary row through a row-specific action such as right-click on macOS or
+long-press on mobile. Backup insertion must preserve the contract that backup
+rows attach to the nearest preceding primary row in the same workout. The UI
+should therefore make the parent primary row explicit instead of asking the user
+to infer attachment from raw sheet order.
+
+When adding a workout placement, the active-sheet formula-driven columns must
+use direct formulas to the selected `Exercises` row. The app owns only the
+active-sheet context cells (`Workout` and `is_backup`) and empty history cells
+for the new placement.
 
 ## Literal Log Formats
 
@@ -74,6 +108,11 @@ Examples:
 - **Backup row**: an exercise row whose `is_backup` cell is true. A backup row
   belongs to the nearest preceding primary row in the same workout. A workout
   whose first app-readable row is a backup violates the contract.
+- **Canonical exercise row**: a row in `Exercises` that owns reusable exercise
+  metadata. Multiple active-sheet rows may point at the same canonical exercise
+  row.
+- **Workout placement**: an active-sheet row that includes formulas into a
+  canonical exercise row plus active-sheet-only workout context.
 - **Formula healing**: planning or applying repairs for missing or broken
   active-sheet display formulas so they point directly into `Exercises` again.
   Healing must not introduce app-only IDs or replace the human-readable sheet

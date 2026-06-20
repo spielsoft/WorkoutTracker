@@ -9,13 +9,16 @@ The first implementation target is a standard Flutter/Dart app with a macOS `.ap
 The app should let a user:
 
 1. Sign in with Google.
-2. Select their workout spreadsheet.
+2. Select an existing workout spreadsheet or create a new app-initialized
+   workout spreadsheet in Google Drive.
 3. Validate and repair the active workout sheet when needed.
 4. Select a workout such as Legs, Upper, or a default workout.
 5. Select or create a visible history block such as `Week 1`.
-6. Open an exercise, see recent row-local history, and log sets quickly.
-7. Choose a backup exercise when the gym is busy.
-8. Write compact set notation back to the sheet.
+6. Add canonical exercise definitions to the `Exercises` tab.
+7. Add primary exercises to a workout from the workout exercise list.
+8. Add backup exercises from an existing primary exercise when the gym is busy.
+9. Open an exercise, see recent row-local history, and log sets quickly.
+10. Write compact set notation back to the sheet.
 
 WorkoutTracker is not a coaching app, progression engine, or workout program editor. It is a focused logging interface over a spreadsheet the user controls.
 
@@ -29,7 +32,8 @@ The spreadsheet must remain useful without the app. This drives the core design:
 - The active sheet is canonical for workout rows and visible history.
 - The `Exercises` tab stores canonical exercise metadata.
 - Active sheet display cells use direct spreadsheet formulas into `Exercises`.
-- The app can heal missing or broken formulas, but the initial app does not edit `Exercises`.
+- The app can heal missing or broken formulas, and the MVP app can append new
+  canonical rows to `Exercises`.
 - Workout history is stored horizontally in visible set columns such as `S1`, `S2`, and `S3`.
 - The app presents that horizontal sheet data in a phone-friendly vertical logging flow.
 
@@ -38,7 +42,7 @@ The spreadsheet must remain useful without the app. This drives the core design:
 The active sheet uses fixed columns followed by history blocks:
 
 ```text
-Exercise | Sets | Reps | RPE | Rest | Tempo | Notes | Workout | is_backup | history blocks...
+Exercise | Sets | Reps | RPE | Rest | Tempo | Notes | Log Format | Workout | is_backup | history blocks...
 ```
 
 Important rules:
@@ -50,6 +54,34 @@ Important rules:
 - The first app-readable row in a workout cannot be a backup.
 - History block labels are human labels, not date metadata.
 - New history blocks start with `S1` and grow as more sets are logged.
+- Adding from the workout exercise list creates a primary non-backup row.
+- Adding a backup exercise starts from an existing primary row through a
+  row-specific action such as right-click on macOS or long-press on mobile.
+
+## Exercise Editing MVP
+
+App-created spreadsheets make exercise authoring part of the MVP. The app must
+provide a reusable add-exercise screen that can be opened from both the workout
+setup context and the add-to-workout context.
+
+The add-exercise screen captures canonical `Exercises` metadata:
+
+- exercise name;
+- default sets, reps, RPE, rest, and tempo;
+- notes;
+- literal log format.
+
+The app should supply sensible defaults, including the default log format:
+
+```text
+{Weight}[x]{Reps}[@]{RPE}
+```
+
+Adding a primary exercise to a workout should let the user choose an existing
+canonical exercise or create a new one through the same add-exercise screen,
+then append a non-backup active-sheet row for the selected workout. Adding a
+backup exercise should be launched from an existing primary row and should
+append a backup row attached to that primary exercise by sheet order.
 
 ## Set Notation
 
@@ -67,16 +99,19 @@ Unparseable cells must be preserved and editable as raw text. The app must not s
 
 ## Development Plan
 
-Planning artifacts:
+Stable project artifacts:
 
-- [MVP PRD](issues/MVP_prd.md)
-- [MVP implementation slices](ISSUES_MVP.md)
+- [Domain contract](docs/domain_contract.md)
 - [Agent prompts](PROMPTS.md)
 - [Agent guidance](AGENTS.md)
 
-Implementation will use TDD with vertical slices. Backend sheet-contract behavior comes first. GUI work starts only after backend parsing, validation, healing, write planning, Google integration, reset/cleanup, and backend architecture validation are complete.
+Transient issue plans may be created while coordinating work, but stable docs
+and tests should not depend on those files being present.
 
-Each completed slice should be committed separately.
+Implementation uses TDD with vertical slices. Backend sheet-contract behavior
+comes before GUI work: parsing, validation, healing, write planning, Google
+integration, reset/cleanup, and backend architecture validation should be
+complete before UI code depends on it.
 
 ## Testing
 
@@ -97,7 +132,10 @@ Use the narrowest test tier that matches the change:
 
 ## Current Status
 
-This repository now contains the standard Flutter/Dart scaffold generated for Slice 0, with iOS, macOS, Android, Linux, and Windows platform targets present. Backend sheet-contract implementation has not started yet.
+This repository contains a Flutter/Dart app with backend sheet-contract modules,
+Google Sheets adapters, app flow controllers, widget tests, and an opt-in live
+integration test for the development sheet. The broad local suite should remain
+green before release candidates.
 
 ## Development Sheet
 
@@ -106,3 +144,11 @@ The writable development Google Sheet for integration work is:
 https://docs.google.com/spreadsheets/d/1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E/edit?gid=0#gid=0
 
 Integration slices may write to this sheet, but they must include reset and cleanup behavior so tests leave it in a known state.
+
+## Spreadsheet Selection
+
+Native Google Sign-In remains wired for account access and Sheets API
+authorization. Google Drive Picker is used for choosing an existing sheet.
+Google-backed sheet creation creates a new spreadsheet, initializes it with the
+WorkoutTracker contract, selects it, and persists that selection for later
+launches.
