@@ -178,36 +178,47 @@ void main() {
     expect(find.text('Development'), findsNothing);
   });
 
-  testWidgets(
-    'blocks logging and lists formula issues on the validation screen',
-    (tester) async {
-      final service = TestSpreadsheetValidationService(
-        _parseWorkbookFixture(loadFormulaDamageFixture()),
-      );
+  testWidgets('blocks logging with task-first formula repair guidance', (
+    tester,
+  ) async {
+    final service = TestSpreadsheetValidationService(
+      _parseWorkbookFixture(loadFormulaDamageFixture()),
+    );
 
-      await tester.pumpWidget(
-        WorkoutTrackerApp(
-          validationService: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
-      );
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
 
-      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-      await tester.pump();
-      await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
 
-      expect(find.text('Formula repair needed'), findsOneWidget);
-      expect(
-        find.text('Row 3, Squat: preselects Exercises row 2.'),
-        findsOneWidget,
-      );
-      expect(find.text('Exercise: missing formula'), findsOneWidget);
-      expect(find.text('Log Format: broken formula'), findsOneWidget);
-      expect(find.text('Workout setup'), findsNothing);
-      expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
-      expect(find.text('Save set'), findsNothing);
-    },
-  );
+    expect(find.text('Reconnect exercises to logging rows'), findsOneWidget);
+    expect(
+      find.text(
+        'Repair formula cells so each workout row points to the correct '
+        'Exercises entry.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Squat can be reconnected automatically.'),
+      findsOneWidget,
+    );
+    expect(find.text('Spreadsheet details'), findsOneWidget);
+    expect(
+      find.text('Active sheet row 3; will use Exercises row 2.'),
+      findsOneWidget,
+    );
+    expect(find.text('Exercise: missing formula'), findsOneWidget);
+    expect(find.text('Log Format: broken formula'), findsOneWidget);
+    expect(find.text('Workout setup'), findsNothing);
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
+    expect(find.text('Save set'), findsNothing);
+  });
 
   testWidgets('names warning and error states on validation panels', (
     tester,
@@ -217,13 +228,13 @@ void main() {
         key: 'warning-state',
         fixture: loadFormulaDamageFixture(),
         stateLabel: 'Warning',
-        panelTitle: 'Formula repair needed',
+        panelTitle: 'Reconnect exercises to logging rows',
       ),
       (
         key: 'error-state',
         fixture: loadFixedColumnDamageFixture(),
         stateLabel: 'Error',
-        panelTitle: 'Manual repair needed',
+        panelTitle: 'Fix the active sheet structure',
       ),
     ];
 
@@ -268,7 +279,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Formula repair needed'), findsOneWidget);
+    expect(find.text('Reconnect exercises to logging rows'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('repair-unambiguous-formulas')),
       findsOneWidget,
@@ -291,7 +302,7 @@ void main() {
         value: '=Exercises!I2',
       ),
     ]);
-    expect(find.text('Formula repair needed'), findsNothing);
+    expect(find.text('Reconnect exercises to logging rows'), findsNothing);
     expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
   });
 
@@ -321,10 +332,14 @@ void main() {
       findsNothing,
     );
     expect(find.byKey(const ValueKey('formula-repair-item-3')), findsOneWidget);
+    expect(find.text('Choose the exercise for Squat'), findsOneWidget);
     expect(
-      find.text('Row 3, Squat: choose the Exercises row to use.'),
+      find.text('Select the Exercises entry that this logging row should use.'),
       findsOneWidget,
     );
+    expect(find.text('Spreadsheet details'), findsOneWidget);
+    expect(find.text('Active sheet row 3.'), findsOneWidget);
+    expect(find.text('Repair Squat'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('formula-repair-picker-3')));
     await tester.pumpAndSettle();
@@ -372,10 +387,7 @@ void main() {
         find.byKey(const ValueKey('repair-unambiguous-formulas')),
         findsNothing,
       );
-      expect(
-        find.text('Row 3, Front Squat: choose the Exercises row to use.'),
-        findsOneWidget,
-      );
+      expect(find.text('Choose the exercise for Front Squat'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('formula-repair-picker-3')));
       await tester.pumpAndSettle();
@@ -393,7 +405,7 @@ void main() {
           value: '=Exercises!A2',
         ),
       ]);
-      expect(find.text('Formula repair needed'), findsNothing);
+      expect(find.text('Reconnect exercises to logging rows'), findsNothing);
       expect(
         find.byKey(const ValueKey('select-workout-setup')),
         findsOneWidget,
@@ -423,39 +435,34 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Formula repair needed'), findsNothing);
-    expect(find.text('Manual repair needed'), findsOneWidget);
+    expect(find.text('Reconnect exercises to logging rows'), findsNothing);
+    expect(find.text('Fix the active sheet structure'), findsOneWidget);
     expect(find.text('Workout setup'), findsNothing);
     expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
   });
 
-  testWidgets('shows structural damage as manual repair items with sheet open', (
+  testWidgets('shows structural damage as task-first manual repair guidance', (
     tester,
   ) async {
     final cases = <({WorkoutWorkbookFixture fixture, String expectedText})>[
       (
         fixture: loadFixedColumnDamageFixture(),
-        expectedText:
-            'Row 1: Fixed column 1 must be "Exercise". '
-            'Open the spreadsheet and edit the active sheet.',
+        expectedText: 'Active sheet row 1: Fixed column 1 must be "Exercise".',
       ),
       (
         fixture: loadMalformedHistoryDamageFixture(),
         expectedText:
-            'Row 2: History set column S1 has no history block label. '
-            'Open the spreadsheet and edit the active sheet.',
+            'Active sheet row 2: History set column S1 has no history block label.',
       ),
       (
         fixture: loadInvalidLogFormatDamageFixture(),
         expectedText:
-            'Row 3: Invalid Log Format: Field labels cannot contain brackets. '
-            'Open the spreadsheet and edit the active sheet.',
+            'Active sheet row 3: Invalid Log Format: Field labels cannot contain brackets.',
       ),
       (
         fixture: loadBackupGroupingDamageFixture(),
         expectedText:
-            'Row 3: Backup row has no preceding primary row in the same workout. '
-            'Open the spreadsheet and edit the active sheet.',
+            'Active sheet row 3: Backup row has no preceding primary row in the same workout.',
       ),
     ];
 
@@ -481,7 +488,14 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Manual repair needed'), findsOneWidget);
+      expect(find.text('Fix the active sheet structure'), findsOneWidget);
+      expect(
+        find.text(
+          'Open Google Sheets to repair rows or headers before logging.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Spreadsheet details'), findsOneWidget);
       expect(find.text(entry.expectedText), findsOneWidget);
       expect(
         find.byKey(const ValueKey('repair-unambiguous-formulas')),
@@ -507,7 +521,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Manual repair needed'), findsNothing);
+      expect(find.text('Fix the active sheet structure'), findsNothing);
       expect(
         find.byKey(const ValueKey('select-workout-setup')),
         findsOneWidget,
@@ -533,32 +547,26 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Manual repair needed'), findsOneWidget);
+    expect(find.text('Fix the active sheet structure'), findsOneWidget);
     expect(
       find.text(
-        'Row 2: History set column S1 has no history block label. '
-        'Open the spreadsheet and edit the active sheet.',
+        'Active sheet row 2: History set column S1 has no history block label.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Active sheet row 1: Duplicate history block label: Week 1.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Active sheet row 2: History block Week 1 skips set label S2 before S3.',
       ),
       findsOneWidget,
     );
     expect(
       find.text(
-        'Row 1: Duplicate history block label: Week 1. '
-        'Open the spreadsheet and edit the active sheet.',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        'Row 2: History block Week 1 skips set label S2 before S3. '
-        'Open the spreadsheet and edit the active sheet.',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        'Row 1: History block Empty Block has no set columns. '
-        'Open the spreadsheet and edit the active sheet.',
+        'Active sheet row 1: History block Empty Block has no set columns.',
       ),
       findsOneWidget,
     );
@@ -610,7 +618,7 @@ void main() {
       await tester.pump();
 
       expect(service.appliedPlans, hasLength(1));
-      expect(find.text('Manual repair needed'), findsOneWidget);
+      expect(find.text('Fix the active sheet structure'), findsOneWidget);
       expect(find.text('Workout setup'), findsNothing);
       expect(find.text('Save set'), findsNothing);
       expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
@@ -696,6 +704,125 @@ void main() {
     );
   });
 
+  testWidgets(
+    'first-run setup has one primary sheet choice and secondary alternatives',
+    (tester) async {
+      final picker = _CountingSpreadsheetPicker();
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          spreadsheetPicker: picker,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Choose workout sheet'), findsOneWidget);
+      expect(find.text('Create sheet'), findsOneWidget);
+      expect(find.text('Paste link'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(FilledButton),
+          matching: find.text('Choose workout sheet'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(FilledButton),
+          matching: find.text('Create sheet'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(FilledButton),
+          matching: find.text('Paste link'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('spreadsheet-selection-input')),
+        findsNothing,
+      );
+
+      await tester.tap(find.text('Choose workout sheet'));
+      await tester.pump();
+      expect(picker.chooseCount, 1);
+
+      await tester.tap(find.text('Create sheet'));
+      await tester.pump();
+      expect(picker.createCount, 1);
+
+      await tester.tap(find.text('Paste link'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('spreadsheet-selection-input')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('returning sheet selection keeps loaded state compact', (
+    tester,
+  ) async {
+    final store = _MemoryAppStateStore(
+      null,
+      selectedSpreadsheet: const SelectedSpreadsheet(
+        spreadsheetId: 'selected-spreadsheet-id',
+        name: '2026 Workouts',
+        drivePath: 'My Drive / Workouts / 2026 Workouts',
+        accountEmail: 'saved@example.com',
+      ),
+    );
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        appStateStore: store,
+        spreadsheetPicker: _FakeSpreadsheetPicker(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Back to sheet selection'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Drive / Workouts / 2026 Workouts'), findsOneWidget);
+    expect(find.text('saved@example.com'), findsOneWidget);
+    expect(find.text('Return to workout'), findsOneWidget);
+    expect(find.text('Change sheet'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(FilledButton),
+        matching: find.text('Return to workout'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(FilledButton),
+        matching: find.text('Change sheet'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('spreadsheet-selection-input')),
+      findsNothing,
+    );
+  });
+
   testWidgets('shows text fallback when picker choosing is unavailable', (
     tester,
   ) async {
@@ -737,8 +864,8 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('Choose from Google Drive'));
-    await tester.tap(find.text('Choose from Google Drive'));
+    await tester.tap(find.text('Choose workout sheet'));
+    await tester.tap(find.text('Choose workout sheet'));
 
     expect(picker.chooseCount, 1);
   });
@@ -822,6 +949,188 @@ void main() {
       expect(find.text('Legs (0/1 done)'), findsOneWidget);
     },
   );
+
+  testWidgets('opens backup placement from a visible overview row action', (
+    tester,
+  ) async {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          [
+            'Pull Up',
+            '3',
+            '8',
+            '8',
+            '2 min',
+            '',
+            'Full hang.',
+            '{Reps}',
+            'Upper',
+            '',
+            '',
+          ],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+        ],
+        exercisesRows: const [
+          exercisesSheetColumns,
+          [
+            'Pull Up',
+            'Bodyweight pull',
+            '3',
+            '8',
+            '8',
+            '2 min',
+            '',
+            'Full hang.',
+            '{Reps}',
+          ],
+          [
+            'Front Plank',
+            'Core hold',
+            '3',
+            '45',
+            '8',
+            '60s',
+            '',
+            'Brace hard.',
+            '{Seconds}[s@]{RPE}',
+          ],
+        ],
+      ),
+    );
+    final service = TestSpreadsheetValidationService(activeSheet);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Upper exercises'), findsOneWidget);
+    expect(find.text('Pull Up'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add backup exercise'), findsOneWidget);
+
+    await tester.tap(find.text('Add backup exercise'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Back to exercises'), findsOneWidget);
+    expect(find.text('Add backup exercise'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('existing-exercise-selector')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('summarizes backups without crowding primary overview rows', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const longBackupName =
+        'Very Long Machine Row Backup Name That Should Not Crowd The Row';
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Pull Up',
+        '3',
+        '8',
+        '8',
+        '2 min',
+        '',
+        'Full hang.',
+        '{Reps}',
+        'Upper',
+        '',
+        '',
+      ],
+      [
+        longBackupName,
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        '',
+        '{Reps}',
+        'Upper',
+        'TRUE',
+        '12',
+      ],
+      [
+        'Another Long Cable Backup Option That Should Stay Secondary',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        '',
+        '{Reps}',
+        'Upper',
+        'TRUE',
+        '',
+      ],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    final compactOverview = find.byKey(
+      const ValueKey('compact-workout-overview'),
+    );
+    expect(compactOverview, findsOneWidget);
+    expect(
+      find.descendant(of: compactOverview, matching: find.text('Pull Up')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: compactOverview, matching: find.text('1 set')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: compactOverview, matching: find.text('2 backups')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: compactOverview, matching: find.text(longBackupName)),
+      findsNothing,
+    );
+  });
 
   testWidgets(
     'selecting a workout setup opens the full exercise picker with compact context',
@@ -929,6 +1238,135 @@ void main() {
       expect(find.text('S2: 35@8'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'prioritizes next set entry before context and history on a phone',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 2', 'Week 1', ''],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1', 'S2'],
+        [
+          'Carry',
+          '3',
+          '40',
+          '8',
+          '90s',
+          'Smooth',
+          'Stay tall.',
+          '{Distance}[@]{RPE}',
+          'Conditioning',
+          '',
+          'worked up, grip failed',
+          '30@7',
+          '35@8',
+        ],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Carry'));
+      await tester.pumpAndSettle();
+
+      final nextSet = find.text('Next set S2');
+      final nextSetField = find.byKey(const ValueKey('set-field-Distance'));
+      final saveSet = find.text('Save set');
+      final progress = find.text('Progress 1/2');
+      final target = find.text('Target: 3 sets x 40 @ 8');
+      final recentHistory = find.text('Recent history');
+
+      expect(nextSet, findsOneWidget);
+      expect(nextSetField, findsOneWidget);
+      expect(saveSet, findsOneWidget);
+      expect(progress, findsOneWidget);
+      expect(target, findsOneWidget);
+      expect(recentHistory, findsOneWidget);
+      expect(
+        tester.getTopLeft(nextSet).dy,
+        lessThan(tester.getTopLeft(target).dy),
+      );
+      expect(
+        tester.getTopLeft(nextSetField).dy,
+        lessThan(tester.getTopLeft(target).dy),
+      );
+      expect(
+        tester.getTopLeft(saveSet).dy,
+        lessThan(tester.getTopLeft(target).dy),
+      );
+      expect(
+        tester.getTopLeft(progress).dy,
+        lessThan(tester.getTopLeft(recentHistory).dy),
+      );
+    },
+  );
+
+  testWidgets('keeps save reachable while editing a phone logging form', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetViewInsets();
+    });
+
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Step Up',
+        '3',
+        '10',
+        '8',
+        '90s',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+        'Legs',
+        '',
+        '',
+      ],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Step Up'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('set-field-Weight')));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    await tester.pump();
+
+    final saveSet = find.text('Save set');
+    expect(saveSet, findsOneWidget);
+    expect(
+      tester.getBottomLeft(saveSet).dy,
+      lessThan(tester.view.physicalSize.height - tester.view.viewInsets.bottom),
+    );
+  });
 
   testWidgets('presents logged current and backup states in the logging flow', (
     tester,
@@ -1284,6 +1722,28 @@ class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
 
   @override
   Future<SelectedSpreadsheet?> createSpreadsheet() async {
+    return null;
+  }
+}
+
+class _CountingSpreadsheetPicker implements SpreadsheetPicker {
+  int chooseCount = 0;
+  int createCount = 0;
+
+  @override
+  SpreadsheetPickerAvailability get availability {
+    return const SpreadsheetPickerAvailability.available();
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+    chooseCount += 1;
+    return null;
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> createSpreadsheet() async {
+    createCount += 1;
     return null;
   }
 }

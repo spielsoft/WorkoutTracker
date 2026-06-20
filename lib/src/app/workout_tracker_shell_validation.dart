@@ -29,10 +29,13 @@ class _ValidationSummary extends StatelessWidget {
       if (report.hasBlockingSchemaViolations)
         _IssuePanel(
           icon: Icons.report_problem_outlined,
-          title: 'Manual repair needed',
-          lines: report.manualRepairItems
-              .map((item) => item.displayText)
-              .toList(),
+          title: 'Fix the active sheet structure',
+          lines: [
+            'Open Google Sheets to repair rows or headers before logging.',
+            'Spreadsheet details',
+            for (final item in report.manualRepairItems)
+              _manualRepairItemLine(item),
+          ],
           action: FilledButton.icon(
             key: const ValueKey('open-spreadsheet-manual-repair'),
             onPressed: onOpenSpreadsheet == null
@@ -47,7 +50,7 @@ class _ValidationSummary extends StatelessWidget {
           report.formulaHealingIssues.isNotEmpty)
         _IssuePanel(
           icon: Icons.build_outlined,
-          title: 'Formula repair needed',
+          title: 'Reconnect exercises to logging rows',
           lines: unambiguousFormulaIssues
               .expand(_formulaHealingIssueLines)
               .toList(),
@@ -89,6 +92,10 @@ class _ValidationSummary extends StatelessWidget {
       ],
     );
   }
+}
+
+String _manualRepairItemLine(ManualRepairItem item) {
+  return 'Active sheet row ${item.sheetRowNumber}: ${item.problem}';
 }
 
 class _FormulaChoiceRepairItem extends StatefulWidget {
@@ -135,18 +142,31 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Row ${issue.activeSheetRowNumber}, '
-                '${issue.displayedExerciseName}: choose the Exercises row to use.',
+                'Choose the exercise for ${issue.displayedExerciseName}',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
+              const SizedBox(height: 6),
+              const Text(
+                'Select the Exercises entry that this logging row should use.',
+              ),
               const SizedBox(height: 8),
+              Text(
+                'Spreadsheet details',
+                style: _diagnosticLabelStyle(context),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Active sheet row ${issue.activeSheetRowNumber}.',
+                style: _diagnosticTextStyle(context),
+              ),
               for (final cell in issue.cells)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     '${cell.columnName}: ${_formulaReasonLabel(cell.reason)}',
+                    style: _diagnosticTextStyle(context),
                   ),
                 ),
               const SizedBox(height: 8),
@@ -157,7 +177,7 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
                 expandedInsets: EdgeInsets.zero,
                 enableFilter: true,
                 enableSearch: true,
-                label: const Text('Exercises row'),
+                label: const Text('Exercise to reconnect'),
                 dropdownMenuEntries: [
                   for (final choice in issue.exerciseChoices)
                     DropdownMenuEntry<int>(
@@ -188,7 +208,7 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
                         ),
                       ),
                 icon: const Icon(Icons.build_circle_outlined),
-                label: const Text('Repair selected row'),
+                label: Text('Repair ${issue.displayedExerciseName}'),
               ),
             ],
           ),
@@ -199,11 +219,18 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
 }
 
 Iterable<String> _formulaHealingIssueLines(FormulaHealingIssue issue) sync* {
-  final selection = issue.requiresUserSelection
-      ? 'requires exercise selection'
-      : 'preselects Exercises row ${issue.preselectedExerciseSheetRowNumber}';
-  yield 'Row ${issue.activeSheetRowNumber}, ${issue.displayedExerciseName}: '
-      '$selection.';
+  yield 'Repair formula cells so each workout row points to the correct '
+      'Exercises entry.';
+  yield '${issue.displayedExerciseName} can be reconnected automatically.';
+  yield 'Spreadsheet details';
+  final selectedRow = issue.preselectedExerciseSheetRowNumber;
+  if (selectedRow == null) {
+    yield 'Active sheet row ${issue.activeSheetRowNumber}; '
+        'needs an Exercises row selection.';
+  } else {
+    yield 'Active sheet row ${issue.activeSheetRowNumber}; '
+        'will use Exercises row $selectedRow.';
+  }
   for (final cell in issue.cells) {
     yield '${cell.columnName}: ${_formulaReasonLabel(cell.reason)}';
   }
@@ -239,6 +266,30 @@ class _IssuePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var isDiagnostic = false;
+    final issueLines = <Widget>[];
+    for (final line in lines) {
+      if (line == 'Spreadsheet details') {
+        isDiagnostic = true;
+        issueLines.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(line, style: _diagnosticLabelStyle(context)),
+          ),
+        );
+      } else {
+        issueLines.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              line,
+              style: isDiagnostic ? _diagnosticTextStyle(context) : null,
+            ),
+          ),
+        );
+      }
+    }
+
     return _StateCallout(
       state: switch (tone) {
         _IssueTone.error => _WorkoutVisualState.error,
@@ -247,11 +298,20 @@ class _IssuePanel extends StatelessWidget {
       icon: icon,
       title: title,
       action: action,
-      children: [
-        for (final line in lines)
-          Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(line)),
-        ...extraContent,
-      ],
+      children: [...issueLines, ...extraContent],
     );
   }
+}
+
+TextStyle? _diagnosticLabelStyle(BuildContext context) {
+  return Theme.of(context).textTheme.labelMedium?.copyWith(
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+    fontWeight: FontWeight.w700,
+  );
+}
+
+TextStyle? _diagnosticTextStyle(BuildContext context) {
+  return Theme.of(context).textTheme.bodySmall?.copyWith(
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
 }

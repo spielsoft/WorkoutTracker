@@ -7,13 +7,13 @@ This issue plan intentionally references the PRD for full rationale and user-sto
 ## Checklist
 
 - [x] Slice 1: Establish mobile visual state language
-- [ ] Slice 2: Make logging entry thumb-first
+- [x] Slice 2: Make logging entry thumb-first
 - [ ] Slice 3: Compress logging context and history
-- [ ] Slice 4: Expose backup row actions
+- [x] Slice 4: Expose backup row actions
 - [ ] Slice 5: Stabilize mobile form layouts
 - [ ] Slice 6: Move creation actions out of selectors
-- [ ] Slice 7: Simplify first-run sheet setup
-- [ ] Slice 8: Make repair flows task-first
+- [x] Slice 7: Simplify first-run sheet setup
+- [x] Slice 8: Make repair flows task-first
 - [ ] Slice 9: Mobile UI review pass
 - [ ] Slice 10: Clean up TDD-only UI tests
 
@@ -57,12 +57,12 @@ Rework the mobile logging screen so the active exercise, next set editor, save a
 
 ### Acceptance criteria
 
-- [ ] On common narrow phone widths, the next set editor is visible before recent history and extended context.
-- [ ] The current exercise and next set identity are visible near the editor.
-- [ ] The save action remains reachable while entering set values.
-- [ ] Logged set progress is visible before recent history.
-- [ ] Unparseable set cells remain editable as raw text.
-- [ ] Focused widget tests cover the mobile logging priority order and save availability through public UI behavior.
+- [x] On common narrow phone widths, the next set editor is visible before recent history and extended context.
+- [x] The current exercise and next set identity are visible near the editor.
+- [x] The save action remains reachable while entering set values.
+- [x] Logged set progress is visible before recent history.
+- [x] Unparseable set cells remain editable as raw text.
+- [x] Focused widget tests cover the mobile logging priority order and save availability through public UI behavior.
 
 ### Blocked by
 
@@ -112,12 +112,12 @@ Add visible tap affordances for adding, switching, or managing backup exercises 
 
 ### Acceptance criteria
 
-- [ ] Every primary exercise row has a visible path to add or manage backups.
-- [ ] Backup actions are accessible by tap and do not require long press.
-- [ ] Long press remains optional if retained.
-- [ ] Backup names, counts, or indicators do not crowd out primary exercise names.
-- [ ] Set progress remains visible on rows with backups.
-- [ ] Widget tests verify visible backup actions and readable row state.
+- [x] Every primary exercise row has a visible path to add or manage backups.
+- [x] Backup actions are accessible by tap and do not require long press.
+- [x] Long press remains optional if retained.
+- [x] Backup names, counts, or indicators do not crowd out primary exercise names.
+- [x] Set progress remains visible on rows with backups.
+- [x] Widget tests verify visible backup actions and readable row state.
 
 ### Blocked by
 
@@ -195,11 +195,11 @@ Rework first-run and sheet-selection presentation so there is one dominant mobil
 
 ### Acceptance criteria
 
-- [ ] First-run setup presents one dominant choose-sheet action.
-- [ ] Create-sheet and paste-link paths are visible but secondary.
-- [ ] Returning users can understand selected sheet and account state without setup details dominating normal use.
-- [ ] Existing sheet selection, creation, persistence, and fallback behavior is preserved.
-- [ ] Widget tests verify the primary and secondary setup actions through public UI behavior.
+- [x] First-run setup presents one dominant choose-sheet action.
+- [x] Create-sheet and paste-link paths are visible but secondary.
+- [x] Returning users can understand selected sheet and account state without setup details dominating normal use.
+- [x] Existing sheet selection, creation, persistence, and fallback behavior is preserved.
+- [x] Widget tests verify the primary and secondary setup actions through public UI behavior.
 
 ### Blocked by
 
@@ -222,11 +222,11 @@ Revise validation and repair presentation so panels lead with user task language
 
 ### Acceptance criteria
 
-- [ ] Repair panels lead with task-first language.
-- [ ] Spreadsheet row numbers and diagnostic details remain available but visually secondary.
-- [ ] Formula repair choices identify the affected task or exercise where possible.
-- [ ] Warning and error states use the shared mobile visual state language.
-- [ ] Widget tests verify task-first labels and preserved diagnostic availability.
+- [x] Repair panels lead with task-first language.
+- [x] Spreadsheet row numbers and diagnostic details remain available but visually secondary.
+- [x] Formula repair choices identify the affected task or exercise where possible.
+- [x] Warning and error states use the shared mobile visual state language.
+- [x] Widget tests verify task-first labels and preserved diagnostic availability.
 
 ### Blocked by
 

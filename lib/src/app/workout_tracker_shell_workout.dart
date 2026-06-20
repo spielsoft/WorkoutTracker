@@ -378,6 +378,23 @@ class _WorkoutOverviewTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final setLabel = slot.setCount == 1 ? '1 set' : '${slot.setCount} sets';
+    final backupSummaryLabel = slot.backups.length == 1
+        ? '1 backup'
+        : '${slot.backups.length} backups';
+    final backupActionButton = onAddBackupExercise == null
+        ? null
+        : PopupMenuButton<_PrimaryExerciseAction>(
+            key: ValueKey('backup-actions-${slot.sheetRowNumber}'),
+            tooltip: 'Backup actions for ${slot.exercise}',
+            icon: const Icon(Icons.alt_route_outlined),
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: _PrimaryExerciseAction.addBackup,
+                child: _PrimaryExerciseActionMenuItem(),
+              ),
+            ],
+            onSelected: _handlePrimaryExerciseAction,
+          );
     return GestureDetector(
       onSecondaryTapDown: onAddBackupExercise == null
           ? null
@@ -404,31 +421,20 @@ class _WorkoutOverviewTile extends StatelessWidget {
                   ? Row(
                       children: [
                         Expanded(
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  slot.exercise,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium,
-                                ),
+                              Text(
+                                slot.exercise,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
-                              for (final backup in slot.backups) ...[
-                                const SizedBox(width: 10),
-                                const Icon(
-                                  Icons.subdirectory_arrow_right,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    backup.exercise,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                              if (slot.backups.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                _StateChip(
+                                  state: _WorkoutVisualState.backup,
+                                  label: backupSummaryLabel,
                                 ),
                               ],
                             ],
@@ -436,6 +442,10 @@ class _WorkoutOverviewTile extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Text(setLabel),
+                        if (backupActionButton != null) ...[
+                          const SizedBox(width: 4),
+                          backupActionButton,
+                        ],
                       ],
                     )
                   : Column(
@@ -444,12 +454,30 @@ class _WorkoutOverviewTile extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: Text(
-                                slot.exercise,
-                                style: Theme.of(context).textTheme.titleMedium,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    slot.exercise,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  if (slot.backups.isNotEmpty)
+                                    _StateChip(
+                                      state: _WorkoutVisualState.backup,
+                                      label: backupSummaryLabel,
+                                    ),
+                                ],
                               ),
                             ),
                             Text(setLabel),
+                            if (backupActionButton != null) ...[
+                              const SizedBox(width: 4),
+                              backupActionButton,
+                            ],
                           ],
                         ),
                         if (slot.backups.isNotEmpty) ...[
@@ -469,7 +497,16 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                         size: 18,
                                       ),
                                       const SizedBox(width: 6),
-                                      Text(backup.exercise),
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 240,
+                                        ),
+                                        child: Text(
+                                          backup.exercise,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
                                     ],
                                   ),
                               ],
@@ -483,6 +520,12 @@ class _WorkoutOverviewTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _handlePrimaryExerciseAction(_PrimaryExerciseAction action) {
+    if (action == _PrimaryExerciseAction.addBackup) {
+      onAddBackupExercise?.call(slot);
+    }
   }
 
   Future<void> _showPrimaryExerciseMenu(
@@ -503,14 +546,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
       items: const [
         PopupMenuItem(
           value: _PrimaryExerciseAction.addBackup,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.subdirectory_arrow_right),
-              SizedBox(width: 8),
-              Text('Add backup exercise'),
-            ],
-          ),
+          child: _PrimaryExerciseActionMenuItem(),
         ),
       ],
     );
@@ -521,6 +557,30 @@ class _WorkoutOverviewTile extends StatelessWidget {
 }
 
 enum _PrimaryExerciseAction { addBackup }
+
+class _PrimaryExerciseActionMenuItem extends StatelessWidget {
+  const _PrimaryExerciseActionMenuItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 220,
+      child: Row(
+        children: [
+          Icon(Icons.subdirectory_arrow_right),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Add backup exercise',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _AddExercisePlacementScreen extends StatelessWidget {
   const _AddExercisePlacementScreen({

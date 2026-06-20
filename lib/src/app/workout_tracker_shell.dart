@@ -116,6 +116,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
     this.onReturnToWorkout,
     required this.onChooseSpreadsheet,
     required this.onCreateSpreadsheet,
+    required this.onShowTextFallback,
   });
 
   final SelectedSpreadsheet? selectedSpreadsheet;
@@ -125,6 +126,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
   final VoidCallback? onReturnToWorkout;
   final Future<void> Function() onChooseSpreadsheet;
   final Future<void> Function() onCreateSpreadsheet;
+  final VoidCallback onShowTextFallback;
 
   @override
   Widget build(BuildContext context) {
@@ -167,33 +169,52 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
+            if (selected != null && onReturnToWorkout != null)
+              FilledButton.tonalIcon(
+                key: const ValueKey('return-to-selected-workout'),
+                onPressed: isBusy ? null : onReturnToWorkout,
+                icon: const Icon(Icons.fitness_center_outlined),
+                label: const Text('Return to workout'),
+              )
+            else
+              FilledButton.icon(
+                key: const ValueKey('choose-google-spreadsheet'),
+                onPressed: isBusy || !availability.canChoose
+                    ? null
+                    : onChooseSpreadsheet,
+                icon: const Icon(Icons.drive_folder_upload_outlined),
+                label: Text(
+                  selected == null ? 'Choose workout sheet' : 'Change sheet',
+                ),
+              ),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                FilledButton.icon(
-                  key: const ValueKey('choose-google-spreadsheet'),
-                  onPressed: isBusy || !availability.canChoose
-                      ? null
-                      : onChooseSpreadsheet,
-                  icon: const Icon(Icons.drive_folder_upload_outlined),
-                  label: const Text('Choose from Google Drive'),
-                ),
+                if (selected != null && onReturnToWorkout != null)
+                  OutlinedButton.icon(
+                    key: const ValueKey('choose-google-spreadsheet'),
+                    onPressed: isBusy || !availability.canChoose
+                        ? null
+                        : onChooseSpreadsheet,
+                    icon: const Icon(Icons.drive_folder_upload_outlined),
+                    label: const Text('Change sheet'),
+                  ),
                 OutlinedButton.icon(
                   key: const ValueKey('create-google-spreadsheet'),
                   onPressed: isBusy || !availability.canCreate
                       ? null
                       : onCreateSpreadsheet,
                   icon: const Icon(Icons.add_to_drive_outlined),
-                  label: const Text('Create in Google Drive'),
+                  label: const Text('Create sheet'),
                 ),
-                if (selected != null && onReturnToWorkout != null)
-                  FilledButton.tonalIcon(
-                    key: const ValueKey('return-to-selected-workout'),
-                    onPressed: isBusy ? null : onReturnToWorkout,
-                    icon: const Icon(Icons.fitness_center_outlined),
-                    label: const Text('Return to workout'),
-                  ),
+                TextButton.icon(
+                  key: const ValueKey('show-spreadsheet-url-fallback'),
+                  onPressed: isBusy ? null : onShowTextFallback,
+                  icon: const Icon(Icons.link_outlined),
+                  label: const Text('Paste link'),
+                ),
               ],
             ),
             if (availability.summary case final String summary) ...[
@@ -314,6 +335,7 @@ class _SpreadsheetValidationShellState
       _WorkoutTrackerScreen.exercisePicker;
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
   bool _isPickingSpreadsheet = false;
+  bool _showSpreadsheetTextFallback = false;
 
   @override
   void initState() {
@@ -456,6 +478,7 @@ class _SpreadsheetValidationShellState
       setState(() {
         _selectedSpreadsheet = selectedSpreadsheet;
         _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
+        _showSpreadsheetTextFallback = false;
       });
       try {
         await widget.appStateStore?.writeSelectedSpreadsheet(
@@ -479,6 +502,13 @@ class _SpreadsheetValidationShellState
   void _usePastedSpreadsheetText() {
     setState(() {
       _selectedSpreadsheet = null;
+    });
+  }
+
+  void _showPastedSpreadsheetTextFallback() {
+    setState(() {
+      _selectedSpreadsheet = null;
+      _showSpreadsheetTextFallback = true;
     });
   }
 
@@ -800,6 +830,10 @@ class _SpreadsheetValidationShellState
                 _screen == _WorkoutTrackerScreen.sheetSelection ||
                 report == null ||
                 report.hasBlockingIssues;
+            final showSpreadsheetTextFallback =
+                spreadsheetPicker == null ||
+                pickerAvailability?.canChoose == false ||
+                _showSpreadsheetTextFallback;
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
@@ -820,10 +854,11 @@ class _SpreadsheetValidationShellState
                                 : null,
                             onChooseSpreadsheet: _chooseSpreadsheet,
                             onCreateSpreadsheet: _createSpreadsheet,
+                            onShowTextFallback:
+                                _showPastedSpreadsheetTextFallback,
                           ),
                         ],
-                        if (spreadsheetPicker == null ||
-                            pickerAvailability?.canChoose == false)
+                        if (showSpreadsheetTextFallback)
                           _SpreadsheetTextFallback(
                             controller: _spreadsheetController,
                             isBusy: isBusy,

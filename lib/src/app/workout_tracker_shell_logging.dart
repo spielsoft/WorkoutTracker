@@ -203,17 +203,30 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
           },
         ),
         const SizedBox(height: 16),
-        _ExerciseContextPanel(
-          context: loggingContext,
-          latestHistoryValue: viewModel.latestHistoryValue,
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Icon(
+              selectedChoice.isBackup
+                  ? Icons.alt_route_outlined
+                  : Icons.fitness_center_outlined,
+              size: 20,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            Text(
+              selectedChoice.exercise,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            if (selectedChoice.isBackup)
+              const _StateChip(
+                state: _WorkoutVisualState.backup,
+                label: 'Backup',
+              ),
+          ],
         ),
-        const SizedBox(height: 12),
-        _SetProgressStrip(
-          loggedSetNumbers: loggedSetNumbers,
-          currentSetNumber: viewModel.nextSetNumber,
-          totalSetCount: totalSetCount,
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         Text(
           'Next set S${viewModel.nextSetNumber}',
           style: Theme.of(context).textTheme.titleMedium,
@@ -224,6 +237,12 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
           controllers: viewModel.newSetControllers,
           isBusy: _isWriting,
           onSave: _saveStructuredSet,
+        ),
+        const SizedBox(height: 16),
+        _SetProgressStrip(
+          loggedSetNumbers: loggedSetNumbers,
+          currentSetNumber: viewModel.nextSetNumber,
+          totalSetCount: totalSetCount,
         ),
         const SizedBox(height: 16),
         Text('Logged sets', style: Theme.of(context).textTheme.titleMedium),
@@ -250,6 +269,11 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
                 onSave: () => _saveRawSet(entry),
                 onClear: () => _clearSet(entry),
               ),
+        const SizedBox(height: 16),
+        _ExerciseContextPanel(
+          context: loggingContext,
+          latestHistoryValue: viewModel.latestHistoryValue,
+        ),
         const SizedBox(height: 16),
         Text('Recent history', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -320,11 +344,16 @@ class _StructuredSetEditor extends StatelessWidget {
       ParsedLogFormat(:final fieldLabels) => fieldLabels,
       InvalidLogFormat() => const <String>[],
     };
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
+    Widget saveButton() {
+      return FilledButton.icon(
+        onPressed: isBusy ? null : onSave,
+        icon: const Icon(Icons.save_outlined),
+        label: const Text('Save set'),
+      );
+    }
+
+    List<Widget> fields() {
+      return [
         for (final label in fieldLabels)
           SizedBox(
             width: 112,
@@ -337,12 +366,34 @@ class _StructuredSetEditor extends StatelessWidget {
               ),
             ),
           ),
-        FilledButton.icon(
-          onPressed: isBusy ? null : onSave,
-          icon: const Icon(Icons.save_outlined),
-          label: const Text('Save set'),
-        ),
-      ],
+      ];
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 520) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              saveButton(),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: fields(),
+              ),
+            ],
+          );
+        }
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [...fields(), saveButton()],
+        );
+      },
     );
   }
 }
