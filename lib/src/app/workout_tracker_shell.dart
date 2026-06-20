@@ -26,6 +26,7 @@ enum _WorkoutTrackerScreen {
   exerciseManager,
   exercisePicker,
   addExercise,
+  editExercise,
   exerciseLogging,
 }
 
@@ -387,6 +388,7 @@ class _SpreadsheetValidationShellState
   _WorkoutTrackerScreen _exerciseAddReturnScreen =
       _WorkoutTrackerScreen.exercisePicker;
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
+  CanonicalExercise? _canonicalExerciseBeingEdited;
   bool _isPickingSpreadsheet = false;
   bool _showSpreadsheetTextFallback = false;
 
@@ -654,6 +656,7 @@ class _SpreadsheetValidationShellState
   void _returnToSheetSelection() {
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
+    _canonicalExerciseBeingEdited = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.sheetSelection;
     });
@@ -661,6 +664,7 @@ class _SpreadsheetValidationShellState
 
   void _selectWorkoutSetup() {
     _addExercisePlacementIntent = null;
+    _canonicalExerciseBeingEdited = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.exercisePicker;
     });
@@ -672,6 +676,7 @@ class _SpreadsheetValidationShellState
       return;
     }
     _addExercisePlacementIntent = null;
+    _canonicalExerciseBeingEdited = null;
     _controller.closeExercise();
     setState(() {
       _screen = _WorkoutTrackerScreen.workoutSetup;
@@ -681,6 +686,7 @@ class _SpreadsheetValidationShellState
   void _returnToWorkoutSetup() {
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
+    _canonicalExerciseBeingEdited = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.workoutSetup;
     });
@@ -689,6 +695,7 @@ class _SpreadsheetValidationShellState
   void _openExerciseManager() {
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
+    _canonicalExerciseBeingEdited = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.exerciseManager;
     });
@@ -713,6 +720,7 @@ class _SpreadsheetValidationShellState
         ? _WorkoutTrackerScreen.workoutSetup
         : _WorkoutTrackerScreen.exercisePicker;
     _controller.closeExercise();
+    _canonicalExerciseBeingEdited = null;
     setState(() {
       _exerciseAddReturnScreen = returnScreen;
       _addExercisePlacementIntent = _AddExercisePlacementIntent.primary(
@@ -731,6 +739,7 @@ class _SpreadsheetValidationShellState
         ? _WorkoutTrackerScreen.workoutSetup
         : _WorkoutTrackerScreen.exercisePicker;
     _controller.closeExercise();
+    _canonicalExerciseBeingEdited = null;
     setState(() {
       _exerciseAddReturnScreen = returnScreen;
       _addExercisePlacementIntent = _AddExercisePlacementIntent.backup(
@@ -744,6 +753,7 @@ class _SpreadsheetValidationShellState
 
   void _openCanonicalExerciseCreation() {
     _controller.closeExercise();
+    _canonicalExerciseBeingEdited = null;
     setState(() {
       _exerciseAddReturnScreen =
           _screen == _WorkoutTrackerScreen.exerciseManager
@@ -757,7 +767,24 @@ class _SpreadsheetValidationShellState
   void _closeExerciseAdd() {
     setState(() {
       _addExercisePlacementIntent = null;
+      _canonicalExerciseBeingEdited = null;
       _screen = _exerciseAddReturnScreen;
+    });
+  }
+
+  void _openCanonicalExerciseEdit(CanonicalExercise exercise) {
+    _controller.closeExercise();
+    _addExercisePlacementIntent = null;
+    setState(() {
+      _canonicalExerciseBeingEdited = exercise;
+      _screen = _WorkoutTrackerScreen.editExercise;
+    });
+  }
+
+  void _closeExerciseEdit() {
+    setState(() {
+      _canonicalExerciseBeingEdited = null;
+      _screen = _WorkoutTrackerScreen.exerciseManager;
     });
   }
 
@@ -772,6 +799,26 @@ class _SpreadsheetValidationShellState
     }
     setState(() {
       _screen = _exerciseAddReturnScreen;
+    });
+  }
+
+  Future<void> _handleCanonicalExerciseEditDraft(
+    CanonicalExerciseDraft draft,
+  ) async {
+    final selectedExercise = _canonicalExerciseBeingEdited;
+    if (selectedExercise == null) {
+      return;
+    }
+    final updated = await _controller.updateCanonicalExercise(
+      selectedExercise: selectedExercise,
+      exercise: draft.toCanonicalExerciseDefinition(),
+    );
+    if (!mounted || !updated) {
+      return;
+    }
+    setState(() {
+      _canonicalExerciseBeingEdited = null;
+      _screen = _WorkoutTrackerScreen.exerciseManager;
     });
   }
 
@@ -940,6 +987,8 @@ class _SpreadsheetValidationShellState
                           onSelectWorkoutSetup: _selectWorkoutSetup,
                           onBackToWorkoutSetup: _returnToWorkoutSetup,
                           onOpenExerciseManager: _openExerciseManager,
+                          canonicalExerciseBeingEdited:
+                              _canonicalExerciseBeingEdited,
                           onWorkoutChanged: _selectWorkout,
                           onHistoryBlockChanged: _selectHistoryBlock,
                           onAddWorkout: isBusy ? null : _promptForNewWorkout,
@@ -949,6 +998,9 @@ class _SpreadsheetValidationShellState
                           onCreateCanonicalExercise: isBusy
                               ? null
                               : _openCanonicalExerciseCreation,
+                          onEditCanonicalExercise: isBusy
+                              ? null
+                              : _openCanonicalExerciseEdit,
                           onOpenExercise: _openExercise,
                           onAddPrimaryExercise: _openPrimaryExerciseAdd,
                           onAddBackupExercise: _openBackupExerciseAdd,
@@ -958,6 +1010,9 @@ class _SpreadsheetValidationShellState
                           onCloseExerciseAdd: _closeExerciseAdd,
                           onSubmitCanonicalExercise:
                               _handleCanonicalExerciseDraft,
+                          onSubmitCanonicalExerciseEdit:
+                              _handleCanonicalExerciseEditDraft,
+                          onCloseExerciseEdit: _closeExerciseEdit,
                           onSubmitExercisePlacement: _handleExercisePlacement,
                           onCloseExercise: _closeExercise,
                           onLoggingRowChanged: _controller.selectLoggingRow,

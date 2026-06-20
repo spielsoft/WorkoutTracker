@@ -1300,6 +1300,132 @@ void main() {
     },
   );
 
+  testWidgets(
+    'edits a canonical exercise from the exercise manager without creating a duplicate',
+    (tester) async {
+      final validationService = TestSpreadsheetValidationService(
+        _exerciseInventoryParsedSheet([
+          _exerciseRow('Squat', description: 'Back squat'),
+          _exerciseRow('Bench Press', description: 'Competition bench'),
+        ]),
+      );
+      final authoringService = _EditingExerciseAuthoringService([
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: validationService,
+          exerciseAuthoringService: authoringService,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Squat'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit exercise'), findsWidgets);
+      expect(find.byTooltip('Back to edit exercises'), findsOneWidget);
+      expect(find.text('Squat'), findsOneWidget);
+      expect(find.text('Back squat'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('exercise-authoring-name')),
+        'High Bar Squat',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('exercise-authoring-description')),
+        'High bar back squat',
+      );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('exercise-authoring-submit')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(authoringService.createdExercises, isEmpty);
+      expect(authoringService.updatedExercises, [
+        (
+          row: 2,
+          exercise: const CanonicalExerciseDefinition(
+            exercise: 'High Bar Squat',
+            description: 'High bar back squat',
+            defaultSets: '3',
+            defaultReps: '10',
+            defaultRpe: '8',
+            defaultRest: '2 min',
+            logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+          ),
+        ),
+      ]);
+      expect(find.text('Edit exercises'), findsWidgets);
+      expect(find.text('High Bar Squat'), findsOneWidget);
+      expect(find.text('High bar back squat'), findsOneWidget);
+      expect(find.text('Squat'), findsNothing);
+      expect(find.text('Bench Press'), findsOneWidget);
+      expect(authoringService.exerciseCount, 2);
+    },
+  );
+
+  testWidgets('canceling exercise manager edit leaves the exercise unchanged', (
+    tester,
+  ) async {
+    final validationService = TestSpreadsheetValidationService(
+      _exerciseInventoryParsedSheet([
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+      ]),
+    );
+    final authoringService = _EditingExerciseAuthoringService([
+      _exerciseRow('Squat', description: 'Back squat'),
+      _exerciseRow('Bench Press', description: 'Competition bench'),
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: validationService,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-authoring-name')),
+      'High Bar Squat',
+    );
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(authoringService.updatedExercises, isEmpty);
+    expect(authoringService.createdExercises, isEmpty);
+    expect(find.text('Edit exercises'), findsWidgets);
+    expect(find.text('Squat'), findsOneWidget);
+    expect(find.text('Back squat'), findsOneWidget);
+    expect(find.text('High Bar Squat'), findsNothing);
+    expect(authoringService.exerciseCount, 2);
+  });
+
   testWidgets('does not expose delete controls in the exercise manager', (
     tester,
   ) async {
@@ -2366,6 +2492,16 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
   }
 
   @override
+  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -2374,6 +2510,44 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
     required ExercisePlacementTarget placement,
   }) {
     throw UnimplementedError();
+  }
+}
+
+class _EditingExerciseAuthoringService
+    extends _AppendingExerciseAuthoringService {
+  _EditingExerciseAuthoringService(super.exercises);
+
+  final updatedExercises =
+      <({int row, CanonicalExerciseDefinition exercise})>[];
+
+  int get exerciseCount => _exercises.length;
+
+  @override
+  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) async {
+    updatedExercises.add((
+      row: selectedExercise.sheetRowNumber,
+      exercise: exercise,
+    ));
+    _exercises[selectedExercise.sheetRowNumber - 2] = [
+      exercise.exercise,
+      exercise.description,
+      exercise.defaultSets,
+      exercise.defaultReps,
+      exercise.defaultRpe,
+      exercise.defaultRest,
+      exercise.defaultTempo,
+      exercise.notes,
+      exercise.resolvedLogFormat,
+    ];
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: _exerciseInventoryParsedSheet(_exercises),
+    );
   }
 }
 

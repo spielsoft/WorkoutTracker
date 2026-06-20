@@ -29,6 +29,20 @@ class CanonicalExerciseDraft {
     logFormat: workoutTrackerDefaultLogFormat,
   );
 
+  factory CanonicalExerciseDraft.fromExercise(CanonicalExercise exercise) {
+    return CanonicalExerciseDraft(
+      exerciseName: exercise.exercise,
+      description: exercise.description,
+      defaultSets: exercise.defaultSets,
+      defaultReps: exercise.defaultReps,
+      defaultRPE: exercise.defaultRpe,
+      defaultRest: exercise.defaultRest,
+      defaultTempo: exercise.defaultTempo,
+      notes: exercise.notes,
+      logFormat: exercise.logFormat,
+    );
+  }
+
   final String exerciseName;
   final String description;
   final String defaultSets;

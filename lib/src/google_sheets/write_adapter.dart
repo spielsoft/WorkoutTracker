@@ -109,6 +109,14 @@ class GoogleSheetsWriteAdapter {
     required ExercisesWritePlan plan,
   }) async {
     final cells = <GoogleSheetsCellWrite>[
+      for (final update in plan.rowUpdates)
+        for (var index = 0; index < update.values.length; index += 1)
+          GoogleSheetsCellWrite(
+            sheetRowNumber: update.sheetRowNumber,
+            sheetColumnNumber: index + 1,
+            value: update.values[index],
+            mode: GoogleSheetsValueInputMode.literalText,
+          ),
       for (final append in plan.rowAppends)
         for (var index = 0; index < append.values.length; index += 1)
           GoogleSheetsCellWrite(

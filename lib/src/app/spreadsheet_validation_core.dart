@@ -35,6 +35,13 @@ abstract interface class ExerciseAuthoringService {
     required CanonicalExerciseDefinition exercise,
   });
 
+  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  });
+
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,

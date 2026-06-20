@@ -268,6 +268,33 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
+  Future<bool> updateCanonicalExercise({
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) async {
+    final report = _report;
+    final exerciseAuthoringService = this.exerciseAuthoringService;
+    if (report == null || exerciseAuthoringService == null) {
+      _error = 'Exercise authoring is not connected yet.';
+      notifyListeners();
+      return false;
+    }
+
+    return _runServiceAction(
+      failurePrefix: 'Unable to update exercise',
+      action: () async {
+        _report = await exerciseAuthoringService.updateCanonicalExercise(
+          spreadsheetId: report.spreadsheetId,
+          activeSheet: report.activeSheet,
+          selectedExercise: selectedExercise,
+          exercise: exercise,
+        );
+        _error = null;
+        _clearLoggingSelection();
+      },
+    );
+  }
+
   Future<bool> addExistingExerciseToWorkout({
     required CanonicalExercise exercise,
     required WorkoutPlacementMetadata metadata,

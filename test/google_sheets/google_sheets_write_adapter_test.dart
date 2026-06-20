@@ -283,6 +283,110 @@ void main() {
       ]);
     },
   );
+
+  test(
+    'applies planned Exercises row updates without inserting rows',
+    () async {
+      final client = _FakeGoogleSheetsWriteClient(
+        GoogleSheetsActiveSheetTarget(sheetId: 42, title: 'Active Workout'),
+      );
+      final adapter = GoogleSheetsWriteAdapter(client: client);
+
+      await adapter.applyExercisesWritePlan(
+        spreadsheetId: 'spreadsheet-id',
+        plan: ExercisesWritePlan(
+          rowUpdates: [
+            ExercisesRowUpdate(
+              sheetRowNumber: 2,
+              values: const [
+                'High Bar Squat',
+                'High bar back squat',
+                '3',
+                '5',
+                '8',
+                '3 min',
+                '',
+                '',
+                '{Weight}[x]{Reps}[@]{RPE}',
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(client.insertions, isEmpty);
+      expect(client.writeBatches, [
+        _WriteBatch(
+          mode: GoogleSheetsValueInputMode.literalText,
+          writes: const [
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 1,
+              value: 'High Bar Squat',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 2,
+              value: 'High bar back squat',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 3,
+              value: '3',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 4,
+              value: '5',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 5,
+              value: '8',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 6,
+              value: '3 min',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 7,
+              value: '',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 8,
+              value: '',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 9,
+              value: '{Weight}[x]{Reps}[@]{RPE}',
+            ),
+          ],
+        ),
+      ]);
+    },
+  );
 }
 
 class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {

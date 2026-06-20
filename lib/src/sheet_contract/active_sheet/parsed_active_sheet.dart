@@ -169,6 +169,16 @@ class ParsedActiveSheet {
     return _ActiveSheetWritePlanner(this).planCanonicalExerciseAppend(exercise);
   }
 
+  ExercisesWritePlan planCanonicalExerciseUpdate({
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) {
+    return _ActiveSheetWritePlanner(this).planCanonicalExerciseUpdate(
+      selectedExercise: selectedExercise,
+      exercise: exercise,
+    );
+  }
+
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({
     required CanonicalExercise exercise,
     required String workout,

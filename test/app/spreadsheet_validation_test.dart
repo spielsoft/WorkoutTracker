@@ -373,6 +373,100 @@ void main() {
   );
 
   test(
+    'updates a canonical exercise row and rereads placements through that row',
+    () async {
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ];
+      final updatedActiveRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['High Bar Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ];
+      final exercisesRows = [
+        exercisesSheetColumns,
+        [
+          'Squat',
+          'Back squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+        [
+          'Bench Press',
+          'Competition bench',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+      ];
+      final updatedExercisesRows = [
+        exercisesSheetColumns,
+        [
+          'High Bar Squat',
+          'High bar back squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+        exercisesRows[2],
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, exercisesRows),
+        _workbookSnapshot(activeRows, exercisesRows),
+        _workbookSnapshot(updatedActiveRows, updatedExercisesRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final updated = await service.updateCanonicalExercise(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        selectedExercise: report.activeSheet.canonicalExercises.first,
+        exercise: const CanonicalExerciseDefinition(
+          exercise: 'High Bar Squat',
+          description: 'High bar back squat',
+          defaultSets: '3',
+          defaultReps: '5',
+          defaultRpe: '8',
+          defaultRest: '3 min',
+          logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+        ),
+      );
+
+      expect(writeClient.writeCount, 9);
+      expect(
+        updated.activeSheet.canonicalExercises.map(
+          (exercise) => exercise.exercise,
+        ),
+        ['High Bar Squat', 'Bench Press'],
+      );
+      expect(
+        updated.activeSheet.primarySlots.single.exercise,
+        'High Bar Squat',
+      );
+    },
+  );
+
+  test(
     'rejects workout placement when the selected canonical exercise row changed before apply',
     () async {
       final activeRows = [

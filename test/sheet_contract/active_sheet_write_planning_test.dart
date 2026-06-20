@@ -400,4 +400,108 @@ void main() {
       ),
     ]);
   });
+
+  test('plans canonical exercise edits as an in-place row update', () {
+    final activeRows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}',
+        'Legs',
+        '',
+        '',
+      ],
+    ];
+    final exercisesRows = [
+      exercisesSheetColumns,
+      [
+        'Squat',
+        'Back squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}',
+      ],
+      [
+        'Bench Press',
+        'Competition bench',
+        '4',
+        '6',
+        '8',
+        '3 min',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: activeRows,
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+        ],
+        exercisesRows: exercisesRows,
+      ),
+    );
+
+    final plan = activeSheet.planCanonicalExerciseUpdate(
+      selectedExercise: activeSheet.canonicalExercises.first,
+      exercise: const CanonicalExerciseDefinition(
+        exercise: 'High Bar Squat',
+        description: 'High bar back squat',
+        defaultSets: '3',
+        defaultReps: '5',
+        defaultRpe: '8',
+        defaultRest: '3 min',
+        logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+      ),
+    );
+
+    expect(plan.rowAppends, isEmpty);
+    expect(plan.rowUpdates.single.sheetRowNumber, 2);
+    expect(plan.previewRowsAfterApplying(exercisesRows), [
+      exercisesSheetColumns,
+      [
+        'High Bar Squat',
+        'High bar back squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}',
+      ],
+      [
+        'Bench Press',
+        'Competition bench',
+        '4',
+        '6',
+        '8',
+        '3 min',
+        '',
+        '',
+        '{Weight}[x]{Reps}[@]{RPE}',
+      ],
+    ]);
+  });
 }

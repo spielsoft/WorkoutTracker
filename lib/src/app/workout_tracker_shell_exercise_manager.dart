@@ -6,12 +6,14 @@ class _ExerciseManagerInventory extends StatelessWidget {
     required this.exercises,
     required this.onBack,
     required this.onAddExercise,
+    required this.onEditExercise,
   });
 
   final String sheetLabel;
   final List<CanonicalExercise> exercises;
   final VoidCallback onBack;
   final VoidCallback? onAddExercise;
+  final ValueChanged<CanonicalExercise>? onEditExercise;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,12 @@ class _ExerciseManagerInventory extends StatelessWidget {
           )
         else
           for (final exercise in exercises) ...[
-            _ExerciseInventoryRow(exercise: exercise),
+            _ExerciseInventoryRow(
+              exercise: exercise,
+              onTap: onEditExercise == null
+                  ? null
+                  : () => onEditExercise!(exercise),
+            ),
             const SizedBox(height: 8),
           ],
       ],
@@ -54,52 +61,72 @@ class _ExerciseManagerInventory extends StatelessWidget {
 }
 
 class _ExerciseInventoryRow extends StatelessWidget {
-  const _ExerciseInventoryRow({required this.exercise});
+  const _ExerciseInventoryRow({required this.exercise, required this.onTap});
 
   final CanonicalExercise exercise;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final description = exercise.description.trim();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Icon(
-              Icons.fitness_center_outlined,
-              color: Theme.of(context).colorScheme.primary,
+        onTap: onTap,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exercise.displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  if (description.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.fitness_center_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        exercise.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    ),
-                  ],
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (onTap != null) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.edit_outlined,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ],
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

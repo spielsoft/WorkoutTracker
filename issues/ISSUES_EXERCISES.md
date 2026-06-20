@@ -8,7 +8,7 @@ This issue plan references the PRD for full rationale and user-story detail. Eac
 
 - [x] Slice 1: Add the exercise manager inventory
 - [x] Slice 2: Launch add exercise from the manager
-- [ ] Slice 3: Edit existing canonical exercises
+- [x] Slice 3: Edit existing canonical exercises
 - [ ] Slice 4: Reorder canonical exercises through a generic seam
 - [ ] Slice 5: Reuse reorder behavior for workout exercise order
 - [ ] Slice 6: Exercise management mobile review
@@ -82,13 +82,13 @@ Allow a user to edit an existing canonical exercise from the exercise manager. S
 
 ### Acceptance criteria
 
-- [ ] A user can open edit mode for an existing canonical exercise from the manager.
-- [ ] Edit mode pre-populates the authoring fields with the selected exercise data.
-- [ ] Saving edit mode updates the selected canonical exercise instead of appending a duplicate.
-- [ ] Canceling edit mode leaves the selected canonical exercise unchanged.
-- [ ] The updated exercise appears in the manager after save.
-- [ ] Existing workout placements continue to resolve to the intended canonical exercise after metadata edits.
-- [ ] Tests verify pre-population, save-as-update, cancel behavior, and no duplicate creation.
+- [x] A user can open edit mode for an existing canonical exercise from the manager.
+- [x] Edit mode pre-populates the authoring fields with the selected exercise data.
+- [x] Saving edit mode updates the selected canonical exercise instead of appending a duplicate.
+- [x] Canceling edit mode leaves the selected canonical exercise unchanged.
+- [x] The updated exercise appears in the manager after save.
+- [x] Existing workout placements continue to resolve to the intended canonical exercise after metadata edits.
+- [x] Tests verify pre-population, save-as-update, cancel behavior, and no duplicate creation.
 
 ### Blocked by
 

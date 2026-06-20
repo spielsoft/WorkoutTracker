@@ -587,13 +587,23 @@ class WorkoutPlacementMetadata {
 }
 
 class ExercisesWritePlan {
-  ExercisesWritePlan({Iterable<ExercisesRowAppend> rowAppends = const []})
-    : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends);
+  ExercisesWritePlan({
+    Iterable<ExercisesRowAppend> rowAppends = const [],
+    Iterable<ExercisesRowUpdate> rowUpdates = const [],
+  }) : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends),
+       rowUpdates = List<ExercisesRowUpdate>.unmodifiable(rowUpdates);
 
   final List<ExercisesRowAppend> rowAppends;
+  final List<ExercisesRowUpdate> rowUpdates;
 
   List<List<String>> previewRowsAfterApplying(Iterable<Iterable<String>> rows) {
     final preview = rows.map((row) => row.toList()).toList();
+    for (final update in rowUpdates) {
+      final rowIndex = update.sheetRowNumber - 1;
+      if (rowIndex >= 0 && rowIndex < preview.length) {
+        preview[rowIndex] = update.values.toList();
+      }
+    }
     for (final append in rowAppends) {
       final rowIndex = append.sheetRowNumber - 1;
       while (preview.length < rowIndex) {
@@ -612,15 +622,20 @@ class ExercisesWritePlan {
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is ExercisesWritePlan &&
-            _listEquals(rowAppends, other.rowAppends);
+            _listEquals(rowAppends, other.rowAppends) &&
+            _listEquals(rowUpdates, other.rowUpdates);
   }
 
   @override
-  int get hashCode => Object.hashAll(rowAppends);
+  int get hashCode =>
+      Object.hash(Object.hashAll(rowAppends), Object.hashAll(rowUpdates));
 
   @override
   String toString() {
-    return 'ExercisesWritePlan(rowAppends: $rowAppends)';
+    return 'ExercisesWritePlan('
+        'rowAppends: $rowAppends, '
+        'rowUpdates: $rowUpdates'
+        ')';
   }
 }
 
@@ -647,6 +662,35 @@ class ExercisesRowAppend {
   @override
   String toString() {
     return 'ExercisesRowAppend('
+        'sheetRowNumber: $sheetRowNumber, '
+        'values: $values'
+        ')';
+  }
+}
+
+class ExercisesRowUpdate {
+  ExercisesRowUpdate({
+    required this.sheetRowNumber,
+    required Iterable<String> values,
+  }) : values = List<String>.unmodifiable(values);
+
+  final int sheetRowNumber;
+  final List<String> values;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ExercisesRowUpdate &&
+            sheetRowNumber == other.sheetRowNumber &&
+            _listEquals(values, other.values);
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, Object.hashAll(values));
+
+  @override
+  String toString() {
+    return 'ExercisesRowUpdate('
         'sheetRowNumber: $sheetRowNumber, '
         'values: $values'
         ')';
@@ -845,6 +889,24 @@ class _ActiveSheetWritePlanner {
       values: _canonicalExerciseRowValues(exercise),
     );
     return ExercisesWritePlan(rowAppends: [append]);
+  }
+
+  ExercisesWritePlan planCanonicalExerciseUpdate({
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) {
+    final sheetRowNumber = selectedExercise.sheetRowNumber;
+    if (sheetRowNumber < 2 || sheetRowNumber > sheet._exercisesRows.length) {
+      return ExercisesWritePlan();
+    }
+    return ExercisesWritePlan(
+      rowUpdates: [
+        ExercisesRowUpdate(
+          sheetRowNumber: sheetRowNumber,
+          values: _canonicalExerciseRowValues(exercise),
+        ),
+      ],
+    );
   }
 
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({

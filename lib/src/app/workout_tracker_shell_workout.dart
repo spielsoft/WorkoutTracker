@@ -77,11 +77,13 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onSelectWorkoutSetup,
     required this.onBackToWorkoutSetup,
     required this.onOpenExerciseManager,
+    required this.canonicalExerciseBeingEdited,
     required this.onWorkoutChanged,
     required this.onHistoryBlockChanged,
     required this.onAddWorkout,
     required this.onAddHistoryBlock,
     required this.onCreateCanonicalExercise,
+    required this.onEditCanonicalExercise,
     required this.onOpenExercise,
     required this.onAddPrimaryExercise,
     required this.onAddBackupExercise,
@@ -89,6 +91,8 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.addExercisePlacementIntent,
     required this.onCloseExerciseAdd,
     required this.onSubmitCanonicalExercise,
+    required this.onSubmitCanonicalExerciseEdit,
+    required this.onCloseExerciseEdit,
     required this.onSubmitExercisePlacement,
     required this.onCloseExercise,
     required this.onLoggingRowChanged,
@@ -102,11 +106,13 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final VoidCallback onSelectWorkoutSetup;
   final VoidCallback onBackToWorkoutSetup;
   final VoidCallback onOpenExerciseManager;
+  final CanonicalExercise? canonicalExerciseBeingEdited;
   final ValueChanged<String?> onWorkoutChanged;
   final ValueChanged<String?> onHistoryBlockChanged;
   final VoidCallback? onAddWorkout;
   final VoidCallback? onAddHistoryBlock;
   final VoidCallback? onCreateCanonicalExercise;
+  final ValueChanged<CanonicalExercise>? onEditCanonicalExercise;
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
@@ -114,6 +120,8 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final _AddExercisePlacementIntent? addExercisePlacementIntent;
   final VoidCallback onCloseExerciseAdd;
   final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExercise;
+  final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExerciseEdit;
+  final VoidCallback onCloseExerciseEdit;
   final ValueChanged<_ExercisePlacementDraft> onSubmitExercisePlacement;
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
@@ -165,12 +173,23 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       );
     }
 
+    if (screen == _WorkoutTrackerScreen.editExercise &&
+        canonicalExerciseBeingEdited != null) {
+      return _CanonicalExerciseEditScreen(
+        sheetLabel: sheetLabel,
+        exercise: canonicalExerciseBeingEdited!,
+        onBack: onCloseExerciseEdit,
+        onSubmit: onSubmitCanonicalExerciseEdit,
+      );
+    }
+
     if (screen == _WorkoutTrackerScreen.exerciseManager) {
       return _ExerciseManagerInventory(
         sheetLabel: sheetLabel,
         exercises: activeSheet.canonicalExercises,
         onBack: onBackToWorkoutSetup,
         onAddExercise: onCreateCanonicalExercise,
+        onEditExercise: onEditCanonicalExercise,
       );
     }
 
@@ -912,6 +931,43 @@ class _CanonicalExerciseCreationScreen extends StatelessWidget {
         const SizedBox(height: 16),
         ExerciseAuthoringForm(
           authoringContext: ExerciseAuthoringContext.canonicalExercise,
+          onCancel: onBack,
+          onSubmit: onSubmit,
+        ),
+      ],
+    );
+  }
+}
+
+class _CanonicalExerciseEditScreen extends StatelessWidget {
+  const _CanonicalExerciseEditScreen({
+    required this.sheetLabel,
+    required this.exercise,
+    required this.onBack,
+    required this.onSubmit,
+  });
+
+  final String sheetLabel;
+  final CanonicalExercise exercise;
+  final VoidCallback onBack;
+  final ValueChanged<CanonicalExerciseDraft> onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ScreenHeader(
+          title: sheetLabel,
+          subtitle: 'Edit exercise',
+          compactTitle: true,
+          backTooltip: 'Back to edit exercises',
+          onBack: onBack,
+        ),
+        const SizedBox(height: 16),
+        ExerciseAuthoringForm(
+          authoringContext: ExerciseAuthoringContext.canonicalExercise,
+          initialDraft: CanonicalExerciseDraft.fromExercise(exercise),
           onCancel: onBack,
           onSubmit: onSubmit,
         ),

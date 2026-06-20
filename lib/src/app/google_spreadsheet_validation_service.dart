@@ -81,6 +81,48 @@ class GoogleSpreadsheetValidationService
   }
 
   @override
+  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) async {
+    final writeAdapter = this.writeAdapter;
+    if (writeAdapter == null) {
+      throw StateError('Exercise authoring requires a write adapter.');
+    }
+
+    final currentActiveSheet = await readAdapter.readParsedActiveSheet(
+      spreadsheetId,
+    );
+    final canonicalExerciseRejection = _canonicalExerciseRowRejection(
+      currentSheet: currentActiveSheet,
+      selectedExercise: selectedExercise,
+    );
+    if (canonicalExerciseRejection != null) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: [canonicalExerciseRejection],
+      );
+    }
+    final exercisesPlan = currentActiveSheet.planCanonicalExerciseUpdate(
+      selectedExercise: selectedExercise,
+      exercise: exercise,
+    );
+    final exercisesRow = exercisesPlan.rowUpdates.singleOrNull;
+    if (exercisesRow == null) {
+      throw StateError('No exercise row update was planned.');
+    }
+
+    await writeAdapter.applyExercisesWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: exercisesPlan,
+    );
+    return validateSpreadsheet(spreadsheetId);
+  }
+
+  @override
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
