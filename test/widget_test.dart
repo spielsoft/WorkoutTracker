@@ -1457,6 +1457,59 @@ void main() {
     expect(find.byType(PopupMenuButton), findsNothing);
   });
 
+  testWidgets('reorders canonical exercises from the exercise manager', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final exercises = [
+      _exerciseRow('Squat', description: 'Back squat'),
+      _exerciseRow('Bench Press', description: 'Competition bench'),
+      _exerciseRow('Cable Row', description: 'Seated cable row'),
+    ];
+    final validationService = TestSpreadsheetValidationService(
+      _exerciseInventoryParsedSheet(exercises),
+    );
+    final authoringService = _ReorderingExerciseAuthoringService(exercises);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: validationService,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Reorder Squat'), findsOneWidget);
+    expect(find.byIcon(Icons.drag_handle_outlined), findsNWidgets(3));
+
+    await tester.drag(find.byTooltip('Reorder Squat'), const Offset(0, 170));
+    await tester.pumpAndSettle();
+
+    expect(authoringService.reorderIntents, [
+      const ReorderIntent(fromIndex: 0, toIndex: 2),
+    ]);
+    expect(
+      tester.getTopLeft(find.text('Bench Press')).dy,
+      lessThan(tester.getTopLeft(find.text('Cable Row')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Cable Row')).dy,
+      lessThan(tester.getTopLeft(find.text('Squat')).dy),
+    );
+  });
+
   testWidgets('compresses logging context and history until expanded', (
     tester,
   ) async {
@@ -2511,6 +2564,15 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
   }) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ReorderIntent intent,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 class _EditingExerciseAuthoringService
@@ -2547,6 +2609,45 @@ class _EditingExerciseAuthoringService
     return SpreadsheetValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: _exerciseInventoryParsedSheet(_exercises),
+    );
+  }
+}
+
+class _ReorderingExerciseAuthoringService
+    extends _AppendingExerciseAuthoringService {
+  _ReorderingExerciseAuthoringService(super.exercises);
+
+  final reorderIntents = <ReorderIntent>[];
+
+  @override
+  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ReorderIntent intent,
+  }) async {
+    reorderIntents.add(intent);
+    final plan = activeSheet.planCanonicalExerciseReorder(intent);
+    final previewRows = plan.previewRowsAfterApplying([
+      exercisesSheetColumns,
+      ..._exercises,
+    ]);
+    _exercises
+      ..clear()
+      ..addAll(previewRows.skip(1).map((row) => row.toList()));
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: _exerciseInventoryParsedSheet(
+        _exercises,
+        cellFormulas: plan.activeSheetFormulaUpdates
+            .map(
+              (update) => CellFormula(
+                sheetRowNumber: update.sheetRowNumber,
+                sheetColumnNumber: update.sheetColumnNumber,
+                formula: update.value,
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }
@@ -2623,7 +2724,21 @@ ParsedActiveSheet _minimalValidParsedSheet() {
   );
 }
 
-ParsedActiveSheet _exerciseInventoryParsedSheet(List<List<String>> exercises) {
+ParsedActiveSheet _exerciseInventoryParsedSheet(
+  List<List<String>> exercises, {
+  Iterable<CellFormula> cellFormulas = const [
+    CellFormula(
+      sheetRowNumber: 3,
+      sheetColumnNumber: 1,
+      formula: '=Exercises!A2',
+    ),
+    CellFormula(
+      sheetRowNumber: 3,
+      sheetColumnNumber: 8,
+      formula: '=Exercises!I2',
+    ),
+  ],
+}) {
   return parseActiveSheet(
     ActiveSheetInput(
       rows: [
@@ -2631,18 +2746,7 @@ ParsedActiveSheet _exerciseInventoryParsedSheet(List<List<String>> exercises) {
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ],
-      cellFormulas: const [
-        CellFormula(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 1,
-          formula: '=Exercises!A2',
-        ),
-        CellFormula(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 8,
-          formula: '=Exercises!I2',
-        ),
-      ],
+      cellFormulas: cellFormulas,
       exercisesRows: [exercisesSheetColumns, ...exercises],
     ),
   );

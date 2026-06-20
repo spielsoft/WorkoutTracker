@@ -9,7 +9,7 @@ This issue plan references the PRD for full rationale and user-story detail. Eac
 - [x] Slice 1: Add the exercise manager inventory
 - [x] Slice 2: Launch add exercise from the manager
 - [x] Slice 3: Edit existing canonical exercises
-- [ ] Slice 4: Reorder canonical exercises through a generic seam
+- [x] Slice 4: Reorder canonical exercises through a generic seam
 - [ ] Slice 5: Reuse reorder behavior for workout exercise order
 - [ ] Slice 6: Exercise management mobile review
 - [ ] Slice 7: Clean up TDD-only exercise-management tests
@@ -112,15 +112,15 @@ Enable canonical exercise reordering from the exercise manager using a generic r
 
 ### Acceptance criteria
 
-- [ ] Exercise rows expose a discoverable reorder affordance.
-- [ ] Press-and-hold drag works for canonical exercise reorder on mobile-sized layouts where the platform supports it.
-- [ ] Click-and-drag works for canonical exercise reorder on pointer platforms where the platform supports it.
-- [ ] Reordered canonical exercise order persists after reloading from the sheet-backed source.
-- [ ] Reorder preserves canonical exercise metadata.
-- [ ] Reorder preserves workout references and formula integrity for existing workout placements.
-- [ ] Stale or unsafe reorder input is detected or avoided before writing over newer sheet state.
-- [ ] The reorder planning seam is generic enough to support workout placement ordering without copying canonical-only logic.
-- [ ] Tests cover reorder planning, persistence, metadata preservation, formula/reference safety, no-op moves, boundary moves, and public drag behavior where practical.
+- [x] Exercise rows expose a discoverable reorder affordance.
+- [x] Press-and-hold drag works for canonical exercise reorder on mobile-sized layouts where the platform supports it.
+- [x] Click-and-drag works for canonical exercise reorder on pointer platforms where the platform supports it.
+- [x] Reordered canonical exercise order persists after reloading from the sheet-backed source.
+- [x] Reorder preserves canonical exercise metadata.
+- [x] Reorder preserves workout references and formula integrity for existing workout placements.
+- [x] Stale or unsafe reorder input is detected or avoided before writing over newer sheet state.
+- [x] The reorder planning seam is generic enough to support workout placement ordering without copying canonical-only logic.
+- [x] Tests cover reorder planning, persistence, metadata preservation, formula/reference safety, no-op moves, boundary moves, and public drag behavior where practical.
 
 ### Blocked by
 

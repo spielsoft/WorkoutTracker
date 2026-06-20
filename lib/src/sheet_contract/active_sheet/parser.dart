@@ -104,6 +104,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
           },
     rows: sheet.rows,
     exercisesRows: sheet.exercisesRows,
+    cellFormulas: sheet.cellFormulas,
   );
 }
 

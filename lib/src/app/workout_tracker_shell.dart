@@ -1001,6 +1001,10 @@ class _SpreadsheetValidationShellState
                           onEditCanonicalExercise: isBusy
                               ? null
                               : _openCanonicalExerciseEdit,
+                          onReorderCanonicalExercises:
+                              isBusy || widget.exerciseAuthoringService == null
+                              ? null
+                              : _controller.reorderCanonicalExercises,
                           onOpenExercise: _openExercise,
                           onAddPrimaryExercise: _openPrimaryExerciseAdd,
                           onAddBackupExercise: _openBackupExerciseAdd,

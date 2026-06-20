@@ -387,6 +387,64 @@ void main() {
       ]);
     },
   );
+
+  test(
+    'applies planned active formula repairs after Exercises row updates',
+    () async {
+      final client = _FakeGoogleSheetsWriteClient(
+        const GoogleSheetsActiveSheetTarget(
+          sheetId: 42,
+          title: 'Active Workout',
+        ),
+      );
+      final adapter = GoogleSheetsWriteAdapter(client: client);
+
+      await adapter.applyExercisesWritePlan(
+        spreadsheetId: 'spreadsheet-id',
+        plan: ExercisesWritePlan(
+          rowUpdates: [
+            ExercisesRowUpdate(
+              sheetRowNumber: 2,
+              values: const [
+                'Bench Press',
+                'Competition bench',
+                '4',
+                '6',
+                '8',
+                '3 min',
+                '',
+                '',
+                '{Weight}[x]{Reps}[@]{RPE}',
+              ],
+            ),
+          ],
+          activeSheetFormulaUpdates: const [
+            CellUpdate.formula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              value: '=Exercises!A4',
+            ),
+          ],
+        ),
+      );
+
+      expect(
+        client.writeBatches.last,
+        const _WriteBatch(
+          mode: GoogleSheetsValueInputMode.userEntered,
+          writes: [
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              value: '=Exercises!A4',
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {

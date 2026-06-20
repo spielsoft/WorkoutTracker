@@ -7,6 +7,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
     required this.onBack,
     required this.onAddExercise,
     required this.onEditExercise,
+    required this.onReorderExercises,
   });
 
   final String sheetLabel;
@@ -14,6 +15,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback? onAddExercise;
   final ValueChanged<CanonicalExercise>? onEditExercise;
+  final Future<bool> Function(ReorderIntent intent)? onReorderExercises;
 
   @override
   Widget build(BuildContext context) {
@@ -46,24 +48,50 @@ class _ExerciseManagerInventory extends StatelessWidget {
             children: [Text('The exercise library is empty.')],
           )
         else
-          for (final exercise in exercises) ...[
-            _ExerciseInventoryRow(
-              exercise: exercise,
-              onTap: onEditExercise == null
-                  ? null
-                  : () => onEditExercise!(exercise),
-            ),
-            const SizedBox(height: 8),
-          ],
+          ReorderableListView.builder(
+            buildDefaultDragHandles: false,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: exercises.length,
+            onReorderItem: onReorderExercises == null
+                ? (_, _) {}
+                : (oldIndex, newIndex) {
+                    onReorderExercises!(
+                      ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
+                    );
+                  },
+            itemBuilder: (context, index) {
+              final exercise = exercises[index];
+              return Padding(
+                key: ValueKey('canonical-exercise-${exercise.sheetRowNumber}'),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _ExerciseInventoryRow(
+                  index: index,
+                  exercise: exercise,
+                  canReorder: onReorderExercises != null,
+                  onTap: onEditExercise == null
+                      ? null
+                      : () => onEditExercise!(exercise),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
 }
 
 class _ExerciseInventoryRow extends StatelessWidget {
-  const _ExerciseInventoryRow({required this.exercise, required this.onTap});
+  const _ExerciseInventoryRow({
+    required this.index,
+    required this.exercise,
+    required this.canReorder,
+    required this.onTap,
+  });
 
+  final int index;
   final CanonicalExercise exercise;
+  final bool canReorder;
   final VoidCallback? onTap;
 
   @override
@@ -122,6 +150,22 @@ class _ExerciseInventoryRow extends StatelessWidget {
                   Icon(
                     Icons.edit_outlined,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
+                if (canReorder) ...[
+                  const SizedBox(width: 8),
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: Tooltip(
+                      message: 'Reorder ${exercise.displayName}',
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Icon(
+                          Icons.drag_handle_outlined,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ],

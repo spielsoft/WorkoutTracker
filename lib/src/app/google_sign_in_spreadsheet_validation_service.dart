@@ -125,6 +125,28 @@ class GoogleSignInSpreadsheetValidationService
     );
   }
 
+  @override
+  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ReorderIntent intent,
+  }) async {
+    return _withGoogleSheetsService(
+      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      canWrite: true,
+      action: (service) {
+        if (service case final ExerciseAuthoringService authoringService) {
+          return authoringService.reorderCanonicalExercises(
+            spreadsheetId: spreadsheetId,
+            activeSheet: activeSheet,
+            intent: intent,
+          );
+        }
+        throw StateError('Exercise authoring service is not configured.');
+      },
+    );
+  }
+
   Future<SpreadsheetValidationReport> _withGoogleSheetsService({
     required List<String> scopes,
     required bool canWrite,

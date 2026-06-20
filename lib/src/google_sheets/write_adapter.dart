@@ -132,6 +132,23 @@ class GoogleSheetsWriteAdapter {
       cells: cells,
       mode: GoogleSheetsValueInputMode.literalText,
     );
+    if (plan.activeSheetFormulaUpdates.isNotEmpty) {
+      final activeSheet = await client.fetchActiveSheetTarget(spreadsheetId);
+      await client.writeCells(
+        spreadsheetId: spreadsheetId,
+        sheetTitle: activeSheet.title,
+        cells: [
+          for (final update in plan.activeSheetFormulaUpdates)
+            GoogleSheetsCellWrite(
+              sheetRowNumber: update.sheetRowNumber,
+              sheetColumnNumber: update.sheetColumnNumber,
+              value: update.value,
+              mode: GoogleSheetsValueInputMode.userEntered,
+            ),
+        ],
+        mode: GoogleSheetsValueInputMode.userEntered,
+      );
+    }
   }
 
   Iterable<GoogleSheetsCellWrite> _headerWritesForInsertion(

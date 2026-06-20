@@ -84,6 +84,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onAddHistoryBlock,
     required this.onCreateCanonicalExercise,
     required this.onEditCanonicalExercise,
+    required this.onReorderCanonicalExercises,
     required this.onOpenExercise,
     required this.onAddPrimaryExercise,
     required this.onAddBackupExercise,
@@ -113,6 +114,8 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final VoidCallback? onAddHistoryBlock;
   final VoidCallback? onCreateCanonicalExercise;
   final ValueChanged<CanonicalExercise>? onEditCanonicalExercise;
+  final Future<bool> Function(ReorderIntent intent)?
+  onReorderCanonicalExercises;
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
@@ -190,6 +193,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
         onBack: onBackToWorkoutSetup,
         onAddExercise: onCreateCanonicalExercise,
         onEditExercise: onEditCanonicalExercise,
+        onReorderExercises: onReorderCanonicalExercises,
       );
     }
 

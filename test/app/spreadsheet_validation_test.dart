@@ -467,6 +467,140 @@ void main() {
   );
 
   test(
+    'reorders canonical exercises and rereads workout references safely',
+    () async {
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Bench Press', '4', '6', '8', '3 min', '', '', '', 'Upper', '', ''],
+      ];
+      final updatedActiveRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Bench Press', '4', '6', '8', '3 min', '', '', '', 'Upper', '', ''],
+      ];
+      final exercisesRows = [
+        exercisesSheetColumns,
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+        _exerciseRow('Cable Row', description: 'Seated cable row'),
+      ];
+      final reorderedExercisesRows = [
+        exercisesSheetColumns,
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+        _exerciseRow('Cable Row', description: 'Seated cable row'),
+        _exerciseRow('Squat', description: 'Back squat'),
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _workbookSnapshot(
+          activeRows,
+          exercisesRows,
+          activeFormulas: const [
+            GoogleSheetCellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A2',
+            ),
+            GoogleSheetCellFormula(
+              sheetRowNumber: 4,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A3',
+            ),
+          ],
+        ),
+        _workbookSnapshot(
+          activeRows,
+          exercisesRows,
+          activeFormulas: const [
+            GoogleSheetCellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A2',
+            ),
+            GoogleSheetCellFormula(
+              sheetRowNumber: 4,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A3',
+            ),
+          ],
+        ),
+        _workbookSnapshot(updatedActiveRows, reorderedExercisesRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final reordered = await service.reorderCanonicalExercises(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        intent: const ReorderIntent(fromIndex: 0, toIndex: 2),
+      );
+
+      expect(writeClient.writeCount, 29);
+      expect(
+        reordered.activeSheet.canonicalExercises.map(
+          (exercise) => exercise.exercise,
+        ),
+        ['Bench Press', 'Cable Row', 'Squat'],
+      );
+      expect(reordered.activeSheet.primarySlots.map((slot) => slot.exercise), [
+        'Squat',
+        'Bench Press',
+      ]);
+    },
+  );
+
+  test(
+    'rejects canonical exercise reorder when the sheet changed after the UI snapshot',
+    () async {
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ];
+      final staleExercisesRows = [
+        exercisesSheetColumns,
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+        _exerciseRow('Cable Row', description: 'Seated cable row'),
+      ];
+      final changedExercisesRows = [
+        exercisesSheetColumns,
+        _exerciseRow('Deadlift', description: 'Conventional deadlift'),
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+        _exerciseRow('Cable Row', description: 'Seated cable row'),
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, staleExercisesRows),
+        _workbookSnapshot(activeRows, changedExercisesRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final rejected = await service.reorderCanonicalExercises(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        intent: const ReorderIntent(fromIndex: 0, toIndex: 2),
+      );
+
+      expect(rejected.hasBlockingIssues, isTrue);
+      expect(
+        rejected.manualRepairItems.single.problem,
+        contains('Exercises row 2 no longer matches the planned reorder'),
+      );
+      expect(writeClient.writeCount, 0);
+    },
+  );
+
+  test(
     'rejects workout placement when the selected canonical exercise row changed before apply',
     () async {
       final activeRows = [
@@ -532,6 +666,20 @@ void main() {
   );
 }
 
+List<String> _exerciseRow(String exercise, {String description = ''}) {
+  return [
+    exercise,
+    description,
+    '3',
+    '10',
+    '8',
+    '2 min',
+    '',
+    '',
+    defaultExerciseLogFormat,
+  ];
+}
+
 ParsedActiveSheet _minimalParsedActiveSheet() {
   return parseActiveSheet(
     ActiveSheetInput(
@@ -552,11 +700,16 @@ GoogleSpreadsheetSnapshot _snapshot(List<List<String>> rows) {
 
 GoogleSpreadsheetSnapshot _workbookSnapshot(
   List<List<String>> activeRows,
-  List<List<String>> exercisesRows,
-) {
+  List<List<String>> exercisesRows, {
+  Iterable<GoogleSheetCellFormula> activeFormulas = const [],
+}) {
   return GoogleSpreadsheetSnapshot(
     sheets: [
-      GoogleSheetSnapshot(title: 'Active Workout', rows: activeRows),
+      GoogleSheetSnapshot(
+        title: 'Active Workout',
+        rows: activeRows,
+        cellFormulas: activeFormulas,
+      ),
       GoogleSheetSnapshot(title: 'Exercises', rows: exercisesRows),
     ],
   );

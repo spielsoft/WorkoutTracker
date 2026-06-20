@@ -175,6 +175,44 @@ class GoogleSpreadsheetValidationService
     );
     return validateSpreadsheet(spreadsheetId);
   }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ReorderIntent intent,
+  }) async {
+    final writeAdapter = this.writeAdapter;
+    if (writeAdapter == null) {
+      throw StateError('Exercise reorder requires a write adapter.');
+    }
+
+    final currentActiveSheet = await readAdapter.readParsedActiveSheet(
+      spreadsheetId,
+    );
+    final exercisesPlan = activeSheet.planCanonicalExerciseReorder(intent);
+    final writeRejections = exercisesPlan.writeRejections(currentActiveSheet);
+    if (writeRejections.isNotEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: writeRejections,
+      );
+    }
+    if (exercisesPlan.rowUpdates.isEmpty &&
+        exercisesPlan.activeSheetFormulaUpdates.isEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+      );
+    }
+
+    await writeAdapter.applyExercisesWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: exercisesPlan,
+    );
+    return validateSpreadsheet(spreadsheetId);
+  }
 }
 
 ActiveSheetWriteRejection? _canonicalExerciseRowRejection({

@@ -152,6 +152,51 @@ class ActiveSheetWriteRejection {
   }
 }
 
+class ExercisesRowExpectation extends ActiveSheetWriteExpectation {
+  ExercisesRowExpectation({
+    required this.sheetRowNumber,
+    required Iterable<String> expectedValues,
+  }) : expectedValues = List<String>.unmodifiable(expectedValues);
+
+  final int sheetRowNumber;
+  final List<String> expectedValues;
+
+  @override
+  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+    final rowIndex = sheetRowNumber - 1;
+    if (rowIndex >= 0 &&
+        rowIndex < sheet._exercisesRows.length &&
+        _listEquals(sheet._exercisesRows[rowIndex], expectedValues)) {
+      return const [];
+    }
+    return [
+      ActiveSheetWriteRejection(
+        'Exercises row $sheetRowNumber no longer matches the planned reorder.',
+      ),
+    ];
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ExercisesRowExpectation &&
+            sheetRowNumber == other.sheetRowNumber &&
+            _listEquals(expectedValues, other.expectedValues);
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(sheetRowNumber, Object.hashAll(expectedValues));
+
+  @override
+  String toString() {
+    return 'ExercisesRowExpectation('
+        'sheetRowNumber: $sheetRowNumber, '
+        'expectedValues: $expectedValues'
+        ')';
+  }
+}
+
 class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
   const ActiveSheetRowExpectation({
     required this.sheetRowNumber,
@@ -256,6 +301,58 @@ class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedValue: $expectedValue'
+        ')';
+  }
+}
+
+class ActiveSheetFormulaExpectation extends ActiveSheetWriteExpectation {
+  const ActiveSheetFormulaExpectation({
+    required this.sheetRowNumber,
+    required this.sheetColumnNumber,
+    required this.expectedFormula,
+  });
+
+  final int sheetRowNumber;
+  final int sheetColumnNumber;
+  final String expectedFormula;
+
+  @override
+  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+    for (final formula in sheet._cellFormulas) {
+      if (formula.sheetRowNumber == sheetRowNumber &&
+          formula.sheetColumnNumber == sheetColumnNumber &&
+          formula.formula == expectedFormula) {
+        return const [];
+      }
+    }
+    return [
+      ActiveSheetWriteRejection(
+        'Formula row $sheetRowNumber column $sheetColumnNumber no longer '
+        'matches the planned reorder.',
+      ),
+    ];
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ActiveSheetFormulaExpectation &&
+            sheetRowNumber == other.sheetRowNumber &&
+            sheetColumnNumber == other.sheetColumnNumber &&
+            expectedFormula == other.expectedFormula;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(sheetRowNumber, sheetColumnNumber, expectedFormula);
+  }
+
+  @override
+  String toString() {
+    return 'ActiveSheetFormulaExpectation('
+        'sheetRowNumber: $sheetRowNumber, '
+        'sheetColumnNumber: $sheetColumnNumber, '
+        'expectedFormula: $expectedFormula'
         ')';
   }
 }
@@ -568,6 +665,29 @@ class CanonicalExerciseDefinition {
   }
 }
 
+class ReorderIntent {
+  const ReorderIntent({required this.fromIndex, required this.toIndex});
+
+  final int fromIndex;
+  final int toIndex;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ReorderIntent &&
+            fromIndex == other.fromIndex &&
+            toIndex == other.toIndex;
+  }
+
+  @override
+  int get hashCode => Object.hash(fromIndex, toIndex);
+
+  @override
+  String toString() {
+    return 'ReorderIntent(fromIndex: $fromIndex, toIndex: $toIndex)';
+  }
+}
+
 class WorkoutPlacementMetadata {
   const WorkoutPlacementMetadata({
     this.sets = '',
@@ -590,11 +710,28 @@ class ExercisesWritePlan {
   ExercisesWritePlan({
     Iterable<ExercisesRowAppend> rowAppends = const [],
     Iterable<ExercisesRowUpdate> rowUpdates = const [],
+    Iterable<CellUpdate> activeSheetFormulaUpdates = const [],
+    Iterable<ActiveSheetWriteExpectation> expectations = const [],
   }) : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends),
-       rowUpdates = List<ExercisesRowUpdate>.unmodifiable(rowUpdates);
+       rowUpdates = List<ExercisesRowUpdate>.unmodifiable(rowUpdates),
+       activeSheetFormulaUpdates = List<CellUpdate>.unmodifiable(
+         activeSheetFormulaUpdates,
+       ),
+       expectations = List<ActiveSheetWriteExpectation>.unmodifiable(
+         expectations,
+       );
 
   final List<ExercisesRowAppend> rowAppends;
   final List<ExercisesRowUpdate> rowUpdates;
+  final List<CellUpdate> activeSheetFormulaUpdates;
+  final List<ActiveSheetWriteExpectation> expectations;
+
+  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+    return [
+      for (final expectation in expectations)
+        ...expectation.writeRejections(sheet),
+    ];
+  }
 
   List<List<String>> previewRowsAfterApplying(Iterable<Iterable<String>> rows) {
     final preview = rows.map((row) => row.toList()).toList();
@@ -623,18 +760,29 @@ class ExercisesWritePlan {
     return identical(this, other) ||
         other is ExercisesWritePlan &&
             _listEquals(rowAppends, other.rowAppends) &&
-            _listEquals(rowUpdates, other.rowUpdates);
+            _listEquals(rowUpdates, other.rowUpdates) &&
+            _listEquals(
+              activeSheetFormulaUpdates,
+              other.activeSheetFormulaUpdates,
+            ) &&
+            _listEquals(expectations, other.expectations);
   }
 
   @override
-  int get hashCode =>
-      Object.hash(Object.hashAll(rowAppends), Object.hashAll(rowUpdates));
+  int get hashCode => Object.hash(
+    Object.hashAll(rowAppends),
+    Object.hashAll(rowUpdates),
+    Object.hashAll(activeSheetFormulaUpdates),
+    Object.hashAll(expectations),
+  );
 
   @override
   String toString() {
     return 'ExercisesWritePlan('
         'rowAppends: $rowAppends, '
-        'rowUpdates: $rowUpdates'
+        'rowUpdates: $rowUpdates, '
+        'activeSheetFormulaUpdates: $activeSheetFormulaUpdates, '
+        'expectations: $expectations'
         ')';
   }
 }
@@ -905,6 +1053,48 @@ class _ActiveSheetWritePlanner {
           sheetRowNumber: sheetRowNumber,
           values: _canonicalExerciseRowValues(exercise),
         ),
+      ],
+    );
+  }
+
+  ExercisesWritePlan planCanonicalExerciseReorder(ReorderIntent intent) {
+    if (sheet._exercisesRows.length < 3) {
+      return ExercisesWritePlan();
+    }
+    final header = sheet._exercisesRows.first;
+    final exerciseRows = sheet._exercisesRows.skip(1).toList();
+    final reorderedRows = _reordered(exerciseRows, intent);
+    if (_nestedListEquals(exerciseRows, reorderedRows)) {
+      return ExercisesWritePlan();
+    }
+
+    final oldToNewRows = <int, int>{};
+    for (var oldIndex = 0; oldIndex < exerciseRows.length; oldIndex += 1) {
+      final row = exerciseRows[oldIndex];
+      final newIndex = reorderedRows.indexWhere(
+        (candidate) => identical(candidate, row),
+      );
+      if (newIndex >= 0) {
+        oldToNewRows[oldIndex + 2] = newIndex + 2;
+      }
+    }
+
+    return ExercisesWritePlan(
+      rowUpdates: [
+        for (var index = 0; index < reorderedRows.length; index += 1)
+          ExercisesRowUpdate(
+            sheetRowNumber: index + 2,
+            values: _normalizedExerciseRow(header, reorderedRows[index]),
+          ),
+      ],
+      activeSheetFormulaUpdates: _activeFormulaUpdatesForReorder(oldToNewRows),
+      expectations: [
+        for (var index = 0; index < exerciseRows.length; index += 1)
+          ExercisesRowExpectation(
+            sheetRowNumber: index + 2,
+            expectedValues: exerciseRows[index],
+          ),
+        ..._activeFormulaExpectationsForReorder(oldToNewRows),
       ],
     );
   }
@@ -1309,6 +1499,46 @@ class _ActiveSheetWritePlanner {
     return row;
   }
 
+  List<String> _normalizedExerciseRow(List<String> header, List<String> row) {
+    final width = header.length < exercisesSheetColumns.length
+        ? exercisesSheetColumns.length
+        : header.length;
+    return [for (var index = 0; index < width; index += 1) _cell(row, index)];
+  }
+
+  List<CellUpdate> _activeFormulaUpdatesForReorder(Map<int, int> oldToNewRows) {
+    return [
+      for (final formula in sheet._cellFormulas)
+        if (_directExercisesReference(formula.formula) case final reference?)
+          if (oldToNewRows[reference.rowNumber] case final newRowNumber?)
+            if (newRowNumber != reference.rowNumber)
+              CellUpdate.formula(
+                sheetRowNumber: formula.sheetRowNumber,
+                sheetColumnNumber: formula.sheetColumnNumber,
+                value: _directExercisesFormula(
+                  exercisesSheetColumnNumber: reference.columnNumber,
+                  exercisesSheetRowNumber: newRowNumber,
+                ),
+              ),
+    ];
+  }
+
+  List<ActiveSheetFormulaExpectation> _activeFormulaExpectationsForReorder(
+    Map<int, int> oldToNewRows,
+  ) {
+    return [
+      for (final formula in sheet._cellFormulas)
+        if (_directExercisesReference(formula.formula) case final reference?)
+          if (oldToNewRows[reference.rowNumber] case final newRowNumber?)
+            if (newRowNumber != reference.rowNumber)
+              ActiveSheetFormulaExpectation(
+                sheetRowNumber: formula.sheetRowNumber,
+                sheetColumnNumber: formula.sheetColumnNumber,
+                expectedFormula: formula.formula,
+              ),
+    ];
+  }
+
   int _exerciseRowWidth(List<String> header, int logFormatColumn) {
     var width = header.length;
     if (width < exercisesSheetColumns.length) {
@@ -1458,4 +1688,62 @@ class _ActiveSheetWritePlanner {
           : null,
     );
   }
+}
+
+List<T> _reordered<T>(List<T> items, ReorderIntent intent) {
+  if (intent.fromIndex < 0 ||
+      intent.fromIndex >= items.length ||
+      intent.toIndex < 0 ||
+      intent.toIndex >= items.length ||
+      intent.fromIndex == intent.toIndex) {
+    return List<T>.unmodifiable(items);
+  }
+  final reordered = [...items];
+  final item = reordered.removeAt(intent.fromIndex);
+  reordered.insert(intent.toIndex, item);
+  return List<T>.unmodifiable(reordered);
+}
+
+bool _nestedListEquals<T>(List<List<T>> first, List<List<T>> second) {
+  if (first.length != second.length) {
+    return false;
+  }
+  for (var index = 0; index < first.length; index += 1) {
+    if (!_listEquals(first[index], second[index])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+_DirectExercisesReference? _directExercisesReference(String formula) {
+  final normalized = formula.trim();
+  final match = RegExp(
+    r"^=('?Exercises'?)!([A-Z]+)(\d+)$",
+  ).firstMatch(normalized);
+  if (match == null) {
+    return null;
+  }
+  return _DirectExercisesReference(
+    columnNumber: _columnNumber(match.group(2)!),
+    rowNumber: int.parse(match.group(3)!),
+  );
+}
+
+class _DirectExercisesReference {
+  const _DirectExercisesReference({
+    required this.columnNumber,
+    required this.rowNumber,
+  });
+
+  final int columnNumber;
+  final int rowNumber;
+}
+
+int _columnNumber(String letters) {
+  var columnNumber = 0;
+  for (final codeUnit in letters.codeUnits) {
+    columnNumber = columnNumber * 26 + (codeUnit - 64);
+  }
+  return columnNumber;
 }

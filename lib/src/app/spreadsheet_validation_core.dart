@@ -49,6 +49,12 @@ abstract interface class ExerciseAuthoringService {
     required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
   });
+
+  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ReorderIntent intent,
+  });
 }
 
 class ExercisePlacementTarget {

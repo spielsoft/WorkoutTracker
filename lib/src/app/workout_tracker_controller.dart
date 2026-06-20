@@ -337,6 +337,29 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
+  Future<bool> reorderCanonicalExercises(ReorderIntent intent) async {
+    final report = _report;
+    final exerciseAuthoringService = this.exerciseAuthoringService;
+    if (report == null || exerciseAuthoringService == null) {
+      _error = 'Exercise authoring is not connected yet.';
+      notifyListeners();
+      return false;
+    }
+
+    return _runServiceAction(
+      failurePrefix: 'Unable to reorder exercises',
+      action: () async {
+        _report = await exerciseAuthoringService.reorderCanonicalExercises(
+          spreadsheetId: report.spreadsheetId,
+          activeSheet: report.activeSheet,
+          intent: intent,
+        );
+        _error = null;
+        _clearLoggingSelection();
+      },
+    );
+  }
+
   void selectWorkout(String? workout) {
     _selectedWorkout = workout;
     _clearLoggingSelection();

@@ -504,4 +504,369 @@ void main() {
       ],
     ]);
   });
+
+  test(
+    'plans canonical exercise reorder as metadata-preserving row updates with formula repairs',
+    () {
+      final activeRows = [
+        historyHeaderRow(['Session A']),
+        setLabelRow(['S1']),
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}',
+          'Legs',
+          '',
+          '',
+        ],
+        [
+          'Bench Press',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}',
+          'Upper',
+          '',
+          '',
+        ],
+      ];
+      final exercisesRows = [
+        exercisesSheetColumns,
+        [
+          'Squat',
+          'Back squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Use belt',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+        [
+          'Bench Press',
+          'Competition bench',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          'Pause reps',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+        [
+          'Cable Row',
+          'Seated cable row',
+          '3',
+          '12',
+          '8',
+          '90s',
+          '',
+          'Neutral grip',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+      ];
+      final activeSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: activeRows,
+          cellFormulas: const [
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 8,
+              formula: '=Exercises!I2',
+            ),
+            CellFormula(
+              sheetRowNumber: 4,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A3',
+            ),
+            CellFormula(
+              sheetRowNumber: 4,
+              sheetColumnNumber: 8,
+              formula: '=Exercises!I3',
+            ),
+          ],
+          exercisesRows: exercisesRows,
+        ),
+      );
+
+      final plan = activeSheet.planCanonicalExerciseReorder(
+        ReorderIntent(fromIndex: 0, toIndex: 2),
+      );
+
+      expect(plan.rowAppends, isEmpty);
+      expect(plan.rowUpdates.map((update) => update.sheetRowNumber), [2, 3, 4]);
+      expect(plan.previewRowsAfterApplying(exercisesRows), [
+        exercisesSheetColumns,
+        [
+          'Bench Press',
+          'Competition bench',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          'Pause reps',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+        [
+          'Cable Row',
+          'Seated cable row',
+          '3',
+          '12',
+          '8',
+          '90s',
+          '',
+          'Neutral grip',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+        [
+          'Squat',
+          'Back squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Use belt',
+          '{Weight}[x]{Reps}[@]{RPE}',
+        ],
+      ]);
+      expect(plan.activeSheetFormulaUpdates, [
+        CellUpdate.formula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A4',
+        ),
+        CellUpdate.formula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          value: '=Exercises!I4',
+        ),
+        CellUpdate.formula(
+          sheetRowNumber: 4,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A2',
+        ),
+        CellUpdate.formula(
+          sheetRowNumber: 4,
+          sheetColumnNumber: 8,
+          value: '=Exercises!I2',
+        ),
+      ]);
+    },
+  );
+
+  test('does not plan canonical exercise reorder writes for no-op moves', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+        ],
+        exercisesRows: [
+          exercisesSheetColumns,
+          _canonicalExerciseRow('Squat'),
+          _canonicalExerciseRow('Bench Press'),
+        ],
+      ),
+    );
+
+    final samePosition = activeSheet.planCanonicalExerciseReorder(
+      const ReorderIntent(fromIndex: 1, toIndex: 1),
+    );
+    final outOfRange = activeSheet.planCanonicalExerciseReorder(
+      const ReorderIntent(fromIndex: 2, toIndex: 0),
+    );
+
+    expect(samePosition.rowUpdates, isEmpty);
+    expect(samePosition.activeSheetFormulaUpdates, isEmpty);
+    expect(samePosition.expectations, isEmpty);
+    expect(outOfRange.rowUpdates, isEmpty);
+    expect(outOfRange.activeSheetFormulaUpdates, isEmpty);
+    expect(outOfRange.expectations, isEmpty);
+  });
+
+  test('plans canonical exercise boundary moves', () {
+    final exercisesRows = [
+      exercisesSheetColumns,
+      _canonicalExerciseRow('Squat'),
+      _canonicalExerciseRow('Bench Press'),
+      _canonicalExerciseRow('Cable Row'),
+    ];
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+        ],
+        exercisesRows: exercisesRows,
+      ),
+    );
+
+    final plan = activeSheet.planCanonicalExerciseReorder(
+      const ReorderIntent(fromIndex: 2, toIndex: 0),
+    );
+
+    expect(plan.previewRowsAfterApplying(exercisesRows), [
+      exercisesSheetColumns,
+      _canonicalExerciseRow('Cable Row'),
+      _canonicalExerciseRow('Squat'),
+      _canonicalExerciseRow('Bench Press'),
+    ]);
+  });
+
+  test('rejects canonical exercise reorder when source rows are stale', () {
+    final exercisesRows = [
+      exercisesSheetColumns,
+      _canonicalExerciseRow('Squat'),
+      _canonicalExerciseRow('Bench Press'),
+      _canonicalExerciseRow('Cable Row'),
+    ];
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+        ],
+        exercisesRows: exercisesRows,
+      ),
+    );
+    final plan = activeSheet.planCanonicalExerciseReorder(
+      const ReorderIntent(fromIndex: 0, toIndex: 2),
+    );
+    final changedSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+        ],
+        exercisesRows: [
+          exercisesSheetColumns,
+          _canonicalExerciseRow('Squat', notes: 'Manual sheet edit'),
+          _canonicalExerciseRow('Bench Press'),
+          _canonicalExerciseRow('Cable Row'),
+        ],
+      ),
+    );
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'Exercises row 2 no longer matches the planned reorder.',
+      ),
+    ]);
+  });
+
+  test('rejects canonical exercise reorder when active formulas are stale', () {
+    final exercisesRows = [
+      exercisesSheetColumns,
+      _canonicalExerciseRow('Squat'),
+      _canonicalExerciseRow('Bench Press'),
+      _canonicalExerciseRow('Cable Row'),
+    ];
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+          [
+            'Squat',
+            '3',
+            '10',
+            '8',
+            '2 min',
+            '',
+            '',
+            defaultExerciseLogFormat,
+            'Legs',
+            '',
+            '',
+          ],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+        ],
+        exercisesRows: exercisesRows,
+      ),
+    );
+    final plan = activeSheet.planCanonicalExerciseReorder(
+      const ReorderIntent(fromIndex: 0, toIndex: 2),
+    );
+    final changedSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          historyHeaderRow(['Session A']),
+          setLabelRow(['S1']),
+          [
+            'Squat',
+            '3',
+            '10',
+            '8',
+            '2 min',
+            '',
+            '',
+            defaultExerciseLogFormat,
+            'Legs',
+            '',
+            '',
+          ],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A3',
+          ),
+        ],
+        exercisesRows: exercisesRows,
+      ),
+    );
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'Formula row 3 column 1 no longer matches the planned reorder.',
+      ),
+    ]);
+  });
+}
+
+List<String> _canonicalExerciseRow(
+  String exercise, {
+  String description = '',
+  String defaultSets = '3',
+  String defaultReps = '10',
+  String defaultRpe = '8',
+  String defaultRest = '2 min',
+  String defaultTempo = '',
+  String notes = '',
+  String logFormat = defaultExerciseLogFormat,
+}) {
+  return [
+    exercise,
+    description,
+    defaultSets,
+    defaultReps,
+    defaultRpe,
+    defaultRest,
+    defaultTempo,
+    notes,
+    logFormat,
+  ];
 }

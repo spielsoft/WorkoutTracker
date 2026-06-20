@@ -10,6 +10,7 @@ class ParsedActiveSheet {
     Map<String, int> formulaExerciseColumnNumbers = const {},
     Iterable<Iterable<String>> rows = const [],
     Iterable<Iterable<String>> exercisesRows = const [],
+    Iterable<CellFormula> cellFormulas = const [],
   }) : slots = List<WorkoutSlot>.unmodifiable(slots),
        historyBlocks = List<HistoryBlock>.unmodifiable(historyBlocks),
        primarySlots = List<WorkoutSlot>.unmodifiable(primarySlots),
@@ -25,7 +26,8 @@ class ParsedActiveSheet {
        ),
        _exercisesRows = List<List<String>>.unmodifiable(
          exercisesRows.map((row) => List<String>.unmodifiable(row)),
-       );
+       ),
+       _cellFormulas = List<CellFormula>.unmodifiable(cellFormulas);
 
   final List<WorkoutSlot> slots;
   final List<HistoryBlock> historyBlocks;
@@ -35,6 +37,7 @@ class ParsedActiveSheet {
   final Map<String, int> _formulaExerciseColumnNumbers;
   final List<List<String>> _rows;
   final List<List<String>> _exercisesRows;
+  final List<CellFormula> _cellFormulas;
 
   List<String> get selectableWorkouts {
     return _WorkoutReadModelBuilder(this).selectableWorkouts;
@@ -177,6 +180,10 @@ class ParsedActiveSheet {
       selectedExercise: selectedExercise,
       exercise: exercise,
     );
+  }
+
+  ExercisesWritePlan planCanonicalExerciseReorder(ReorderIntent intent) {
+    return _ActiveSheetWritePlanner(this).planCanonicalExerciseReorder(intent);
   }
 
   ActiveSheetWritePlan planPrimaryWorkoutPlacement({
