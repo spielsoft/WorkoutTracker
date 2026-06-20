@@ -8,7 +8,7 @@ This issue plan intentionally references the PRD for full rationale and user-sto
 
 - [x] Slice 1: Establish mobile visual state language
 - [x] Slice 2: Make logging entry thumb-first
-- [ ] Slice 3: Compress logging context and history
+- [x] Slice 3: Compress logging context and history
 - [x] Slice 4: Expose backup row actions
 - [ ] Slice 5: Stabilize mobile form layouts
 - [ ] Slice 6: Move creation actions out of selectors
@@ -85,11 +85,11 @@ Move target, rest, tempo, notes, and recent history into compact mobile-first su
 
 ### Acceptance criteria
 
-- [ ] Target, rest, tempo, and notes are available without pushing the next set editor below the primary mobile viewport.
-- [ ] Recent history appears as a compact summary by default.
-- [ ] Users can expand or inspect deeper history without leaving the logging flow.
-- [ ] Logged current-session sets remain visually higher priority than prior history.
-- [ ] Widget tests verify default collapsed or compact presentation and expansion behavior.
+- [x] Target, rest, tempo, and notes are available without pushing the next set editor below the primary mobile viewport.
+- [x] Recent history appears as a compact summary by default.
+- [x] Users can expand or inspect deeper history without leaving the logging flow.
+- [x] Logged current-session sets remain visually higher priority than prior history.
+- [x] Widget tests verify default collapsed or compact presentation and expansion behavior.
 
 ### Blocked by
 

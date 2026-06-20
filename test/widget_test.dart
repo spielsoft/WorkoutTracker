@@ -1186,58 +1186,83 @@ void main() {
     },
   );
 
-  testWidgets(
-    'keeps exercise context, selected rows, recent history, and raw controls',
-    (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
-        [...activeSheetFixedColumns, 'Week 2', 'Week 1', ''],
-        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1', 'S2'],
-        [
-          'Carry',
-          '3',
-          '40',
-          '8',
-          '90s',
-          'Smooth',
-          'Stay tall.',
-          '{Distance}[@]{RPE}',
-          'Conditioning',
-          '',
-          'worked up, grip failed',
-          '30@7',
-          '35@8',
-        ],
-      ]);
+  testWidgets('compresses logging context and history until expanded', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      await tester.pumpWidget(
-        WorkoutTrackerApp(
-          validationService: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
-      );
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 2', 'Week 1', ''],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1', 'S2'],
+      [
+        'Carry',
+        '3',
+        '40',
+        '8',
+        '90s',
+        'Smooth',
+        'Stay tall.',
+        '{Distance}[@]{RPE}',
+        'Conditioning',
+        '',
+        'worked up, grip failed',
+        '30@7',
+        '35@8',
+      ],
+    ]);
 
-      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-      await tester.pump();
-      await tester.pump();
-      await tester.tap(find.text('Carry'));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
 
-      expect(find.text('Carry'), findsWidgets);
-      expect(find.text('Carry logging'), findsNothing);
-      expect(find.text('Target: 3 sets x 40 @ 8'), findsOneWidget);
-      expect(find.text('Rest: 90s'), findsOneWidget);
-      expect(find.text('Tempo: Smooth'), findsOneWidget);
-      expect(find.text('Stay tall.'), findsOneWidget);
-      expect(find.text('Next set S2'), findsOneWidget);
-      expect(find.text('Logged sets'), findsOneWidget);
-      expect(find.byKey(const ValueKey('raw-S1')), findsOneWidget);
-      expect(find.text('Recent history'), findsOneWidget);
-      expect(find.text('Week 1'), findsWidgets);
-      expect(find.text('Week 1 S1: 30@7'), findsNothing);
-      expect(find.text('S1: 30@7'), findsOneWidget);
-      expect(find.text('S2: 35@8'), findsOneWidget);
-    },
-  );
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Carry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Carry'), findsWidgets);
+    expect(find.text('Carry logging'), findsNothing);
+    expect(find.text('Next set S2'), findsOneWidget);
+    expect(find.text('Logged sets'), findsOneWidget);
+    expect(find.byKey(const ValueKey('raw-S1')), findsOneWidget);
+    expect(find.text('Training details'), findsOneWidget);
+    expect(find.text('Plan 3 x 40 @ 8'), findsOneWidget);
+    expect(find.text('Rest 90s | Tempo Smooth'), findsOneWidget);
+    expect(find.text('Target: 3 sets x 40 @ 8'), findsNothing);
+    expect(find.text('Rest: 90s'), findsNothing);
+    expect(find.text('Tempo: Smooth'), findsNothing);
+    expect(find.text('Notes: Stay tall.'), findsNothing);
+    expect(find.text('Recent history'), findsOneWidget);
+    expect(find.text('Week 1: 30@7, 35@8'), findsOneWidget);
+    expect(find.text('Week 1'), findsNothing);
+    expect(find.text('Week 1 S1: 30@7'), findsNothing);
+    expect(find.text('S1: 30@7'), findsNothing);
+    expect(find.text('S2: 35@8'), findsNothing);
+
+    await tester.tap(find.text('Training details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Target: 3 sets x 40 @ 8'), findsOneWidget);
+    expect(find.text('Rest: 90s'), findsOneWidget);
+    expect(find.text('Tempo: Smooth'), findsOneWidget);
+    expect(find.text('Notes: Stay tall.'), findsOneWidget);
+    expect(find.text('Latest history: 30@7'), findsOneWidget);
+
+    await tester.tap(find.text('Recent history'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('S1: 30@7'), findsOneWidget);
+    expect(find.text('S2: 35@8'), findsOneWidget);
+  });
 
   testWidgets(
     'prioritizes next set entry before context and history on a phone',
@@ -1286,7 +1311,7 @@ void main() {
       final nextSetField = find.byKey(const ValueKey('set-field-Distance'));
       final saveSet = find.text('Save set');
       final progress = find.text('Progress 1/2');
-      final target = find.text('Target: 3 sets x 40 @ 8');
+      final target = find.text('Plan 3 x 40 @ 8');
       final recentHistory = find.text('Recent history');
 
       expect(nextSet, findsOneWidget);

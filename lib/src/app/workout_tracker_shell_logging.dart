@@ -135,6 +135,9 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     final loggedSetNumbers = {
       for (final entry in viewModel.loggedEntries) entry.setNumber,
     };
+    final priorHistoryBlocks = loggingContext.recentHistoryBlocks
+        .where((block) => block.label != loggingContext.selectedHistory.label)
+        .toList();
     final totalSetCount =
         loggingContext.selectedHistory.entries.length < viewModel.nextSetNumber
         ? viewModel.nextSetNumber
@@ -272,19 +275,24 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
         const SizedBox(height: 16),
         _ExerciseContextPanel(
           context: loggingContext,
-          latestHistoryValue: viewModel.latestHistoryValue,
+          latestHistoryValue: _latestHistoryValue(priorHistoryBlocks),
         ),
         const SizedBox(height: 16),
-        Text('Recent history', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        if (loggingContext.recentHistoryBlocks.isEmpty)
-          const Text('No row-local history yet.')
-        else
-          for (final block in loggingContext.recentHistoryBlocks)
-            _RecentHistoryBlock(block: block),
+        _RecentHistoryPanel(blocks: priorHistoryBlocks),
       ],
     );
   }
+}
+
+String? _latestHistoryValue(List<RowHistoryBlock> blocks) {
+  for (final block in blocks) {
+    for (final entry in block.entries) {
+      if (entry.rawValue.trim().isNotEmpty) {
+        return entry.rawValue;
+      }
+    }
+  }
+  return null;
 }
 
 class _ExerciseContextPanel extends StatelessWidget {
@@ -299,27 +307,161 @@ class _ExerciseContextPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final targets = this.context.targets;
+    final summaryParts = [
+      if (this.context.rest.trim().isNotEmpty) 'Rest ${this.context.rest}',
+      if (targets.tempo.trim().isNotEmpty) 'Tempo ${targets.tempo}',
+    ];
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Target: ${targets.sets} sets x ${targets.reps} @ ${targets.rpe}',
-            ),
+      child: _CompactExpansionSection(
+        title: 'Training details',
+        summaryLines: [
+          'Plan ${targets.sets} x ${targets.reps} @ ${targets.rpe}',
+          if (summaryParts.isNotEmpty) summaryParts.join(' | '),
+        ],
+        children: [
+          Text(
+            'Target: ${targets.sets} sets x ${targets.reps} @ ${targets.rpe}',
+          ),
+          if (this.context.rest.trim().isNotEmpty)
             Text('Rest: ${this.context.rest}'),
-            if (targets.tempo.trim().isNotEmpty)
-              Text('Tempo: ${targets.tempo}'),
-            if (this.context.notes.trim().isNotEmpty) Text(this.context.notes),
-            if (latestHistoryValue != null)
-              Text('Latest history: $latestHistoryValue'),
-          ],
+          if (targets.tempo.trim().isNotEmpty) Text('Tempo: ${targets.tempo}'),
+          if (this.context.notes.trim().isNotEmpty)
+            Text('Notes: ${this.context.notes}'),
+          if (latestHistoryValue != null)
+            Text('Latest history: $latestHistoryValue'),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentHistoryPanel extends StatelessWidget {
+  const _RecentHistoryPanel({required this.blocks});
+
+  final List<RowHistoryBlock> blocks;
+
+  @override
+  Widget build(BuildContext context) {
+    if (blocks.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recent history',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          const Text('No row-local history yet.'),
+        ],
+      );
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: _CompactExpansionSection(
+        title: 'Recent history',
+        summaryLines: _historySummaryLines(blocks),
+        children: [
+          for (final block in blocks) _RecentHistoryBlock(block: block),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactExpansionSection extends StatelessWidget {
+  const _CompactExpansionSection({
+    required this.title,
+    required this.summaryLines,
+    required this.children,
+  });
+
+  final String title;
+  final List<String> summaryLines;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final line in summaryLines)
+                Text(line, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ],
+          ),
         ),
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<String> _historySummaryLines(List<RowHistoryBlock> blocks) {
+  final lines = <String>[];
+  for (final block in blocks) {
+    final values = block.entries
+        .where((entry) => entry.rawValue.trim().isNotEmpty)
+        .map((entry) => entry.rawValue.trim())
+        .toList();
+    if (values.isEmpty) {
+      continue;
+    }
+    lines.add('${block.label}: ${values.join(', ')}');
+  }
+  if (lines.isEmpty) {
+    return const ['No row-local history yet.'];
+  }
+  return lines;
+}
+
+class _RecentHistoryBlock extends StatelessWidget {
+  const _RecentHistoryBlock({required this.block});
+
+  final RowHistoryBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = block.entries
+        .where((entry) => entry.rawValue.trim().isNotEmpty)
+        .toList();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(block.label, style: Theme.of(context).textTheme.labelLarge),
+          Wrap(
+            spacing: 16,
+            runSpacing: 4,
+            children: [
+              for (final entry in entries)
+                Text('${entry.setLabel}: ${entry.rawValue}'),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -500,36 +642,6 @@ class _LoggedFormattedSetEditor extends StatelessWidget {
             tooltip: 'Clear set',
             onPressed: isBusy ? null : onClear,
             icon: const Icon(Icons.delete_outline),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecentHistoryBlock extends StatelessWidget {
-  const _RecentHistoryBlock({required this.block});
-
-  final RowHistoryBlock block;
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = block.entries
-        .where((entry) => entry.rawValue.trim().isNotEmpty)
-        .toList();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(block.label, style: Theme.of(context).textTheme.labelLarge),
-          Wrap(
-            spacing: 16,
-            runSpacing: 4,
-            children: [
-              for (final entry in entries)
-                Text('${entry.setLabel}: ${entry.rawValue}'),
-            ],
           ),
         ],
       ),
