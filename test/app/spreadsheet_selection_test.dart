@@ -68,6 +68,34 @@ void main() {
       expect(client.isClosed, isTrue);
     },
   );
+
+  test(
+    'selected spreadsheet metadata resolution uses writable Sheets authorization',
+    () async {
+      final gateway = _RecordingAuthorizationGateway();
+      final client = _GetSpreadsheetClient();
+      final picker = MobileGoogleDriveSpreadsheetPicker(
+        clientId: 'client-id.apps.googleusercontent.com',
+        authorizationGateway: gateway,
+        authorizationClientFactory: (_) => client,
+      );
+
+      final selected = await picker.resolveSelectedSpreadsheet(
+        const SelectedSpreadsheet(
+          spreadsheetId: 'picked-spreadsheet-id',
+          name: 'picked-spreadsheet-id',
+        ),
+      );
+
+      expect(gateway.requestedScopes.single, [
+        GoogleApisSheetsWriteClient.writeScopes.single,
+      ]);
+      expect(selected.spreadsheetId, 'picked-spreadsheet-id');
+      expect(selected.name, 'Picked Workout Book');
+      expect(selected.accountEmail, 'user@example.com');
+      expect(client.isClosed, isTrue);
+    },
+  );
 }
 
 class _RecordingAuthorizationGateway extends ChangeNotifier
@@ -134,6 +162,43 @@ class _CreateSpreadsheetClient extends http.BaseClient {
             'spreadsheetUrl':
                 'https://docs.google.com/spreadsheets/d/created-spreadsheet-id/edit',
             'properties': {'title': properties['title']},
+          }),
+        ),
+      ),
+      200,
+      headers: {'content-type': 'application/json; charset=utf-8'},
+      request: request,
+    );
+  }
+
+  @override
+  void close() {
+    isClosed = true;
+    super.close();
+  }
+}
+
+class _GetSpreadsheetClient extends http.BaseClient {
+  var isClosed = false;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (request.method != 'GET' ||
+        !request.url.path.endsWith('/spreadsheets/picked-spreadsheet-id')) {
+      throw StateError(
+        'Unexpected request: ${request.runtimeType} '
+        '${request.method} ${request.url}',
+      );
+    }
+
+    return http.StreamedResponse(
+      Stream<List<int>>.value(
+        utf8.encode(
+          jsonEncode({
+            'spreadsheetId': 'picked-spreadsheet-id',
+            'spreadsheetUrl':
+                'https://docs.google.com/spreadsheets/d/picked-spreadsheet-id/edit',
+            'properties': {'title': 'Picked Workout Book'},
           }),
         ),
       ),

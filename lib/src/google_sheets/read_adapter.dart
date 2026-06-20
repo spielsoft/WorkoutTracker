@@ -88,8 +88,6 @@ class GoogleApisSheetsSpreadsheetClient
 
   final sheets.SheetsApi _api;
 
-  static const readOnlyScopes = [sheets.SheetsApi.spreadsheetsReadonlyScope];
-
   @override
   Future<GoogleSpreadsheetSnapshot> fetchSpreadsheet(
     String spreadsheetId,

@@ -8,7 +8,7 @@ import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
   test(
-    'native Google sign-in validation uses read-only Sheets authorization',
+    'native Google sign-in validation uses writable Sheets authorization',
     () async {
       final gateway = _RecordingGoogleSignInAuthorizationGateway();
       final activeSheet = _minimalParsedActiveSheet();
@@ -31,9 +31,9 @@ void main() {
       expect(authClient.closedDuringAction, isFalse);
       expect(authClient.closed, isTrue);
       expect(gateway.requestedScopes.single, [
-        sheets.SheetsApi.spreadsheetsReadonlyScope,
+        sheets.SheetsApi.spreadsheetsScope,
       ]);
-      expect(requestedWriteAccess, isFalse);
+      expect(requestedWriteAccess, isTrue);
     },
   );
 

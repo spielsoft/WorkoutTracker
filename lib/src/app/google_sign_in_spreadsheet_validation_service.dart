@@ -30,8 +30,8 @@ class GoogleSignInSpreadsheetValidationService
     String spreadsheetId,
   ) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsSpreadsheetClient.readOnlyScopes,
-      canWrite: false,
+      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      canWrite: true,
       action: (service) => service.validateSpreadsheet(spreadsheetId),
     );
   }
