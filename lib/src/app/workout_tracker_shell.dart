@@ -13,6 +13,7 @@ import 'workout_tracker_controller.dart';
 part 'workout_tracker_shell_account.dart';
 part 'workout_tracker_shell_workout.dart';
 part 'workout_tracker_shell_exercise_authoring.dart';
+part 'workout_tracker_shell_exercise_manager.dart';
 part 'workout_tracker_shell_visual_states.dart';
 part 'workout_tracker_shell_logging.dart';
 part 'workout_tracker_shell_validation.dart';
@@ -22,6 +23,7 @@ const _compactSegmentedButtonRadius = 8.0;
 enum _WorkoutTrackerScreen {
   sheetSelection,
   workoutSetup,
+  exerciseManager,
   exercisePicker,
   addExercise,
   exerciseLogging,
@@ -684,6 +686,14 @@ class _SpreadsheetValidationShellState
     });
   }
 
+  void _openExerciseManager() {
+    _controller.closeExercise();
+    _addExercisePlacementIntent = null;
+    setState(() {
+      _screen = _WorkoutTrackerScreen.exerciseManager;
+    });
+  }
+
   void _openExercise(int primarySheetRowNumber) {
     _controller.openExercise(primarySheetRowNumber);
     setState(() {
@@ -926,6 +936,7 @@ class _SpreadsheetValidationShellState
                           onBackToSheetSelection: _returnToSheetSelection,
                           onSelectWorkoutSetup: _selectWorkoutSetup,
                           onBackToWorkoutSetup: _returnToWorkoutSetup,
+                          onOpenExerciseManager: _openExerciseManager,
                           onWorkoutChanged: _selectWorkout,
                           onHistoryBlockChanged: _selectHistoryBlock,
                           onAddWorkout: isBusy ? null : _promptForNewWorkout,

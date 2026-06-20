@@ -76,6 +76,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onBackToSheetSelection,
     required this.onSelectWorkoutSetup,
     required this.onBackToWorkoutSetup,
+    required this.onOpenExerciseManager,
     required this.onWorkoutChanged,
     required this.onHistoryBlockChanged,
     required this.onAddWorkout,
@@ -99,6 +100,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final VoidCallback onBackToSheetSelection;
   final VoidCallback onSelectWorkoutSetup;
   final VoidCallback onBackToWorkoutSetup;
+  final VoidCallback onOpenExerciseManager;
   final ValueChanged<String?> onWorkoutChanged;
   final ValueChanged<String?> onHistoryBlockChanged;
   final VoidCallback? onAddWorkout;
@@ -154,6 +156,14 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
         sheetLabel: sheetLabel,
         onBack: onCloseExerciseAdd,
         onSubmit: onSubmitCanonicalExercise,
+      );
+    }
+
+    if (screen == _WorkoutTrackerScreen.exerciseManager) {
+      return _ExerciseManagerInventory(
+        sheetLabel: sheetLabel,
+        exercises: activeSheet.canonicalExercises,
+        onBack: onBackToWorkoutSetup,
       );
     }
 
@@ -295,6 +305,13 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
           },
         ),
         const SizedBox(height: 24),
+        OutlinedButton.icon(
+          key: const ValueKey('open-exercise-manager'),
+          onPressed: onOpenExerciseManager,
+          icon: const Icon(Icons.edit_note_outlined),
+          label: const Text('Edit exercises'),
+        ),
+        const SizedBox(height: 12),
         FilledButton.icon(
           key: const ValueKey('select-workout-setup'),
           onPressed: overview == null ? null : onSelectWorkoutSetup,

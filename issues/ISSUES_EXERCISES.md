@@ -6,7 +6,7 @@ This issue plan references the PRD for full rationale and user-story detail. Eac
 
 ## Checklist
 
-- [ ] Slice 1: Add the exercise manager inventory
+- [x] Slice 1: Add the exercise manager inventory
 - [ ] Slice 2: Launch add exercise from the manager
 - [ ] Slice 3: Edit existing canonical exercises
 - [ ] Slice 4: Reorder canonical exercises through a generic seam
@@ -26,12 +26,12 @@ Create the mobile-first Edit Exercises view as a read-oriented inventory of cano
 
 ### Acceptance criteria
 
-- [ ] A user can reach an Edit Exercises view through a visible app flow.
-- [ ] The view lists canonical exercises in the order provided by the sheet-backed source.
-- [ ] Exercise rows are readable and usable at common iPhone widths.
-- [ ] Empty, loading, and error states are user-facing and actionable where appropriate.
-- [ ] The view does not expose delete, swipe-delete, disabled delete, or overflow delete actions.
-- [ ] Focused tests verify inventory visibility, ordering, empty state, and absence of delete controls through public UI behavior.
+- [x] A user can reach an Edit Exercises view through a visible app flow.
+- [x] The view lists canonical exercises in the order provided by the sheet-backed source.
+- [x] Exercise rows are readable and usable at common iPhone widths.
+- [x] Empty, loading, and error states are user-facing and actionable where appropriate.
+- [x] The view does not expose delete, swipe-delete, disabled delete, or overflow delete actions.
+- [x] Focused tests verify inventory visibility, ordering, empty state, and absence of delete controls through public UI behavior.
 
 ### Blocked by
 

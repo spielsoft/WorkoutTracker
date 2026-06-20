@@ -1110,6 +1110,113 @@ void main() {
     },
   );
 
+  testWidgets('opens an exercise manager inventory in canonical sheet order', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final service = TestSpreadsheetValidationService(
+      _exerciseInventoryParsedSheet([
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Bench Press', description: 'Competition bench'),
+        _exerciseRow('Cable Row', description: 'Seated cable row'),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit exercises'), findsWidgets);
+    expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+    expect(find.text('Squat'), findsOneWidget);
+    expect(find.text('Back squat'), findsOneWidget);
+    expect(find.text('Bench Press'), findsOneWidget);
+    expect(find.text('Competition bench'), findsOneWidget);
+    expect(find.text('Cable Row'), findsOneWidget);
+    expect(find.text('Seated cable row'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Squat')).dy,
+      lessThan(tester.getTopLeft(find.text('Bench Press')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Bench Press')).dy,
+      lessThan(tester.getTopLeft(find.text('Cable Row')).dy),
+    );
+  });
+
+  testWidgets('shows an empty state for an empty exercise library', (
+    tester,
+  ) async {
+    final service = TestSpreadsheetValidationService(
+      _emptyExerciseInventoryParsedSheet(),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit exercises'), findsWidgets);
+    expect(find.text('No exercises in this sheet.'), findsOneWidget);
+    expect(find.text('Squat'), findsNothing);
+  });
+
+  testWidgets('does not expose delete controls in the exercise manager', (
+    tester,
+  ) async {
+    final service = TestSpreadsheetValidationService(
+      _exerciseInventoryParsedSheet([
+        _exerciseRow('Squat', description: 'Back squat'),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Squat'), findsOneWidget);
+    expect(find.textContaining('delete', findRichText: true), findsNothing);
+    expect(find.textContaining('Delete', findRichText: true), findsNothing);
+    expect(find.byTooltip('Delete exercise'), findsNothing);
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
+    expect(find.byType(Dismissible), findsNothing);
+    expect(find.byType(PopupMenuButton), findsNothing);
+  });
+
   testWidgets('compresses logging context and history until expanded', (
     tester,
   ) async {
@@ -2183,6 +2290,67 @@ ParsedActiveSheet _minimalValidParsedSheet() {
       ],
     ),
   );
+}
+
+ParsedActiveSheet _exerciseInventoryParsedSheet(List<List<String>> exercises) {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ],
+      cellFormulas: const [
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          formula: '=Exercises!A2',
+        ),
+        CellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 8,
+          formula: '=Exercises!I2',
+        ),
+      ],
+      exercisesRows: [exercisesSheetColumns, ...exercises],
+    ),
+  );
+}
+
+ParsedActiveSheet _emptyExerciseInventoryParsedSheet() {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ],
+      exercisesRows: const [exercisesSheetColumns],
+    ),
+  );
+}
+
+List<String> _exerciseRow(
+  String name, {
+  String description = '',
+  String defaultSets = '3',
+  String defaultReps = '10',
+  String defaultRpe = '8',
+  String defaultRest = '2 min',
+  String defaultTempo = '',
+  String notes = '',
+  String logFormat = '{Weight}[x]{Reps}[@]{RPE}',
+}) {
+  return [
+    name,
+    description,
+    defaultSets,
+    defaultReps,
+    defaultRpe,
+    defaultRest,
+    defaultTempo,
+    notes,
+    logFormat,
+  ];
 }
 
 class _CompletingWriteValidationService
