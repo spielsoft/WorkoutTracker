@@ -96,6 +96,18 @@ class GoogleSpreadsheetValidationService
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
+    final canonicalExerciseRejection = _canonicalExerciseRowRejection(
+      originalSheet: activeSheet,
+      currentSheet: currentActiveSheet,
+      exercisesSheetRowNumber: exercisesSheetRowNumber,
+    );
+    if (canonicalExerciseRejection != null) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: [canonicalExerciseRejection],
+      );
+    }
     final activePlan = placement.isBackup
         ? currentActiveSheet.planBackupWorkoutPlacement(
             primarySheetRowNumber: placement.primarySheetRowNumber!,
@@ -122,4 +134,54 @@ class GoogleSpreadsheetValidationService
     );
     return validateSpreadsheet(spreadsheetId);
   }
+}
+
+ActiveSheetWriteRejection? _canonicalExerciseRowRejection({
+  required ParsedActiveSheet originalSheet,
+  required ParsedActiveSheet currentSheet,
+  required int exercisesSheetRowNumber,
+}) {
+  final original = _canonicalExerciseForRow(
+    originalSheet,
+    exercisesSheetRowNumber,
+  );
+  final current = _canonicalExerciseForRow(
+    currentSheet,
+    exercisesSheetRowNumber,
+  );
+  if (original != null &&
+      current != null &&
+      _sameCanonicalExercise(original, current)) {
+    return null;
+  }
+
+  final label = original?.displayName ?? 'selected exercise';
+  return ActiveSheetWriteRejection(
+    'Exercises row $exercisesSheetRowNumber no longer matches $label.',
+  );
+}
+
+CanonicalExercise? _canonicalExerciseForRow(
+  ParsedActiveSheet sheet,
+  int sheetRowNumber,
+) {
+  for (final exercise in sheet.canonicalExercises) {
+    if (exercise.sheetRowNumber == sheetRowNumber) {
+      return exercise;
+    }
+  }
+  return null;
+}
+
+bool _sameCanonicalExercise(CanonicalExercise first, CanonicalExercise second) {
+  return first.sheetRowNumber == second.sheetRowNumber &&
+      first.exercise == second.exercise &&
+      first.description == second.description &&
+      first.defaultSets == second.defaultSets &&
+      first.defaultReps == second.defaultReps &&
+      first.defaultRpe == second.defaultRpe &&
+      first.defaultRest == second.defaultRest &&
+      first.defaultTempo == second.defaultTempo &&
+      first.notes == second.notes &&
+      first.logFormat == second.logFormat;
 }

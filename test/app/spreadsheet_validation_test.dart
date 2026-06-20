@@ -371,6 +371,70 @@ void main() {
       expect(writeClient.writeCount, 0);
     },
   );
+
+  test(
+    'rejects workout placement when the selected canonical exercise row changed before apply',
+    () async {
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ];
+      final staleExercisesRows = [
+        exercisesSheetColumns,
+        [
+          'Squat',
+          'Back squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Stay braced.',
+          defaultExerciseLogFormat,
+        ],
+      ];
+      final changedExercisesRows = [
+        exercisesSheetColumns,
+        [
+          'Deadlift',
+          'Conventional deadlift',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'Push the floor away.',
+          defaultExerciseLogFormat,
+        ],
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, staleExercisesRows),
+        _workbookSnapshot(activeRows, changedExercisesRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+
+      final rejected = await service.addExistingExerciseToWorkout(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        exercisesSheetRowNumber: 2,
+        metadata: const WorkoutPlacementMetadata(),
+        placement: const ExercisePlacementTarget.primary(workout: 'Legs'),
+      );
+
+      expect(rejected.hasBlockingIssues, isTrue);
+      expect(
+        rejected.manualRepairItems.single.problem,
+        contains('Exercises row 2 no longer matches Squat'),
+      );
+      expect(writeClient.writeCount, 0);
+    },
+  );
 }
 
 ParsedActiveSheet _minimalParsedActiveSheet() {
@@ -388,6 +452,18 @@ ParsedActiveSheet _minimalParsedActiveSheet() {
 GoogleSpreadsheetSnapshot _snapshot(List<List<String>> rows) {
   return GoogleSpreadsheetSnapshot(
     sheets: [GoogleSheetSnapshot(title: 'Active Workout', rows: rows)],
+  );
+}
+
+GoogleSpreadsheetSnapshot _workbookSnapshot(
+  List<List<String>> activeRows,
+  List<List<String>> exercisesRows,
+) {
+  return GoogleSpreadsheetSnapshot(
+    sheets: [
+      GoogleSheetSnapshot(title: 'Active Workout', rows: activeRows),
+      GoogleSheetSnapshot(title: 'Exercises', rows: exercisesRows),
+    ],
   );
 }
 
