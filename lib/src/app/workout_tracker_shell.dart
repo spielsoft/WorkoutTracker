@@ -112,6 +112,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
     required this.availability,
     required this.isBusy,
     this.accountSession,
+    this.onReturnToWorkout,
     required this.onChooseSpreadsheet,
     required this.onCreateSpreadsheet,
   });
@@ -120,6 +121,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
   final SpreadsheetPickerAvailability availability;
   final bool isBusy;
   final GoogleAccountSession? accountSession;
+  final VoidCallback? onReturnToWorkout;
   final Future<void> Function() onChooseSpreadsheet;
   final Future<void> Function() onCreateSpreadsheet;
 
@@ -184,6 +186,13 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
                   icon: const Icon(Icons.add_to_drive_outlined),
                   label: const Text('Create in Google Drive'),
                 ),
+                if (selected != null && onReturnToWorkout != null)
+                  FilledButton.tonalIcon(
+                    key: const ValueKey('return-to-selected-workout'),
+                    onPressed: isBusy ? null : onReturnToWorkout,
+                    icon: const Icon(Icons.fitness_center_outlined),
+                    label: const Text('Return to workout'),
+                  ),
               ],
             ),
             if (availability.summary case final String summary) ...[
@@ -515,6 +524,18 @@ class _SpreadsheetValidationShellState
     });
   }
 
+  void _returnToLoadedWorkout() {
+    final report = _controller.report;
+    if (report == null || report.hasBlockingIssues) {
+      return;
+    }
+    _addExercisePlacementIntent = null;
+    _controller.closeExercise();
+    setState(() {
+      _screen = _WorkoutTrackerScreen.workoutSetup;
+    });
+  }
+
   void _returnToWorkoutSetup() {
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
@@ -662,6 +683,8 @@ class _SpreadsheetValidationShellState
             final report = _controller.report;
             final error = _controller.error;
             final isBusy = _controller.isBusy;
+            final hasLoadedWorkout =
+                report != null && !report.hasBlockingIssues;
             final showSheetSelection =
                 _screen == _WorkoutTrackerScreen.sheetSelection ||
                 report == null ||
@@ -682,6 +705,9 @@ class _SpreadsheetValidationShellState
                                 widget.spreadsheetPicker!.availability,
                             isBusy: isBusy,
                             accountSession: widget.accountSession,
+                            onReturnToWorkout: hasLoadedWorkout
+                                ? _returnToLoadedWorkout
+                                : null,
                             onChooseSpreadsheet: _chooseSpreadsheet,
                             onCreateSpreadsheet: _createSpreadsheet,
                           ),
@@ -721,6 +747,9 @@ class _SpreadsheetValidationShellState
                       if (!showSheetSelection)
                         _WorkoutAndHistorySelection(
                           setup: _controller.workoutSetup!,
+                          sheetLabel:
+                              _selectedSpreadsheet?.displayLabel ??
+                              report.spreadsheetId,
                           screen: _screen,
                           newHistoryBlockController: _newHistoryBlockController,
                           onBackToSheetSelection: _returnToSheetSelection,
