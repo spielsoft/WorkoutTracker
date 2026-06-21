@@ -23,10 +23,10 @@ TestFlight are the release gates.
 - `ios/Runner/Info.plist` reads `GIDClientID` and URL scheme values from that
   xcconfig.
 - The app currently requests writable Google Sheets authorization for normal
-  sheet use. There is no read-only app mode.
-- Google Drive Picker choosing uses a loopback callback and
-  `WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID` when configured for desktop/testing
-  builds.
+  sheet use.
+- Google Drive Picker choosing uses a loopback callback and the checked-in web
+  OAuth client ID:
+  `657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com`.
 
 Do not change the bundle identifier once App Store Connect, Google OAuth,
 TestFlight installs, screenshots, and review notes depend on it.
@@ -96,9 +96,11 @@ https://www.googleapis.com/auth/spreadsheets
    automatically.
 5. Create an iOS OAuth client with bundle ID
    `com.spielman.workouttracker`.
-6. Update `ios/Flutter/GoogleSignIn.xcconfig` if the production client differs
+6. Confirm the checked-in Web OAuth client for Google Drive Picker belongs to
+   the production Google Cloud project.
+7. Update `ios/Flutter/GoogleSignIn.xcconfig` if the production client differs
    from the current development client.
-7. Keep secret JSON exports and API keys out of source control. Public mobile
+8. Keep secret JSON exports and API keys out of source control. Public mobile
    OAuth client IDs are embedded in app config; client secrets are not app
    secrets in an installed mobile binary.
 
@@ -396,7 +398,7 @@ After submission:
 - [ ] `flutter build macos` passes.
 - [ ] `flutter build ios --release --no-codesign` passes.
 - [ ] `flutter build ipa --release` passes before upload.
-- [ ] No stale development fallback docs remain.
+- [ ] No stale development-only selection docs remain.
 - [ ] Production app imports do not expose development reset helpers.
 
 ### Apple

@@ -52,10 +52,12 @@ https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=6571
 
 Google Drive Picker is used for choosing an existing spreadsheet, and
 Google-backed sheet creation initializes a new WorkoutTracker spreadsheet in
-Drive. Picker selection uses the web OAuth client ID supplied through the
-`WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID` dart define. Development builds that
-omit this value cannot choose an existing sheet through Picker; provide the
-dart define when validating sheet selection.
+Drive. Picker selection uses the checked-in web OAuth client ID for the
+`workouttracker-16285` Google Cloud project:
+
+```text
+657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com
+```
 
 ## Sheets Scopes
 

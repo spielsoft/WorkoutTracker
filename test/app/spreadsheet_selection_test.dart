@@ -39,6 +39,11 @@ void main() {
     },
   );
 
+  test('production picker client ID enables app builds', () {
+    expect(workoutTrackerGooglePickerClientId, isNotEmpty);
+    expect(MobileGoogleDriveSpreadsheetPicker().availability.canChoose, isTrue);
+  });
+
   test(
     'created spreadsheets are initialized as WorkoutTracker workbooks',
     () async {

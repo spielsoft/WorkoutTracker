@@ -14,11 +14,8 @@ import 'google_authorization_client.dart';
 typedef WorkoutTrackerWorkbookInitializerFactory =
     WorkoutTrackerWorkbookInitializer Function(sheets.SheetsApi api);
 
-const workoutTrackerGooglePickerClientIdDartDefine =
-    'WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID';
-const workoutTrackerGooglePickerClientId = String.fromEnvironment(
-  workoutTrackerGooglePickerClientIdDartDefine,
-);
+const workoutTrackerGooglePickerClientId =
+    '657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com';
 const workoutTrackerGooglePickerCallbackTimeout = Duration(minutes: 5);
 const _googlePickerCallbackPath = '/google-picker-callback';
 const _googlePickerCallbackStateBytes = 16;
