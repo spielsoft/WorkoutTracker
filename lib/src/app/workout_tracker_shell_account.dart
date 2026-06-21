@@ -17,7 +17,9 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
       _isSwitching = true;
     });
     try {
-      await widget.accountSession.switchAccount();
+      await widget.accountSession.switchAccount(
+        scopes: GoogleApisSheetsWriteClient.writeScopes,
+      );
     } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

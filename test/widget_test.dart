@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
@@ -2452,7 +2453,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(accountSession.switchCount, 1);
-    expect(accountSession.requestedScopes.single, isEmpty);
+    expect(
+      accountSession.requestedScopes.single,
+      GoogleApisSheetsWriteClient.writeScopes,
+    );
     expect(accountSession.currentAccount?.email, 'right@example.com');
   });
 
@@ -2483,6 +2487,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(accountSession.switchCount, 1);
+    expect(
+      accountSession.requestedScopes.single,
+      GoogleApisSheetsWriteClient.writeScopes,
+    );
     expect(accountSession.currentAccount?.email, 'right@example.com');
   });
 
