@@ -227,7 +227,7 @@ Suggested tests:
 
 ## Slice 8: Device Validation Gate
 
-Status: pending
+Status: pending live Google authorization
 
 Problem:
 
@@ -250,9 +250,14 @@ Likely files:
 
 Suggested tests:
 
-- `flutter analyze`
-- `flutter test`
-- `flutter build ios --simulator`
-- `flutter build ios --no-codesign`
+- `flutter devices` - passed 2026-06-28; found Ian Spielman's iPhone
+  wirelessly, macOS, and Chrome.
+- Device signing/team setup remains documented in `APP_STORE.md`.
+- `flutter analyze` - passed 2026-06-28 after declaring the existing
+  test-only `url_launcher_platform_interface` dependency.
+- `flutter test` - passed 2026-06-28.
+- `flutter build ios --simulator` - passed 2026-06-28.
+- `flutter build ios --no-codesign` - passed 2026-06-28.
 - `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 flutter test integration_test/live_logging_flow_test.dart`
-  only with explicit authorization.
+  not run 2026-06-28; live Google sheet writes still require explicit
+  authorization.
