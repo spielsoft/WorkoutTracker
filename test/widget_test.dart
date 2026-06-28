@@ -1376,16 +1376,19 @@ void main() {
           'Very Long Bulgarian Split Squat Name For A Narrow Phone';
       const backupExercise =
           'Long Reverse Lunge Backup Option For Crowded Gym Days';
-      final service = TestSpreadsheetValidationService.fromRows([
+      final rows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         [primaryExercise, '3', '8', '8', '90s', '', '', '', 'Legs', '', ''],
         [backupExercise, '3', '8', '8', '90s', '', '', '', 'Legs', 'TRUE', ''],
-      ]);
+      ];
+      final service = TestSpreadsheetValidationService.fromRows(rows);
+      final authoringService = _ReorderingWorkoutExerciseAuthoringService(rows);
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
           validationService: service,
+          exerciseAuthoringService: authoringService,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -1402,9 +1405,19 @@ void main() {
       expect(find.byTooltip('Add to workout'), findsOneWidget);
       expect(find.byTooltip('Add exercise'), findsNothing);
       expect(
+        find.byTooltip('Open logging for $primaryExercise'),
+        findsOneWidget,
+      );
+      expect(find.text('Open log'), findsOneWidget);
+      expect(
         find.byTooltip('Backup actions for $primaryExercise'),
         findsOneWidget,
       );
+      expect(
+        find.bySemanticsLabel('Backup actions for $primaryExercise'),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Reorder $primaryExercise'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.tap(find.byTooltip('Backup actions for $primaryExercise'));
@@ -1890,7 +1903,7 @@ void main() {
     expect(find.byTooltip('Reorder Squat'), findsOneWidget);
     expect(find.byIcon(Icons.drag_handle_outlined), findsNWidgets(2));
 
-    await tester.drag(find.byTooltip('Reorder Squat'), const Offset(0, 240));
+    await tester.drag(find.byTooltip('Reorder Squat'), const Offset(0, 320));
     await tester.pumpAndSettle();
 
     expect(authoringService.reorderIntents, [

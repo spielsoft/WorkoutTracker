@@ -14,7 +14,7 @@ after GUI-facing changes.
 
 - [x] Slice 1: Cleanly Integrate Current GUI Fixes
 - [ ] Slice 2: Validate Multi-Set Logging Against Live GUI
-- [ ] Slice 3: Make Row Actions Understandable
+- [x] Slice 3: Make Row Actions Understandable
 - [ ] Slice 4: Speed Up Multi-Exercise Plan Building
 - [ ] Slice 5: Preserve Exercise Library Context After Save
 - [ ] Slice 6: Repeat Black-Box GUI Regression Pass
@@ -125,12 +125,12 @@ labels where appropriate, tooltips, semantic labels, and tests.
 
 ### Acceptance criteria
 
-- [ ] Backup actions are named clearly in tooltips and semantics.
-- [ ] Reorder handles are named clearly per exercise.
-- [ ] Opening/logging an exercise row is discoverable without relying only on
+- [x] Backup actions are named clearly in tooltips and semantics.
+- [x] Reorder handles are named clearly per exercise.
+- [x] Opening/logging an exercise row is discoverable without relying only on
       trial-and-error icon interpretation.
-- [ ] Compact desktop and narrow phone widget tests remain free of overflow.
-- [ ] Widget tests verify the user-facing labels/tooltips for representative
+- [x] Compact desktop and narrow phone widget tests remain free of overflow.
+- [x] Widget tests verify the user-facing labels/tooltips for representative
       primary and backup rows.
 
 ### Blocked by
