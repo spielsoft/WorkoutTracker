@@ -108,7 +108,7 @@ Suggested tests:
 
 ## Slice 4: Reject Stale Formula Repair Plans
 
-Status: pending
+Status: complete
 
 Problem:
 
@@ -133,8 +133,9 @@ Likely files:
 
 Suggested tests:
 
-- `flutter test test/sheet_contract/active_sheet_formula_healing_test.dart`
-- `flutter test test/app/spreadsheet_validation_test.dart --plain-name "formula"`
+- `flutter test test/sheet_contract/active_sheet_formula_healing_test.dart` - passed
+- `flutter test test/app/spreadsheet_validation_test.dart` - passed
+- `git diff --check -- lib/src/sheet_contract/active_sheet/formula_healing.dart lib/src/sheet_contract/active_sheet/write_plans.dart test/sheet_contract/active_sheet_formula_healing_test.dart ISSUES.md` - passed
 
 ## Slice 5: Reject Stale Log Format Set Writes
 

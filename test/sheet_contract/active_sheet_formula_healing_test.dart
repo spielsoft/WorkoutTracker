@@ -400,7 +400,7 @@ void main() {
     final plan = activeSheet.planFormulaHealing(activeSheetRowNumber: 3);
 
     final changedRows = rows.map((row) => [...row]).toList();
-    changedRows[2][0] = 'Bench Press';
+    changedRows[2][1] = '4';
     final changedSheet = parseActiveSheet(
       ActiveSheetInput(
         rows: changedRows,
@@ -409,7 +409,12 @@ void main() {
       ),
     );
 
-    expect(plan.writeRejections(changedSheet), isNotEmpty);
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'The active sheet changed after validation. Revalidate before '
+        'repairing formulas for row 3.',
+      ),
+    ]);
   });
 }
 

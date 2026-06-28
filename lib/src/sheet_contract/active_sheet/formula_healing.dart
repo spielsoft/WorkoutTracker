@@ -201,11 +201,9 @@ class _FormulaHealingPlanner {
       ],
       expectations: [
         if (slot != null)
-          ActiveSheetRowExpectation(
-            sheetRowNumber: slot.sheetRowNumber,
-            exercise: slot.exercise,
-            workout: slot.workout,
-            isBackup: slot.isBackup,
+          FormulaRepairRowExpectation(
+            sheetRowNumber: activeSheetRowNumber,
+            expectedValues: sheet._sheetRow(activeSheetRowNumber),
           ),
       ],
     );

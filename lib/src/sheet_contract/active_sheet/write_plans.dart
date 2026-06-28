@@ -300,6 +300,53 @@ class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
+class FormulaRepairRowExpectation extends ActiveSheetWriteExpectation {
+  FormulaRepairRowExpectation({
+    required this.sheetRowNumber,
+    required Iterable<String> expectedValues,
+  }) : expectedValues = List<String>.unmodifiable(expectedValues);
+
+  final int sheetRowNumber;
+  final List<String> expectedValues;
+
+  @override
+  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+    final rowIndex = sheetRowNumber - 1;
+    if (rowIndex >= 0 &&
+        rowIndex < sheet._rows.length &&
+        _listEquals(sheet._rows[rowIndex], expectedValues)) {
+      return const [];
+    }
+    return [
+      ActiveSheetWriteRejection(
+        'The active sheet changed after validation. Revalidate before '
+        'repairing formulas for row $sheetRowNumber.',
+      ),
+    ];
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is FormulaRepairRowExpectation &&
+            sheetRowNumber == other.sheetRowNumber &&
+            _listEquals(expectedValues, other.expectedValues);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(sheetRowNumber, Object.hashAll(expectedValues));
+  }
+
+  @override
+  String toString() {
+    return 'FormulaRepairRowExpectation('
+        'sheetRowNumber: $sheetRowNumber, '
+        'expectedValues: $expectedValues'
+        ')';
+  }
+}
+
 class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
   const ActiveSheetCellExpectation({
     required this.sheetRowNumber,
