@@ -190,13 +190,6 @@ LogFormatParseResult parseLogFormat(String text) {
   return ParsedLogFormat(segments);
 }
 
-String renderLogFormat(
-  ParsedLogFormat format,
-  Map<String, String> fieldValues,
-) {
-  return format.render(fieldValues);
-}
-
 LogEntry parseLogEntry(ParsedLogFormat format, String text) {
   final values = _parseLogEntrySegments(format.segments, text);
   if (values == null) {

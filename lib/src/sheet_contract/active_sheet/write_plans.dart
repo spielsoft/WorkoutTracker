@@ -1835,7 +1835,7 @@ class _ActiveSheetWritePlanner {
     }
     final format = slot.logFormat;
     return format is ParsedLogFormat
-        ? renderLogFormat(format, fieldValues)
+        ? format.render(fieldValues)
         : null;
   }
 
