@@ -384,6 +384,7 @@ class _SpreadsheetValidationShellState
       _WorkoutTrackerScreen.exercisePicker;
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
   CanonicalExercise? _canonicalExerciseBeingEdited;
+  String? _highlightedCanonicalExerciseName;
   bool _isPickingSpreadsheet = false;
 
   @override
@@ -682,6 +683,7 @@ class _SpreadsheetValidationShellState
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
     _canonicalExerciseBeingEdited = null;
+    _highlightedCanonicalExerciseName = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.exerciseManager;
     });
@@ -707,6 +709,7 @@ class _SpreadsheetValidationShellState
         : _WorkoutTrackerScreen.exercisePicker;
     _controller.closeExercise();
     _canonicalExerciseBeingEdited = null;
+    _highlightedCanonicalExerciseName = null;
     setState(() {
       _exerciseAddReturnScreen = returnScreen;
       _addExercisePlacementIntent = _AddExercisePlacementIntent.primary(
@@ -761,6 +764,7 @@ class _SpreadsheetValidationShellState
   void _openCanonicalExerciseEdit(CanonicalExercise exercise) {
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
+    _highlightedCanonicalExerciseName = null;
     setState(() {
       _canonicalExerciseBeingEdited = exercise;
       _screen = _WorkoutTrackerScreen.editExercise;
@@ -784,6 +788,7 @@ class _SpreadsheetValidationShellState
       return;
     }
     setState(() {
+      _highlightedCanonicalExerciseName = draft.normalized().exerciseName;
       _screen = _exerciseAddReturnScreen;
     });
   }
@@ -804,6 +809,7 @@ class _SpreadsheetValidationShellState
     }
     setState(() {
       _canonicalExerciseBeingEdited = null;
+      _highlightedCanonicalExerciseName = draft.normalized().exerciseName;
       _screen = _WorkoutTrackerScreen.exerciseManager;
     });
   }
@@ -1006,6 +1012,8 @@ class _SpreadsheetValidationShellState
                           onEditCanonicalExercise: isBusy
                               ? null
                               : _openCanonicalExerciseEdit,
+                          highlightedCanonicalExerciseName:
+                              _highlightedCanonicalExerciseName,
                           onReorderCanonicalExercises:
                               isBusy || widget.exerciseAuthoringService == null
                               ? null

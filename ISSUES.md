@@ -16,7 +16,7 @@ after GUI-facing changes.
 - [ ] Slice 2: Validate Multi-Set Logging Against Live GUI
 - [x] Slice 3: Make Row Actions Understandable
 - [x] Slice 4: Speed Up Multi-Exercise Plan Building
-- [ ] Slice 5: Preserve Exercise Library Context After Save
+- [x] Slice 5: Preserve Exercise Library Context After Save
 - [ ] Slice 6: Repeat Black-Box GUI Regression Pass
 - [ ] Slice 7: Clean Up Temporary GUI Tests
 
@@ -189,12 +189,12 @@ without manually scrolling back through the seeded library.
 
 ### Acceptance criteria
 
-- [ ] Saving a new exercise returns to the exercise library with the saved item
+- [x] Saving a new exercise returns to the exercise library with the saved item
       visible or clearly highlighted.
-- [ ] Editing an existing exercise returns with that row visible.
-- [ ] Long seeded-library lists do not jump to an unhelpful top position after
+- [x] Editing an existing exercise returns with that row visible.
+- [x] Long seeded-library lists do not jump to an unhelpful top position after
       save.
-- [ ] Widget tests use a long exercise library and verify the saved/edited row
+- [x] Widget tests use a long exercise library and verify the saved/edited row
       is visible after returning.
 
 ### Blocked by

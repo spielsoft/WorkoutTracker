@@ -1577,6 +1577,137 @@ void main() {
     },
   );
 
+  testWidgets('keeps a newly saved exercise visible in a long library', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final seededExercises = [
+      for (var index = 1; index <= 24; index += 1)
+        _exerciseRow(
+          'Seeded Exercise ${index.toString().padLeft(2, '0')}',
+          description: 'Seeded library item $index',
+        ),
+    ];
+    final validationService = TestSpreadsheetValidationService(
+      _exerciseInventoryParsedSheet(seededExercises),
+    );
+    final authoringService = _AppendingExerciseAuthoringService(
+      seededExercises,
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: validationService,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Seeded Exercise 01'), findsOneWidget);
+    expect(find.text('Custom Sled Push'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('add-canonical-exercise')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-authoring-name')),
+      'Custom Sled Push',
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('exercise-authoring-submit')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit exercises'), findsWidgets);
+    expect(find.text('Custom Sled Push'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('saved-exercise-highlight')),
+      findsOneWidget,
+    );
+    final highlightRect = tester.getRect(
+      find.byKey(const ValueKey('saved-exercise-highlight')),
+    );
+    expect(highlightRect.top, greaterThanOrEqualTo(0));
+    expect(highlightRect.bottom, lessThanOrEqualTo(844));
+  });
+
+  testWidgets('keeps an edited exercise visible in a long library', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final seededExercises = [
+      for (var index = 1; index <= 24; index += 1)
+        _exerciseRow(
+          'Seeded Exercise ${index.toString().padLeft(2, '0')}',
+          description: 'Seeded library item $index',
+        ),
+    ];
+    final validationService = TestSpreadsheetValidationService(
+      _exerciseInventoryParsedSheet(seededExercises),
+    );
+    final authoringService = _EditingExerciseAuthoringService(seededExercises);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: validationService,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Seeded Exercise 24'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Seeded Exercise 24'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-authoring-name')),
+      'Custom Rope Row',
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('exercise-authoring-submit')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit exercises'), findsWidgets);
+    expect(find.text('Custom Rope Row'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('saved-exercise-highlight')),
+      findsOneWidget,
+    );
+    final highlightRect = tester.getRect(
+      find.byKey(const ValueKey('saved-exercise-highlight')),
+    );
+    expect(highlightRect.top, greaterThanOrEqualTo(0));
+    expect(highlightRect.bottom, lessThanOrEqualTo(844));
+  });
+
   testWidgets(
     'canceling exercise manager add leaves the exercise library unchanged',
     (tester) async {
