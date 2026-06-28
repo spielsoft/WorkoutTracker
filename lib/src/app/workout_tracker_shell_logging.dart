@@ -28,6 +28,7 @@ class _ExerciseLoggingScreen extends StatefulWidget {
 class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
   late final ExerciseLoggingFlow _flow;
   bool _isWriting = false;
+  String? _writeError;
 
   @override
   void initState() {
@@ -78,25 +79,32 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     await _runWrite(() async {
       final saved = await widget.onApplyWritePlan(plan);
       if (!saved) {
-        return;
+        return false;
       }
       _flow.clearNewSetControllers();
+      return true;
     });
   }
 
-  Future<void> _runWrite(Future<void> Function() action) async {
+  Future<bool> _runWrite(Future<bool> Function() action) async {
     if (_isWriting) {
-      return;
+      return false;
     }
     setState(() {
       _isWriting = true;
+      _writeError = null;
     });
+    var saved = false;
     try {
-      await action();
+      saved = await action();
+      return saved;
+    } on Object {
+      return false;
     } finally {
       if (mounted) {
         setState(() {
           _isWriting = false;
+          _writeError = saved ? null : 'Unable to save set. Try again.';
         });
       }
     }
@@ -104,7 +112,7 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
     await _runWrite(() async {
-      await widget.onApplyWritePlan(_flow.planRawSetEdit(entry));
+      return widget.onApplyWritePlan(_flow.planRawSetEdit(entry));
     });
   }
 
@@ -117,13 +125,13 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
       return;
     }
     await _runWrite(() async {
-      await widget.onApplyWritePlan(plan);
+      return widget.onApplyWritePlan(plan);
     });
   }
 
   Future<void> _clearSet(RowHistoryEntry entry) async {
     await _runWrite(() async {
-      await widget.onApplyWritePlan(_flow.planSetClear(entry));
+      return widget.onApplyWritePlan(_flow.planSetClear(entry));
     });
   }
 
@@ -241,6 +249,10 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
           isBusy: _isWriting,
           onSave: _saveStructuredSet,
         ),
+        if (_writeError != null) ...[
+          const SizedBox(height: 8),
+          _InlineLoggingError(message: _writeError!),
+        ],
         const SizedBox(height: 16),
         _SetProgressStrip(
           loggedSetNumbers: loggedSetNumbers,
@@ -293,6 +305,39 @@ String? _latestHistoryValue(List<RowHistoryBlock> blocks) {
     }
   }
   return null;
+}
+
+class _InlineLoggingError extends StatelessWidget {
+  const _InlineLoggingError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      key: const ValueKey('logging-write-error'),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(color: colorScheme.onErrorContainer),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ExerciseContextPanel extends StatelessWidget {

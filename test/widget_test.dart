@@ -102,7 +102,7 @@ void main() {
     expect(find.text('Next set S2'), findsOneWidget);
   });
 
-  testWidgets('does not launch duplicate set saves while a write is pending', (
+  testWidgets('does not launch duplicate Save set actions while pending', (
     tester,
   ) async {
     final service = _CompletingWriteValidationService(
@@ -133,6 +133,110 @@ void main() {
     await tester.tap(find.text('Save set'));
 
     expect(service.appliedPlans, hasLength(1));
+  });
+
+  testWidgets('does not launch duplicate logged set edits while pending', (
+    tester,
+  ) async {
+    final service = _CompletingWriteValidationService(_loggedSetParsedSheet());
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('logged-S1-field-Weight')),
+      '160',
+    );
+    await tester.tap(find.byTooltip('Save structured set'));
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<IconButton>(find.byKey(const ValueKey('save-S1')))
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.byTooltip('Save structured set'));
+
+    expect(service.appliedPlans, hasLength(1));
+  });
+
+  testWidgets('does not launch duplicate logged set clears while pending', (
+    tester,
+  ) async {
+    final service = _CompletingWriteValidationService(_loggedSetParsedSheet());
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Clear set'));
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<IconButton>(find.byKey(const ValueKey('clear-S1')))
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.byTooltip('Clear set'));
+
+    expect(service.appliedPlans, hasLength(1));
+    expect(service.appliedPlans.single.cellUpdates.single.value, isEmpty);
+  });
+
+  testWidgets('shows failed Save set writes near logging controls', (
+    tester,
+  ) async {
+    final service = _FailingWriteValidationService(_minimalValidParsedSheet());
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('set-field-Weight')),
+      '155',
+    );
+    await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
+    await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
+    await tester.tap(find.text('Save set'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(service.appliedPlans, hasLength(1));
+    expect(find.byKey(const ValueKey('logging-write-error')), findsOneWidget);
+    expect(find.text('Unable to save set. Try again.'), findsOneWidget);
   });
 
   testWidgets('renders compact spreadsheet selection controls', (tester) async {
@@ -856,6 +960,39 @@ void main() {
     await tester.tap(find.text('Choose workout sheet'));
 
     expect(picker.chooseCount, 1);
+  });
+
+  testWidgets('does not launch duplicate create actions while creating', (
+    tester,
+  ) async {
+    final picker = _CompletingSpreadsheetPicker();
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Create sheet'));
+    await tester.pump();
+
+    expect(picker.createCount, 1);
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.byKey(const ValueKey('create-google-spreadsheet')),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.text('Create sheet'));
+
+    expect(picker.createCount, 1);
   });
 
   testWidgets('restores the Google account session on startup', (tester) async {
@@ -2670,7 +2807,9 @@ class _FakeSpreadsheetPicker implements SpreadsheetPicker {
 
 class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
   final chooseCompleter = Completer<SelectedSpreadsheet?>();
+  final createCompleter = Completer<SelectedSpreadsheet?>();
   int chooseCount = 0;
+  int createCount = 0;
 
   @override
   SpreadsheetPickerAvailability get availability {
@@ -2684,8 +2823,9 @@ class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet() async {
-    return null;
+  Future<SelectedSpreadsheet?> createSpreadsheet() {
+    createCount += 1;
+    return createCompleter.future;
   }
 }
 
@@ -2952,6 +3092,18 @@ ParsedActiveSheet _minimalValidParsedSheet() {
   );
 }
 
+ParsedActiveSheet _loggedSetParsedSheet() {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '150x5@8'],
+      ],
+    ),
+  );
+}
+
 ParsedActiveSheet _exerciseInventoryParsedSheet(
   List<List<String>> exercises, {
   Iterable<CellFormula> cellFormulas = const [
@@ -3042,6 +3194,33 @@ class _CompletingWriteValidationService
   }) {
     appliedPlans.add(plan);
     return writeCompleter.future;
+  }
+}
+
+class _FailingWriteValidationService implements SpreadsheetValidationService {
+  _FailingWriteValidationService(this.validSheet);
+
+  final ParsedActiveSheet validSheet;
+  final appliedPlans = <ActiveSheetWritePlan>[];
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: validSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    throw StateError('network unavailable');
   }
 }
 

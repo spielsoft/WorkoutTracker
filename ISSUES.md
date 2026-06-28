@@ -75,7 +75,7 @@ Suggested tests:
 
 ## Slice 3: Prevent Duplicate Async Actions
 
-Status: pending
+Status: complete
 
 Problem:
 
@@ -102,8 +102,9 @@ Likely files:
 
 Suggested tests:
 
-- `flutter test test/widget_test.dart --plain-name "picker"`
-- `flutter test test/widget_test.dart --plain-name "Save set"`
+- `flutter test test/widget_test.dart --plain-name "picker"` - passed
+- `flutter test test/widget_test.dart --plain-name "Save set"` - passed
+- `flutter test test/widget_test.dart` - passed, 51 tests
 
 ## Slice 4: Reject Stale Formula Repair Plans
 
