@@ -229,6 +229,63 @@ void main() {
   );
 
   test(
+    'rejects a set write when the row Log Format changed before apply',
+    () async {
+      final staleRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ];
+      final changedRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          '',
+          '',
+        ],
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _snapshot(staleRows),
+        _snapshot(changedRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final plan = report.activeSheet.planSetLoggingWrite(
+        historyBlockLabel: 'Week 1',
+        sheetRowNumber: 3,
+        fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+      );
+
+      final rejected = await service.applyActiveSheetWritePlan(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        plan: plan,
+      );
+
+      expect(rejected.hasBlockingIssues, isTrue);
+      expect(
+        rejected.manualRepairItems.map((item) => item.problem),
+        contains(contains('Cell row 3 column 8 no longer matches')),
+      );
+      expect(writeClient.writeCount, 0);
+    },
+  );
+
+  test(
     'rejects an edit or clear when the visible set column no longer exists',
     () async {
       final staleRows = [

@@ -1460,7 +1460,10 @@ class _ActiveSheetWritePlanner {
         ),
       ],
       expectations: [
-        if (slot != null) _rowExpectation(slot),
+        if (slot != null) ...[
+          _rowExpectation(slot),
+          _logFormatExpectation(slot),
+        ],
         ActiveSheetSetColumnExpectation(
           historyBlockLabel: historyBlockLabel,
           setNumber: setNumber,
@@ -1505,7 +1508,10 @@ class _ActiveSheetWritePlanner {
         ),
       ],
       expectations: [
-        if (slot != null) _rowExpectation(slot),
+        if (slot != null) ...[
+          _rowExpectation(slot),
+          _logFormatExpectation(slot),
+        ],
         ActiveSheetSetColumnExpectation(
           historyBlockLabel: historyBlockLabel,
           setNumber: setNumber,

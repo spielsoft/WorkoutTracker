@@ -212,7 +212,7 @@ void main() {
     ]);
   });
 
-  test('rejects structured set writes if the row log format changed', () {
+  test('rejects new set saves if the row log format changed', () {
     final rows = [
       historyHeaderRow(['Session A']),
       setLabelRow(['S1']),
@@ -233,6 +233,32 @@ void main() {
     expect(plan.writeRejections(changedSheet), isNotEmpty);
   });
 
+  test('rejects structured set edits if the row log format changed', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planSetEdit(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      setNumber: 1,
+      fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
+    );
+
+    final changedRows = rows.map((row) => [...row]).toList();
+    changedRows[2][7] = '{Reps}[@]{RPE}';
+    final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'Cell row 3 column 8 no longer matches the visible value.',
+      ),
+    ]);
+  });
+
   test('plans clearing an existing set cell', () {
     final activeSheet = parseFixtureActiveSheet();
 
@@ -244,6 +270,31 @@ void main() {
 
     expect(plan.cellUpdates, [
       CellUpdate(sheetRowNumber: 6, sheetColumnNumber: 11, value: ''),
+    ]);
+  });
+
+  test('rejects set clears if the row log format changed', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planSetClear(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      setNumber: 1,
+    );
+
+    final changedRows = rows.map((row) => [...row]).toList();
+    changedRows[2][7] = '{Reps}[@]{RPE}';
+    final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'Cell row 3 column 8 no longer matches the visible value.',
+      ),
     ]);
   });
 
@@ -397,6 +448,44 @@ void main() {
         sheetRowNumber: 3,
         sheetColumnNumber: 11,
         value: 'worked up, knee felt better',
+      ),
+    ]);
+  });
+
+  test('rejects raw set edits if the row log format changed', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        '',
+        'Legs',
+        '',
+        'worked up, knee felt odd',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planRawSetEdit(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      setNumber: 1,
+      rawText: 'worked up, knee felt better',
+    );
+
+    final changedRows = rows.map((row) => [...row]).toList();
+    changedRows[2][7] = '{Note}';
+    final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'Cell row 3 column 8 no longer matches the visible value.',
       ),
     ]);
   });

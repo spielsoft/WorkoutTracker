@@ -139,7 +139,7 @@ Suggested tests:
 
 ## Slice 5: Reject Stale Log Format Set Writes
 
-Status: pending
+Status: complete
 
 Problem:
 
@@ -161,8 +161,9 @@ Likely files:
 
 Suggested tests:
 
-- `flutter test test/sheet_contract/active_sheet_write_planning_test.dart`
-- `flutter test test/app/spreadsheet_validation_test.dart --plain-name "Log Format"`
+- `flutter test test/sheet_contract/active_sheet_write_planning_test.dart` - passed
+- `flutter test test/app/spreadsheet_validation_test.dart --plain-name "Log Format"` - passed
+- `git diff --check -- lib/src/sheet_contract/active_sheet/write_plans.dart test/sheet_contract/active_sheet_write_planning_test.dart test/app/spreadsheet_validation_test.dart` - passed
 
 ## Slice 6: iPhone Logging Usability Pass
 
