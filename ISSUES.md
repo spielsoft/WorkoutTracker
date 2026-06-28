@@ -44,7 +44,7 @@ Suggested tests:
 
 ## Slice 2: Keep The Local Readiness Suite Green
 
-Status: pending
+Status: complete
 
 Problem:
 
@@ -69,9 +69,9 @@ Likely files:
 
 Suggested tests:
 
-- `flutter test test/platform_store_readiness_test.dart`
-- `flutter test test/widget_test.dart --plain-name "restores a selected Google Drive sheet label"`
-- `flutter test`
+- `flutter test test/platform_store_readiness_test.dart` - passed
+- `flutter test test/widget_test.dart --plain-name "restores a selected Google Drive sheet label"` - passed
+- `flutter test` - passed, 174 tests
 
 ## Slice 3: Prevent Duplicate Async Actions
 
