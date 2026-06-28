@@ -969,9 +969,24 @@ class _SequencedSpreadsheetClient implements GoogleSheetsSpreadsheetClient {
   var _nextSnapshot = 0;
 
   @override
-  Future<GoogleSpreadsheetSnapshot> fetchSpreadsheet(
+  Future<GoogleSpreadsheetMetadata> fetchSpreadsheetMetadata(
     String spreadsheetId,
   ) async {
+    final snapshot = _nextSnapshot < snapshots.length
+        ? snapshots[_nextSnapshot]
+        : snapshots.last;
+    return GoogleSpreadsheetMetadata(
+      sheets: snapshot.sheets.map(
+        (sheet) => GoogleSheetMetadata(title: sheet.title),
+      ),
+    );
+  }
+
+  @override
+  Future<GoogleSpreadsheetSnapshot> fetchSpreadsheetGridData(
+    String spreadsheetId, {
+    required Iterable<String> ranges,
+  }) async {
     if (_nextSnapshot >= snapshots.length) {
       return snapshots.last;
     }
@@ -1010,6 +1025,27 @@ class _RecordingWriteClient implements GoogleSheetsWriteClient {
     required int rowCount,
   }) async {
     writeCount += rowCount;
+  }
+
+  @override
+  Future<void> applyActiveSheetStructuralBatch({
+    required String spreadsheetId,
+    required int sheetId,
+    required String sheetTitle,
+    required Iterable<GoogleSheetsRowInsertion> rowInsertions,
+    required Iterable<GoogleSheetsColumnInsertion> columnInsertions,
+    required Iterable<GoogleSheetsCellWrite> cells,
+    required Iterable<GoogleSheetsCellClear> clears,
+  }) async {
+    writeCount += rowInsertions.fold<int>(
+      0,
+      (sum, insertion) => sum + insertion.rowCount,
+    );
+    writeCount += columnInsertions.fold<int>(
+      0,
+      (sum, insertion) => sum + insertion.columnCount,
+    );
+    writeCount += cells.length + clears.length;
   }
 
   @override

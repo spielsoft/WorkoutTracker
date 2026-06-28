@@ -37,42 +37,53 @@ void main() {
       );
 
       expect(client.fetchedSpreadsheetIds, ['spreadsheet-id']);
-      expect(client.insertions, [
-        _InsertedColumns(
+      expect(client.insertions, isEmpty);
+      expect(client.writes, isEmpty);
+      expect(client.structuralBatches, [
+        _StructuralBatch(
           spreadsheetId: 'spreadsheet-id',
           sheetId: 42,
-          sheetColumnNumber: 10,
-          columnCount: 1,
-        ),
-      ]);
-      expect(client.writes, [
-        _CellWrite(
-          spreadsheetId: 'spreadsheet-id',
           sheetTitle: 'Active Workout',
-          sheetRowNumber: 1,
-          sheetColumnNumber: 10,
-          value: 'Session A',
-        ),
-        _CellWrite(
-          spreadsheetId: 'spreadsheet-id',
-          sheetTitle: 'Active Workout',
-          sheetRowNumber: 2,
-          sheetColumnNumber: 10,
-          value: 'S1',
-        ),
-        _CellWrite(
-          spreadsheetId: 'spreadsheet-id',
-          sheetTitle: 'Active Workout',
-          sheetRowNumber: 3,
-          sheetColumnNumber: 10,
-          value: '225x5@8',
-        ),
-        _CellWrite(
-          spreadsheetId: 'spreadsheet-id',
-          sheetTitle: 'Active Workout',
-          sheetRowNumber: 4,
-          sheetColumnNumber: 1,
-          value: '=Exercises!A2',
+          rowInsertions: const [],
+          columnInsertions: const [
+            _InsertedColumns(
+              spreadsheetId: 'spreadsheet-id',
+              sheetId: 42,
+              sheetColumnNumber: 10,
+              columnCount: 1,
+            ),
+          ],
+          writes: const [
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 1,
+              sheetColumnNumber: 10,
+              value: 'Session A',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 10,
+              value: 'S1',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 3,
+              sheetColumnNumber: 10,
+              value: '225x5@8',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 4,
+              sheetColumnNumber: 1,
+              value: '=Exercises!A2',
+            ),
+          ],
+          clears: const [],
         ),
       ]);
     },
@@ -218,17 +229,22 @@ void main() {
         ),
       );
 
-      expect(client.insertions, [
-        _InsertedColumns(
+      expect(client.insertions, isEmpty);
+      expect(client.writeBatches, isEmpty);
+      expect(client.structuralBatches, [
+        _StructuralBatch(
           spreadsheetId: 'spreadsheet-id',
           sheetId: 42,
-          sheetColumnNumber: 11,
-          columnCount: 1,
-        ),
-      ]);
-      expect(client.writeBatches, [
-        _WriteBatch(
-          mode: GoogleSheetsValueInputMode.literalText,
+          sheetTitle: 'Active Workout',
+          rowInsertions: const [],
+          columnInsertions: const [
+            _InsertedColumns(
+              spreadsheetId: 'spreadsheet-id',
+              sheetId: 42,
+              sheetColumnNumber: 11,
+              columnCount: 1,
+            ),
+          ],
           writes: const [
             _CellWrite(
               spreadsheetId: 'spreadsheet-id',
@@ -258,29 +274,103 @@ void main() {
               sheetColumnNumber: 12,
               value: '=manual note',
             ),
-          ],
-        ),
-        _WriteBatch(
-          mode: GoogleSheetsValueInputMode.userEntered,
-          writes: const [
             _CellWrite(
               spreadsheetId: 'spreadsheet-id',
               sheetTitle: 'Active Workout',
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               value: '=Exercises!A2',
+              mode: GoogleSheetsValueInputMode.userEntered,
+            ),
+          ],
+          clears: const [
+            _CellClear(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 3,
+              sheetColumnNumber: 12,
             ),
           ],
         ),
       ]);
-      expect(client.clears, const [
-        _CellClear(
+      expect(client.clears, isEmpty);
+    },
+  );
+
+  test(
+    'applies structural active-sheet writes as one batch so failures do not continue with partial calls',
+    () async {
+      final client = _FakeGoogleSheetsWriteClient(
+        GoogleSheetsActiveSheetTarget(sheetId: 42, title: 'Active Workout'),
+      )..failStructuralBatch = true;
+      final adapter = GoogleSheetsWriteAdapter(client: client);
+
+      await expectLater(
+        adapter.applyActiveSheetWritePlan(
           spreadsheetId: 'spreadsheet-id',
+          plan: ActiveSheetWritePlan(
+            columnInsertions: [
+              HistoryColumnInsertion(
+                sheetColumnNumber: 11,
+                headers: const ['Week 2'],
+                setLabels: const ['S1'],
+              ),
+            ],
+            cellUpdates: const [
+              CellUpdate(
+                sheetRowNumber: 3,
+                sheetColumnNumber: 11,
+                value: '225x5@8',
+              ),
+            ],
+          ),
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(client.structuralBatches, [
+        _StructuralBatch(
+          spreadsheetId: 'spreadsheet-id',
+          sheetId: 42,
           sheetTitle: 'Active Workout',
-          sheetRowNumber: 3,
-          sheetColumnNumber: 12,
+          columnInsertions: const [
+            _InsertedColumns(
+              spreadsheetId: 'spreadsheet-id',
+              sheetId: 42,
+              sheetColumnNumber: 11,
+              columnCount: 1,
+            ),
+          ],
+          rowInsertions: const [],
+          writes: const [
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 1,
+              sheetColumnNumber: 11,
+              value: 'Week 2',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 11,
+              value: 'S1',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Active Workout',
+              sheetRowNumber: 3,
+              sheetColumnNumber: 11,
+              value: '225x5@8',
+            ),
+          ],
+          clears: const [],
         ),
       ]);
+      expect(client.insertions, isEmpty);
+      expect(client.writeBatches, isEmpty);
+      expect(client.clears, isEmpty);
     },
   );
 
@@ -439,6 +529,7 @@ void main() {
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               value: '=Exercises!A4',
+              mode: GoogleSheetsValueInputMode.userEntered,
             ),
           ],
         ),
@@ -456,6 +547,8 @@ class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
   final List<_CellWrite> writes = [];
   final List<_WriteBatch> writeBatches = [];
   final List<_CellClear> clears = [];
+  final List<_StructuralBatch> structuralBatches = [];
+  var failStructuralBatch = false;
 
   @override
   Future<GoogleSheetsActiveSheetTarget> fetchActiveSheetTarget(
@@ -491,6 +584,70 @@ class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
   }) async {}
 
   @override
+  Future<void> applyActiveSheetStructuralBatch({
+    required String spreadsheetId,
+    required int sheetId,
+    required String sheetTitle,
+    required Iterable<GoogleSheetsRowInsertion> rowInsertions,
+    required Iterable<GoogleSheetsColumnInsertion> columnInsertions,
+    required Iterable<GoogleSheetsCellWrite> cells,
+    required Iterable<GoogleSheetsCellClear> clears,
+  }) async {
+    structuralBatches.add(
+      _StructuralBatch(
+        spreadsheetId: spreadsheetId,
+        sheetId: sheetId,
+        sheetTitle: sheetTitle,
+        rowInsertions: rowInsertions
+            .map(
+              (insertion) => _InsertedRows(
+                spreadsheetId: spreadsheetId,
+                sheetId: sheetId,
+                sheetRowNumber: insertion.sheetRowNumber,
+                rowCount: insertion.rowCount,
+              ),
+            )
+            .toList(),
+        columnInsertions: columnInsertions
+            .map(
+              (insertion) => _InsertedColumns(
+                spreadsheetId: spreadsheetId,
+                sheetId: sheetId,
+                sheetColumnNumber: insertion.sheetColumnNumber,
+                columnCount: insertion.columnCount,
+              ),
+            )
+            .toList(),
+        writes: cells
+            .map(
+              (cell) => _CellWrite(
+                spreadsheetId: spreadsheetId,
+                sheetTitle: sheetTitle,
+                sheetRowNumber: cell.sheetRowNumber,
+                sheetColumnNumber: cell.sheetColumnNumber,
+                value: cell.value,
+                mode: cell.mode,
+              ),
+            )
+            .toList(),
+        clears: clears
+            .map(
+              (cell) => _CellClear(
+                spreadsheetId: spreadsheetId,
+                sheetTitle: sheetTitle,
+                sheetRowNumber: cell.sheetRowNumber,
+                sheetColumnNumber: cell.sheetColumnNumber,
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (failStructuralBatch) {
+      throw StateError('structural batch failed');
+    }
+  }
+
+  @override
   Future<void> writeCells({
     required String spreadsheetId,
     required String sheetTitle,
@@ -505,6 +662,7 @@ class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
             sheetRowNumber: cell.sheetRowNumber,
             sheetColumnNumber: cell.sheetColumnNumber,
             value: cell.value,
+            mode: mode,
           ),
         )
         .toList();
@@ -570,6 +728,104 @@ class _InsertedColumns {
   }
 }
 
+class _InsertedRows {
+  const _InsertedRows({
+    required this.spreadsheetId,
+    required this.sheetId,
+    required this.sheetRowNumber,
+    required this.rowCount,
+  });
+
+  final String spreadsheetId;
+  final int sheetId;
+  final int sheetRowNumber;
+  final int rowCount;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is _InsertedRows &&
+            spreadsheetId == other.spreadsheetId &&
+            sheetId == other.sheetId &&
+            sheetRowNumber == other.sheetRowNumber &&
+            rowCount == other.rowCount;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(spreadsheetId, sheetId, sheetRowNumber, rowCount);
+  }
+
+  @override
+  String toString() {
+    return '_InsertedRows('
+        'spreadsheetId: $spreadsheetId, '
+        'sheetId: $sheetId, '
+        'sheetRowNumber: $sheetRowNumber, '
+        'rowCount: $rowCount'
+        ')';
+  }
+}
+
+class _StructuralBatch {
+  const _StructuralBatch({
+    required this.spreadsheetId,
+    required this.sheetId,
+    required this.sheetTitle,
+    required this.rowInsertions,
+    required this.columnInsertions,
+    required this.writes,
+    required this.clears,
+  });
+
+  final String spreadsheetId;
+  final int sheetId;
+  final String sheetTitle;
+  final List<_InsertedRows> rowInsertions;
+  final List<_InsertedColumns> columnInsertions;
+  final List<_CellWrite> writes;
+  final List<_CellClear> clears;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is _StructuralBatch &&
+            spreadsheetId == other.spreadsheetId &&
+            sheetId == other.sheetId &&
+            sheetTitle == other.sheetTitle &&
+            _listEquals(rowInsertions, other.rowInsertions) &&
+            _listEquals(columnInsertions, other.columnInsertions) &&
+            _listEquals(writes, other.writes) &&
+            _listEquals(clears, other.clears);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      spreadsheetId,
+      sheetId,
+      sheetTitle,
+      Object.hashAll(rowInsertions),
+      Object.hashAll(columnInsertions),
+      Object.hashAll(writes),
+      Object.hashAll(clears),
+    );
+  }
+
+  @override
+  String toString() {
+    return '_StructuralBatch('
+        'spreadsheetId: $spreadsheetId, '
+        'sheetId: $sheetId, '
+        'sheetTitle: $sheetTitle, '
+        'rowInsertions: $rowInsertions, '
+        'columnInsertions: $columnInsertions, '
+        'writes: $writes, '
+        'clears: $clears'
+        ')';
+  }
+}
+
 class _WriteBatch {
   const _WriteBatch({required this.mode, required this.writes});
 
@@ -600,6 +856,7 @@ class _CellWrite {
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.value,
+    this.mode = GoogleSheetsValueInputMode.literalText,
   });
 
   final String spreadsheetId;
@@ -607,6 +864,7 @@ class _CellWrite {
   final int sheetRowNumber;
   final int sheetColumnNumber;
   final String value;
+  final GoogleSheetsValueInputMode mode;
 
   @override
   bool operator ==(Object other) {
@@ -616,7 +874,8 @@ class _CellWrite {
             sheetTitle == other.sheetTitle &&
             sheetRowNumber == other.sheetRowNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
-            value == other.value;
+            value == other.value &&
+            mode == other.mode;
   }
 
   @override
@@ -627,6 +886,7 @@ class _CellWrite {
       sheetRowNumber,
       sheetColumnNumber,
       value,
+      mode,
     );
   }
 
@@ -637,7 +897,8 @@ class _CellWrite {
         'sheetTitle: $sheetTitle, '
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
-        'value: $value'
+        'value: $value, '
+        'mode: $mode'
         ')';
   }
 }

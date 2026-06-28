@@ -4,6 +4,31 @@ import 'package:workout_tracker/log_format.dart';
 
 void main() {
   test(
+    'requests grid data only for the active sheet and Exercises tab',
+    () async {
+      final client = _FakeGoogleSheetsSpreadsheetClient(
+        GoogleSpreadsheetSnapshot(
+          sheets: [
+            GoogleSheetSnapshot(title: 'Active Workout', rows: const []),
+            GoogleSheetSnapshot(title: 'Exercises', rows: const []),
+          ],
+        ),
+      );
+      final adapter = GoogleSheetsReadAdapter(client: client);
+
+      await adapter.readActiveSheetInput('spreadsheet-id');
+
+      expect(client.metadataSpreadsheetIds, ['spreadsheet-id']);
+      expect(client.gridRequests, [
+        const _GridRequest(
+          spreadsheetId: 'spreadsheet-id',
+          ranges: ["'Active Workout'", "'Exercises'"],
+        ),
+      ]);
+    },
+  );
+
+  test(
     'reads the first tab and Exercises tab into the sheet-contract parser',
     () async {
       final adapter = GoogleSheetsReadAdapter(
@@ -149,10 +174,65 @@ class _FakeGoogleSheetsSpreadsheetClient
   _FakeGoogleSheetsSpreadsheetClient(this.snapshot);
 
   final GoogleSpreadsheetSnapshot snapshot;
+  final List<String> metadataSpreadsheetIds = [];
+  final List<_GridRequest> gridRequests = [];
 
   @override
-  Future<GoogleSpreadsheetSnapshot> fetchSpreadsheet(String spreadsheetId) {
+  Future<GoogleSpreadsheetMetadata> fetchSpreadsheetMetadata(
+    String spreadsheetId,
+  ) async {
+    metadataSpreadsheetIds.add(spreadsheetId);
+    return GoogleSpreadsheetMetadata(
+      sheets: snapshot.sheets.map(
+        (sheet) => GoogleSheetMetadata(title: sheet.title),
+      ),
+    );
+  }
+
+  @override
+  Future<GoogleSpreadsheetSnapshot> fetchSpreadsheetGridData(
+    String spreadsheetId, {
+    required Iterable<String> ranges,
+  }) {
     expect(spreadsheetId, 'spreadsheet-id');
+    gridRequests.add(
+      _GridRequest(spreadsheetId: spreadsheetId, ranges: ranges.toList()),
+    );
     return Future.value(snapshot);
   }
+}
+
+class _GridRequest {
+  const _GridRequest({required this.spreadsheetId, required this.ranges});
+
+  final String spreadsheetId;
+  final List<String> ranges;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is _GridRequest &&
+            spreadsheetId == other.spreadsheetId &&
+            _listEquals(ranges, other.ranges);
+  }
+
+  @override
+  int get hashCode => Object.hash(spreadsheetId, Object.hashAll(ranges));
+
+  @override
+  String toString() {
+    return '_GridRequest(spreadsheetId: $spreadsheetId, ranges: $ranges)';
+  }
+}
+
+bool _listEquals<T>(List<T> left, List<T> right) {
+  if (left.length != right.length) {
+    return false;
+  }
+  for (var index = 0; index < left.length; index += 1) {
+    if (left[index] != right[index]) {
+      return false;
+    }
+  }
+  return true;
 }

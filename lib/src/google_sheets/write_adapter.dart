@@ -28,24 +28,6 @@ class GoogleSheetsWriteAdapter {
             second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
       );
 
-    for (final insertion in sortedRowInsertions) {
-      await client.insertRows(
-        spreadsheetId: spreadsheetId,
-        sheetId: activeSheet.sheetId,
-        sheetRowNumber: insertion.sheetRowNumber,
-        rowCount: insertion.rowCount,
-      );
-    }
-
-    for (final insertion in sortedInsertions) {
-      await client.insertColumns(
-        spreadsheetId: spreadsheetId,
-        sheetId: activeSheet.sheetId,
-        sheetColumnNumber: insertion.sheetColumnNumber,
-        columnCount: insertion.setLabels.length,
-      );
-    }
-
     final cells = <GoogleSheetsCellWrite>[
       for (final insertion in plan.columnInsertions)
         ..._headerWritesForInsertion(insertion),
@@ -67,6 +49,29 @@ class GoogleSheetsWriteAdapter {
             sheetColumnNumber: update.sheetColumnNumber,
           ),
     ];
+
+    if (plan.rowInsertions.isNotEmpty || plan.columnInsertions.isNotEmpty) {
+      await client.applyActiveSheetStructuralBatch(
+        spreadsheetId: spreadsheetId,
+        sheetId: activeSheet.sheetId,
+        sheetTitle: activeSheet.title,
+        rowInsertions: sortedRowInsertions.map(
+          (insertion) => GoogleSheetsRowInsertion(
+            sheetRowNumber: insertion.sheetRowNumber,
+            rowCount: insertion.rowCount,
+          ),
+        ),
+        columnInsertions: sortedInsertions.map(
+          (insertion) => GoogleSheetsColumnInsertion(
+            sheetColumnNumber: insertion.sheetColumnNumber,
+            columnCount: insertion.setLabels.length,
+          ),
+        ),
+        cells: cells,
+        clears: clears,
+      );
+      return;
+    }
 
     if (cells.isEmpty && clears.isEmpty) {
       return;
@@ -199,6 +204,16 @@ abstract interface class GoogleSheetsWriteClient {
     required int rowCount,
   });
 
+  Future<void> applyActiveSheetStructuralBatch({
+    required String spreadsheetId,
+    required int sheetId,
+    required String sheetTitle,
+    required Iterable<GoogleSheetsRowInsertion> rowInsertions,
+    required Iterable<GoogleSheetsColumnInsertion> columnInsertions,
+    required Iterable<GoogleSheetsCellWrite> cells,
+    required Iterable<GoogleSheetsCellClear> clears,
+  });
+
   Future<void> writeCells({
     required String spreadsheetId,
     required String sheetTitle,
@@ -248,6 +263,26 @@ class GoogleSheetsCellClear {
 }
 
 enum GoogleSheetsValueInputMode { literalText, userEntered }
+
+class GoogleSheetsRowInsertion {
+  const GoogleSheetsRowInsertion({
+    required this.sheetRowNumber,
+    required this.rowCount,
+  });
+
+  final int sheetRowNumber;
+  final int rowCount;
+}
+
+class GoogleSheetsColumnInsertion {
+  const GoogleSheetsColumnInsertion({
+    required this.sheetColumnNumber,
+    required this.columnCount,
+  });
+
+  final int sheetColumnNumber;
+  final int columnCount;
+}
 
 class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
   GoogleApisSheetsWriteClient(this._api);
@@ -353,6 +388,51 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
   }
 
   @override
+  Future<void> applyActiveSheetStructuralBatch({
+    required String spreadsheetId,
+    required int sheetId,
+    required String sheetTitle,
+    required Iterable<GoogleSheetsRowInsertion> rowInsertions,
+    required Iterable<GoogleSheetsColumnInsertion> columnInsertions,
+    required Iterable<GoogleSheetsCellWrite> cells,
+    required Iterable<GoogleSheetsCellClear> clears,
+  }) async {
+    final requests = <sheets.Request>[
+      for (final insertion in rowInsertions)
+        if (insertion.rowCount > 0)
+          _insertDimensionRequest(
+            sheetId: sheetId,
+            dimension: 'ROWS',
+            sheetStartNumber: insertion.sheetRowNumber,
+            count: insertion.rowCount,
+            inheritFromBefore: insertion.sheetRowNumber > 1,
+          ),
+      for (final insertion in columnInsertions)
+        if (insertion.columnCount > 0)
+          _insertDimensionRequest(
+            sheetId: sheetId,
+            dimension: 'COLUMNS',
+            sheetStartNumber: insertion.sheetColumnNumber,
+            count: insertion.columnCount,
+            inheritFromBefore: true,
+          ),
+      for (final cell in cells)
+        _updateCellRequest(sheetId: sheetId, cell: cell),
+      for (final cell in clears)
+        _clearCellRequest(sheetId: sheetId, cell: cell),
+    ];
+    if (requests.isEmpty) {
+      return;
+    }
+
+    await _api.spreadsheets.batchUpdate(
+      sheets.BatchUpdateSpreadsheetRequest(requests: requests),
+      spreadsheetId,
+      $fields: 'spreadsheetId',
+    );
+  }
+
+  @override
   Future<void> writeCells({
     required String spreadsheetId,
     required String sheetTitle,
@@ -405,6 +485,96 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
       $fields: 'spreadsheetId,clearedRanges',
     );
   }
+}
+
+sheets.Request _insertDimensionRequest({
+  required int sheetId,
+  required String dimension,
+  required int sheetStartNumber,
+  required int count,
+  required bool inheritFromBefore,
+}) {
+  final startIndex = sheetStartNumber - 1;
+  return sheets.Request(
+    insertDimension: sheets.InsertDimensionRequest(
+      inheritFromBefore: inheritFromBefore,
+      range: sheets.DimensionRange(
+        sheetId: sheetId,
+        dimension: dimension,
+        startIndex: startIndex,
+        endIndex: startIndex + count,
+      ),
+    ),
+  );
+}
+
+sheets.Request _updateCellRequest({
+  required int sheetId,
+  required GoogleSheetsCellWrite cell,
+}) {
+  return sheets.Request(
+    updateCells: sheets.UpdateCellsRequest(
+      fields: 'userEnteredValue',
+      range: _singleCellRange(
+        sheetId: sheetId,
+        sheetRowNumber: cell.sheetRowNumber,
+        sheetColumnNumber: cell.sheetColumnNumber,
+      ),
+      rows: [
+        sheets.RowData(
+          values: [
+            sheets.CellData(userEnteredValue: _extendedValueForCell(cell)),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+sheets.ExtendedValue _extendedValueForCell(GoogleSheetsCellWrite cell) {
+  return switch (cell.mode) {
+    GoogleSheetsValueInputMode.literalText => sheets.ExtendedValue(
+      stringValue: cell.value,
+    ),
+    GoogleSheetsValueInputMode.userEntered => sheets.ExtendedValue(
+      formulaValue: cell.value,
+    ),
+  };
+}
+
+sheets.Request _clearCellRequest({
+  required int sheetId,
+  required GoogleSheetsCellClear cell,
+}) {
+  return sheets.Request(
+    updateCells: sheets.UpdateCellsRequest(
+      fields: 'userEnteredValue',
+      range: _singleCellRange(
+        sheetId: sheetId,
+        sheetRowNumber: cell.sheetRowNumber,
+        sheetColumnNumber: cell.sheetColumnNumber,
+      ),
+      rows: [
+        sheets.RowData(values: [sheets.CellData()]),
+      ],
+    ),
+  );
+}
+
+sheets.GridRange _singleCellRange({
+  required int sheetId,
+  required int sheetRowNumber,
+  required int sheetColumnNumber,
+}) {
+  final rowIndex = sheetRowNumber - 1;
+  final columnIndex = sheetColumnNumber - 1;
+  return sheets.GridRange(
+    sheetId: sheetId,
+    startRowIndex: rowIndex,
+    endRowIndex: rowIndex + 1,
+    startColumnIndex: columnIndex,
+    endColumnIndex: columnIndex + 1,
+  );
 }
 
 String _valueInputOption(GoogleSheetsValueInputMode mode) {
