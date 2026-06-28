@@ -32,7 +32,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
               ? null
               : IconButton.filled(
                   key: const ValueKey('add-canonical-exercise'),
-                  tooltip: 'Add Exercise',
+                  tooltip: 'Create exercise',
                   onPressed: onAddExercise,
                   icon: const Icon(Icons.add_outlined),
                 ),
@@ -147,9 +147,12 @@ class _ExerciseInventoryRow extends StatelessWidget {
                 ),
                 if (onTap != null) ...[
                   const SizedBox(width: 8),
-                  Icon(
-                    Icons.edit_outlined,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  Tooltip(
+                    message: 'Edit ${exercise.displayName}',
+                    child: Icon(
+                      Icons.edit_outlined,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
                 if (canReorder) ...[

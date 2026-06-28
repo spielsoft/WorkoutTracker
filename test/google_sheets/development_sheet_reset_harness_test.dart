@@ -21,59 +21,14 @@ void main() {
       expect(workbook.exercisesSheet.title, 'Exercises');
 
       final activeRows = workbook.activeSheet.rows;
-      expect(
-        activeRows.first.take(activeSheetFixedColumns.length),
-        activeSheetFixedColumns,
-      );
-      expect(activeRows[0].skip(activeSheetFixedColumns.length), [
-        'Week 2',
-        '',
-        'Week 1',
-      ]);
-      expect(activeRows[1].skip(activeSheetFixedColumns.length), [
-        'S1',
-        'S2',
-        'S1',
-      ]);
-
-      final displayRows = _activeRowsWithExerciseDisplayValues(workbook);
+      expect(activeRows, [activeSheetFixedColumns]);
       final parsedActiveSheet = parseActiveSheet(
-        ActiveSheetInput(rows: displayRows),
+        ActiveSheetInput(rows: activeRows),
       );
-      final primarySlots = parsedActiveSheet.primarySlots;
 
       expect(parsedActiveSheet.schemaViolations, isEmpty);
-      expect(
-        primarySlots.where((slot) => slot.workout == 'Legs'),
-        hasLength(greaterThanOrEqualTo(2)),
-      );
-      expect(
-        primarySlots.where((slot) => slot.workout == 'Upper'),
-        hasLength(greaterThanOrEqualTo(2)),
-      );
-      expect(
-        primarySlots,
-        anyElement(
-          predicate<WorkoutSlot>(
-            (slot) =>
-                slot.exercise == 'Plank' &&
-                slot.workout == 'Upper' &&
-                !slot.isBackup,
-            'contains Plank as an Upper primary',
-          ),
-        ),
-      );
-      expect(primarySlots.any((slot) => slot.backups.length > 2), isTrue);
-      expect(
-        primarySlots.any((slot) => slot.workout == defaultWorkoutName),
-        isTrue,
-      );
-
-      final formulaRows = activeRows.where(
-        (row) => row.length > 8 && row.first.startsWith('=Exercises!A'),
-      );
-      expect(formulaRows, isNotEmpty);
-      expect(formulaRows.every(_usesDirectExerciseDisplayFormulas), isTrue);
+      expect(parsedActiveSheet.primarySlots, isEmpty);
+      expect(parsedActiveSheet.historyBlocks, isEmpty);
 
       final exercisesRows = workbook.exercisesSheet.rows;
       expect(exercisesRows.first, [
@@ -87,28 +42,27 @@ void main() {
         'Notes',
         'Log Format',
       ]);
-      final exerciseFormats = exercisesRows.skip(1).map((row) => row[8]);
       expect(
-        exerciseFormats,
+        exercisesRows.skip(1).map((row) => row.first),
+        containsAll([
+          'Bulgarian Split Squat',
+          'Romanian Deadlift',
+          'Standing Calf Raise',
+        ]),
+      );
+      expect(
+        exercisesRows.skip(1).map((row) => row[8]),
         containsAll([
           '{Weight}[x]{Reps}[@]{RPE}',
           '{Reps}[@]{RPE}',
           '{Height}[x]{Reps}[@]{RPE}',
           '{Seconds}[s@]{RPE}',
-          '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
         ]),
       );
-      final exerciseLibraryNames = exercisesRows
-          .skip(1)
-          .map((row) => row.first);
       expect(
-        displayRows
-            .skip(2)
-            .where((row) => row.length > 8 && row.first.isNotEmpty)
-            .every((row) => exerciseLibraryNames.contains(row.first)),
-        isTrue,
+        activeRows.skip(1).where((row) => row.any((cell) => cell.isNotEmpty)),
+        isEmpty,
       );
-      expect(exerciseLibraryNames, containsAll(['Plank', 'Farmer Carry']));
     },
   );
 
@@ -124,7 +78,6 @@ void main() {
   });
 
   test('plans workbook writes with typed cell values and text formatting', () {
-    final planner = WorkoutTrackerWorkbookInitializationPlanner();
     final tab = WorkoutTrackerWorkbookTab(
       title: 'Active Workout',
       rows: [
@@ -134,7 +87,7 @@ void main() {
       ],
     );
 
-    final plan = planner.planTabRewrite(
+    final plan = WorkoutTrackerWorkbookTabRewritePlan(
       sheetId: 42,
       tab: tab,
       frozenRowCount: 1,
@@ -182,80 +135,4 @@ class _FakeWorkbookInitializer implements WorkoutTrackerWorkbookInitializer {
     initializedSpreadsheetIds.add(spreadsheetId);
     workbooks.add(workbook);
   }
-}
-
-List<List<String>> _activeRowsWithExerciseDisplayValues(
-  WorkoutTrackerWorkbook workbook,
-) {
-  return workbook.activeSheet.rows
-      .map(
-        (row) => row
-            .map((cell) => _exerciseDisplayValue(cell, workbook.exercisesSheet))
-            .toList(),
-      )
-      .toList();
-}
-
-String _exerciseDisplayValue(String cell, WorkoutTrackerWorkbookTab exercises) {
-  final formula = _exerciseFormula(cell);
-  if (formula == null) {
-    return cell;
-  }
-
-  final rowIndex = formula.rowNumber - 1;
-  final columnIndex = _columnNumber(formula.columnLetters) - 1;
-  if (rowIndex < 0 ||
-      rowIndex >= exercises.rows.length ||
-      columnIndex < 0 ||
-      columnIndex >= exercises.rows[rowIndex].length) {
-    return cell;
-  }
-  return exercises.rows[rowIndex][columnIndex];
-}
-
-bool _usesDirectExerciseDisplayFormulas(List<String> row) {
-  final firstFormula = _exerciseFormula(row.first);
-  if (firstFormula == null || firstFormula.columnLetters != 'A') {
-    return false;
-  }
-
-  final expectedColumns = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
-  for (var index = 0; index < expectedColumns.length; index += 1) {
-    final formula = _exerciseFormula(row[index]);
-    if (formula == null ||
-        formula.columnLetters != expectedColumns[index] ||
-        formula.rowNumber != firstFormula.rowNumber) {
-      return false;
-    }
-  }
-  return true;
-}
-
-_ExerciseFormula? _exerciseFormula(String value) {
-  final match = RegExp(r'^=Exercises!([A-Z]+)(\d+)$').firstMatch(value);
-  if (match == null) {
-    return null;
-  }
-  return _ExerciseFormula(
-    columnLetters: match.group(1)!,
-    rowNumber: int.parse(match.group(2)!),
-  );
-}
-
-int _columnNumber(String letters) {
-  var number = 0;
-  for (final codeUnit in letters.codeUnits) {
-    number = number * 26 + codeUnit - 64;
-  }
-  return number;
-}
-
-class _ExerciseFormula {
-  const _ExerciseFormula({
-    required this.columnLetters,
-    required this.rowNumber,
-  });
-
-  final String columnLetters;
-  final int rowNumber;
 }

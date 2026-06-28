@@ -162,10 +162,15 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     if (screen == _WorkoutTrackerScreen.addExercise) {
       final intent = addExercisePlacementIntent;
       if (intent != null) {
+        final backTooltip =
+            exerciseAddReturnScreen == _WorkoutTrackerScreen.workoutSetup
+            ? 'Back to workout setup'
+            : 'Back to exercises';
         return _AddExercisePlacementScreen(
           sheetLabel: sheetLabel,
           intent: intent,
           exercises: activeSheet.canonicalExercises,
+          backTooltip: backTooltip,
           onBack: onCloseExerciseAdd,
           onSubmit: onSubmitExercisePlacement,
         );
@@ -219,7 +224,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                 ? null
                 : IconButton.filled(
                     key: const ValueKey('add-primary-exercise'),
-                    tooltip: 'Add exercise',
+                    tooltip: 'Add to workout',
                     onPressed: () => onAddPrimaryExercise(selectedWorkout),
                     icon: const Icon(Icons.add_outlined),
                   ),
@@ -248,7 +253,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
           onBack: onBackToSheetSelection,
           trailing: IconButton.filledTonal(
             key: const ValueKey('open-exercise-manager'),
-            tooltip: 'Edit exercises',
+            tooltip: 'Edit exercise library',
             onPressed: onOpenExerciseManager,
             icon: const Icon(Icons.fitness_center_outlined),
           ),
@@ -312,6 +317,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                 SizedBox(
                   width: fieldWidth,
                   child: DropdownButtonFormField<String>(
+                    key: ValueKey('history-block-$selectedHistoryBlock'),
                     initialValue: selectedHistoryBlock,
                     isExpanded: true,
                     decoration: const InputDecoration(
@@ -420,7 +426,7 @@ class _WorkoutOverviewList extends StatelessWidget {
               if (onAddPrimaryExercise != null)
                 IconButton.filled(
                   key: const ValueKey('add-primary-exercise-from-setup'),
-                  tooltip: 'Add exercise',
+                  tooltip: 'Add to workout',
                   onPressed: onAddPrimaryExercise,
                   icon: const Icon(Icons.add_outlined),
                 ),
@@ -734,6 +740,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
     required this.sheetLabel,
     required this.intent,
     required this.exercises,
+    required this.backTooltip,
     required this.onBack,
     required this.onSubmit,
   });
@@ -741,6 +748,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   final String sheetLabel;
   final _AddExercisePlacementIntent intent;
   final List<CanonicalExercise> exercises;
+  final String backTooltip;
   final VoidCallback onBack;
   final ValueChanged<_ExercisePlacementDraft> onSubmit;
 
@@ -752,9 +760,9 @@ class _AddExercisePlacementScreen extends StatelessWidget {
       children: [
         _ScreenHeader(
           title: sheetLabel,
-          subtitle: isBackup ? 'Add backup exercise' : 'Add exercise',
+          subtitle: isBackup ? 'Add backup exercise' : 'Add to workout',
           compactTitle: true,
-          backTooltip: 'Back to exercises',
+          backTooltip: backTooltip,
           onBack: onBack,
         ),
         const SizedBox(height: 16),
@@ -785,6 +793,7 @@ class _ExercisePlacementForm extends StatefulWidget {
 
 class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
   CanonicalExercise? _selectedExercise;
+  late final TextEditingController _exerciseSearchController;
   late final TextEditingController _setsController;
   late final TextEditingController _repsController;
   late final TextEditingController _rpeController;
@@ -795,6 +804,8 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
   @override
   void initState() {
     super.initState();
+    _exerciseSearchController = TextEditingController();
+    _exerciseSearchController.addListener(_handleExerciseSearchChanged);
     _setsController = TextEditingController();
     _repsController = TextEditingController();
     _rpeController = TextEditingController();
@@ -816,6 +827,8 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
 
   @override
   void dispose() {
+    _exerciseSearchController.removeListener(_handleExerciseSearchChanged);
+    _exerciseSearchController.dispose();
     _setsController.dispose();
     _repsController.dispose();
     _rpeController.dispose();
@@ -823,6 +836,10 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
     _tempoController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _handleExerciseSearchChanged() {
+    setState(() {});
   }
 
   void _loadExerciseDefaults(CanonicalExercise? exercise) {
@@ -849,13 +866,47 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
   Widget build(BuildContext context) {
     final exercises = widget.exercises;
     final selectedExercise = _selectedExercise;
+    final exerciseQuery = _exerciseSearchController.text.trim().toLowerCase();
+    final matchingExercises = exerciseQuery.isEmpty
+        ? exercises
+        : exercises.where((exercise) {
+            return exercise.displayName.toLowerCase().contains(exerciseQuery) ||
+                exercise.description.toLowerCase().contains(exerciseQuery);
+          }).toList();
+    final selectableExercises =
+        selectedExercise != null &&
+            !matchingExercises.contains(selectedExercise)
+        ? [selectedExercise, ...matchingExercises]
+        : matchingExercises;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        TextField(
+          key: const ValueKey('exercise-picker-search'),
+          controller: _exerciseSearchController,
+          decoration: InputDecoration(
+            labelText: 'Search exercises',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.search_outlined),
+            suffixIcon: exerciseQuery.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Clear exercise search',
+                    onPressed: _exerciseSearchController.clear,
+                    icon: const Icon(Icons.clear_outlined),
+                  ),
+          ),
+          textInputAction: TextInputAction.search,
+        ),
+        const SizedBox(height: 12),
         DropdownButtonFormField<CanonicalExercise>(
           key: const ValueKey('existing-exercise-selector'),
           initialValue: selectedExercise,
-          hint: const Text('Choose exercise'),
+          hint: Text(
+            exerciseQuery.isEmpty || selectableExercises.isNotEmpty
+                ? 'Choose exercise'
+                : 'No matching exercises',
+          ),
           isExpanded: true,
           decoration: const InputDecoration(
             labelText: 'Exercise',
@@ -863,7 +914,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
             prefixIcon: Icon(Icons.fitness_center_outlined),
           ),
           items: [
-            for (final exercise in exercises)
+            for (final exercise in selectableExercises)
               DropdownMenuItem(
                 value: exercise,
                 child: Text(
@@ -872,7 +923,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
                 ),
               ),
           ],
-          onChanged: exercises.isEmpty
+          onChanged: selectableExercises.isEmpty
               ? null
               : (exercise) {
                   setState(() {

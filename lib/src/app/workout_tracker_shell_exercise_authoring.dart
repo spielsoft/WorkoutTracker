@@ -468,7 +468,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
   }
 }
 
-class _ExerciseAuthoringTextField extends StatelessWidget {
+class _ExerciseAuthoringTextField extends StatefulWidget {
   const _ExerciseAuthoringTextField({
     super.key,
     required this.controller,
@@ -489,19 +489,59 @@ class _ExerciseAuthoringTextField extends StatelessWidget {
   final TextInputType? keyboardType;
 
   @override
+  State<_ExerciseAuthoringTextField> createState() =>
+      _ExerciseAuthoringTextFieldState();
+}
+
+class _ExerciseAuthoringTextFieldState
+    extends State<_ExerciseAuthoringTextField> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(_selectTextAfterFocus);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_selectTextAfterFocus);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _selectTextAfterFocus() {
+    if (!_focusNode.hasFocus) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_focusNode.hasFocus) {
+        return;
+      }
+      widget.controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: widget.controller.text.length,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Semantics(
-      identifier: semanticsIdentifier,
+      identifier: widget.semanticsIdentifier,
       child: TextFormField(
-        controller: controller,
-        enabled: enabled,
+        controller: widget.controller,
+        enabled: widget.enabled,
+        focusNode: _focusNode,
         decoration: InputDecoration(
-          labelText: labelText,
+          labelText: widget.labelText,
           border: const OutlineInputBorder(),
-          prefixIcon: Icon(icon),
+          prefixIcon: Icon(widget.icon),
         ),
-        textInputAction: textInputAction,
-        keyboardType: keyboardType,
+        textInputAction: widget.textInputAction,
+        keyboardType: widget.keyboardType,
+        selectAllOnFocus: true,
       ),
     );
   }

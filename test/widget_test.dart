@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
@@ -1163,7 +1164,7 @@ void main() {
     await tester.tap(find.text('Add backup exercise'));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Back to exercises'), findsOneWidget);
+    expect(find.byTooltip('Back to workout setup'), findsOneWidget);
     expect(find.text('Add backup exercise'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('existing-exercise-selector')),
@@ -1291,6 +1292,76 @@ void main() {
     },
   );
 
+  testWidgets('back from adding to a selected workout returns to setup', (
+    tester,
+  ) async {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+        ],
+        exercisesRows: const [
+          exercisesSheetColumns,
+          [
+            'Pull Up',
+            'Bodyweight pull',
+            '3',
+            '8',
+            '8',
+            '2 min',
+            '',
+            'Full hang.',
+            '{Reps}',
+          ],
+        ],
+      ),
+    );
+    final service = TestSpreadsheetValidationService(activeSheet);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add to workout'), findsWidgets);
+    expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back to workout setup'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
+    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('spreadsheet-selection-input')),
+      findsNothing,
+    );
+    expect(find.text('Legs - Week 1'), findsNothing);
+  });
+
   testWidgets(
     'keeps exercise picker backup actions reachable on a narrow phone',
     (tester) async {
@@ -1328,7 +1399,8 @@ void main() {
       expect(find.text('Legs - Week 1'), findsOneWidget);
       expect(find.text(primaryExercise), findsOneWidget);
       expect(find.text(backupExercise), findsOneWidget);
-      expect(find.byTooltip('Add exercise'), findsOneWidget);
+      expect(find.byTooltip('Add to workout'), findsOneWidget);
+      expect(find.byTooltip('Add exercise'), findsNothing);
       expect(
         find.byTooltip('Backup actions for $primaryExercise'),
         findsOneWidget,
@@ -1377,12 +1449,16 @@ void main() {
 
     expect(find.text('Edit exercises'), findsWidgets);
     expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+    expect(find.byTooltip('Create exercise'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);
     expect(find.text('Back squat'), findsOneWidget);
+    expect(find.byTooltip('Edit Squat'), findsOneWidget);
     expect(find.text('Bench Press'), findsOneWidget);
     expect(find.text('Competition bench'), findsOneWidget);
+    expect(find.byTooltip('Edit Bench Press'), findsOneWidget);
     expect(find.text('Cable Row'), findsOneWidget);
     expect(find.text('Seated cable row'), findsOneWidget);
+    expect(find.byTooltip('Edit Cable Row'), findsOneWidget);
     expect(
       tester.getTopLeft(find.text('Squat')).dy,
       lessThan(tester.getTopLeft(find.text('Bench Press')).dy),
@@ -2183,7 +2259,7 @@ void main() {
     expect(find.text('Add workout'), findsNothing);
     expect(find.text('Add history'), findsNothing);
     expect(find.text('Edit exercises'), findsNothing);
-    expect(find.byTooltip('Edit exercises'), findsOneWidget);
+    expect(find.byTooltip('Edit exercise library'), findsOneWidget);
     expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -2235,7 +2311,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(service.appliedPlans, hasLength(1));
-      expect(find.text('Week 2'), findsOneWidget);
+      final historyField = find.byType(DropdownButtonFormField<String>).last;
+      expect(
+        tester.state<FormFieldState<String>>(historyField).value,
+        'Week 2',
+      );
     },
   );
 
@@ -2305,8 +2385,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Add to workout'));
-    await tester.tap(find.text('Add to workout'));
+    expect(find.text('Add to workout'), findsWidgets);
+    expect(find.text('Add exercise'), findsNothing);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('place-existing-exercise')),
+    );
+    await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
     await tester.pump();
 
     expect(_textFieldWithLabel('Sets'), findsNothing);
@@ -2320,8 +2405,207 @@ void main() {
     expect(_textFieldWithLabel('Reps'), findsOneWidget);
     expect(_textFieldWithLabel('RPE'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Add to workout'));
-    expect(find.text('Add to workout'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('place-existing-exercise')),
+    );
+    expect(find.text('Add to workout'), findsWidgets);
+    expect(find.text('Add exercise'), findsNothing);
+  });
+
+  testWidgets('does not choose an exercise from an unopened picker on Return', (
+    tester,
+  ) async {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+        ],
+        exercisesRows: const [
+          exercisesSheetColumns,
+          [
+            'Bulgarian Split Squat',
+            'Rear-foot elevated split squat',
+            '3',
+            '10',
+            '8',
+            '2 min',
+            '',
+            '',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
+          [
+            'Dip',
+            'Parallel bar dip',
+            '3',
+            '10',
+            '8',
+            '2 min',
+            '',
+            '',
+            '{Reps}',
+          ],
+        ],
+      ),
+    );
+    final service = TestSpreadsheetValidationService(activeSheet);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
+    );
+    await tester.pumpAndSettle();
+
+    final selector = find.byKey(const ValueKey('exercise-picker-search'));
+    await tester.tap(selector);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(_textFieldWithLabel('Sets'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('place-existing-exercise')),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(_textFieldWithLabel('Sets'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('place-existing-exercise')),
+          )
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('filters the workout exercise picker before placement', (
+    tester,
+  ) async {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+        ],
+        exercisesRows: const [
+          exercisesSheetColumns,
+          [
+            'Pull Up',
+            'Bodyweight pull',
+            '3',
+            '8',
+            '8',
+            '2 min',
+            '',
+            'Full hang.',
+            '{Reps}',
+          ],
+          [
+            'Bench Press',
+            'Competition bench',
+            '4',
+            '6',
+            '8',
+            '3 min',
+            '',
+            '',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
+          [
+            'Romanian Deadlift',
+            'Hip hinge',
+            '3',
+            '10',
+            '7',
+            '2 min',
+            '',
+            '',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
+        ],
+      ),
+    );
+    final service = TestSpreadsheetValidationService(activeSheet);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-picker-search')),
+      'romanian',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Romanian Deadlift'), findsOneWidget);
+    expect(find.text('Bench Press'), findsNothing);
+
+    await tester.tap(find.text('Romanian Deadlift').last);
+    await tester.pumpAndSettle();
+
+    expect(_textFieldWithLabel('Sets'), findsOneWidget);
+    expect(_textFieldWithLabel('Reps'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('10'), findsOneWidget);
   });
 
   testWidgets('keeps workout placement fields usable on a phone', (
@@ -2492,6 +2776,48 @@ void main() {
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'selects default exercise authoring field text on focus for replacement',
+    (tester) async {
+      final validationService = TestSpreadsheetValidationService(
+        _exerciseInventoryParsedSheet([
+          _exerciseRow('Squat', description: 'Back squat'),
+        ]),
+      );
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: validationService,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('add-canonical-exercise')));
+      await tester.pumpAndSettle();
+
+      final defaultReps = find.byKey(
+        const ValueKey('exercise-authoring-default-reps'),
+      );
+      await tester.tap(defaultReps);
+      await tester.pump();
+
+      final editableText = tester.widget<EditableText>(
+        find.descendant(of: defaultReps, matching: find.byType(EditableText)),
+      );
+      expect(editableText.controller.selection.textInside('10'), '10');
+
+      tester.testTextInput.enterText('12');
+      await tester.pump();
+
+      expect(editableText.controller.text, '12');
     },
   );
 

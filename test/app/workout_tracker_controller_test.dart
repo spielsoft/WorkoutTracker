@@ -308,6 +308,129 @@ void main() {
   });
 
   test(
+    'rejects a logged next-set save when refresh does not retain the set',
+    () async {
+      final visibleSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            [...activeSheetFixedColumns, 'Today', ''],
+            [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+            [
+              'Lat Pulldown',
+              '2',
+              '10',
+              '8',
+              '2 min',
+              '',
+              '',
+              '',
+              'Pull Day',
+              '',
+              '100x10@8',
+              '',
+            ],
+          ],
+        ),
+      );
+      final service = _StaleWriteValidationService(visibleSheet);
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      controller.openExercise(3);
+      final plan = visibleSheet.planSetLoggingWrite(
+        historyBlockLabel: 'Today',
+        sheetRowNumber: 3,
+        fieldValues: const {'Weight': '105', 'Reps': '9', 'RPE': '9'},
+      );
+
+      final saved = await controller.applyActiveSheetWritePlan(plan);
+      final context = controller.report!.activeSheet
+          .buildExerciseLoggingContext(
+            primarySheetRowNumber: 3,
+            selectedSheetRowNumber: 3,
+            historyBlockLabel: 'Today',
+          );
+
+      expect(saved, isFalse);
+      expect(
+        controller.error,
+        'Unable to save set: saved set was not visible after refresh.',
+      );
+      expect(context.selectedHistory.entries[1].rawValue, isEmpty);
+      expect(service.appliedPlans, [plan]);
+    },
+  );
+
+  test(
+    'rejects a logged next-set save when refresh shows a different set value',
+    () async {
+      final visibleSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            [...activeSheetFixedColumns, 'Today', ''],
+            [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+            [
+              'Lat Pulldown',
+              '2',
+              '10',
+              '8',
+              '2 min',
+              '',
+              '',
+              '',
+              'Pull Day',
+              '',
+              '100x10@8',
+              '',
+            ],
+          ],
+        ),
+      );
+      final refreshedSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            [...activeSheetFixedColumns, 'Today', ''],
+            [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+            [
+              'Lat Pulldown',
+              '2',
+              '10',
+              '8',
+              '2 min',
+              '',
+              '',
+              '',
+              'Pull Day',
+              '',
+              '100x10@8',
+              '95x10@7',
+            ],
+          ],
+        ),
+      );
+      final service = _StaleWriteValidationService(refreshedSheet);
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      controller.openExercise(3);
+      final plan = visibleSheet.planSetLoggingWrite(
+        historyBlockLabel: 'Today',
+        sheetRowNumber: 3,
+        fieldValues: const {'Weight': '105', 'Reps': '9', 'RPE': '9'},
+      );
+
+      final saved = await controller.applyActiveSheetWritePlan(plan);
+
+      expect(saved, isFalse);
+      expect(
+        controller.error,
+        'Unable to save set: saved set was not visible after refresh.',
+      );
+      expect(service.appliedPlans, [plan]);
+    },
+  );
+
+  test(
     'repairs unambiguous formula issues with one flagged-cell write plan',
     () async {
       final damagedSheet = _parseWorkbookFixture(loadFormulaDamageFixture());
@@ -579,6 +702,36 @@ class _RejectingWriteValidationService implements SpreadsheetValidationService {
     return SpreadsheetValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: currentSheet,
+    );
+  }
+}
+
+class _StaleWriteValidationService implements SpreadsheetValidationService {
+  _StaleWriteValidationService(this.activeSheet);
+
+  final ParsedActiveSheet activeSheet;
+  final List<ActiveSheetWritePlan> appliedPlans = [];
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: this.activeSheet,
     );
   }
 }

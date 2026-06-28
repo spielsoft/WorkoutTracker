@@ -1,263 +1,281 @@
-# iPhone Live Testing Readiness Issues
+# GUI MVP Hardening Issues
 
-This is the active vertical-slice plan for getting WorkoutTracker ready for
-live iPhone testing. Work through slices in order. Use TDD for each slice:
-write or update a failing behavior test through a public interface, implement
-the smallest fix, run targeted tests, then update this checklist only after the
-slice is complete.
+This is the active vertical-slice plan for the remaining GUI/MVP hardening
+work found through black-box macOS testing. Work through slices in dependency
+order. Use TDD for each implementation slice: write or update one failing
+behavior test through a public interface, implement the smallest fix, run
+targeted tests, then update this checklist only after the slice is complete.
 
 Do not run live Google integration tests or write to the development sheet
-unless explicitly authorized for that slice.
+unless explicitly authorized for that slice. Rebuild the macOS release bundle
+after GUI-facing changes.
 
-## Slice 1: Existing Sheet Selection Must Work On iPhone
+## Checklist
 
-Status: complete
+- [x] Slice 1: Cleanly Integrate Current GUI Fixes
+- [ ] Slice 2: Validate Multi-Set Logging Against Live GUI
+- [ ] Slice 3: Make Row Actions Understandable
+- [ ] Slice 4: Speed Up Multi-Exercise Plan Building
+- [ ] Slice 5: Preserve Exercise Library Context After Save
+- [ ] Slice 6: Repeat Black-Box GUI Regression Pass
+- [ ] Slice 7: Clean Up Temporary GUI Tests
 
-Problem:
+## Slice 1: Cleanly Integrate Current GUI Fixes
 
-- A fresh build can hide the pasted Google Sheets URL/ID fallback whenever a
-  `SpreadsheetPicker` is present, even if choosing an existing sheet is
-  unavailable because `WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID` is not set.
-- This can block testers from selecting the known development sheet.
+### Type
 
-Acceptance criteria:
+`AFK`
 
-- If Google Drive choosing is unavailable, the sheet selection screen exposes a
-  pasted URL/ID path.
-- The pasted URL/ID path remains compatible with native Google Sign-In
-  validation.
-- Existing picker/create controls still render their availability state.
-- Widget tests cover picker-present/manual-fallback behavior.
+### What to build
 
-Likely files:
+Review and stabilize the GUI fixes already prototyped in the dirty worktree so
+they become clean, reviewable vertical slices. The intended behavior is:
 
-- `lib/src/app/workout_tracker_shell.dart`
-- `lib/src/app/spreadsheet_selection.dart`
-- `test/widget_test.dart`
-- `test/app/spreadsheet_selection_test.dart`
+- New workbook creation starts with an empty active workout sheet and a seeded
+  canonical exercise library.
+- Add to workout and Create exercise are clearly distinguished.
+- Stale logging saves do not clear inputs unless refreshed sheet data contains
+  the saved set.
+- Add to workout back navigation returns to workout setup.
+- Newly created history blocks visibly become selected.
+- Exercise placement includes search.
+- Default exercise-authoring numeric fields replace selected text on focus.
+- Return key behavior does not choose an unopened exercise picker item.
 
-Suggested tests:
+Keep the patch scoped to the MVP GUI hardening work and preserve unrelated
+worktree changes.
 
-- `flutter test test/widget_test.dart --plain-name "exposes pasted sheet validation when picker choosing is unavailable"` - passed
-- `flutter test test/app/spreadsheet_selection_test.dart` - passed
-- `flutter test test/widget_test.dart --plain-name "spreadsheet"` - passed
+### Acceptance criteria
 
-## Slice 2: Keep The Local Readiness Suite Green
+- [x] The current GUI fixes are present in clean, understandable diffs.
+- [x] The active workout template has only contract headers while `Exercises`
+      keeps the seeded canonical library.
+- [x] Logging write success is gated by refreshed public logging state.
+- [x] Add to workout returns to workout setup on back.
+- [x] History block selection refreshes after creation.
+- [x] Exercise placement search filters by exercise name or description.
+- [x] Authoring fields replace default numeric values on normal typing.
+- [x] Targeted controller and widget tests pass.
+- [x] The macOS release app bundle is rebuilt.
 
-Status: complete
+### Blocked by
 
-Problem:
+None - can start immediately.
 
-- `flutter test` is red because readiness tests reference deleted transient docs
-  and one restored-selected-sheet UI expectation no longer matches current
-  startup behavior.
+### User stories covered
 
-Acceptance criteria:
+- New sheet starts blank but useful.
+- Add to workout is distinguishable from Create exercise.
+- Logging does not silently discard data.
+- Back navigation preserves user context.
+- History block creation is immediately usable.
+- Custom exercises can be found in the seeded library.
+- Numeric defaults are easy to replace.
 
-- Broad local `flutter test` passes, excluding live Google writes.
-- Tests do not depend on deleted transient plan files.
-- The restored selected-sheet behavior is either fixed or the test is updated
-  to match the intended current flow.
+## Slice 2: Validate Multi-Set Logging Against Live GUI
 
-Likely files:
+### Type
 
-- `test/platform_store_readiness_test.dart`
-- `test/widget_test.dart`
-- `APP_STORE.md`
-- `README.md`
-- `docs/google_sheets_development_auth.md`
+`HITL`
 
-Suggested tests:
+### What to build
 
-- `flutter test test/platform_store_readiness_test.dart` - passed
-- `flutter test test/widget_test.dart --plain-name "restores a selected Google Drive sheet label"` - passed
-- `flutter test` - passed, 174 tests
+Run a GUI-only macOS validation pass focused on the previously blocking S2 save
+workflow. The app must be logged in to a valid Google account, and the tester
+must explicitly authorize live sheet writes for this validation. All app input
+must use visible mouse and keyboard interactions only.
 
-## Slice 3: Prevent Duplicate Async Actions
+The goal is to determine whether the current stale-refresh guard is sufficient
+or whether the live Google write/read adapter still fails to persist S2.
 
-Status: complete
+### Acceptance criteria
 
-Problem:
+- [ ] The rebuilt macOS app creates or selects a test sheet through the GUI.
+- [ ] A workout and history block are created or selected through the GUI.
+- [ ] An exercise is added and S1 plus S2 are logged through the GUI.
+- [ ] If S2 persists, the logged list and progress update visibly.
+- [ ] If S2 does not persist, the input remains available or a visible error is
+      shown; it must not silently disappear.
+- [ ] The app is quit at the end of the pass.
+- [ ] Findings are recorded with exact visible reproduction steps.
 
-- Picker/create actions and logging save/edit actions can be tapped repeatedly
-  while async work is pending.
-- On phones this can launch multiple auth flows, create multiple sheets, or
-  submit duplicate set writes.
+### Blocked by
 
-Acceptance criteria:
+- Slice 1: Cleanly Integrate Current GUI Fixes
+- User must provide live Google login/authorization and permit test writes.
 
-- Picker/create actions enter a local busy state until the action completes.
-- Logging save/edit/clear controls are disabled or visibly busy while a write
-  is pending.
-- Failed writes are visible near the logging action or otherwise discoverable
-  without scrolling back to the top.
-- Tests cover repeated taps during pending actions.
+### User stories covered
 
-Likely files:
+- In-gym multi-set logging can be trusted.
+- Failed writes are visible and recoverable.
+- GUI testing reflects real app usage.
 
-- `lib/src/app/workout_tracker_shell.dart`
-- `lib/src/app/workout_tracker_shell_logging.dart`
-- `lib/src/app/workout_tracker_controller.dart`
-- `test/widget_test.dart`
+## Slice 3: Make Row Actions Understandable
 
-Suggested tests:
+### Type
 
-- `flutter test test/widget_test.dart --plain-name "picker"` - passed
-- `flutter test test/widget_test.dart --plain-name "Save set"` - passed
-- `flutter test test/widget_test.dart` - passed, 51 tests
+`AFK`
 
-## Slice 4: Reject Stale Formula Repair Plans
+### What to build
 
-Status: complete
+Improve the discoverability of row-level actions that black-box testing found
+ambiguous: backup actions, reorder handles, and logging/open-row affordances.
+Keep the layout compact, but make each action understandable through visible
+labels where appropriate, tooltips, semantic labels, and tests.
 
-Problem:
+### Acceptance criteria
 
-- Formula repair plans can write formulas to stale rows because they do not
-  carry active-sheet row expectations.
+- [ ] Backup actions are named clearly in tooltips and semantics.
+- [ ] Reorder handles are named clearly per exercise.
+- [ ] Opening/logging an exercise row is discoverable without relying only on
+      trial-and-error icon interpretation.
+- [ ] Compact desktop and narrow phone widget tests remain free of overflow.
+- [ ] Widget tests verify the user-facing labels/tooltips for representative
+      primary and backup rows.
 
-Acceptance criteria:
+### Blocked by
 
-- Formula healing write plans include enough expectations to reject if the
-  target row identity changed after validation.
-- Rejection explains that the sheet changed and must be revalidated.
-- Tests cover stale-row formula repair rejection through the public sheet
-  contract or validation-service interface.
+- Slice 1: Cleanly Integrate Current GUI Fixes
 
-Likely files:
+### User stories covered
 
-- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
-- `lib/src/app/spreadsheet_validation_core.dart`
-- `test/sheet_contract/active_sheet_formula_healing_test.dart`
-- `test/app/spreadsheet_validation_test.dart`
+- Row actions are understandable without guessing.
+- Backup and reorder controls are safe to use in a gym context.
 
-Suggested tests:
+## Slice 4: Speed Up Multi-Exercise Plan Building
 
-- `flutter test test/sheet_contract/active_sheet_formula_healing_test.dart` - passed
-- `flutter test test/app/spreadsheet_validation_test.dart` - passed
-- `git diff --check -- lib/src/sheet_contract/active_sheet/formula_healing.dart lib/src/sheet_contract/active_sheet/write_plans.dart test/sheet_contract/active_sheet_formula_healing_test.dart ISSUES.md` - passed
+### Type
 
-## Slice 5: Reject Stale Log Format Set Writes
+`AFK`
 
-Status: complete
+### What to build
 
-Problem:
+Make adding several exercises to a workout less repetitive. After successfully
+placing an exercise, provide an explicit path to add another exercise while
+preserving the current workout and useful picker/search context. Keep the
+default path simple for users who only wanted to add one exercise.
 
-- Set writes render notation from the old row-local log format but do not reject
-  if the sheet's `Log Format` changed before apply.
+### Acceptance criteria
 
-Acceptance criteria:
+- [ ] After adding an exercise to a workout, the user can choose Add another
+      without returning through awkward intermediate states.
+- [ ] The selected workout is preserved.
+- [ ] Search/filter context is either preserved or intentionally reset with
+      predictable behavior.
+- [ ] The existing single-add flow remains available.
+- [ ] Widget tests cover adding at least two exercises to one workout using the
+      improved flow.
 
-- New set saves, structured edits, raw edits, and clears reject stale row-local
-  log-format changes when that format affects the planned write.
-- Tests cover a format change between planning and applying a write.
-- Raw preservation behavior remains intact.
+### Blocked by
 
-Likely files:
+- Slice 1: Cleanly Integrate Current GUI Fixes
 
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
-- `test/sheet_contract/active_sheet_write_planning_test.dart`
-- `test/app/spreadsheet_validation_test.dart`
+### User stories covered
 
-Suggested tests:
+- Building a workout plan with multiple exercises is fast.
+- The user does not lose context between repeated additions.
 
-- `flutter test test/sheet_contract/active_sheet_write_planning_test.dart` - passed
-- `flutter test test/app/spreadsheet_validation_test.dart --plain-name "Log Format"` - passed
-- `git diff --check -- lib/src/sheet_contract/active_sheet/write_plans.dart test/sheet_contract/active_sheet_write_planning_test.dart test/app/spreadsheet_validation_test.dart` - passed
+## Slice 5: Preserve Exercise Library Context After Save
 
-## Slice 6: iPhone Logging Usability Pass
+### Type
 
-Status: complete
+`AFK`
 
-Problem:
+### What to build
 
-- iPhone-specific layout and keyboard behavior is thinly covered.
-- Structured set fields do not request numeric-friendly keyboards.
+After creating or editing a canonical exercise, preserve or restore useful
+context in the exercise library. A user should be able to see the saved item
+without manually scrolling back through the seeded library.
 
-Acceptance criteria:
+### Acceptance criteria
 
-- Structured set fields use a keyboard appropriate for numeric set entry while
-  preserving arbitrary raw text edit paths.
-- Narrow iPhone viewport tests cover workout setup, exercise picker, logging,
-  keyboard/view-inset behavior, and backup selection.
-- No text overflow or inaccessible primary actions in tested phone viewports.
+- [ ] Saving a new exercise returns to the exercise library with the saved item
+      visible or clearly highlighted.
+- [ ] Editing an existing exercise returns with that row visible.
+- [ ] Long seeded-library lists do not jump to an unhelpful top position after
+      save.
+- [ ] Widget tests use a long exercise library and verify the saved/edited row
+      is visible after returning.
 
-Likely files:
+### Blocked by
 
-- `lib/src/app/workout_tracker_shell_workout.dart`
-- `lib/src/app/workout_tracker_shell_logging.dart`
-- `test/widget_test.dart`
+- Slice 1: Cleanly Integrate Current GUI Fixes
 
-Suggested tests:
+### User stories covered
 
-- `flutter test test/widget_test.dart --plain-name "keeps exercise picker backup actions reachable on a narrow phone"` - passed
-- `flutter test test/widget_test.dart --plain-name "phone"` - passed
-- `flutter test test/widget_test.dart --plain-name "backup"` - passed
+- Exercise authoring gives clear confirmation.
+- Custom exercise creation does not feel lost in the seeded library.
 
-## Slice 7: Google Adapter Read/Write Robustness
+## Slice 6: Repeat Black-Box GUI Regression Pass
 
-Status: complete
+### Type
 
-Problem:
+`HITL`
 
-- Live reads fetch grid data for every tab.
-- History block/column insertion writes are split across multiple calls, which
-  can leave partial sheet changes on flaky mobile networks.
+### What to build
 
-Acceptance criteria:
+Repeat the macOS GUI-only stress test after the AFK fixes are integrated and
+the release bundle is rebuilt. The pass should create a new sheet, add custom
+exercises, build at least two workouts, log multiple sets as if in the gym, and
+try plausible random interactions. The tester must not use accessibility
+setters, direct APIs, source inspection, or direct sheet edits.
 
-- Reads request only the active sheet and `Exercises` data needed by the app.
-- History-block creation/growth write behavior is covered for failure modes or
-  made more atomic through Sheets batch APIs where practical.
-- Tests verify adapter requests and partial-failure behavior without live
-  Google credentials.
+### Acceptance criteria
 
-Likely files:
+- [ ] The pass uses only visible mouse and keyboard interactions.
+- [ ] A new Google-backed sheet is created through the GUI.
+- [ ] Several canonical exercises are added through the GUI.
+- [ ] At least two workouts are built through the GUI.
+- [ ] Multiple sets, including S2 or later, are logged through the GUI.
+- [ ] The app is quit when the pass is complete or when a blocker is hit.
+- [ ] Pain points and blockers are reported with reproduction steps.
 
-- `lib/src/google_sheets/read_adapter.dart`
-- `lib/src/google_sheets/write_adapter.dart`
-- `test/google_sheets/google_sheets_read_adapter_test.dart`
-- `test/google_sheets/google_sheets_write_adapter_test.dart`
+### Blocked by
 
-Suggested tests:
+- Slice 1: Cleanly Integrate Current GUI Fixes
+- Slice 2: Validate Multi-Set Logging Against Live GUI
+- Slice 3: Make Row Actions Understandable
+- Slice 4: Speed Up Multi-Exercise Plan Building
+- Slice 5: Preserve Exercise Library Context After Save
+- User must provide live Google login/authorization and permit test writes.
 
-- `flutter test test/google_sheets/google_sheets_read_adapter_test.dart` - passed
-- `flutter test test/google_sheets/google_sheets_write_adapter_test.dart` - passed
-- `flutter test test/app/spreadsheet_validation_test.dart` - passed
+### User stories covered
 
-## Slice 8: Device Validation Gate
+- The MVP flow works under realistic gym use.
+- GUI validation reflects actual user interactions.
 
-Status: pending live Google authorization
+## Slice 7: Clean Up Temporary GUI Tests
 
-Problem:
+### Type
 
-- Local builds pass, but no real iPhone was visible during review and live
-  Google writes were not authorized.
+`AFK`
 
-Acceptance criteria:
+### What to build
 
-- `flutter devices` sees the intended iPhone or simulator test target.
-- Device signing/team setup is documented or configured for the tester machine.
-- `flutter build ios --simulator` and `flutter build ios --no-codesign` pass.
-- Live Google integration is run only after explicit authorization, with reset
-  and cleanup behavior confirmed.
+Use the `test-cleanup` skill to review tests added during the GUI hardening
+work. Keep durable behavior tests that protect user-facing contracts and remove
+or rewrite tests that only pin temporary implementation details.
 
-Likely files:
+### Acceptance criteria
 
-- `APP_STORE.md`
-- `docs/google_sheets_development_auth.md`
-- iOS project signing configuration if explicitly chosen
+- [ ] Tests assert observable behavior through public app/controller/widget
+      interfaces.
+- [ ] Tests do not over-constrain private helper structure or incidental widget
+      shape.
+- [ ] The focused GUI/controller tests still cover stale logging saves,
+      Add-to-workout navigation, history selection, search, authoring field
+      replacement, row-action labels, Add another, and library context.
+- [ ] Relevant targeted tests pass.
+- [ ] The macOS release bundle is rebuilt if any GUI-facing code changes.
 
-Suggested tests:
+### Blocked by
 
-- `flutter devices` - passed 2026-06-28; found Ian Spielman's iPhone
-  wirelessly, macOS, and Chrome.
-- Device signing/team setup remains documented in `APP_STORE.md`.
-- `flutter analyze` - passed 2026-06-28 after declaring the existing
-  test-only `url_launcher_platform_interface` dependency.
-- `flutter test` - passed 2026-06-28.
-- `flutter build ios --simulator` - passed 2026-06-28.
-- `flutter build ios --no-codesign` - passed 2026-06-28.
+- Slice 6: Repeat Black-Box GUI Regression Pass
+
+### User stories covered
+
+- Future refactors keep the MVP GUI path reliable.
+- The test suite stays maintainable.
 - `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 flutter test integration_test/live_logging_flow_test.dart`
   not run 2026-06-28; live Google sheet writes still require explicit
   authorization.

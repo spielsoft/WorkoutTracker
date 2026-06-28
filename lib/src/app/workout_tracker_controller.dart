@@ -233,12 +233,18 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to save set',
       action: () async {
-        _report = await validationService.applyActiveSheetWritePlan(
+        final updatedReport = await validationService.applyActiveSheetWritePlan(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           plan: plan,
         );
+        _report = updatedReport;
         _error = null;
+        if (!_retainsLoggedSetWrite(plan, updatedReport.activeSheet)) {
+          throw const _ControllerActionFailure(
+            'saved set was not visible after refresh.',
+          );
+        }
       },
     );
   }
@@ -506,6 +512,60 @@ class WorkoutTrackerController extends ChangeNotifier {
     _selectedLoggingSheetRowNumber = null;
   }
 
+  bool _retainsLoggedSetWrite(
+    ActiveSheetWritePlan plan,
+    ParsedActiveSheet activeSheet,
+  ) {
+    final nextSetPosition = plan.nextSetPosition;
+    if (nextSetPosition == null) {
+      return true;
+    }
+
+    final historyBlockLabel = _selectedHistoryBlock;
+    final primarySheetRowNumber = _loggingPrimarySheetRowNumber;
+    if (historyBlockLabel == null || primarySheetRowNumber == null) {
+      return true;
+    }
+
+    final savedSetNumber = nextSetPosition.setNumber - 1;
+    if (savedSetNumber < 1) {
+      return true;
+    }
+    final savedSetValue = _plannedSavedSetValue(plan, nextSetPosition);
+    if (savedSetValue == null) {
+      return false;
+    }
+
+    try {
+      final context = activeSheet.buildExerciseLoggingContext(
+        primarySheetRowNumber: primarySheetRowNumber,
+        selectedSheetRowNumber: nextSetPosition.sheetRowNumber,
+        historyBlockLabel: historyBlockLabel,
+      );
+      for (final entry in context.selectedHistory.entries) {
+        if (entry.setNumber == savedSetNumber) {
+          return entry.rawValue.trim() == savedSetValue.trim();
+        }
+      }
+      return false;
+    } on Object {
+      return false;
+    }
+  }
+
+  String? _plannedSavedSetValue(
+    ActiveSheetWritePlan plan,
+    SetPosition nextSetPosition,
+  ) {
+    for (final update in plan.cellUpdates) {
+      if (update.sheetRowNumber == nextSetPosition.sheetRowNumber &&
+          update.valueKind == CellUpdateValueKind.literalText) {
+        return update.value;
+      }
+    }
+    return null;
+  }
+
   WorkoutLoggingTarget? _loggingTargetForOverview({
     required WorkoutOverview? overview,
     required String? selectedHistoryBlock,
@@ -582,6 +642,17 @@ class WorkoutTrackerController extends ChangeNotifier {
           'propagate the change, then retry: $enableUrl';
     }
     return '$failurePrefix: $message';
+  }
+}
+
+class _ControllerActionFailure {
+  const _ControllerActionFailure(this.message);
+
+  final String message;
+
+  @override
+  String toString() {
+    return message;
   }
 }
 
