@@ -2524,6 +2524,113 @@ void main() {
     );
   });
 
+  testWidgets('adds another workout exercise without leaving placement', (
+    tester,
+  ) async {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
+        ],
+        cellFormulas: const [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A2',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I2',
+          ),
+        ],
+        exercisesRows: const [
+          exercisesSheetColumns,
+          [
+            'Bench Press',
+            'Competition bench',
+            '4',
+            '6',
+            '8',
+            '3 min',
+            '',
+            '',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
+          [
+            'Romanian Deadlift',
+            'Hip hinge',
+            '3',
+            '10',
+            '7',
+            '2 min',
+            '',
+            '',
+            '{Weight}[x]{Reps}[@]{RPE}',
+          ],
+        ],
+      ),
+    );
+    final service = TestSpreadsheetValidationService(activeSheet);
+    final authoringService = _WorkoutPlacementRecordingService(activeSheet);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bench Press').last);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('place-existing-exercise-add-another')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add to workout'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('existing-exercise-selector')),
+      findsOneWidget,
+    );
+    expect(_textFieldWithLabel('Sets'), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-picker-search')),
+      'romanian',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Romanian Deadlift').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
+    await tester.pumpAndSettle();
+
+    expect(authoringService.placements.map((placement) => placement.exercise), [
+      'Bench Press',
+      'Romanian Deadlift',
+    ]);
+    expect(authoringService.placements.map((placement) => placement.workout), [
+      'Legs',
+      'Legs',
+    ]);
+    expect(find.text('Legs exercises'), findsOneWidget);
+  });
+
   testWidgets('filters the workout exercise picker before placement', (
     tester,
   ) async {
@@ -3429,6 +3536,33 @@ class _EditingExerciseAuthoringService
     return SpreadsheetValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: _exerciseInventoryParsedSheet(_exercises),
+    );
+  }
+}
+
+class _WorkoutPlacementRecordingService
+    extends _AppendingExerciseAuthoringService {
+  _WorkoutPlacementRecordingService(this._activeSheet) : super(const []);
+
+  ParsedActiveSheet _activeSheet;
+  final placements = <({String exercise, String? workout, bool isBackup})>[];
+
+  @override
+  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise exercise,
+    required WorkoutPlacementMetadata metadata,
+    required ExercisePlacementTarget placement,
+  }) async {
+    placements.add((
+      exercise: exercise.displayName,
+      workout: placement.workout,
+      isBackup: placement.isBackup,
+    ));
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: _activeSheet,
     );
   }
 }

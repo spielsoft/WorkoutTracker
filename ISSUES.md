@@ -15,7 +15,7 @@ after GUI-facing changes.
 - [x] Slice 1: Cleanly Integrate Current GUI Fixes
 - [ ] Slice 2: Validate Multi-Set Logging Against Live GUI
 - [x] Slice 3: Make Row Actions Understandable
-- [ ] Slice 4: Speed Up Multi-Exercise Plan Building
+- [x] Slice 4: Speed Up Multi-Exercise Plan Building
 - [ ] Slice 5: Preserve Exercise Library Context After Save
 - [ ] Slice 6: Repeat Black-Box GUI Regression Pass
 - [ ] Slice 7: Clean Up Temporary GUI Tests
@@ -157,13 +157,13 @@ default path simple for users who only wanted to add one exercise.
 
 ### Acceptance criteria
 
-- [ ] After adding an exercise to a workout, the user can choose Add another
+- [x] After adding an exercise to a workout, the user can choose Add another
       without returning through awkward intermediate states.
-- [ ] The selected workout is preserved.
-- [ ] Search/filter context is either preserved or intentionally reset with
+- [x] The selected workout is preserved.
+- [x] Search/filter context is either preserved or intentionally reset with
       predictable behavior.
-- [ ] The existing single-add flow remains available.
-- [ ] Widget tests cover adding at least two exercises to one workout using the
+- [x] The existing single-add flow remains available.
+- [x] Widget tests cover adding at least two exercises to one workout using the
       improved flow.
 
 ### Blocked by

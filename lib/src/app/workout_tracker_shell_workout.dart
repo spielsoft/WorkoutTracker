@@ -99,6 +99,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onSubmitCanonicalExerciseEdit,
     required this.onCloseExerciseEdit,
     required this.onSubmitExercisePlacement,
+    required this.onSubmitExercisePlacementAndAddAnother,
     required this.onCloseExercise,
     required this.onLoggingRowChanged,
     required this.onApplyWritePlan,
@@ -131,6 +132,8 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExerciseEdit;
   final VoidCallback onCloseExerciseEdit;
   final ValueChanged<_ExercisePlacementDraft> onSubmitExercisePlacement;
+  final Future<bool> Function(_ExercisePlacementDraft draft)
+  onSubmitExercisePlacementAndAddAnother;
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
@@ -173,6 +176,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
           backTooltip: backTooltip,
           onBack: onCloseExerciseAdd,
           onSubmit: onSubmitExercisePlacement,
+          onSubmitAndAddAnother: onSubmitExercisePlacementAndAddAnother,
         );
       }
       return _CanonicalExerciseCreationScreen(
@@ -790,6 +794,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
     required this.backTooltip,
     required this.onBack,
     required this.onSubmit,
+    required this.onSubmitAndAddAnother,
   });
 
   final String sheetLabel;
@@ -798,6 +803,8 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   final String backTooltip;
   final VoidCallback onBack;
   final ValueChanged<_ExercisePlacementDraft> onSubmit;
+  final Future<bool> Function(_ExercisePlacementDraft draft)
+  onSubmitAndAddAnother;
 
   @override
   Widget build(BuildContext context) {
@@ -817,6 +824,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
           exercises: exercises,
           initialExercise: null,
           onSubmit: onSubmit,
+          onSubmitAndAddAnother: onSubmitAndAddAnother,
         ),
       ],
     );
@@ -828,11 +836,14 @@ class _ExercisePlacementForm extends StatefulWidget {
     required this.exercises,
     required this.initialExercise,
     required this.onSubmit,
+    required this.onSubmitAndAddAnother,
   });
 
   final List<CanonicalExercise> exercises;
   final CanonicalExercise? initialExercise;
   final ValueChanged<_ExercisePlacementDraft> onSubmit;
+  final Future<bool> Function(_ExercisePlacementDraft draft)
+  onSubmitAndAddAnother;
 
   @override
   State<_ExercisePlacementForm> createState() => _ExercisePlacementFormState();
@@ -896,6 +907,14 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
     _restController.text = exercise?.defaultRest ?? '';
     _tempoController.text = exercise?.defaultTempo ?? '';
     _notesController.text = exercise?.notes ?? '';
+  }
+
+  void _clearSelectionForAnother() {
+    setState(() {
+      _selectedExercise = null;
+      _exerciseSearchController.clear();
+      _loadExerciseDefaults(null);
+    });
   }
 
   WorkoutPlacementMetadata _metadataFromControllers() {
@@ -1041,18 +1060,42 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
           ),
         ],
         const SizedBox(height: 16),
-        FilledButton.icon(
-          key: const ValueKey('place-existing-exercise'),
-          onPressed: selectedExercise == null
-              ? null
-              : () => widget.onSubmit(
-                  _ExercisePlacementDraft(
-                    exercise: selectedExercise,
-                    metadata: _metadataFromControllers(),
-                  ),
-                ),
-          icon: const Icon(Icons.playlist_add_outlined),
-          label: const Text('Add to workout'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton.icon(
+              key: const ValueKey('place-existing-exercise'),
+              onPressed: selectedExercise == null
+                  ? null
+                  : () => widget.onSubmit(
+                      _ExercisePlacementDraft(
+                        exercise: selectedExercise,
+                        metadata: _metadataFromControllers(),
+                      ),
+                    ),
+              icon: const Icon(Icons.playlist_add_outlined),
+              label: const Text('Add to workout'),
+            ),
+            OutlinedButton.icon(
+              key: const ValueKey('place-existing-exercise-add-another'),
+              onPressed: selectedExercise == null
+                  ? null
+                  : () async {
+                      final added = await widget.onSubmitAndAddAnother(
+                        _ExercisePlacementDraft(
+                          exercise: selectedExercise,
+                          metadata: _metadataFromControllers(),
+                        ),
+                      );
+                      if (added) {
+                        _clearSelectionForAnother();
+                      }
+                    },
+              icon: const Icon(Icons.add_outlined),
+              label: const Text('Add another'),
+            ),
+          ],
         ),
       ],
     );

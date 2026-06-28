@@ -809,11 +809,33 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _handleExercisePlacement(_ExercisePlacementDraft draft) async {
-    final intent = _addExercisePlacementIntent;
-    if (intent == null) {
+    final added = await _addExercisePlacement(draft);
+    if (!mounted || !added) {
       return;
     }
-    final added = await _controller.addExistingExerciseToWorkout(
+    _addExercisePlacementIntent = null;
+    setState(() {
+      _screen = _exerciseAddReturnScreen;
+    });
+  }
+
+  Future<bool> _handleExercisePlacementAndAddAnother(
+    _ExercisePlacementDraft draft,
+  ) async {
+    final added = await _addExercisePlacement(draft);
+    if (!mounted || !added) {
+      return false;
+    }
+    setState(() {});
+    return true;
+  }
+
+  Future<bool> _addExercisePlacement(_ExercisePlacementDraft draft) async {
+    final intent = _addExercisePlacementIntent;
+    if (intent == null) {
+      return false;
+    }
+    return _controller.addExistingExerciseToWorkout(
       exercise: draft.exercise,
       metadata: draft.metadata,
       placement: switch (intent.kind) {
@@ -825,13 +847,6 @@ class _SpreadsheetValidationShellState
         ),
       },
     );
-    if (!mounted || !added) {
-      return;
-    }
-    _addExercisePlacementIntent = null;
-    setState(() {
-      _screen = _exerciseAddReturnScreen;
-    });
   }
 
   void _selectWorkout(String? workout) {
@@ -1012,6 +1027,8 @@ class _SpreadsheetValidationShellState
                               _handleCanonicalExerciseEditDraft,
                           onCloseExerciseEdit: _closeExerciseEdit,
                           onSubmitExercisePlacement: _handleExercisePlacement,
+                          onSubmitExercisePlacementAndAddAnother:
+                              _handleExercisePlacementAndAddAnother,
                           onCloseExercise: _closeExercise,
                           onLoggingRowChanged: _controller.selectLoggingRow,
                           onApplyWritePlan:
