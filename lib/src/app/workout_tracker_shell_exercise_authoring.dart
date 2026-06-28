@@ -296,34 +296,40 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
             ],
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            key: const ValueKey('exercise-authoring-name'),
-            controller: _exerciseNameController,
-            enabled: !widget.isBusy,
-            decoration: const InputDecoration(
-              labelText: 'Exercise name',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.fitness_center_outlined),
+          Semantics(
+            identifier: 'exercise-authoring-name',
+            child: TextFormField(
+              key: const ValueKey('exercise-authoring-name'),
+              controller: _exerciseNameController,
+              enabled: !widget.isBusy,
+              decoration: const InputDecoration(
+                labelText: 'Exercise name',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.fitness_center_outlined),
+              ),
+              textInputAction: TextInputAction.next,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Enter an exercise name.';
+                }
+                return null;
+              },
             ),
-            textInputAction: TextInputAction.next,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Enter an exercise name.';
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 12),
-          TextFormField(
-            key: const ValueKey('exercise-authoring-description'),
-            controller: _descriptionController,
-            enabled: !widget.isBusy,
-            decoration: const InputDecoration(
-              labelText: 'Description',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.short_text_outlined),
+          Semantics(
+            identifier: 'exercise-authoring-description',
+            child: TextFormField(
+              key: const ValueKey('exercise-authoring-description'),
+              controller: _descriptionController,
+              enabled: !widget.isBusy,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.short_text_outlined),
+              ),
+              textInputAction: TextInputAction.next,
             ),
-            textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
@@ -342,6 +348,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       key: const ValueKey('exercise-authoring-default-sets'),
                       controller: _defaultSetsController,
                       enabled: !widget.isBusy,
+                      semanticsIdentifier: 'exercise-authoring-default-sets',
                       labelText: 'Default sets',
                       icon: Icons.format_list_numbered_outlined,
                       textInputAction: TextInputAction.next,
@@ -354,6 +361,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       key: const ValueKey('exercise-authoring-default-reps'),
                       controller: _defaultRepsController,
                       enabled: !widget.isBusy,
+                      semanticsIdentifier: 'exercise-authoring-default-reps',
                       labelText: 'Default reps',
                       icon: Icons.repeat_outlined,
                       textInputAction: TextInputAction.next,
@@ -365,6 +373,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       key: const ValueKey('exercise-authoring-default-rpe'),
                       controller: _defaultRPEController,
                       enabled: !widget.isBusy,
+                      semanticsIdentifier: 'exercise-authoring-default-rpe',
                       labelText: 'Default RPE',
                       icon: Icons.speed_outlined,
                       textInputAction: TextInputAction.next,
@@ -377,6 +386,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       key: const ValueKey('exercise-authoring-default-rest'),
                       controller: _defaultRestController,
                       enabled: !widget.isBusy,
+                      semanticsIdentifier: 'exercise-authoring-default-rest',
                       labelText: 'Default rest',
                       icon: Icons.timer_outlined,
                       textInputAction: TextInputAction.next,
@@ -388,6 +398,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       key: const ValueKey('exercise-authoring-default-tempo'),
                       controller: _defaultTempoController,
                       enabled: !widget.isBusy,
+                      semanticsIdentifier: 'exercise-authoring-default-tempo',
                       labelText: 'Default tempo',
                       icon: Icons.graphic_eq_outlined,
                       textInputAction: TextInputAction.next,
@@ -399,6 +410,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                       key: const ValueKey('exercise-authoring-log-format'),
                       controller: _logFormatController,
                       enabled: !widget.isBusy,
+                      semanticsIdentifier: 'exercise-authoring-log-format',
                       labelText: 'Log format',
                       icon: Icons.data_object_outlined,
                       textInputAction: TextInputAction.next,
@@ -409,18 +421,21 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
             },
           ),
           const SizedBox(height: 12),
-          TextFormField(
-            key: const ValueKey('exercise-authoring-notes'),
-            controller: _notesController,
-            enabled: !widget.isBusy,
-            decoration: const InputDecoration(
-              labelText: 'Notes',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.notes_outlined),
+          Semantics(
+            identifier: 'exercise-authoring-notes',
+            child: TextFormField(
+              key: const ValueKey('exercise-authoring-notes'),
+              controller: _notesController,
+              enabled: !widget.isBusy,
+              decoration: const InputDecoration(
+                labelText: 'Notes',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.notes_outlined),
+              ),
+              minLines: 3,
+              maxLines: 5,
+              textInputAction: TextInputAction.newline,
             ),
-            minLines: 3,
-            maxLines: 5,
-            textInputAction: TextInputAction.newline,
           ),
           const SizedBox(height: 20),
           Wrap(
@@ -458,6 +473,7 @@ class _ExerciseAuthoringTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.enabled,
+    required this.semanticsIdentifier,
     required this.labelText,
     required this.icon,
     required this.textInputAction,
@@ -466,6 +482,7 @@ class _ExerciseAuthoringTextField extends StatelessWidget {
 
   final TextEditingController controller;
   final bool enabled;
+  final String semanticsIdentifier;
   final String labelText;
   final IconData icon;
   final TextInputAction textInputAction;
@@ -473,16 +490,19 @@ class _ExerciseAuthoringTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      enabled: enabled,
-      decoration: InputDecoration(
-        labelText: labelText,
-        border: const OutlineInputBorder(),
-        prefixIcon: Icon(icon),
+    return Semantics(
+      identifier: semanticsIdentifier,
+      child: TextFormField(
+        controller: controller,
+        enabled: enabled,
+        decoration: InputDecoration(
+          labelText: labelText,
+          border: const OutlineInputBorder(),
+          prefixIcon: Icon(icon),
+        ),
+        textInputAction: textInputAction,
+        keyboardType: keyboardType,
       ),
-      textInputAction: textInputAction,
-      keyboardType: keyboardType,
     );
   }
 }
