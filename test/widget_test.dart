@@ -1291,6 +1291,58 @@ void main() {
     },
   );
 
+  testWidgets(
+    'keeps exercise picker backup actions reachable on a narrow phone',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 700);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const primaryExercise =
+          'Very Long Bulgarian Split Squat Name For A Narrow Phone';
+      const backupExercise =
+          'Long Reverse Lunge Backup Option For Crowded Gym Days';
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [primaryExercise, '3', '8', '8', '90s', '', '', '', 'Legs', '', ''],
+        [backupExercise, '3', '8', '8', '90s', '', '', '', 'Legs', 'TRUE', ''],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Legs - Week 1'), findsOneWidget);
+      expect(find.text(primaryExercise), findsOneWidget);
+      expect(find.text(backupExercise), findsOneWidget);
+      expect(find.byTooltip('Add exercise'), findsOneWidget);
+      expect(
+        find.byTooltip('Backup actions for $primaryExercise'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byTooltip('Backup actions for $primaryExercise'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add backup exercise'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('opens an exercise manager inventory in canonical sheet order', (
     tester,
   ) async {

@@ -167,7 +167,7 @@ Suggested tests:
 
 ## Slice 6: iPhone Logging Usability Pass
 
-Status: pending
+Status: complete
 
 Problem:
 
@@ -190,8 +190,9 @@ Likely files:
 
 Suggested tests:
 
-- `flutter test test/widget_test.dart --plain-name "phone"`
-- `flutter test test/widget_test.dart --plain-name "backup"`
+- `flutter test test/widget_test.dart --plain-name "keeps exercise picker backup actions reachable on a narrow phone"` - passed
+- `flutter test test/widget_test.dart --plain-name "phone"` - passed
+- `flutter test test/widget_test.dart --plain-name "backup"` - passed
 
 ## Slice 7: Google Adapter Read/Write Robustness
 

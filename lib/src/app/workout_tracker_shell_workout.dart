@@ -565,22 +565,24 @@ class _WorkoutOverviewTile extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: Wrap(
-                                spacing: 8,
-                                runSpacing: 6,
-                                crossAxisAlignment: WrapCrossAlignment.center,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     slot.exercise,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: Theme.of(
                                       context,
                                     ).textTheme.titleMedium,
                                   ),
-                                  if (slot.backups.isNotEmpty)
+                                  if (slot.backups.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
                                     _StateChip(
                                       state: _WorkoutVisualState.backup,
                                       label: backupSummaryLabel,
                                     ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -602,30 +604,33 @@ class _WorkoutOverviewTile extends StatelessWidget {
                           const SizedBox(height: 8),
                           Padding(
                             padding: const EdgeInsets.only(left: 16),
-                            child: Wrap(
-                              spacing: 16,
-                              runSpacing: 6,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                for (final backup in slot.backups)
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.subdirectory_arrow_right,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                          maxWidth: 240,
+                                for (final (index, backup)
+                                    in slot.backups.indexed)
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: index < slot.backups.length - 1
+                                          ? 6
+                                          : 0,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.subdirectory_arrow_right,
+                                          size: 18,
                                         ),
-                                        child: Text(
-                                          backup.exercise,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            backup.exercise,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                               ],
                             ),
