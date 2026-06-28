@@ -903,7 +903,11 @@ class _SpreadsheetValidationShellState
                 _screen == _WorkoutTrackerScreen.sheetSelection ||
                 report == null ||
                 report.hasBlockingIssues;
-            final showSpreadsheetTextFallback = spreadsheetPicker == null;
+            final showSpreadsheetTextFallback =
+                spreadsheetPicker == null ||
+                (_selectedSpreadsheet == null &&
+                    pickerAvailability != null &&
+                    !pickerAvailability.canChoose);
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
@@ -926,6 +930,8 @@ class _SpreadsheetValidationShellState
                             onChooseSpreadsheet: _chooseSpreadsheet,
                             onCreateSpreadsheet: _createSpreadsheet,
                           ),
+                          if (showSpreadsheetTextFallback)
+                            const SizedBox(height: 12),
                         ],
                         if (showSpreadsheetTextFallback)
                           _SpreadsheetTextFallback(

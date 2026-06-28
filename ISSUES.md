@@ -1,366 +1,253 @@
-# MVP Repair and Sheet Interaction Plan
+# iPhone Live Testing Readiness Issues
 
-This is the active transient implementation plan for the next MVP pass.
+This is the active vertical-slice plan for getting WorkoutTracker ready for
+live iPhone testing. Work through slices in order. Use TDD for each slice:
+write or update a failing behavior test through a public interface, implement
+the smallest fix, run targeted tests, then update this checklist only after the
+slice is complete.
 
-The goal is app-level MVP usefulness and sheet safety, not App Store submission
-process work. Store distribution tasks, signing, TestFlight, and store metadata
-are intentionally out of scope here.
+Do not run live Google integration tests or write to the development sheet
+unless explicitly authorized for that slice.
 
-Every validation or repair slice must create broken sheet fixtures that expose
-the proposed issue and prove the app catches it before writing.
+## Slice 1: Existing Sheet Selection Must Work On iPhone
 
-- [x] Slice 0: Repair-Damage Test Fixtures
-- [x] Slice 1: Block Damaged Sheets on the Validation Screen
-- [x] Slice 2: One-Click Unambiguous Formula Repair
-- [x] Slice 3: Choice-Based Ambiguous Formula Repair
-- [x] Slice 4: Manual Repair Items for Structural Damage
-- [x] Slice 5: Literal Writes for User and History Text
-- [x] Slice 6: Narrow Write Sanity Checks and Duplicate Block Prevention
-- [x] Slice 7: MVP Repair and Interaction Validation Gate
+Status: complete
 
-## Slice 0: Repair-Damage Test Fixtures
+Problem:
 
-### Type
+- A fresh build can hide the pasted Google Sheets URL/ID fallback whenever a
+  `SpreadsheetPicker` is present, even if choosing an existing sheet is
+  unavailable because `WORKOUT_TRACKER_GOOGLE_PICKER_CLIENT_ID` is not set.
+- This can block testers from selecting the known development sheet.
 
-`AFK`
+Acceptance criteria:
 
-### What to build
+- If Google Drive choosing is unavailable, the sheet selection screen exposes a
+  pasted URL/ID path.
+- The pasted URL/ID path remains compatible with native Google Sign-In
+  validation.
+- Existing picker/create controls still render their availability state.
+- Widget tests cover picker-present/manual-fallback behavior.
 
-Create reusable local sheet fixtures for the damaged-sheet cases in this plan.
-The fixtures should be small, deterministic, and usable by backend tests,
-controller tests, and widget tests without Google credentials.
+Likely files:
 
-This slice should not add product behavior by itself. It creates the test
-surface that later slices use to prove damaged sheets are caught and routed
-correctly.
+- `lib/src/app/workout_tracker_shell.dart`
+- `lib/src/app/spreadsheet_selection.dart`
+- `test/widget_test.dart`
+- `test/app/spreadsheet_selection_test.dart`
 
-### Acceptance criteria
+Suggested tests:
 
-- [x] Local fixtures include missing or renamed fixed columns.
-- [x] Local fixtures include malformed history blocks: duplicate labels, stray
-      set columns, skipped set labels, and empty history blocks.
-- [x] Local fixtures include invalid `Log Format` values.
-- [x] Local fixtures include backup grouping violations.
-- [x] Local fixtures include missing formula-driven cells.
-- [x] Local fixtures include broken formula-driven cells pointing at the wrong
-      `Exercises` row or column.
-- [x] Local fixtures include ambiguous formula repair cases with duplicate
-      `Exercises` matches.
-- [x] Local fixtures include no-exact-match formula repair cases.
-- [x] Fixture tests verify each broken fixture is stable and exposes the
-      intended damaged-sheet condition.
-- [x] No fixture requires Google credentials or writes to the development
-      spreadsheet.
+- `flutter test test/widget_test.dart --plain-name "exposes pasted sheet validation when picker choosing is unavailable"` - passed
+- `flutter test test/app/spreadsheet_selection_test.dart` - passed
+- `flutter test test/widget_test.dart --plain-name "spreadsheet"` - passed
 
-### Blocked by
+## Slice 2: Keep The Local Readiness Suite Green
 
-None - can start immediately.
+Status: pending
 
-### User stories covered
+Problem:
 
-- Sheet contract validation and repair reliability.
-- MVP testing requirement: broken sheets must expose each proposed issue.
+- `flutter test` is red because readiness tests reference deleted transient docs
+  and one restored-selected-sheet UI expectation no longer matches current
+  startup behavior.
 
-## Slice 1: Block Damaged Sheets on the Validation Screen
+Acceptance criteria:
 
-### Type
+- Broad local `flutter test` passes, excluding live Google writes.
+- Tests do not depend on deleted transient plan files.
+- The restored selected-sheet behavior is either fixed or the test is updated
+  to match the intended current flow.
 
-`AFK`
+Likely files:
 
-### What to build
+- `test/platform_store_readiness_test.dart`
+- `test/widget_test.dart`
+- `APP_STORE.md`
+- `README.md`
+- `docs/google_sheets_development_auth.md`
 
-Route every damaged selected sheet to the main validation/repair screen and
-prevent workout logging until the sheet is valid enough to use. If damage is
-detected after an app action, discard transient typed logging input and return
-to the validation/repair screen.
+Suggested tests:
 
-The validation screen should show all known current issues and update after
-revalidation. This slice establishes the damaged-sheet gate before adding
-specific repair actions.
+- `flutter test test/platform_store_readiness_test.dart`
+- `flutter test test/widget_test.dart --plain-name "restores a selected Google Drive sheet label"`
+- `flutter test`
 
-### Acceptance criteria
+## Slice 3: Prevent Duplicate Async Actions
 
-- [x] A behavior test fails first with a broken fixed-column fixture and proves
-      the app does not enter workout logging.
-- [x] A behavior test fails first with a broken history-block fixture and proves
-      the app does not enter workout logging.
-- [x] A behavior test fails first with an invalid `Log Format` fixture and
-      proves the app does not enter workout logging.
-- [x] A behavior test fails first with a backup grouping violation fixture and
-      proves the app does not enter workout logging.
-- [x] The validation/repair screen lists all currently known issues for the
-      selected sheet.
-- [x] If a later app action produces a validation report with damage, the app
-      returns to the validation/repair screen and no longer exposes logging
-      controls.
-- [x] Transient typed logging input is not preserved when routing back to repair.
-- [x] Tests cross public backend/controller/widget interfaces rather than
-      private helpers.
+Status: pending
 
-### Blocked by
+Problem:
 
-- Slice 0: Repair-Damage Test Fixtures
+- Picker/create actions and logging save/edit actions can be tapped repeatedly
+  while async work is pending.
+- On phones this can launch multiple auth flows, create multiple sheets, or
+  submit duplicate set writes.
 
-### User stories covered
+Acceptance criteria:
 
-- No app editing of a damaged sheet.
-- Repair screen owns sheet validation state.
+- Picker/create actions enter a local busy state until the action completes.
+- Logging save/edit/clear controls are disabled or visibly busy while a write
+  is pending.
+- Failed writes are visible near the logging action or otherwise discoverable
+  without scrolling back to the top.
+- Tests cover repeated taps during pending actions.
 
-## Slice 2: One-Click Unambiguous Formula Repair
+Likely files:
 
-### Type
+- `lib/src/app/workout_tracker_shell.dart`
+- `lib/src/app/workout_tracker_shell_logging.dart`
+- `lib/src/app/workout_tracker_controller.dart`
+- `test/widget_test.dart`
 
-`AFK`
+Suggested tests:
 
-### What to build
+- `flutter test test/widget_test.dart --plain-name "picker"`
+- `flutter test test/widget_test.dart --plain-name "Save set"`
 
-Add MVP click-to-fix behavior for formula repair cases where the correct
-`Exercises` row is unambiguous. The validation/repair screen should group all
-unambiguous formula issues into one action, apply repairs for only the flagged
-cells, re-read the sheet, and shrink the issue list.
+## Slice 4: Reject Stale Formula Repair Plans
 
-This slice only repairs formulas. It must not attempt structural repairs.
+Status: pending
 
-### Acceptance criteria
+Problem:
 
-- [x] A behavior test fails first using a broken sheet with missing formula
-      cells that have exact `Exercises` matches.
-- [x] A behavior test fails first using a broken sheet with wrong direct
-      formulas that have exact `Exercises` matches.
-- [x] The repair screen shows one grouped action for all unambiguous formula
-      issues.
-- [x] Applying the grouped action writes direct formulas only into flagged
-      cells.
-- [x] Applying the grouped action does not overwrite unflagged formula-driven
-      cells.
-- [x] Applying the grouped action does not edit the `Exercises` tab.
-- [x] After repair, the app re-reads/revalidates and the repaired issues
-      disappear from the list.
-- [x] Logging remains blocked while any blocking issue remains.
+- Formula repair plans can write formulas to stale rows because they do not
+  carry active-sheet row expectations.
 
-### Blocked by
+Acceptance criteria:
 
-- Slice 0: Repair-Damage Test Fixtures
-- Slice 1: Block Damaged Sheets on the Validation Screen
+- Formula healing write plans include enough expectations to reject if the
+  target row identity changed after validation.
+- Rejection explains that the sheet changed and must be revalidated.
+- Tests cover stale-row formula repair rejection through the public sheet
+  contract or validation-service interface.
 
-### User stories covered
+Likely files:
 
-- Click-to-fix common formula damage.
-- Formula repair writes only flagged cells.
+- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
+- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `lib/src/app/spreadsheet_validation_core.dart`
+- `test/sheet_contract/active_sheet_formula_healing_test.dart`
+- `test/app/spreadsheet_validation_test.dart`
 
-## Slice 3: Choice-Based Ambiguous Formula Repair
+Suggested tests:
 
-### Type
+- `flutter test test/sheet_contract/active_sheet_formula_healing_test.dart`
+- `flutter test test/app/spreadsheet_validation_test.dart --plain-name "formula"`
 
-`AFK`
+## Slice 5: Reject Stale Log Format Set Writes
 
-### What to build
+Status: pending
 
-Add individual repair items for formula issues where the app cannot infer the
-correct `Exercises` row. Each ambiguous or no-exact-match item should include a
-searchable/filterable `Exercises` row picker and a fix action enabled only after
-the user chooses a row.
+Problem:
 
-This slice only repairs formulas. It must not create exercises or perform
-structural sheet repairs.
+- Set writes render notation from the old row-local log format but do not reject
+  if the sheet's `Log Format` changed before apply.
 
-### Acceptance criteria
+Acceptance criteria:
 
-- [x] A behavior test fails first using a broken sheet where a formula repair
-      row has duplicate exact `Exercises` name matches.
-- [x] A behavior test fails first using a broken sheet where a formula repair
-      row has no exact `Exercises` name match.
-- [x] Ambiguous and no-match formula rows appear as individual repair items, not
-      in the unambiguous grouped action.
-- [x] Each individual item exposes a searchable/filterable picker containing
-      all `Exercises` rows.
-- [x] The fix action is disabled until a row is selected.
-- [x] Applying the fix writes direct formulas only into flagged cells for that
-      active-sheet row.
-- [x] Applying the fix does not overwrite unflagged formula-driven cells.
-- [x] After repair, the app re-reads/revalidates and the fixed item disappears
-      or changes according to the new sheet state.
+- New set saves, structured edits, raw edits, and clears reject stale row-local
+  log-format changes when that format affects the planned write.
+- Tests cover a format change between planning and applying a write.
+- Raw preservation behavior remains intact.
 
-### Blocked by
+Likely files:
 
-- Slice 2: One-Click Unambiguous Formula Repair
+- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `test/sheet_contract/active_sheet_write_planning_test.dart`
+- `test/app/spreadsheet_validation_test.dart`
 
-### User stories covered
+Suggested tests:
 
-- User-selected formula repair when the correct exercise row is ambiguous.
-- User-selected formula repair when no exact exercise-name match exists.
+- `flutter test test/sheet_contract/active_sheet_write_planning_test.dart`
+- `flutter test test/app/spreadsheet_validation_test.dart --plain-name "Log Format"`
 
-## Slice 4: Manual Repair Items for Structural Damage
+## Slice 6: iPhone Logging Usability Pass
 
-### Type
+Status: pending
 
-`AFK`
+Problem:
 
-### What to build
+- iPhone-specific layout and keyboard behavior is thinly covered.
+- Structured set fields do not request numeric-friendly keyboards.
 
-For structural sheet damage that is easy for users to fix directly in the
-spreadsheet, provide clear manual repair items on the validation/repair screen
-with an Open in Google Sheets action. Do not build complex structural
-auto-repair in MVP.
+Acceptance criteria:
 
-Manual repair items should be concise and actionable: what is wrong, where it
-is, and what the user should change in the sheet.
+- Structured set fields use a keyboard appropriate for numeric set entry while
+  preserving arbitrary raw text edit paths.
+- Narrow iPhone viewport tests cover workout setup, exercise picker, logging,
+  keyboard/view-inset behavior, and backup selection.
+- No text overflow or inaccessible primary actions in tested phone viewports.
 
-### Acceptance criteria
+Likely files:
 
-- [x] A broken fixed-column fixture produces a manual repair item with no
-      app-side fix action.
-- [x] A malformed history-block fixture produces a manual repair item with no
-      app-side fix action.
-- [x] An invalid `Log Format` fixture produces a manual repair item with no
-      app-side fix action.
-- [x] A backup grouping violation fixture produces a manual repair item with no
-      app-side fix action.
-- [x] Manual repair items include an Open in Google Sheets action.
-- [x] Opening behavior is abstracted so tests can verify the target spreadsheet
-      URL without launching a real app or browser.
-- [x] Revalidating after the user fixes the sheet externally updates the issue
-      list and can unlock logging.
+- `lib/src/app/workout_tracker_shell_workout.dart`
+- `lib/src/app/workout_tracker_shell_logging.dart`
+- `test/widget_test.dart`
 
-### Blocked by
+Suggested tests:
 
-- Slice 1: Block Damaged Sheets on the Validation Screen
+- `flutter test test/widget_test.dart --plain-name "phone"`
+- `flutter test test/widget_test.dart --plain-name "backup"`
 
-### User stories covered
+## Slice 7: Google Adapter Read/Write Robustness
 
-- Structural damage is blocked and explained.
-- Users can jump to the source-of-truth sheet for manual repair.
+Status: pending
 
-## Slice 5: Literal Writes for User and History Text
+Problem:
 
-### Type
+- Live reads fetch grid data for every tab.
+- History block/column insertion writes are split across multiple calls, which
+  can leave partial sheet changes on flaky mobile networks.
 
-`AFK`
+Acceptance criteria:
 
-### What to build
+- Reads request only the active sheet and `Exercises` data needed by the app.
+- History-block creation/growth write behavior is covered for failure modes or
+  made more atomic through Sheets batch APIs where practical.
+- Tests verify adapter requests and partial-failure behavior without live
+  Google credentials.
 
-Separate formula writes from literal user/history writes. Formula repair writes
-must continue to enter formulas. User set logs, raw edits, clears, history block
-labels, and set labels must be written as literal text so formula-looking user
-values are not executed by Google Sheets.
+Likely files:
 
-### Acceptance criteria
+- `lib/src/google_sheets/read_adapter.dart`
+- `lib/src/google_sheets/write_adapter.dart`
+- `test/google_sheets/google_sheets_read_adapter_test.dart`
+- `test/google_sheets/google_sheets_write_adapter_test.dart`
 
-- [x] A write-adapter behavior test fails first when a structured set renders a
-      formula-looking value such as `=1+1`.
-- [x] A write-adapter behavior test fails first when raw set text starts with
-      `=`.
-- [x] A write-adapter behavior test fails first when a new history block label
-      starts with `=`.
-- [x] User log values and history labels/set labels are sent through a literal
-      value path.
-- [x] Formula repair cells are sent through a formula-entered path.
-- [x] Mixed write plans split formula and literal writes if the Google Sheets
-      adapter cannot safely apply both in one request.
-- [x] Clearing a cell still clears the cell rather than writing visible escape
-      text.
-- [x] Existing local write-adapter tests continue to pass.
+Suggested tests:
 
-### Blocked by
+- `flutter test test/google_sheets/google_sheets_read_adapter_test.dart`
+- `flutter test test/google_sheets/google_sheets_write_adapter_test.dart`
 
-- Slice 2: One-Click Unambiguous Formula Repair
+## Slice 8: Device Validation Gate
 
-### User stories covered
+Status: pending
 
-- User-entered workout text is preserved as text.
-- Formula repair still writes formulas.
+Problem:
 
-## Slice 6: Narrow Write Sanity Checks and Duplicate Block Prevention
+- Local builds pass, but no real iPhone was visible during review and live
+  Google writes were not authorized.
 
-### Type
+Acceptance criteria:
 
-`AFK`
+- `flutter devices` sees the intended iPhone or simulator test target.
+- Device signing/team setup is documented or configured for the tester machine.
+- `flutter build ios --simulator` and `flutter build ios --no-codesign` pass.
+- Live Google integration is run only after explicit authorization, with reset
+  and cleanup behavior confirmed.
 
-### What to build
+Likely files:
 
-Add MVP action-local write safety checks without adding full validation before
-every write and without re-planning to a different visible set target behind the
-user's back.
+- `APP_STORE.md`
+- `docs/google_sheets_development_auth.md`
+- iOS project signing configuration if explicitly chosen
 
-Before applying a write, the app should check only the target facts needed for
-that action: expected row identity, workout/backup selection, selected history
-block or set column, target cell expectation, and insertion point expectation.
-If the target no longer makes sense, return to validation/repair.
+Suggested tests:
 
-Also prevent app-created duplicate history block labels before writing.
-
-### Acceptance criteria
-
-- [x] A broken/changed sheet fixture proves a set write is rejected when the
-      target row no longer has the expected exercise display value.
-- [x] A broken/changed sheet fixture proves a set write is rejected when the
-      target row no longer matches the expected workout or backup state.
-- [x] A broken/changed sheet fixture proves an edit/clear is rejected when the
-      target set column no longer exists.
-- [x] A broken/changed sheet fixture proves a new-set save is rejected when the
-      target cell is no longer the value/empty state shown in the UI.
-- [x] A broken/changed sheet fixture proves history block insertion is rejected
-      when the fixed-column/header insertion point no longer matches the plan.
-- [x] Rejected writes route the app to the validation/repair screen.
-- [x] Save behavior trusts the visible UI target and does not silently re-plan
-      to another set cell.
-- [x] Creating a history block with an existing label is blocked inline before
-      any write plan is applied.
-- [x] Duplicate labels already present in the sheet remain a validation/repair
-      issue, not an auto-repair.
-
-### Blocked by
-
-- Slice 1: Block Damaged Sheets on the Validation Screen
-- Slice 5: Literal Writes for User and History Text
-
-### User stories covered
-
-- Avoid obvious bad writes without full validation on every write.
-- Prevent app-created duplicate history block damage.
-
-## Slice 7: MVP Repair and Interaction Validation Gate
-
-### Type
-
-`HITL`
-
-### What to build
-
-Validate the complete MVP repair and sheet interaction flow. This is the gate
-for the pass: all local tests must pass, the skipped-by-default live integration
-test must still compile/skip without Google credentials, and a HITL live run may
-be performed only when Google login and development-sheet writes are explicitly
-approved.
-
-### Acceptance criteria
-
-- [x] Every broken-sheet fixture introduced in this plan is covered by a
-      behavior test that proves the issue is caught before writing.
-- [x] Formula repair tests cover grouped unambiguous repair and individual
-      choice-based repair.
-- [x] Manual repair tests cover structural issues and Open in Google Sheets
-      action routing.
-- [x] Literal write tests prove formula-looking user/history text is preserved
-      as text.
-- [x] Narrow write sanity tests prove rejected writes route to validation/repair.
-- [x] `flutter test` passes.
-- [x] `flutter analyze` passes.
-- [x] `flutter test integration_test/live_logging_flow_test.dart` builds and
-      skips cleanly without `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1`.
-- [x] If a live run is explicitly approved, the development sheet is reset
-      before and after the run.
-- [x] README or domain docs are updated only if behavior or user-facing repair
-      semantics changed.
-
-### Blocked by
-
-- Slice 3: Choice-Based Ambiguous Formula Repair
-- Slice 4: Manual Repair Items for Structural Damage
-- Slice 6: Narrow Write Sanity Checks and Duplicate Block Prevention
-
-### User stories covered
-
-- MVP validation and repair flow.
-- MVP sheet interaction safety.
-- Development discipline for broken-sheet coverage.
+- `flutter analyze`
+- `flutter test`
+- `flutter build ios --simulator`
+- `flutter build ios --no-codesign`
+- `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 flutter test integration_test/live_logging_flow_test.dart`
+  only with explicit authorization.

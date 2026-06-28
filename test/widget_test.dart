@@ -771,9 +771,11 @@ void main() {
   });
 
   testWidgets(
-    'does not expose text fallback when picker choosing is unavailable',
+    'exposes pasted sheet validation when picker choosing is unavailable',
     (tester) async {
-      const picker = DisabledSpreadsheetPicker(reason: 'Selection disabled.');
+      const picker = DisabledSpreadsheetPicker(
+        reason: 'Google Drive Picker is missing an OAuth client ID.',
+      );
       final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -788,16 +790,50 @@ void main() {
       );
       await tester.pump();
 
+      expect(find.text('Choose workout sheet'), findsOneWidget);
+      expect(find.text('Create sheet'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('choose-google-spreadsheet')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const ValueKey('create-google-spreadsheet')),
+            )
+            .onPressed,
+        isNull,
+      );
       expect(
         find.byKey(const ValueKey('spreadsheet-url-fallback')),
-        findsNothing,
+        findsOneWidget,
       );
       expect(
         find.byKey(const ValueKey('spreadsheet-selection-input')),
-        findsNothing,
+        findsOneWidget,
       );
-      expect(find.text('Selection disabled.'), findsOneWidget);
-      expect(find.text('Paste link'), findsNothing);
+      expect(
+        find.text('Google Drive Picker is missing an OAuth client ID.'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey('spreadsheet-selection-input')),
+        'https://docs.google.com/spreadsheets/d/pasted-spreadsheet-id/edit',
+      );
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.spreadsheetIds, ['pasted-spreadsheet-id']);
+      expect(
+        find.byKey(const ValueKey('select-workout-setup')),
+        findsOneWidget,
+      );
     },
   );
 
