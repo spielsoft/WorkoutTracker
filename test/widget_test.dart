@@ -944,9 +944,49 @@ void main() {
 
       await tester.tap(find.text('Create sheet'));
       await tester.pump();
-      expect(picker.createCount, 1);
+      expect(find.text('Create sheet'), findsWidgets);
+      expect(picker.createCount, 0);
     },
   );
+
+  testWidgets('create sheet prompts for a workbook name before creating', (
+    tester,
+  ) async {
+    final picker = _CountingSpreadsheetPicker();
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Create sheet'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sheet name'), findsOneWidget);
+    final nameField = find.byKey(const ValueKey('create-spreadsheet-name'));
+    expect(nameField, findsOneWidget);
+    expect(tester.widget<TextField>(nameField).controller!.text, isNotEmpty);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(picker.createCount, 0);
+    expect(picker.createNames, isEmpty);
+
+    await tester.tap(find.text('Create sheet'));
+    await tester.pumpAndSettle();
+    await tester.enterText(nameField, 'Custom Training Log');
+    await tester.tap(find.text('Create'));
+    await tester.pump();
+
+    expect(picker.createCount, 1);
+    expect(picker.createNames, ['Custom Training Log']);
+  });
 
   testWidgets('returning sheet selection keeps loaded state compact', (
     tester,
@@ -1097,9 +1137,12 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.text('Create sheet'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
     await tester.pump();
 
     expect(picker.createCount, 1);
+    expect(picker.createNames.single, isNotEmpty);
     expect(
       tester
           .widget<OutlinedButton>(
@@ -1109,7 +1152,7 @@ void main() {
       isNull,
     );
 
-    await tester.tap(find.text('Create sheet'));
+    await tester.tap(find.byKey(const ValueKey('create-google-spreadsheet')));
 
     expect(picker.createCount, 1);
   });
@@ -4100,7 +4143,7 @@ class _FakeSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet() async {
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     return null;
   }
 }
@@ -4110,6 +4153,7 @@ class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
   final createCompleter = Completer<SelectedSpreadsheet?>();
   int chooseCount = 0;
   int createCount = 0;
+  final createNames = <String?>[];
 
   @override
   SpreadsheetPickerAvailability get availability {
@@ -4123,8 +4167,9 @@ class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet() {
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) {
     createCount += 1;
+    createNames.add(name);
     return createCompleter.future;
   }
 }
@@ -4350,6 +4395,7 @@ class _ReorderingWorkoutExerciseAuthoringService
 class _CountingSpreadsheetPicker implements SpreadsheetPicker {
   int chooseCount = 0;
   int createCount = 0;
+  final createNames = <String?>[];
 
   @override
   SpreadsheetPickerAvailability get availability {
@@ -4363,8 +4409,9 @@ class _CountingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet() async {
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     createCount += 1;
+    createNames.add(name);
     return null;
   }
 }

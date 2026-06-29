@@ -15,8 +15,6 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
   GoogleApisWorkoutTrackerWorkbookInitializer(this._api);
 
   final sheets.SheetsApi _api;
-  final WorkoutTrackerWorkbookInitializationPlanner _planner =
-      const WorkoutTrackerWorkbookInitializationPlanner();
 
   static const writeScopes = [sheets.SheetsApi.spreadsheetsScope];
 
@@ -78,7 +76,7 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
             properties: sheets.SheetProperties(
               title: workbook.exercisesSheet.title,
               gridProperties: sheets.GridProperties(
-                rowCount: _planner.usableRowCount(workbook.exercisesSheet),
+                rowCount: usableWorkbookRowCount(workbook.exercisesSheet),
                 columnCount: workbook.exercisesSheet.columnCount,
                 frozenRowCount: 1,
               ),
@@ -122,7 +120,7 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
       $fields: 'spreadsheetId,clearedRange',
     );
 
-    final plan = _planner.planTabRewrite(
+    final plan = WorkoutTrackerWorkbookTabRewritePlan(
       sheetId: target.sheetId,
       tab: tab,
       frozenRowCount: frozenRowCount,

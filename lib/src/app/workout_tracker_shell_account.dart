@@ -1,20 +1,24 @@
 part of 'workout_tracker_shell.dart';
 
 class _GoogleAccountMenu extends StatefulWidget {
-  const _GoogleAccountMenu({required this.accountSession});
+  const _GoogleAccountMenu({
+    required this.accountSession,
+    required this.onSignedOut,
+  });
 
   final GoogleAccountSession accountSession;
+  final Future<void> Function() onSignedOut;
 
   @override
   State<_GoogleAccountMenu> createState() => _GoogleAccountMenuState();
 }
 
 class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
-  bool _isSwitching = false;
+  bool _isBusy = false;
 
   Future<void> _switchAccount() async {
     setState(() {
-      _isSwitching = true;
+      _isBusy = true;
     });
     try {
       await widget.accountSession.switchAccount(
@@ -33,7 +37,29 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
     } finally {
       if (mounted) {
         setState(() {
-          _isSwitching = false;
+          _isBusy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _signOut() async {
+    setState(() {
+      _isBusy = true;
+    });
+    try {
+      await widget.accountSession.signOut();
+      await widget.onSignedOut();
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to log out of Google Sheets: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBusy = false;
         });
       }
     }
@@ -49,12 +75,14 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
           tooltip: account == null
               ? 'Connect Google Sheets'
               : 'Google Sheets account: ${account.email}',
-          enabled: !_isSwitching,
-          icon: _GoogleAccountAvatar(account: account, isBusy: _isSwitching),
+          enabled: !_isBusy,
+          icon: _GoogleAccountAvatar(account: account, isBusy: _isBusy),
           onSelected: (action) {
             switch (action) {
               case _GoogleAccountAction.switchAccount:
                 _switchAccount();
+              case _GoogleAccountAction.signOut:
+                _signOut();
             }
           },
           itemBuilder: (context) {
@@ -81,6 +109,17 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
                   ],
                 ),
               ),
+              if (account != null)
+                PopupMenuItem<_GoogleAccountAction>(
+                  value: _GoogleAccountAction.signOut,
+                  child: Row(
+                    children: const [
+                      Icon(Icons.logout),
+                      SizedBox(width: 12),
+                      Flexible(child: Text('Log out')),
+                    ],
+                  ),
+                ),
             ];
           },
         );
@@ -89,7 +128,7 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
   }
 }
 
-enum _GoogleAccountAction { switchAccount }
+enum _GoogleAccountAction { switchAccount, signOut }
 
 class _GoogleAccountSummary extends StatelessWidget {
   const _GoogleAccountSummary({required this.account});

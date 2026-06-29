@@ -118,6 +118,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
     required this.showAvailabilitySummary,
     required this.isBusy,
     this.accountSession,
+    required this.onSignedOut,
     this.onReturnToWorkout,
     required this.onChooseSpreadsheet,
     required this.onCreateSpreadsheet,
@@ -128,6 +129,7 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
   final bool showAvailabilitySummary;
   final bool isBusy;
   final GoogleAccountSession? accountSession;
+  final Future<void> Function() onSignedOut;
   final VoidCallback? onReturnToWorkout;
   final Future<void> Function() onChooseSpreadsheet;
   final Future<void> Function() onCreateSpreadsheet;
@@ -160,7 +162,10 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
                 ),
                 if (accountSession != null) ...[
                   const SizedBox(width: 8),
-                  _GoogleAccountMenu(accountSession: accountSession!),
+                  _GoogleAccountMenu(
+                    accountSession: accountSession!,
+                    onSignedOut: onSignedOut,
+                  ),
                 ],
               ],
             ),
@@ -233,10 +238,19 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
 }
 
 class _NamePromptDialog extends StatefulWidget {
-  const _NamePromptDialog({required this.title, required this.label});
+  const _NamePromptDialog({
+    required this.title,
+    required this.label,
+    this.initialValue,
+    this.submitLabel = 'Add',
+    this.textFieldKey,
+  });
 
   final String title;
   final String label;
+  final String? initialValue;
+  final String submitLabel;
+  final Key? textFieldKey;
 
   @override
   State<_NamePromptDialog> createState() => _NamePromptDialogState();
@@ -249,7 +263,11 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
+    _controller = TextEditingController(text: widget.initialValue);
+    _controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _controller.text.length,
+    );
     _focusNode = FocusNode();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -274,6 +292,7 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
     return AlertDialog(
       title: Text(widget.title),
       content: TextField(
+        key: widget.textFieldKey,
         controller: _controller,
         focusNode: _focusNode,
         autofocus: true,
@@ -286,7 +305,7 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Add')),
+        FilledButton(onPressed: _submit, child: Text(widget.submitLabel)),
       ],
     );
   }
@@ -299,6 +318,7 @@ class _SpreadsheetTextFallback extends StatelessWidget {
     required this.onChanged,
     required this.onSubmitted,
     required this.onValidate,
+    required this.onSignedOut,
     this.accountSession,
   });
 
@@ -307,6 +327,7 @@ class _SpreadsheetTextFallback extends StatelessWidget {
   final VoidCallback onChanged;
   final VoidCallback onSubmitted;
   final Future<void> Function() onValidate;
+  final Future<void> Function() onSignedOut;
   final GoogleAccountSession? accountSession;
 
   @override
@@ -334,7 +355,10 @@ class _SpreadsheetTextFallback extends StatelessWidget {
             ),
             if (accountSession != null) ...[
               const SizedBox(width: 8),
-              _GoogleAccountMenu(accountSession: accountSession!),
+              _GoogleAccountMenu(
+                accountSession: accountSession!,
+                onSignedOut: onSignedOut,
+              ),
             ],
           ],
         ),
@@ -393,8 +417,9 @@ class _SpreadsheetValidationShellState
       _WorkoutTrackerScreen.exercisePicker;
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
   CanonicalExercise? _canonicalExerciseBeingEdited;
-  String? _highlightedCanonicalExerciseName;
+  int? _highlightedCanonicalExerciseSheetRowNumber;
   bool _isPickingSpreadsheet = false;
+  bool _isClearingSession = false;
 
   @override
   void initState() {
@@ -435,20 +460,18 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _restoreSpreadsheetSelection() async {
-    SelectedSpreadsheet? savedSelection;
-    WorkoutSelectionState? savedWorkoutSelection;
-    String? savedText;
+    GoogleWorkspaceAccessState accessState;
     try {
-      savedSelection = await widget.appStateStore?.readSelectedSpreadsheet();
-      savedWorkoutSelection = await widget.appStateStore
-          ?.readWorkoutSelection();
-      savedText = await widget.appStateStore?.readSpreadsheetText();
+      accessState =
+          await widget.appStateStore?.readGoogleWorkspaceAccessState() ??
+          const GoogleWorkspaceAccessState();
     } on Object {
       return;
     }
     if (!mounted) {
       return;
     }
+    var savedSelection = accessState.selectedSpreadsheet;
     if (savedSelection != null) {
       savedSelection = await _resolveSelectedSpreadsheet(savedSelection);
       setState(() {
@@ -456,9 +479,10 @@ class _SpreadsheetValidationShellState
         _spreadsheetController.text = savedSelection!.spreadsheetId;
       });
       await _validateSelectedSpreadsheet();
-      _restoreWorkoutSelection(savedWorkoutSelection);
+      _restoreWorkoutSelection(accessState.workoutSelection);
       return;
     }
+    final savedText = accessState.spreadsheetText;
     if (savedText != null && savedText != _spreadsheetController.text) {
       _spreadsheetController.text = savedText;
     }
@@ -474,7 +498,16 @@ class _SpreadsheetValidationShellState
     final resolver = picker as SelectedSpreadsheetResolver;
     try {
       final resolved = await resolver.resolveSelectedSpreadsheet(selected);
-      await widget.appStateStore?.writeSelectedSpreadsheet(resolved);
+      final store = widget.appStateStore;
+      if (store != null) {
+        final accessState = await store.readGoogleWorkspaceAccessState();
+        await store.writeGoogleWorkspaceAccessState(
+          accessState.copyWith(
+            spreadsheetText: resolved.spreadsheetId,
+            selectedSpreadsheet: resolved,
+          ),
+        );
+      }
       return resolved;
     } on Object {
       return selected;
@@ -482,13 +515,20 @@ class _SpreadsheetValidationShellState
   }
 
   void _persistSpreadsheetText() {
+    if (_isClearingSession) {
+      return;
+    }
     final store = widget.appStateStore;
     if (store == null) {
       return;
     }
     unawaited(
       store
-          .writeSpreadsheetText(_spreadsheetController.text)
+          .writeGoogleWorkspaceAccessState(
+            GoogleWorkspaceAccessState(
+              spreadsheetText: _spreadsheetController.text,
+            ),
+          )
           .catchError((_) {}),
     );
   }
@@ -516,7 +556,12 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _createSpreadsheet() async {
-    await _pickSpreadsheet((picker) => picker.createSpreadsheet());
+    final defaultName = defaultWorkoutSpreadsheetTitle();
+    final name = await _promptForSpreadsheetName(defaultName);
+    if (!mounted || name == null) {
+      return;
+    }
+    await _pickSpreadsheet((picker) => picker.createSpreadsheet(name: name));
   }
 
   Future<void> _pickSpreadsheet(
@@ -539,9 +584,16 @@ class _SpreadsheetValidationShellState
         _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
       });
       try {
-        await widget.appStateStore?.writeSelectedSpreadsheet(
-          selectedSpreadsheet,
-        );
+        final store = widget.appStateStore;
+        if (store != null) {
+          final accessState = await store.readGoogleWorkspaceAccessState();
+          await store.writeGoogleWorkspaceAccessState(
+            accessState.copyWith(
+              spreadsheetText: selectedSpreadsheet.spreadsheetId,
+              selectedSpreadsheet: selectedSpreadsheet,
+            ),
+          );
+        }
       } on Object {
         // Selection still works for this session if persistence fails.
       }
@@ -563,18 +615,65 @@ class _SpreadsheetValidationShellState
     });
   }
 
+  Future<void> _handleSignedOut() async {
+    _isClearingSession = true;
+    try {
+      _controller.clearSpreadsheetSelection();
+      setState(() {
+        _selectedSpreadsheet = null;
+        _spreadsheetController.clear();
+        _screen = _WorkoutTrackerScreen.sheetSelection;
+        _exerciseAddReturnScreen = _WorkoutTrackerScreen.exercisePicker;
+        _addExercisePlacementIntent = null;
+        _canonicalExerciseBeingEdited = null;
+      });
+      await widget.appStateStore?.clearGoogleWorkspaceAccessState();
+    } finally {
+      _isClearingSession = false;
+    }
+  }
+
   Future<String?> _promptForName({
     required String title,
     required String label,
+    String? initialValue,
+    String submitLabel = 'Add',
+    Key? textFieldKey,
   }) async {
     final value = await showDialog<String>(
       context: context,
       builder: (context) {
-        return _NamePromptDialog(title: title, label: label);
+        return _NamePromptDialog(
+          title: title,
+          label: label,
+          initialValue: initialValue,
+          submitLabel: submitLabel,
+          textFieldKey: textFieldKey,
+        );
       },
     );
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
+  }
+
+  Future<String?> _promptForSpreadsheetName(String defaultName) async {
+    final value = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return _NamePromptDialog(
+          title: 'Create sheet',
+          label: 'Sheet name',
+          initialValue: defaultName,
+          submitLabel: 'Create',
+          textFieldKey: const ValueKey('create-spreadsheet-name'),
+        );
+      },
+    );
+    if (value == null) {
+      return null;
+    }
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? defaultName : trimmed;
   }
 
   Future<void> _promptForNewWorkout() async {
@@ -692,7 +791,7 @@ class _SpreadsheetValidationShellState
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
     _canonicalExerciseBeingEdited = null;
-    _highlightedCanonicalExerciseName = null;
+    _highlightedCanonicalExerciseSheetRowNumber = null;
     setState(() {
       _screen = _WorkoutTrackerScreen.exerciseManager;
     });
@@ -715,7 +814,7 @@ class _SpreadsheetValidationShellState
   void _openPrimaryExerciseAdd(String workout) {
     _controller.closeExercise();
     _canonicalExerciseBeingEdited = null;
-    _highlightedCanonicalExerciseName = null;
+    _highlightedCanonicalExerciseSheetRowNumber = null;
     setState(() {
       _exerciseAddReturnScreen = _WorkoutTrackerScreen.workoutSetup;
       _addExercisePlacementIntent = _AddExercisePlacementIntent.primary(
@@ -770,7 +869,7 @@ class _SpreadsheetValidationShellState
   void _openCanonicalExerciseEdit(CanonicalExercise exercise) {
     _controller.closeExercise();
     _addExercisePlacementIntent = null;
-    _highlightedCanonicalExerciseName = null;
+    _highlightedCanonicalExerciseSheetRowNumber = null;
     setState(() {
       _canonicalExerciseBeingEdited = exercise;
       _screen = _WorkoutTrackerScreen.editExercise;
@@ -793,8 +892,12 @@ class _SpreadsheetValidationShellState
     if (!mounted || !created) {
       return;
     }
+    final createdExerciseName = draft.normalized().exerciseName;
     setState(() {
-      _highlightedCanonicalExerciseName = draft.normalized().exerciseName;
+      _highlightedCanonicalExerciseSheetRowNumber =
+          _exerciseAddReturnScreen == _WorkoutTrackerScreen.exerciseManager
+          ? _lastCanonicalExerciseSheetRowNumberByName(createdExerciseName)
+          : null;
       _screen = _exerciseAddReturnScreen;
     });
   }
@@ -815,9 +918,23 @@ class _SpreadsheetValidationShellState
     }
     setState(() {
       _canonicalExerciseBeingEdited = null;
-      _highlightedCanonicalExerciseName = draft.normalized().exerciseName;
+      _highlightedCanonicalExerciseSheetRowNumber =
+          selectedExercise.sheetRowNumber;
       _screen = _WorkoutTrackerScreen.exerciseManager;
     });
+  }
+
+  int? _lastCanonicalExerciseSheetRowNumberByName(String exerciseName) {
+    final exercises = _controller.report?.activeSheet.canonicalExercises;
+    if (exercises == null) {
+      return null;
+    }
+    for (final exercise in exercises.reversed) {
+      if (exercise.exercise == exerciseName) {
+        return exercise.sheetRowNumber;
+      }
+    }
+    return null;
   }
 
   Future<void> _handleExercisePlacement(_ExercisePlacementDraft draft) async {
@@ -897,16 +1014,18 @@ class _SpreadsheetValidationShellState
     if (store == null || report == null || setup == null) {
       return;
     }
+    final selection = WorkoutSelectionState(
+      spreadsheetId: report.spreadsheetId,
+      workout: setup.selectedWorkout,
+      historyBlock: setup.selectedHistoryBlock,
+    );
     unawaited(
-      store
-          .writeWorkoutSelection(
-            WorkoutSelectionState(
-              spreadsheetId: report.spreadsheetId,
-              workout: setup.selectedWorkout,
-              historyBlock: setup.selectedHistoryBlock,
-            ),
-          )
-          .catchError((_) {}),
+      (() async {
+        final accessState = await store.readGoogleWorkspaceAccessState();
+        await store.writeGoogleWorkspaceAccessState(
+          accessState.copyWith(workoutSelection: selection),
+        );
+      })().catchError((_) {}),
     );
   }
 
@@ -951,6 +1070,7 @@ class _SpreadsheetValidationShellState
                             showAvailabilitySummary: showPickerAvailability,
                             isBusy: isBusy,
                             accountSession: widget.accountSession,
+                            onSignedOut: _handleSignedOut,
                             onReturnToWorkout: hasLoadedWorkout
                                 ? _returnToLoadedWorkout
                                 : null,
@@ -965,6 +1085,7 @@ class _SpreadsheetValidationShellState
                             controller: _spreadsheetController,
                             isBusy: isBusy,
                             accountSession: widget.accountSession,
+                            onSignedOut: _handleSignedOut,
                             onChanged: _usePastedSpreadsheetText,
                             onSubmitted: _validateSelectedSpreadsheet,
                             onValidate: _validateSelectedSpreadsheet,
@@ -1018,8 +1139,8 @@ class _SpreadsheetValidationShellState
                           onEditCanonicalExercise: isBusy
                               ? null
                               : _openCanonicalExerciseEdit,
-                          highlightedCanonicalExerciseName:
-                              _highlightedCanonicalExerciseName,
+                          highlightedCanonicalExerciseSheetRowNumber:
+                              _highlightedCanonicalExerciseSheetRowNumber,
                           onReorderCanonicalExercises:
                               isBusy || widget.exerciseAuthoringService == null
                               ? null

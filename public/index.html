@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="WorkoutTracker support page for a gym logging app backed by a user-owned Google Sheet."
+    >
+    <title>WorkoutTracker Support</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17211f;
+        --muted: #52615d;
+        --line: #d7dfda;
+        --paper: #fbfcfa;
+        --panel: #ffffff;
+        --accent: #146c5c;
+        --accent-soft: #e6f3ef;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.55;
+      }
+
+      header,
+      main,
+      footer {
+        width: min(920px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      header {
+        padding: 48px 0 28px;
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        padding-bottom: 52px;
+      }
+
+      nav a,
+      footer a {
+        color: var(--accent);
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      nav a:hover,
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      .brand {
+        color: var(--ink);
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(2.25rem, 7vw, 4.5rem);
+        line-height: 0.96;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 1.35rem;
+        line-height: 1.2;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .lede {
+        max-width: 680px;
+        margin-top: 22px;
+        color: var(--muted);
+        font-size: 1.15rem;
+      }
+
+      .notice {
+        margin-top: 28px;
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        background: var(--accent-soft);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        padding: 28px 0 42px;
+      }
+
+      section {
+        min-width: 0;
+        padding: 22px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 1.15rem;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      footer {
+        padding: 28px 0 44px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      @media (max-width: 760px) {
+        header {
+          padding-top: 28px;
+        }
+
+        nav {
+          padding-bottom: 36px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+          padding-top: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Site">
+        <a class="brand" href="/">WorkoutTracker</a>
+        <a href="/privacy.html">Privacy Policy</a>
+      </nav>
+      <h1>Fast workout logging over your own spreadsheet.</h1>
+      <p class="lede">
+        WorkoutTracker is a lightweight gym logging app for people who want a
+        focused phone and desktop interface without giving up their human-readable
+        workout sheet.
+      </p>
+      <p class="notice">
+        Durable workout data is stored in a user-owned Google Sheet in the
+        user's Google Drive. WorkoutTracker does not run a workout data server
+        and does not create a separate WorkoutTracker database.
+      </p>
+    </header>
+
+    <main>
+      <div class="grid" aria-label="Support topics">
+        <section>
+          <h2>What It Does</h2>
+          <p>
+            The app helps select or create a workout spreadsheet, validate the
+            sheet layout, choose workouts and history blocks, and write compact
+            set notation back to visible sheet cells.
+          </p>
+        </section>
+
+        <section>
+          <h2>Your Sheet</h2>
+          <p>
+            The Google Sheet remains the source of truth. You can open and edit
+            it directly in Google Sheets when the app is unavailable.
+          </p>
+        </section>
+
+        <section>
+          <h2>Support</h2>
+          <p>
+            For support, use the contact channel from the store listing or the
+            distribution page where you received WorkoutTracker. Include your
+            platform, app version, and a short description of the issue.
+          </p>
+        </section>
+      </div>
+
+      <section aria-labelledby="data-model-heading">
+        <h2 id="data-model-heading">Data Model</h2>
+        <ul>
+          <li>Workout rows and history live in the first tab of the selected spreadsheet.</li>
+          <li>Canonical exercise metadata lives in the sheet's Exercises tab.</li>
+          <li>Unparseable set cells are preserved as text instead of discarded.</li>
+          <li>Firebase Hosting serves these public pages only; it is not used as a workout backend.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Read the <a href="/privacy.html">WorkoutTracker Privacy Policy</a> for
+        details about Google authorization and data storage.
+      </p>
+    </footer>
+  </body>
+</html>

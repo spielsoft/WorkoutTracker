@@ -37,7 +37,6 @@ void main() {
       );
 
       expect(client.fetchedSpreadsheetIds, ['spreadsheet-id']);
-      expect(client.insertions, isEmpty);
       expect(client.writes, isEmpty);
       expect(client.structuralBatches, [
         _StructuralBatch(
@@ -229,7 +228,6 @@ void main() {
         ),
       );
 
-      expect(client.insertions, isEmpty);
       expect(client.writeBatches, isEmpty);
       expect(client.structuralBatches, [
         _StructuralBatch(
@@ -368,7 +366,6 @@ void main() {
           clears: const [],
         ),
       ]);
-      expect(client.insertions, isEmpty);
       expect(client.writeBatches, isEmpty);
       expect(client.clears, isEmpty);
     },
@@ -404,7 +401,6 @@ void main() {
         ),
       );
 
-      expect(client.insertions, isEmpty);
       expect(client.writeBatches, [
         _WriteBatch(
           mode: GoogleSheetsValueInputMode.literalText,
@@ -543,7 +539,6 @@ class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
 
   final GoogleSheetsActiveSheetTarget target;
   final List<String> fetchedSpreadsheetIds = [];
-  final List<_InsertedColumns> insertions = [];
   final List<_CellWrite> writes = [];
   final List<_WriteBatch> writeBatches = [];
   final List<_CellClear> clears = [];
@@ -557,31 +552,6 @@ class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
     fetchedSpreadsheetIds.add(spreadsheetId);
     return target;
   }
-
-  @override
-  Future<void> insertColumns({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetColumnNumber,
-    required int columnCount,
-  }) async {
-    insertions.add(
-      _InsertedColumns(
-        spreadsheetId: spreadsheetId,
-        sheetId: sheetId,
-        sheetColumnNumber: sheetColumnNumber,
-        columnCount: columnCount,
-      ),
-    );
-  }
-
-  @override
-  Future<void> insertRows({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetRowNumber,
-    required int rowCount,
-  }) async {}
 
   @override
   Future<void> applyActiveSheetStructuralBatch({

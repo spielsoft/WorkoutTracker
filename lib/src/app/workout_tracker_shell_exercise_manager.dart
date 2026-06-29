@@ -4,7 +4,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
   const _ExerciseManagerInventory({
     required this.sheetLabel,
     required this.exercises,
-    required this.highlightedExerciseName,
+    required this.highlightedExerciseSheetRowNumber,
     required this.onBack,
     required this.onAddExercise,
     required this.onEditExercise,
@@ -13,7 +13,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
 
   final String sheetLabel;
   final List<CanonicalExercise> exercises;
-  final String? highlightedExerciseName;
+  final int? highlightedExerciseSheetRowNumber;
   final VoidCallback onBack;
   final VoidCallback? onAddExercise;
   final ValueChanged<CanonicalExercise>? onEditExercise;
@@ -21,8 +21,9 @@ class _ExerciseManagerInventory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final highlightedExerciseName = this.highlightedExerciseName;
-    if (highlightedExerciseName != null) {
+    final highlightedExerciseSheetRowNumber =
+        this.highlightedExerciseSheetRowNumber;
+    if (highlightedExerciseSheetRowNumber != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final highlightedContext = _highlightedExerciseKey.currentContext;
         if (highlightedContext != null) {
@@ -78,8 +79,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
             itemBuilder: (context, index) {
               final exercise = exercises[index];
               final isHighlighted =
-                  highlightedExerciseName != null &&
-                  exercise.displayName == highlightedExerciseName;
+                  exercise.sheetRowNumber == highlightedExerciseSheetRowNumber;
               return Padding(
                 key: isHighlighted
                     ? _highlightedExerciseKey

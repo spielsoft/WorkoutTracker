@@ -1,31 +1,17 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher_platform_interface/link.dart';
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 import 'package:workout_tracker/google_sheets.dart';
+import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
-  test('selected spreadsheet encodes display metadata separately from ID', () {
-    const selected = SelectedSpreadsheet(
-      spreadsheetId: 'spreadsheet-id',
-      name: '2026 Workouts',
-      drivePath: 'My Drive / Workouts / 2026 Workouts',
-      webViewLink: 'https://docs.google.com/spreadsheets/d/spreadsheet-id',
-      accountEmail: 'user@example.com',
-    );
-
-    final decoded = decodeSelectedSpreadsheet(
-      encodeSelectedSpreadsheet(selected),
-    );
-
-    expect(decoded?.spreadsheetId, 'spreadsheet-id');
-    expect(decoded?.displayLabel, 'My Drive / Workouts / 2026 Workouts');
-    expect(decoded?.accountEmail, 'user@example.com');
-  });
-
   test(
     'disabled spreadsheet picker reports both actions unavailable',
     () async {
@@ -41,7 +27,12 @@ void main() {
 
   test('production picker client ID enables app builds', () {
     expect(workoutTrackerGooglePickerClientId, isNotEmpty);
-    expect(MobileGoogleDriveSpreadsheetPicker().availability.canChoose, isTrue);
+    expect(
+      MobileGoogleDriveSpreadsheetPicker(
+        callbackReceiverFactory: _unusedCallbackReceiverFactory,
+      ).availability.canChoose,
+      isTrue,
+    );
   });
 
   test(
@@ -57,19 +48,30 @@ void main() {
         workbookInitializerFactory: (_) => initializer,
       );
 
-      final selected = await creator.createWorkoutSpreadsheet();
+      final selected = await creator.createWorkoutSpreadsheet(
+        name: ' User Named Workout Book ',
+      );
 
       expect(
         gateway.requestedScopes.single,
         GoogleApisWorkoutTrackerWorkbookInitializer.writeScopes,
       );
-      expect(client.createRequestTitles, ['New Workout Book']);
+      expect(client.createRequestTitles, ['User Named Workout Book']);
       expect(initializer.initializedSpreadsheetIds, ['created-spreadsheet-id']);
       final workbook = initializer.workbooks.single;
       expect(workbook.activeSheet.title, 'Active Workout');
       expect(workbook.exercisesSheet.title, 'Exercises');
+      expect(workbook.activeSheet.rows, [activeSheetFixedColumns]);
+      expect(
+        workbook.exercisesSheet.rows.skip(1).map((row) => row.first),
+        containsAll([
+          'Bulgarian Split Squat',
+          'Romanian Deadlift',
+          'Standing Calf Raise',
+        ]),
+      );
       expect(selected.spreadsheetId, 'created-spreadsheet-id');
-      expect(selected.name, 'New Workout Book');
+      expect(selected.name, 'User Named Workout Book');
       expect(selected.accountEmail, 'user@example.com');
       expect(client.isClosed, isTrue);
     },
@@ -82,6 +84,7 @@ void main() {
       final client = _GetSpreadsheetClient();
       final picker = MobileGoogleDriveSpreadsheetPicker(
         clientId: 'client-id.apps.googleusercontent.com',
+        callbackReceiverFactory: _unusedCallbackReceiverFactory,
         authorizationGateway: gateway,
         authorizationClientFactory: (_) => client,
       );
@@ -109,66 +112,157 @@ void main() {
       final authorizationUrl =
           MobileGoogleDriveSpreadsheetPicker.googlePickerAuthorizationUrl(
             clientId: 'client-id.apps.googleusercontent.com',
-            redirectUri: Uri.parse(
-              'http://localhost:1234/google-picker-callback',
-            ),
+            redirectUri: workoutTrackerGooglePickerHostedCallbackUri,
             state: 'request-state',
           );
 
       expect(authorizationUrl.host, 'accounts.google.com');
       expect(
         authorizationUrl.queryParameters['redirect_uri'],
-        'http://localhost:1234/google-picker-callback',
+        workoutTrackerGooglePickerHostedCallbackUri.toString(),
       );
       expect(authorizationUrl.queryParameters['state'], 'request-state');
     },
   );
 
-  test('google picker callback accepts only matching path and state', () {
-    final accepted = validateGooglePickerLoopbackCallback(
+  test(
+    'hosted picker flow returns selected spreadsheet through app-owned URI',
+    () async {
+      final previousLauncher = UrlLauncherPlatform.instance;
+      final nativeLinks = StreamController<Uri>();
+      final launcher = _CompletingHostedGooglePickerLauncher(nativeLinks);
+      UrlLauncherPlatform.instance = launcher;
+      addTearDown(() async {
+        UrlLauncherPlatform.instance = previousLauncher;
+        await nativeLinks.close();
+      });
+
+      final selected = await MobileGoogleDriveSpreadsheetPicker(
+        clientId: 'client-id.apps.googleusercontent.com',
+        callbackReceiverFactory: ({required state, required timeout}) async {
+          return NativeGooglePickerCallbackReceiver(
+            state: state,
+            timeout: timeout,
+            uriLinkStream: nativeLinks.stream,
+          );
+        },
+      ).chooseSpreadsheet();
+
+      final launchedUrl = Uri.parse(launcher.launchedUrls.single);
+      expect(launchedUrl.host, 'accounts.google.com');
+      expect(
+        launchedUrl.queryParameters['redirect_uri'],
+        workoutTrackerGooglePickerHostedCallbackUri.toString(),
+      );
+      expect(launcher.returnedState, launchedUrl.queryParameters['state']);
+      expect(selected?.spreadsheetId, 'picked-spreadsheet-id');
+    },
+  );
+
+  test('native google picker callback accepts only safe app-owned results', () {
+    final success = validateGooglePickerNativeCallback(
       Uri.parse(
-        'http://localhost:1234/google-picker-callback'
-        '?state=request-state&picked_file_ids=first,%20second',
+        'workouttracker://google-picker-callback'
+        '?state=request-state&picked_file_ids=first_sheet,second-sheet',
       ),
       expectedState: 'request-state',
     );
 
-    expect(accepted.result?.pickedSpreadsheetIds, ['first', 'second']);
-    expect(accepted.errorMessage, isNull);
+    expect(success.result?.pickedSpreadsheetIds, [
+      'first_sheet',
+      'second-sheet',
+    ]);
+    expect(success.errorMessage, isNull);
 
-    final wrongPath = validateGooglePickerLoopbackCallback(
+    final cancelled = validateGooglePickerNativeCallback(
       Uri.parse(
-        'http://localhost:1234/'
-        '?state=request-state&picked_file_ids=spreadsheet-id',
+        'workouttracker://google-picker-callback'
+        '?state=request-state&error=access_denied',
       ),
       expectedState: 'request-state',
     );
-    expect(wrongPath.result, isNull);
-    expect(wrongPath.statusCode, HttpStatus.notFound);
-    expect(wrongPath.errorMessage, contains('/google-picker-callback'));
+    expect(cancelled.result?.cancelled, isTrue);
 
-    final wrongState = validateGooglePickerLoopbackCallback(
+    final pickerError = validateGooglePickerNativeCallback(
       Uri.parse(
-        'http://localhost:1234/google-picker-callback'
-        '?state=other-state&picked_file_ids=spreadsheet-id',
+        'workouttracker://google-picker-callback'
+        '?state=request-state&error=server_error',
       ),
       expectedState: 'request-state',
     );
-    expect(wrongState.result, isNull);
-    expect(wrongState.statusCode, HttpStatus.badRequest);
-    expect(wrongState.errorMessage, contains('state'));
+    expect(pickerError.result?.error, 'server_error');
 
-    final missingState = validateGooglePickerLoopbackCallback(
+    final missingState = validateGooglePickerNativeCallback(
       Uri.parse(
-        'http://localhost:1234/google-picker-callback'
+        'workouttracker://google-picker-callback'
         '?picked_file_ids=spreadsheet-id',
       ),
       expectedState: 'request-state',
     );
     expect(missingState.result, isNull);
-    expect(missingState.statusCode, HttpStatus.badRequest);
     expect(missingState.errorMessage, contains('missing request state'));
+
+    final wrongState = validateGooglePickerNativeCallback(
+      Uri.parse(
+        'workouttracker://google-picker-callback'
+        '?state=other-state&picked_file_ids=spreadsheet-id',
+      ),
+      expectedState: 'request-state',
+    );
+    expect(wrongState.result, isNull);
+    expect(wrongState.errorMessage, contains('state'));
+
+    final malformedSpreadsheetId = validateGooglePickerNativeCallback(
+      Uri.parse(
+        'workouttracker://google-picker-callback'
+        '?state=request-state&picked_file_ids=spreadsheet.id',
+      ),
+      expectedState: 'request-state',
+    );
+    expect(malformedSpreadsheetId.result, isNull);
+    expect(malformedSpreadsheetId.errorMessage, contains('spreadsheet ID'));
+
+    final unrelated = validateGooglePickerNativeCallback(
+      Uri.parse(
+        'com.googleusercontent.apps.client:/oauth2redirect'
+        '?state=request-state&picked_file_ids=spreadsheet-id',
+      ),
+      expectedState: 'request-state',
+    );
+    expect(unrelated.result, isNull);
+    expect(unrelated.errorMessage, contains('workouttracker'));
   });
+
+  test('native google picker callback scheme is app-owned', () {
+    final iosInfoPlist = File('ios/Runner/Info.plist').readAsStringSync();
+    final macosInfoPlist = File('macos/Runner/Info.plist').readAsStringSync();
+    final androidManifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
+
+    expect(iosInfoPlist, contains('<string>workouttracker</string>'));
+    expect(macosInfoPlist, contains('<string>workouttracker</string>'));
+    expect(androidManifest, contains('android:scheme="workouttracker"'));
+    expect(
+      iosInfoPlist,
+      contains(
+        '<string>\$(WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID)</string>',
+      ),
+    );
+    expect(
+      macosInfoPlist,
+      contains(
+        '<string>\$(WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID)</string>',
+      ),
+    );
+  });
+}
+
+Future<GooglePickerCallbackReceiver> _unusedCallbackReceiverFactory({
+  required String state,
+  required Duration timeout,
+}) async {
+  throw StateError('Spreadsheet picker callback receiver was not expected.');
 }
 
 class _RecordingAuthorizationGateway extends ChangeNotifier
@@ -191,6 +285,9 @@ class _RecordingAuthorizationGateway extends ChangeNotifier
 
   @override
   Future<void> switchAccount({List<String> scopes = const []}) async {}
+
+  @override
+  Future<void> signOut() async {}
 }
 
 class _RecordingWorkbookInitializer
@@ -285,5 +382,45 @@ class _GetSpreadsheetClient extends http.BaseClient {
   void close() {
     isClosed = true;
     super.close();
+  }
+}
+
+class _CompletingHostedGooglePickerLauncher extends UrlLauncherPlatform {
+  _CompletingHostedGooglePickerLauncher(this.nativeLinks);
+
+  final StreamController<Uri> nativeLinks;
+  final launchedUrls = <String>[];
+  String? returnedState;
+
+  @override
+  final LinkDelegate? linkDelegate = null;
+
+  @override
+  Future<bool> launch(
+    String url, {
+    required bool useSafariVC,
+    required bool useWebView,
+    required bool enableJavaScript,
+    required bool enableDomStorage,
+    required bool universalLinksOnly,
+    required Map<String, String> headers,
+    String? webOnlyWindowName,
+  }) async {
+    launchedUrls.add(url);
+    final launchedUri = Uri.parse(url);
+    returnedState = launchedUri.queryParameters['state'];
+    scheduleMicrotask(() {
+      nativeLinks.add(
+        Uri(
+          scheme: workoutTrackerGooglePickerNativeCallbackScheme,
+          host: workoutTrackerGooglePickerNativeCallbackHost,
+          queryParameters: {
+            'state': returnedState!,
+            'picked_file_ids': 'picked-spreadsheet-id',
+          },
+        ),
+      );
+    });
+    return true;
   }
 }

@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="WorkoutTracker Google Picker callback page for spreadsheet selection."
+    >
+    <title>WorkoutTracker Google Picker callback</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17211f;
+        --muted: #52615d;
+        --line: #d7dfda;
+        --paper: #fbfcfa;
+        --panel: #ffffff;
+        --accent: #146c5c;
+        --success: #0f6b50;
+        --warning: #916400;
+        --danger: #9d2b24;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.55;
+      }
+
+      header,
+      main,
+      footer {
+        width: min(760px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      header {
+        padding: 42px 0 24px;
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        padding-bottom: 42px;
+      }
+
+      a {
+        color: var(--accent);
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      a[aria-disabled="true"] {
+        color: var(--muted);
+        pointer-events: none;
+      }
+
+      .brand {
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 6vw, 3.75rem);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 1.28rem;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      main {
+        display: grid;
+        gap: 18px;
+        padding: 8px 0 42px;
+      }
+
+      section {
+        padding: 22px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .status {
+        border-left: 6px solid var(--warning);
+      }
+
+      .status[data-kind="success"] {
+        border-left-color: var(--success);
+      }
+
+      .status[data-kind="cancelled"] {
+        border-left-color: var(--warning);
+      }
+
+      .status[data-kind="error"],
+      .status[data-kind="invalid"] {
+        border-left-color: var(--danger);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      code {
+        overflow-wrap: anywhere;
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono",
+          monospace;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 1.15rem;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      footer {
+        padding: 28px 0 44px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Site">
+        <a class="brand" href="/">WorkoutTracker</a>
+        <a href="/privacy.html">Privacy Policy</a>
+      </nav>
+      <h1>Google Picker callback</h1>
+      <p class="muted">
+        This static page receives the Google Picker spreadsheet selection result
+        for <code>/google-picker-callback/</code> and shows the next step.
+      </p>
+    </header>
+
+    <main>
+      <section class="status" id="status" data-kind="invalid" aria-live="polite">
+        <h2 id="status-title">Malformed callback</h2>
+        <p id="status-detail">
+          The callback result could not be read. Return to WorkoutTracker and
+          try choosing the spreadsheet again.
+        </p>
+        <p>
+          <a id="open-app-link" href="#" aria-disabled="true">
+            Open WorkoutTracker
+          </a>
+        </p>
+      </section>
+
+      <section aria-labelledby="contract-heading">
+        <h2 id="contract-heading">Callback Contract</h2>
+        <ul>
+          <li>
+            Success uses <code>state</code> and comma-separated
+            <code>picked_file_ids</code> values from the query string or URL
+            fragment.
+          </li>
+          <li>
+            Selection cancelled is represented by <code>error=access_denied</code>.
+          </li>
+          <li>
+            Picker error states are represented by an <code>error</code> value
+            other than <code>access_denied</code>.
+          </li>
+          <li>
+            Missing request state is rejected before any selected spreadsheet ID
+            is accepted.
+          </li>
+          <li>
+            State mismatch is rejected when the returned state differs from the
+            browser-side expected state stored at
+            <code>workoutTrackerGooglePickerState</code> in
+            <code>sessionStorage</code>.
+          </li>
+          <li>
+            This page does not store workout data or act as an app backend.
+          </li>
+        </ul>
+      </section>
+
+      <noscript>
+        <section class="status" data-kind="invalid">
+          <h2>Malformed callback</h2>
+          <p>
+            JavaScript is required to inspect the callback parameters. Return to
+            WorkoutTracker and try choosing the spreadsheet again.
+          </p>
+        </section>
+      </noscript>
+    </main>
+
+    <footer>
+      <p>
+        Firebase Hosting serves this callback artifact as a static page only.
+      </p>
+    </footer>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var expectedStateKey = "workoutTrackerGooglePickerState";
+        var statusEl = document.getElementById("status");
+        var titleEl = document.getElementById("status-title");
+        var detailEl = document.getElementById("status-detail");
+        var openAppLinkEl = document.getElementById("open-app-link");
+
+        function readCallbackParams() {
+          var params = new URLSearchParams(window.location.search);
+          var fragment = window.location.hash.replace(/^#/, "");
+
+          if (fragment.charAt(0) === "?") {
+            fragment = fragment.slice(1);
+          }
+
+          if (fragment.length > 0) {
+            var fragmentParams = new URLSearchParams(fragment);
+            fragmentParams.forEach(function (value, key) {
+              if (!params.has(key)) {
+                params.set(key, value);
+              }
+            });
+          }
+
+          return params;
+        }
+
+        function parsePickedFileIds(value) {
+          if (value === null) {
+            return [];
+          }
+
+          var ids = value
+            .split(",")
+            .map(function (id) {
+              return id.trim();
+            })
+            .filter(function (id) {
+              return id.length > 0;
+            });
+
+          var malformed = ids.length === 0 || ids.some(function (id) {
+            return !/^[A-Za-z0-9_-]+$/.test(id);
+          });
+
+          return malformed ? null : ids;
+        }
+
+        function expectedState() {
+          try {
+            return window.sessionStorage.getItem(expectedStateKey);
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function nativeCallbackUri(params) {
+          var nativeParams = new URLSearchParams();
+          ["state", "picked_file_ids", "error"].forEach(function (key) {
+            if (params.has(key)) {
+              nativeParams.set(key, params.get(key));
+            }
+          });
+
+          if (!nativeParams.has("state")) {
+            return null;
+          }
+
+          return (
+            "workouttracker://google-picker-callback?" +
+            nativeParams.toString()
+          );
+        }
+
+        function evaluateCallback(params) {
+          var state = params.get("state");
+          var error = params.get("error");
+          var expected = expectedState();
+          var openAppUri = nativeCallbackUri(params);
+
+          if (!state) {
+            return {
+              kind: "invalid",
+              title: "Missing request state",
+              detail:
+                "The callback did not include a request state. Return to WorkoutTracker and try choosing the spreadsheet again.",
+              openAppUri: openAppUri,
+            };
+          }
+
+          if (expected && expected !== state) {
+            return {
+              kind: "invalid",
+              title: "State mismatch",
+              detail:
+                "The callback state does not match the locally stored expected state. Return to WorkoutTracker and start selection again.",
+              openAppUri: openAppUri,
+            };
+          }
+
+          if (error === "access_denied") {
+            return {
+              kind: "cancelled",
+              title: "Selection cancelled",
+              detail:
+                "No spreadsheet was selected. Return to WorkoutTracker when you are ready to choose a sheet.",
+              openAppUri: openAppUri,
+            };
+          }
+
+          if (error) {
+            return {
+              kind: "error",
+              title: "Picker error",
+              detail:
+                "Google Picker returned an error: " + error + ". Return to WorkoutTracker and try again.",
+              openAppUri: openAppUri,
+            };
+          }
+
+          var pickedFileIds = parsePickedFileIds(params.get("picked_file_ids"));
+          if (pickedFileIds === null || pickedFileIds.length === 0) {
+            return {
+              kind: "invalid",
+              title: "Malformed callback",
+              detail:
+                "The callback did not include valid selected spreadsheet IDs. Return to WorkoutTracker and try choosing the spreadsheet again.",
+              openAppUri: openAppUri,
+            };
+          }
+
+          return {
+            kind: "success",
+            title: "Spreadsheet selected",
+            detail:
+              "Selected spreadsheet ID" +
+              (pickedFileIds.length === 1 ? "" : "s") +
+              ": " +
+              pickedFileIds.join(", ") +
+              ". Return to WorkoutTracker to continue.",
+            openAppUri: openAppUri,
+          };
+        }
+
+        function renderResult(result) {
+          statusEl.setAttribute("data-kind", result.kind);
+          titleEl.textContent = result.title;
+          detailEl.textContent = result.detail;
+
+          if (result.openAppUri) {
+            openAppLinkEl.href = result.openAppUri;
+            openAppLinkEl.removeAttribute("aria-disabled");
+            window.setTimeout(function () {
+              window.location.href = result.openAppUri;
+            }, 0);
+          }
+        }
+
+        renderResult(evaluateCallback(readCallbackParams()));
+      })();
+    </script>
+  </body>
+</html>

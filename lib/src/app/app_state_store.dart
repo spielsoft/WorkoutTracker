@@ -3,67 +3,132 @@ import 'dart:io';
 
 import 'spreadsheet_selection.dart';
 
+class GoogleWorkspaceAccessState {
+  const GoogleWorkspaceAccessState({
+    this.spreadsheetText,
+    this.selectedSpreadsheet,
+    this.workoutSelection,
+  });
+
+  final String? spreadsheetText;
+  final SelectedSpreadsheet? selectedSpreadsheet;
+  final WorkoutSelectionState? workoutSelection;
+
+  GoogleWorkspaceAccessState copyWith({
+    String? spreadsheetText,
+    SelectedSpreadsheet? selectedSpreadsheet,
+    WorkoutSelectionState? workoutSelection,
+  }) {
+    return GoogleWorkspaceAccessState(
+      spreadsheetText: spreadsheetText ?? this.spreadsheetText,
+      selectedSpreadsheet: selectedSpreadsheet ?? this.selectedSpreadsheet,
+      workoutSelection: workoutSelection ?? this.workoutSelection,
+    );
+  }
+
+  GoogleWorkspaceAccessState migrateLegacy({
+    String? spreadsheetText,
+    SelectedSpreadsheet? selectedSpreadsheet,
+    WorkoutSelectionState? workoutSelection,
+  }) {
+    return GoogleWorkspaceAccessState(
+      spreadsheetText: this.spreadsheetText ?? spreadsheetText,
+      selectedSpreadsheet: this.selectedSpreadsheet ?? selectedSpreadsheet,
+      workoutSelection: this.workoutSelection ?? workoutSelection,
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return {
+      if (spreadsheetText != null) 'spreadsheetText': spreadsheetText,
+      if (selectedSpreadsheet != null)
+        'selectedSpreadsheet': selectedSpreadsheet!.toJson(),
+      if (workoutSelection != null)
+        'workoutSelection': workoutSelection!.toJson(),
+    };
+  }
+
+  static GoogleWorkspaceAccessState fromJson(Object? value) {
+    if (value case <String, Object?>{
+      'spreadsheetText': final String spreadsheetText,
+    }) {
+      return GoogleWorkspaceAccessState(
+        spreadsheetText: spreadsheetText,
+        selectedSpreadsheet: SelectedSpreadsheet.fromJson(
+          value['selectedSpreadsheet'],
+        ),
+        workoutSelection: WorkoutSelectionState.fromJson(
+          value['workoutSelection'],
+        ),
+      );
+    }
+    if (value is Map<String, Object?>) {
+      return GoogleWorkspaceAccessState(
+        selectedSpreadsheet: SelectedSpreadsheet.fromJson(
+          value['selectedSpreadsheet'],
+        ),
+        workoutSelection: WorkoutSelectionState.fromJson(
+          value['workoutSelection'],
+        ),
+      );
+    }
+    return const GoogleWorkspaceAccessState();
+  }
+}
+
 abstract interface class AppStateStore {
-  Future<String?> readSpreadsheetText();
+  Future<GoogleWorkspaceAccessState> readGoogleWorkspaceAccessState();
 
-  Future<void> writeSpreadsheetText(String value);
+  Future<void> writeGoogleWorkspaceAccessState(
+    GoogleWorkspaceAccessState value,
+  );
 
-  Future<SelectedSpreadsheet?> readSelectedSpreadsheet();
-
-  Future<void> writeSelectedSpreadsheet(SelectedSpreadsheet value);
-
-  Future<WorkoutSelectionState?> readWorkoutSelection();
-
-  Future<void> writeWorkoutSelection(WorkoutSelectionState value);
+  Future<void> clearGoogleWorkspaceAccessState();
 }
 
 class FileAppStateStore implements AppStateStore {
   const FileAppStateStore();
 
+  static const _googleWorkspaceAccessKey = 'googleWorkspaceAccess';
   static const _spreadsheetTextKey = 'spreadsheetText';
   static const _selectedSpreadsheetKey = 'selectedSpreadsheet';
   static const _workoutSelectionKey = 'workoutSelection';
 
   @override
-  Future<String?> readSpreadsheetText() async {
+  Future<GoogleWorkspaceAccessState> readGoogleWorkspaceAccessState() async {
     final decoded = await _readState();
-    if (decoded case {_spreadsheetTextKey: final String value}) {
-      return value;
-    }
-    return null;
+    return GoogleWorkspaceAccessState.fromJson(
+      decoded[_googleWorkspaceAccessKey],
+    ).migrateLegacy(
+      spreadsheetText: decoded[_spreadsheetTextKey] as String?,
+      selectedSpreadsheet: SelectedSpreadsheet.fromJson(
+        decoded[_selectedSpreadsheetKey],
+      ),
+      workoutSelection: WorkoutSelectionState.fromJson(
+        decoded[_workoutSelectionKey],
+      ),
+    );
   }
 
   @override
-  Future<void> writeSpreadsheetText(String value) async {
+  Future<void> writeGoogleWorkspaceAccessState(
+    GoogleWorkspaceAccessState value,
+  ) async {
     final state = await _readState();
-    state[_spreadsheetTextKey] = value;
+    state[_googleWorkspaceAccessKey] = value.toJson();
+    state.remove(_spreadsheetTextKey);
+    state.remove(_selectedSpreadsheetKey);
+    state.remove(_workoutSelectionKey);
     await _writeState(state);
   }
 
   @override
-  Future<SelectedSpreadsheet?> readSelectedSpreadsheet() async {
-    final decoded = await _readState();
-    return SelectedSpreadsheet.fromJson(decoded[_selectedSpreadsheetKey]);
-  }
-
-  @override
-  Future<void> writeSelectedSpreadsheet(SelectedSpreadsheet value) async {
+  Future<void> clearGoogleWorkspaceAccessState() async {
     final state = await _readState();
-    state[_selectedSpreadsheetKey] = value.toJson();
-    state[_spreadsheetTextKey] = value.spreadsheetId;
-    await _writeState(state);
-  }
-
-  @override
-  Future<WorkoutSelectionState?> readWorkoutSelection() async {
-    final decoded = await _readState();
-    return WorkoutSelectionState.fromJson(decoded[_workoutSelectionKey]);
-  }
-
-  @override
-  Future<void> writeWorkoutSelection(WorkoutSelectionState value) async {
-    final state = await _readState();
-    state[_workoutSelectionKey] = value.toJson();
+    state.remove(_googleWorkspaceAccessKey);
+    state.remove(_spreadsheetTextKey);
+    state.remove(_selectedSpreadsheetKey);
+    state.remove(_workoutSelectionKey);
     await _writeState(state);
   }
 

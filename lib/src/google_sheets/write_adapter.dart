@@ -190,20 +190,6 @@ abstract interface class GoogleSheetsWriteClient {
     String spreadsheetId,
   );
 
-  Future<void> insertColumns({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetColumnNumber,
-    required int columnCount,
-  });
-
-  Future<void> insertRows({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetRowNumber,
-    required int rowCount,
-  });
-
   Future<void> applyActiveSheetStructuralBatch({
     required String spreadsheetId,
     required int sheetId,
@@ -318,72 +304,6 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
     return GoogleSheetsActiveSheetTarget(
       sheetId: activeSheetId,
       title: activeSheetProperties?.title ?? '',
-    );
-  }
-
-  @override
-  Future<void> insertColumns({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetColumnNumber,
-    required int columnCount,
-  }) async {
-    if (columnCount <= 0) {
-      return;
-    }
-
-    final startIndex = sheetColumnNumber - 1;
-    await _api.spreadsheets.batchUpdate(
-      sheets.BatchUpdateSpreadsheetRequest(
-        requests: [
-          sheets.Request(
-            insertDimension: sheets.InsertDimensionRequest(
-              inheritFromBefore: true,
-              range: sheets.DimensionRange(
-                sheetId: sheetId,
-                dimension: 'COLUMNS',
-                startIndex: startIndex,
-                endIndex: startIndex + columnCount,
-              ),
-            ),
-          ),
-        ],
-      ),
-      spreadsheetId,
-      $fields: 'spreadsheetId',
-    );
-  }
-
-  @override
-  Future<void> insertRows({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetRowNumber,
-    required int rowCount,
-  }) async {
-    if (rowCount <= 0) {
-      return;
-    }
-
-    final startIndex = sheetRowNumber - 1;
-    await _api.spreadsheets.batchUpdate(
-      sheets.BatchUpdateSpreadsheetRequest(
-        requests: [
-          sheets.Request(
-            insertDimension: sheets.InsertDimensionRequest(
-              inheritFromBefore: startIndex > 0,
-              range: sheets.DimensionRange(
-                sheetId: sheetId,
-                dimension: 'ROWS',
-                startIndex: startIndex,
-                endIndex: startIndex + rowCount,
-              ),
-            ),
-          ),
-        ],
-      ),
-      spreadsheetId,
-      $fields: 'spreadsheetId',
     );
   }
 

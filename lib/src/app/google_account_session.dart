@@ -35,6 +35,8 @@ abstract interface class GoogleAccountSession implements Listenable {
   Future<void> restoreAccount();
 
   Future<void> switchAccount({List<String> scopes = const []});
+
+  Future<void> signOut();
 }
 
 abstract interface class GoogleSignInAuthorizationGateway
@@ -87,8 +89,7 @@ class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
   @override
   Future<void> switchAccount({List<String> scopes = const []}) async {
     await _ensureInitialized();
-    await _signIn.signOut();
-    _setAccount(null);
+    await signOut();
     final account = await _signIn.authenticate(scopeHint: scopes);
     if (scopes.isNotEmpty) {
       final headers = await account.authorizationClient.authorizationHeaders(
@@ -100,6 +101,13 @@ class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
       }
     }
     _setAccount(account);
+  }
+
+  @override
+  Future<void> signOut() async {
+    await _ensureInitialized();
+    await _signIn.signOut();
+    _setAccount(null);
   }
 
   Future<void> _ensureInitialized() {

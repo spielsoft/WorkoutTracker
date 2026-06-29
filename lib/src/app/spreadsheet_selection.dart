@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -13,12 +12,22 @@ import 'google_authorization_client.dart';
 
 typedef WorkoutTrackerWorkbookInitializerFactory =
     WorkoutTrackerWorkbookInitializer Function(sheets.SheetsApi api);
+typedef GooglePickerCallbackReceiverFactory =
+    Future<GooglePickerCallbackReceiver> Function({
+      required String state,
+      required Duration timeout,
+    });
 
 const workoutTrackerGooglePickerClientId =
     '657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com';
 const workoutTrackerGooglePickerCallbackTimeout = Duration(minutes: 5);
-const _googlePickerCallbackPath = '/google-picker-callback';
+const workoutTrackerGooglePickerNativeCallbackScheme = 'workouttracker';
+const workoutTrackerGooglePickerNativeCallbackHost = 'google-picker-callback';
+final workoutTrackerGooglePickerHostedCallbackUri = Uri.parse(
+  'https://workouttracker-16285.web.app/google-picker-callback/',
+);
 const _googlePickerCallbackStateBytes = 16;
+final _googlePickerSpreadsheetIdPattern = RegExp(r'^[A-Za-z0-9_-]+$');
 
 class SelectedSpreadsheet {
   const SelectedSpreadsheet({
@@ -71,28 +80,16 @@ class SelectedSpreadsheet {
   }
 }
 
-String encodeSelectedSpreadsheet(SelectedSpreadsheet selected) {
-  return jsonEncode(selected.toJson());
-}
-
-SelectedSpreadsheet? decodeSelectedSpreadsheet(String encoded) {
-  try {
-    return SelectedSpreadsheet.fromJson(jsonDecode(encoded));
-  } on Object {
-    return null;
-  }
-}
-
 abstract interface class SpreadsheetPicker {
   SpreadsheetPickerAvailability get availability;
 
   Future<SelectedSpreadsheet?> chooseSpreadsheet();
 
-  Future<SelectedSpreadsheet?> createSpreadsheet();
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name});
 }
 
 abstract interface class GoogleSpreadsheetCreator {
-  Future<SelectedSpreadsheet> createWorkoutSpreadsheet();
+  Future<SelectedSpreadsheet> createWorkoutSpreadsheet({String? name});
 }
 
 abstract interface class SelectedSpreadsheetResolver {
@@ -149,7 +146,7 @@ class DisabledSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet() async {
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     throw StateError(reason);
   }
 }
@@ -157,6 +154,7 @@ class DisabledSpreadsheetPicker implements SpreadsheetPicker {
 class MobileGoogleDriveSpreadsheetPicker
     implements SpreadsheetPicker, SelectedSpreadsheetResolver {
   const MobileGoogleDriveSpreadsheetPicker({
+    required this.callbackReceiverFactory,
     this.clientId = workoutTrackerGooglePickerClientId,
     this.callbackTimeout = workoutTrackerGooglePickerCallbackTimeout,
     this.authorizationGateway,
@@ -166,6 +164,7 @@ class MobileGoogleDriveSpreadsheetPicker
 
   final String clientId;
   final Duration callbackTimeout;
+  final GooglePickerCallbackReceiverFactory callbackReceiverFactory;
   final GoogleSignInAuthorizationGateway? authorizationGateway;
   final GoogleAuthorizationClientFactory? authorizationClientFactory;
   final GoogleSpreadsheetCreator? spreadsheetCreator;
@@ -191,9 +190,9 @@ class MobileGoogleDriveSpreadsheetPicker
     }
 
     final callbackState = _newGooglePickerCallbackState();
-    final callbackReceiver = await _LoopbackGooglePickerCallbackReceiver.bind(
-      timeout: callbackTimeout,
+    final callbackReceiver = await callbackReceiverFactory(
       state: callbackState,
+      timeout: callbackTimeout,
     );
     try {
       final authorizationUrl = googlePickerAuthorizationUrl(
@@ -223,12 +222,12 @@ class MobileGoogleDriveSpreadsheetPicker
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet() async {
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     final creator = spreadsheetCreator;
     if (creator == null) {
       throw StateError('Google Drive sheet creation is not connected yet.');
     }
-    return creator.createWorkoutSpreadsheet();
+    return creator.createWorkoutSpreadsheet(name: name);
   }
 
   @override
@@ -308,7 +307,7 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
        workbookInitializerFactory =
            workbookInitializerFactory ??
            ((api) => GoogleApisWorkoutTrackerWorkbookInitializer(api)),
-       titleFactory = titleFactory ?? _defaultWorkoutSpreadsheetTitle;
+       titleFactory = titleFactory ?? defaultWorkoutSpreadsheetTitle;
 
   final GoogleSignInAuthorizationGateway authorizationGateway;
   final GoogleAuthorizationClientFactory authorizationClientFactory;
@@ -316,10 +315,10 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
   final String Function() titleFactory;
 
   @override
-  Future<SelectedSpreadsheet> createWorkoutSpreadsheet() async {
-    final requestedTitle = titleFactory().trim();
+  Future<SelectedSpreadsheet> createWorkoutSpreadsheet({String? name}) async {
+    final requestedTitle = (name ?? titleFactory()).trim();
     final title = requestedTitle.isEmpty
-        ? _defaultWorkoutSpreadsheetTitle()
+        ? defaultWorkoutSpreadsheetTitle()
         : requestedTitle;
     final headers = await authorizationGateway.authorizationHeaders(
       GoogleApisWorkoutTrackerWorkbookInitializer.writeScopes,
@@ -353,13 +352,13 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
       client.close();
     }
   }
+}
 
-  static String _defaultWorkoutSpreadsheetTitle() {
-    final now = DateTime.now();
-    final month = now.month.toString().padLeft(2, '0');
-    final day = now.day.toString().padLeft(2, '0');
-    return 'WorkoutTracker ${now.year}-$month-$day';
-  }
+String defaultWorkoutSpreadsheetTitle() {
+  final now = DateTime.now();
+  final month = now.month.toString().padLeft(2, '0');
+  final day = now.day.toString().padLeft(2, '0');
+  return 'WorkoutTracker ${now.year}-$month-$day';
 }
 
 String googleSheetsUrl(String spreadsheetId) {
@@ -376,14 +375,22 @@ String _newGooglePickerCallbackState() {
   return base64UrlEncode(bytes).replaceAll('=', '');
 }
 
-class _LoopbackGooglePickerCallbackReceiver {
-  _LoopbackGooglePickerCallbackReceiver._({
-    required this._server,
-    required this.redirectUri,
-    required this._state,
+abstract interface class GooglePickerCallbackReceiver {
+  Uri get redirectUri;
+
+  Future<GooglePickerCallbackResult> get result;
+
+  Future<void> close();
+}
+
+final class NativeGooglePickerCallbackReceiver
+    implements GooglePickerCallbackReceiver {
+  NativeGooglePickerCallbackReceiver({
+    required this.state,
     required Duration timeout,
+    required Stream<Uri> uriLinkStream,
   }) : _completion = Completer<GooglePickerCallbackResult>() {
-    _subscription = _server.listen(_handleRequest);
+    _subscription = uriLinkStream.listen(_handleUri);
     _timeout = Timer(timeout, () {
       if (!_completion.isCompleted) {
         _completion.completeError(
@@ -396,168 +403,127 @@ class _LoopbackGooglePickerCallbackReceiver {
     });
   }
 
-  final HttpServer _server;
-  final Uri redirectUri;
-  final String _state;
+  final String state;
   final Completer<GooglePickerCallbackResult> _completion;
-  late final StreamSubscription<HttpRequest> _subscription;
+  late final StreamSubscription<Uri> _subscription;
   late final Timer _timeout;
 
+  @override
+  Uri get redirectUri => workoutTrackerGooglePickerHostedCallbackUri;
+
+  @override
   Future<GooglePickerCallbackResult> get result => _completion.future;
 
-  static Future<_LoopbackGooglePickerCallbackReceiver> bind({
-    required Duration timeout,
-    required String state,
-  }) async {
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    return _LoopbackGooglePickerCallbackReceiver._(
-      server: server,
-      redirectUri: Uri.parse(
-        'http://localhost:${server.port}$_googlePickerCallbackPath',
-      ),
-      state: state,
-      timeout: timeout,
-    );
-  }
-
+  @override
   Future<void> close() async {
     _timeout.cancel();
     await _subscription.cancel();
-    await _server.close(force: true);
   }
 
-  void _handleRequest(HttpRequest request) {
-    final validation = validateGooglePickerLoopbackCallback(
-      request.uri,
-      expectedState: _state,
+  void _handleUri(Uri uri) {
+    if (!_isGooglePickerNativeCallbackUri(uri) || _completion.isCompleted) {
+      return;
+    }
+
+    final validation = validateGooglePickerNativeCallback(
+      uri,
+      expectedState: state,
     );
     final result = validation.result;
-    request.response
-      ..statusCode = validation.statusCode
-      ..headers.contentType = ContentType.html
-      ..write(
-        result == null
-            ? _callbackErrorHtml(validation.errorMessage!)
-            : _callbackHtml(result),
-      )
-      ..close();
-
-    if (!_completion.isCompleted &&
-        request.uri.path == _googlePickerCallbackPath) {
-      if (result == null) {
-        _completion.completeError(
-          StateError('Google Drive Picker failed: ${validation.errorMessage}.'),
-        );
-      } else if (result.error != null) {
-        _completion.completeError(
-          StateError('Google Drive Picker failed: ${result.error}.'),
-        );
-      } else {
-        _completion.complete(result);
-      }
+    if (result == null) {
+      _completion.completeError(
+        StateError('Google Drive Picker failed: ${validation.errorMessage}.'),
+      );
+    } else if (result.error != null && !result.cancelled) {
+      _completion.completeError(
+        StateError('Google Drive Picker failed: ${result.error}.'),
+      );
+    } else {
+      _completion.complete(result);
     }
-  }
-
-  String _callbackHtml(GooglePickerCallbackResult result) {
-    final title = result.error == null ? 'Selection received' : 'Picker failed';
-    final body = result.error == null
-        ? 'You can return to Workout Tracker.'
-        : 'Google Drive Picker returned ${htmlEscape.convert(result.error!)}.';
-    return '''
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>$title</title>
-    <style>
-      body {
-        color: #202124;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        margin: 48px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>$title</h1>
-    <p>$body</p>
-  </body>
-</html>
-''';
-  }
-
-  String _callbackErrorHtml(String errorMessage) {
-    final escapedError = htmlEscape.convert(errorMessage);
-    return '''
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Picker failed</title>
-    <style>
-      body {
-        color: #202124;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        margin: 48px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Picker failed</h1>
-    <p>$escapedError</p>
-  </body>
-</html>
-''';
   }
 }
 
-@visibleForTesting
-final class GooglePickerLoopbackCallbackValidation {
-  const GooglePickerLoopbackCallbackValidation.accepted(this.result)
-    : errorMessage = null,
-      statusCode = HttpStatus.ok;
+bool _isGooglePickerNativeCallbackUri(Uri uri) {
+  return uri.scheme == workoutTrackerGooglePickerNativeCallbackScheme &&
+      uri.host == workoutTrackerGooglePickerNativeCallbackHost &&
+      (uri.path.isEmpty || uri.path == '/');
+}
 
-  const GooglePickerLoopbackCallbackValidation.rejected({
+final class GooglePickerNativeCallbackValidation {
+  const GooglePickerNativeCallbackValidation.accepted(this.result)
+    : errorMessage = null;
+
+  const GooglePickerNativeCallbackValidation.rejected({
     required this.errorMessage,
-    required this.statusCode,
   }) : result = null;
 
   final GooglePickerCallbackResult? result;
   final String? errorMessage;
-  final int statusCode;
 }
 
-@visibleForTesting
-GooglePickerLoopbackCallbackValidation validateGooglePickerLoopbackCallback(
-  Uri requestUri, {
+GooglePickerNativeCallbackValidation validateGooglePickerNativeCallback(
+  Uri callbackUri, {
   required String expectedState,
 }) {
-  if (requestUri.path != _googlePickerCallbackPath) {
-    return GooglePickerLoopbackCallbackValidation.rejected(
+  if (callbackUri.scheme != workoutTrackerGooglePickerNativeCallbackScheme ||
+      callbackUri.host != workoutTrackerGooglePickerNativeCallbackHost ||
+      (callbackUri.path.isNotEmpty && callbackUri.path != '/')) {
+    return const GooglePickerNativeCallbackValidation.rejected(
       errorMessage:
-          'Unexpected Google Drive Picker callback path '
-          '${requestUri.path}; expected $_googlePickerCallbackPath.',
-      statusCode: HttpStatus.notFound,
+          'Unexpected Google Drive Picker callback URL; expected '
+          'workouttracker://google-picker-callback.',
     );
   }
 
-  final returnedState = requestUri.queryParameters['state'];
+  final returnedState = callbackUri.queryParameters['state'];
   if (returnedState == null || returnedState.isEmpty) {
-    return const GooglePickerLoopbackCallbackValidation.rejected(
+    return const GooglePickerNativeCallbackValidation.rejected(
       errorMessage: 'Google Drive Picker callback is missing request state.',
-      statusCode: HttpStatus.badRequest,
     );
   }
   if (returnedState != expectedState) {
-    return const GooglePickerLoopbackCallbackValidation.rejected(
+    return const GooglePickerNativeCallbackValidation.rejected(
       errorMessage:
           'Google Drive Picker callback state did not match the active request.',
-      statusCode: HttpStatus.badRequest,
     );
   }
 
-  return GooglePickerLoopbackCallbackValidation.accepted(
-    GooglePickerCallbackResult.fromQueryParameters(requestUri.queryParameters),
+  final error = callbackUri.queryParameters['error'];
+  if (error != null && error.isNotEmpty) {
+    return GooglePickerNativeCallbackValidation.accepted(
+      GooglePickerCallbackResult(pickedSpreadsheetIds: const [], error: error),
+    );
+  }
+
+  final pickedSpreadsheetIds = _pickedSpreadsheetIds(
+    callbackUri.queryParameters['picked_file_ids'],
   );
+  if (pickedSpreadsheetIds == null || pickedSpreadsheetIds.isEmpty) {
+    return const GooglePickerNativeCallbackValidation.rejected(
+      errorMessage:
+          'Google Drive Picker callback is missing valid spreadsheet IDs.',
+    );
+  }
+
+  return GooglePickerNativeCallbackValidation.accepted(
+    GooglePickerCallbackResult(pickedSpreadsheetIds: pickedSpreadsheetIds),
+  );
+}
+
+List<String>? _pickedSpreadsheetIds(String? pickedFileIds) {
+  if (pickedFileIds == null) {
+    return null;
+  }
+  final ids = pickedFileIds
+      .split(',')
+      .map((id) => id.trim())
+      .where((id) => id.isNotEmpty)
+      .toList(growable: false);
+  if (ids.any((id) => !_googlePickerSpreadsheetIdPattern.hasMatch(id))) {
+    return null;
+  }
+  return ids;
 }
 
 @visibleForTesting
@@ -571,18 +537,4 @@ class GooglePickerCallbackResult {
   final String? error;
 
   bool get cancelled => error == 'access_denied';
-
-  static GooglePickerCallbackResult fromQueryParameters(
-    Map<String, String> queryParameters,
-  ) {
-    final pickedFileIds = queryParameters['picked_file_ids'] ?? '';
-    return GooglePickerCallbackResult(
-      pickedSpreadsheetIds: pickedFileIds
-          .split(',')
-          .map((id) => id.trim())
-          .where((id) => id.isNotEmpty)
-          .toList(growable: false),
-      error: queryParameters['error'],
-    );
-  }
 }

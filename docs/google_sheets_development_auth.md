@@ -59,6 +59,53 @@ Drive. Picker selection uses the checked-in web OAuth client ID for the
 657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com
 ```
 
+## Firebase Hosting Picker Callback
+
+Firebase Hosting is a durable release dependency for support/privacy pages and
+for the Google Picker browser-to-native handoff. It is a static site, not an
+app backend, and it does not store workout data. The durable data artifact
+remains the user-owned Google Sheet.
+
+The repo-root Firebase config points at the existing Firebase project:
+
+```text
+workouttracker-16285
+```
+
+The configured production Hosting origins, after live deploy, are:
+
+```text
+https://workouttracker-16285.web.app
+https://workouttracker-16285.firebaseapp.com
+```
+
+The Google Picker OAuth redirect/callback URL to deploy and register is:
+
+```text
+https://workouttracker-16285.web.app/google-picker-callback/
+```
+
+The hosted callback page preserves Google Picker result parameters and returns
+them to the native Flutter app through this app-owned URL scheme:
+
+```text
+workouttracker://google-picker-callback
+```
+
+Before relying on the hosted callback, deploy Firebase Hosting to the live
+channel and confirm the callback URL returns HTTP 200. The Web OAuth client must
+then list the exact hosted callback URL above under Authorized redirect URIs.
+The OAuth consent screen should also use the hosted support and privacy URLs:
+
+```text
+https://workouttracker-16285.web.app/
+https://workouttracker-16285.web.app/privacy.html
+```
+
+Production app startup injects the native callback receiver, so Picker
+authorization always uses the hosted HTTPS callback. The app no longer supports
+a local loopback Picker callback path.
+
 ## Sheets Scopes
 
 Validation, history block creation, set logging, exercise authoring, and app
@@ -82,9 +129,8 @@ The app does not request full-drive access for the MVP sheet contract.
 For macOS native Google Sign-In, open `macos/Runner.xcworkspace` in Xcode,
 select the `Runner` target, and choose a development team under Signing &
 Capabilities. The plugin requires keychain sharing, which cannot be used by an
-unsigned macOS target. The Picker loopback callback also requires local network
-server entitlement in macOS builds. The entitlements are already present in the
-project.
+unsigned macOS target. Picker selection should use the hosted HTTPS callback
+and app-owned URL scheme above for release validation.
 
 Build the macOS bundle:
 
@@ -99,10 +145,24 @@ when Google authorization is needed:
 open build/macos/Build/Products/Release/workout_tracker.app
 ```
 
-## iOS simulator validation
+## iOS device and simulator validation
+
+Use a physical iPhone or iPad for release-facing validation:
+
+```sh
+flutter devices
+flutter run --release -d <device-id>
+```
+
+Use profile mode only when you need limited runtime observability:
+
+```sh
+flutter run --profile -d <device-id>
+```
 
 Boot an available simulator and run the app through Flutter so the simulator
-installs and launches the bundle:
+installs and launches the bundle. Simulator runs are layout/basic-flow checks,
+not release-equivalent validation:
 
 ```sh
 flutter devices

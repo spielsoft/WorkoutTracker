@@ -110,10 +110,36 @@ void main() {
       ).readAsStringSync();
 
       expect(authDocs, contains('macOS GUI validation'));
-      expect(authDocs, contains('iOS simulator validation'));
+      expect(authDocs, contains('iOS device and simulator validation'));
+      expect(authDocs, contains('flutter run --release -d <device-id>'));
       expect(authDocs, contains('flutter build ios --simulator'));
       expect(authDocs, contains('native Google Sign-In'));
       expect(authDocs, contains('account-picker'));
+    });
+
+    test('Xcode schemes run release-facing builds by default', () {
+      for (final schemePath in [
+        'ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme',
+        'macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme',
+      ]) {
+        final scheme = File(schemePath).readAsStringSync();
+
+        expect(
+          _schemeActionBuildConfiguration(scheme, 'LaunchAction'),
+          'Release',
+          reason: '$schemePath Run must install release-facing app builds.',
+        );
+        expect(
+          _schemeActionBuildConfiguration(scheme, 'AnalyzeAction'),
+          'Release',
+          reason: '$schemePath Analyze should not default to Debug.',
+        );
+        expect(
+          _schemeActionBuildConfiguration(scheme, 'ArchiveAction'),
+          'Release',
+          reason: '$schemePath Archive must remain Release.',
+        );
+      }
     });
 
     test(
@@ -207,4 +233,13 @@ Map<String, String> _iosRunnerBuildSettingsByConfig(String project) {
 
 Matcher _containsBuildSetting(String key, String value) {
   return contains(RegExp('${RegExp.escape(key)} = ${RegExp.escape(value)};'));
+}
+
+String _schemeActionBuildConfiguration(String scheme, String actionName) {
+  final match = RegExp(
+    '<$actionName\\b[^>]*\\bbuildConfiguration = "([^"]+)"',
+    dotAll: true,
+  ).firstMatch(scheme);
+  expect(match, isNotNull, reason: '$actionName must declare a build config.');
+  return match!.group(1)!;
 }

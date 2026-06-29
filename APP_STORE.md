@@ -24,9 +24,20 @@ TestFlight are the release gates.
   xcconfig.
 - The app currently requests writable Google Sheets authorization for normal
   sheet use.
-- Google Drive Picker choosing uses a loopback callback and the checked-in web
-  OAuth client ID:
+- Google Drive Picker choosing uses the Firebase-hosted HTTPS callback and the
+  checked-in web OAuth client ID:
   `657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com`.
+- Firebase project ID: `workouttracker-16285`.
+- Configured production support URL, after live Firebase deploy:
+  `https://workouttracker-16285.web.app/`.
+- Configured production privacy URL, after live Firebase deploy:
+  `https://workouttracker-16285.web.app/privacy.html`.
+- Configured production Google Picker callback URL, after live Firebase deploy:
+  `https://workouttracker-16285.web.app/google-picker-callback/`.
+- App-owned Picker return URL scheme:
+  `workouttracker://google-picker-callback`.
+- Firebase Hosting is a static support/privacy/callback surface. It is not a
+  Workout Tracker account server and does not store workout data.
 
 Do not change the bundle identifier once App Store Connect, Google OAuth,
 TestFlight installs, screenshots, and review notes depend on it.
@@ -82,9 +93,11 @@ the production OAuth consent screen and production OAuth clients.
    - app name: `Workout Tracker`;
    - support email: monitored;
    - developer contact email: monitored;
-   - app home page: public support/home page;
-   - privacy policy URL: public privacy policy;
-   - authorized domain: the domain hosting those pages.
+   - app home page: `https://workouttracker-16285.web.app/`;
+   - privacy policy URL:
+     `https://workouttracker-16285.web.app/privacy.html`;
+   - authorized domain: the Firebase Hosting domain accepted by Google for
+     those URLs.
 3. Add exactly the scopes used by the app. Current normal use requires writable
    Sheets access:
 
@@ -98,9 +111,22 @@ https://www.googleapis.com/auth/spreadsheets
    `com.spielman.workouttracker`.
 6. Confirm the checked-in Web OAuth client for Google Drive Picker belongs to
    the production Google Cloud project.
-7. Update `ios/Flutter/GoogleSignIn.xcconfig` if the production client differs
+7. Add this exact URL to the Web OAuth client's Authorized redirect URIs:
+
+```text
+https://workouttracker-16285.web.app/google-picker-callback/
+```
+
+8. Confirm the hosted callback page hands Picker results back to the native app
+   through:
+
+```text
+workouttracker://google-picker-callback
+```
+
+9. Update `ios/Flutter/GoogleSignIn.xcconfig` if the production client differs
    from the current development client.
-8. Keep secret JSON exports and API keys out of source control. Public mobile
+10. Keep secret JSON exports and API keys out of source control. Public mobile
    OAuth client IDs are embedded in app config; client secrets are not app
    secrets in an installed mobile binary.
 
@@ -122,10 +148,15 @@ applies. Plan for verification before launch:
 
 ## Phase 3: Public Support And Privacy Pages
 
-Create public pages before TestFlight external testing:
+Firebase Hosting provides the public pages needed before TestFlight external
+testing. Deploy the repo-root Hosting source to the live channel and verify
+these URLs return HTTP 200 before entering them in App Store Connect or Google
+Cloud:
 
-1. Support/home page.
-2. Privacy policy page.
+1. Support/home page:
+   `https://workouttracker-16285.web.app/`.
+2. Privacy policy page:
+   `https://workouttracker-16285.web.app/privacy.html`.
 3. Contact method.
 
 The privacy policy must state:
@@ -182,7 +213,9 @@ Xcode first; do not work around it by changing bundle identifiers.
 ## Phase 5: iPhone And iPad Development-Mode Testing
 
 Do this before TestFlight. Test both iPhone and iPad because this is a
-universal iOS/iPadOS Flutter app.
+universal iOS/iPadOS Flutter app. The normal development-device loop should
+use release builds. Debug builds are reserved for diagnosing a specific Flutter
+or native crash and are not the default validation artifact.
 
 ### One-Time Device Setup
 
@@ -207,13 +240,13 @@ sudo xcodebuild -license
    for development and ad hoc provisioning profiles, while Xcode automatic
    signing can register connected devices.
 
-### Debug Build On Device
+### Release Build On Device
 
 For each device:
 
 ```bash
 flutter devices
-flutter run -d <device-id>
+flutter run --release -d <device-id>
 ```
 
 Verify:
@@ -236,16 +269,15 @@ Verify:
 - no unexpected browser/login loop appears after the sheet is already
   authorized.
 
-### Release Build On Device
-
-For each device:
+If runtime observability is needed without switching all the way to debug mode,
+use profile mode explicitly:
 
 ```bash
-flutter run --release -d <device-id>
+flutter run --profile -d <device-id>
 ```
 
-Repeat the full smoke flow. Release builds catch signing, entitlement, keychain,
-OAuth callback, and optimization issues that debug builds can hide.
+Do not use plain `flutter run -d <device-id>` for release validation; it
+defaults to debug mode.
 
 ## Phase 6: Live Google Integration Gate
 
@@ -406,7 +438,8 @@ After submission:
 - [ ] Apple Developer Program active.
 - [ ] App Store Connect accessible.
 - [ ] App ID exists for `com.spielman.workouttracker`.
-- [ ] iOS Runner target signing works for Debug/Profile/Release.
+- [ ] iOS Runner target signing works for Release/Profile, with Debug kept only
+      for targeted diagnostics.
 - [ ] App record exists.
 - [ ] Screenshots prepared.
 - [ ] App metadata prepared.
@@ -430,10 +463,10 @@ After submission:
 
 ### Device Testing
 
-- [ ] iPhone debug build tested.
 - [ ] iPhone release build tested.
-- [ ] iPad debug build tested.
 - [ ] iPad release build tested.
+- [ ] Profile/debug diagnostics were run only if needed and did not replace
+      release-device validation.
 - [ ] TestFlight install tested on iPhone.
 - [ ] TestFlight install tested on iPad.
 - [ ] Clean-device reviewer instructions tested.

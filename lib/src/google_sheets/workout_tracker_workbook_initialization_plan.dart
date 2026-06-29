@@ -2,26 +2,6 @@ import 'package:googleapis/sheets/v4.dart' as sheets;
 
 import 'workout_tracker_workbook_template.dart';
 
-class WorkoutTrackerWorkbookInitializationPlanner {
-  const WorkoutTrackerWorkbookInitializationPlanner();
-
-  int usableRowCount(WorkoutTrackerWorkbookTab tab) {
-    return _usableWorkbookRowCount(tab);
-  }
-
-  WorkoutTrackerWorkbookTabRewritePlan planTabRewrite({
-    required int sheetId,
-    required WorkoutTrackerWorkbookTab tab,
-    required int frozenRowCount,
-  }) {
-    return WorkoutTrackerWorkbookTabRewritePlan(
-      sheetId: sheetId,
-      tab: tab,
-      frozenRowCount: frozenRowCount,
-    );
-  }
-}
-
 class WorkoutTrackerWorkbookTabRewritePlan {
   WorkoutTrackerWorkbookTabRewritePlan({
     required int sheetId,
@@ -38,7 +18,7 @@ class WorkoutTrackerWorkbookTabRewritePlan {
              properties: sheets.SheetProperties(
                sheetId: sheetId,
                gridProperties: sheets.GridProperties(
-                 rowCount: _usableWorkbookRowCount(tab),
+                 rowCount: usableWorkbookRowCount(tab),
                  columnCount: tab.columnCount,
                  frozenRowCount: frozenRowCount,
                ),
@@ -51,7 +31,7 @@ class WorkoutTrackerWorkbookTabRewritePlan {
              range: sheets.GridRange(
                sheetId: sheetId,
                startRowIndex: 0,
-               endRowIndex: _usableWorkbookRowCount(tab),
+               endRowIndex: usableWorkbookRowCount(tab),
                startColumnIndex: 0,
                endColumnIndex: tab.columnCount,
              ),
@@ -94,7 +74,7 @@ class WorkoutTrackerWorkbookTabRewritePlan {
   final List<sheets.Request> requests;
 }
 
-int _usableWorkbookRowCount(WorkoutTrackerWorkbookTab tab) {
+int usableWorkbookRowCount(WorkoutTrackerWorkbookTab tab) {
   final minimumRows = tab.title == 'Exercises' ? 25 : 50;
   return tab.rows.length > minimumRows ? tab.rows.length : minimumRows;
 }

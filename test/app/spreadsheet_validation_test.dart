@@ -1008,26 +1008,6 @@ class _RecordingWriteClient implements GoogleSheetsWriteClient {
   }
 
   @override
-  Future<void> insertColumns({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetColumnNumber,
-    required int columnCount,
-  }) async {
-    writeCount += 1;
-  }
-
-  @override
-  Future<void> insertRows({
-    required String spreadsheetId,
-    required int sheetId,
-    required int sheetRowNumber,
-    required int rowCount,
-  }) async {
-    writeCount += rowCount;
-  }
-
-  @override
   Future<void> applyActiveSheetStructuralBatch({
     required String spreadsheetId,
     required int sheetId,
@@ -1133,6 +1113,9 @@ class _RecordingGoogleSignInAuthorizationGateway extends ChangeNotifier
 
   @override
   Future<void> switchAccount({List<String> scopes = const []}) async {}
+
+  @override
+  Future<void> signOut() async {}
 
   @override
   Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {

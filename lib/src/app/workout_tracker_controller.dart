@@ -119,6 +119,16 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
+  void clearSpreadsheetSelection() {
+    _report = null;
+    _error = null;
+    _selectedWorkout = null;
+    _selectedHistoryBlock = null;
+    _pendingWorkouts.clear();
+    _clearLoggingSelection();
+    notifyListeners();
+  }
+
   Future<bool> createHistoryBlock(String label) async {
     final report = _report;
     final trimmedLabel = label.trim();
