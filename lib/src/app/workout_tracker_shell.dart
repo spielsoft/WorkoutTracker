@@ -269,6 +269,7 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
       extentOffset: _controller.text.length,
     );
     _focusNode = FocusNode();
+    _focusNode.addListener(_selectTextAfterFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focusNode.requestFocus();
@@ -278,9 +279,25 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
 
   @override
   void dispose() {
+    _focusNode.removeListener(_selectTextAfterFocus);
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _selectTextAfterFocus() {
+    if (!_focusNode.hasFocus) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_focusNode.hasFocus) {
+        return;
+      }
+      _controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
+    });
   }
 
   void _submit() {
@@ -299,6 +316,7 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
         decoration: InputDecoration(labelText: widget.label),
         textInputAction: TextInputAction.done,
         onSubmitted: (_) => _submit(),
+        selectAllOnFocus: true,
       ),
       actions: [
         TextButton(
