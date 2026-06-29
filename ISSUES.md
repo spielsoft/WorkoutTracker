@@ -13,7 +13,7 @@ after GUI-facing changes.
 ## Checklist
 
 - [x] Slice 1: Cleanly Integrate Current GUI Fixes
-- [ ] Slice 2: Validate Multi-Set Logging Against Live GUI
+- [x] Slice 2: Validate Multi-Set Logging Against Live GUI
 - [x] Slice 3: Make Row Actions Understandable
 - [x] Slice 4: Speed Up Multi-Exercise Plan Building
 - [x] Slice 5: Preserve Exercise Library Context After Save
@@ -90,14 +90,41 @@ or whether the live Google write/read adapter still fails to persist S2.
 
 ### Acceptance criteria
 
-- [ ] The rebuilt macOS app creates or selects a test sheet through the GUI.
-- [ ] A workout and history block are created or selected through the GUI.
-- [ ] An exercise is added and S1 plus S2 are logged through the GUI.
+- [x] The rebuilt macOS app creates or selects a test sheet through the GUI.
+- [x] A workout and history block are created or selected through the GUI.
+- [x] An exercise is added and S1 plus S2 are logged through the GUI.
 - [ ] If S2 persists, the logged list and progress update visibly.
-- [ ] If S2 does not persist, the input remains available or a visible error is
+- [x] If S2 does not persist, the input remains available or a visible error is
       shown; it must not silently disappear.
-- [ ] The app is quit at the end of the pass.
-- [ ] Findings are recorded with exact visible reproduction steps.
+- [x] The app is quit at the end of the pass.
+- [x] Findings are recorded with exact visible reproduction steps.
+
+### Findings
+
+Live GUI validation on 2026-06-28 against the rebuilt macOS release app found
+that S2 still does not persist to a newly created Google-backed sheet.
+
+Reproduction:
+
+1. Launched
+   `/Users/ispielma/Code/Apps/WorkoutTracker/build/macos/Build/Products/Release/Workout Tracker.app/`
+   while logged in.
+2. Created Google-backed sheet `WorkoutTracker 2026-06-28` through the GUI.
+3. Created workout `Slice2 Test` and history block `Slice2 Block` through
+   visible controls.
+4. Added seeded canonical exercise `Bench Press` to the workout.
+5. Opened the Bench Press log, entered S1 as `135 / 6 / 8`, and saved. The
+   refreshed log showed `Logged S1`, `Next set S2`, and progress `1/2`.
+6. Entered S2 as `140 / 6 / 8.5` and saved. After refresh, the app showed
+   `Error / Connection or validation failed / Unable to save set: saved set was
+   not visible after refresh.` The inline error said
+   `Unable to save set. Try again.`
+7. The S2 input values remained visible, the logged list still showed only S1,
+   progress remained `1/2`, and current set remained S2.
+
+Result: the stale-refresh guard prevents silent data loss, but live
+Google-backed multi-set logging is still not trustworthy because S2 was not
+visible after refresh.
 
 ### Blocked by
 
@@ -222,13 +249,47 @@ setters, direct APIs, source inspection, or direct sheet edits.
 
 ### Acceptance criteria
 
-- [ ] The pass uses only visible mouse and keyboard interactions.
-- [ ] A new Google-backed sheet is created through the GUI.
-- [ ] Several canonical exercises are added through the GUI.
-- [ ] At least two workouts are built through the GUI.
+- [x] The pass uses only visible mouse and keyboard interactions.
+- [x] A new Google-backed sheet is created through the GUI.
+- [x] Several canonical exercises are added through the GUI.
+- [x] At least two workouts are built through the GUI.
 - [ ] Multiple sets, including S2 or later, are logged through the GUI.
-- [ ] The app is quit when the pass is complete or when a blocker is hit.
-- [ ] Pain points and blockers are reported with reproduction steps.
+- [x] The app is quit when the pass is complete or when a blocker is hit.
+- [x] Pain points and blockers are reported with reproduction steps.
+
+### Findings
+
+Black-box GUI regression attempt on 2026-06-28 used only visible Computer Use
+mouse, keyboard, scroll, and drag interactions against the rebuilt macOS release
+app.
+
+Completed setup:
+
+1. Created another Google-backed `WorkoutTracker 2026-06-28` sheet through the
+   GUI.
+2. Created custom canonical exercises `Slice6 Press` and `Slice6 Row` through
+   the exercise manager GUI; both appeared in the exercise list after save.
+3. Created workouts `Slice6 Push` and `Slice6 Pull` through the workout
+   selector.
+4. Created and selected history block `Slice6 Block`.
+5. Added `Slice6 Row` to `Slice6 Pull` and `Slice6 Press` to `Slice6 Push`.
+
+Blockers and pain points:
+
+1. Slice 6 cannot be completed while the Slice 2 live S2 persistence blocker is
+   unresolved: S2 entry was proven to fail on a new Google-backed sheet with a
+   visible `saved set was not visible after refresh` error.
+2. During the Slice 6 stress attempt, the release app window disappeared from
+   Computer Use while saving S1 for `Slice6 Press`. Computer Use reported
+   `noWindowsAvailable` followed by `cgWindowNotFound`; the app was still
+   listed as running and was then quit with `super+q`.
+3. The Add-to-workout back button returned to the account/sheet screen instead
+   of workout setup during this pass, requiring `Return to workout` to continue.
+
+Result: Slice 6 remains incomplete. The setup flow got far enough to confirm
+new-sheet creation, custom exercise creation, two-workout setup, history-block
+selection, and exercise placement, but the multi-set stress path remains blocked
+by live logging reliability.
 
 ### Blocked by
 
