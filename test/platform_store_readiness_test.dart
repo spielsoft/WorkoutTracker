@@ -134,6 +134,19 @@ void main() {
       },
     );
 
+    test('macOS main window is visible at launch', () {
+      final mainMenu = File(
+        'macos/Runner/Base.lproj/MainMenu.xib',
+      ).readAsStringSync();
+
+      expect(
+        mainMenu,
+        contains(RegExp(r'<window\b[^>]*visibleAtLaunch="YES"')),
+        reason:
+            'The release app must open a visible window for GUI validation.',
+      );
+    });
+
     test(
       'documents Google-backed sheet selection while auth remains wired',
       () {
