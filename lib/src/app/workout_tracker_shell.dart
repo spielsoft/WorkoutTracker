@@ -704,14 +704,11 @@ class _SpreadsheetValidationShellState
   }
 
   void _openPrimaryExerciseAdd(String workout) {
-    final returnScreen = _screen == _WorkoutTrackerScreen.workoutSetup
-        ? _WorkoutTrackerScreen.workoutSetup
-        : _WorkoutTrackerScreen.exercisePicker;
     _controller.closeExercise();
     _canonicalExerciseBeingEdited = null;
     _highlightedCanonicalExerciseName = null;
     setState(() {
-      _exerciseAddReturnScreen = returnScreen;
+      _exerciseAddReturnScreen = _WorkoutTrackerScreen.workoutSetup;
       _addExercisePlacementIntent = _AddExercisePlacementIntent.primary(
         workout: workout,
       );

@@ -1439,6 +1439,194 @@ void main() {
   });
 
   testWidgets(
+    'add-to-workout search and placement preserve selected sheet context',
+    (tester) async {
+      final activeSheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [
+            [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
+            [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
+            [
+              'Pull Up',
+              '3',
+              '8',
+              '8',
+              '2 min',
+              '',
+              '',
+              '{Reps}',
+              'Legs',
+              '',
+              '',
+              '',
+            ],
+            [
+              'Bench Press',
+              '4',
+              '6',
+              '8',
+              '3 min',
+              '',
+              '',
+              '{Weight}[x]{Reps}[@]{RPE}',
+              'Upper',
+              '',
+              '',
+              '',
+            ],
+          ],
+          cellFormulas: const [
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 8,
+              formula: '=Exercises!I2',
+            ),
+            CellFormula(
+              sheetRowNumber: 4,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A3',
+            ),
+            CellFormula(
+              sheetRowNumber: 4,
+              sheetColumnNumber: 8,
+              formula: '=Exercises!I3',
+            ),
+          ],
+          exercisesRows: const [
+            exercisesSheetColumns,
+            [
+              'Pull Up',
+              'Bodyweight pull',
+              '3',
+              '8',
+              '8',
+              '2 min',
+              '',
+              'Full hang.',
+              '{Reps}',
+            ],
+            [
+              'Bench Press',
+              'Competition bench',
+              '4',
+              '6',
+              '8',
+              '3 min',
+              '',
+              '',
+              '{Weight}[x]{Reps}[@]{RPE}',
+            ],
+            [
+              'Romanian Deadlift',
+              'Hip hinge',
+              '3',
+              '10',
+              '7',
+              '2 min',
+              '',
+              '',
+              '{Weight}[x]{Reps}[@]{RPE}',
+            ],
+          ],
+        ),
+      );
+      final store = _MemoryAppStateStore(
+        null,
+        selectedSpreadsheet: const SelectedSpreadsheet(
+          spreadsheetId: 'selected-spreadsheet-id',
+          name: '2026 Workouts',
+          drivePath: 'My Drive / Workouts / 2026 Workouts',
+          accountEmail: 'saved@example.com',
+        ),
+      );
+      final service = TestSpreadsheetValidationService(activeSheet);
+      final authoringService = _WorkoutPlacementRecordingService(activeSheet);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          exerciseAuthoringService: authoringService,
+          appStateStore: store,
+          spreadsheetPicker: _FakeSpreadsheetPicker(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('Week 2'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Week 1').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Legs (0/1 done)').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Upper (0/1 done)').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('add-primary-exercise-from-setup')),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('exercise-picker-search')),
+        'romanian',
+      );
+      await tester.pump();
+
+      expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+      await tester.tap(find.byTooltip('Back to workout setup'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Upper exercises'), findsOneWidget);
+      expect(find.text('Week 1'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('spreadsheet-selection-input')),
+        findsNothing,
+      );
+      expect(find.text('Return to workout'), findsNothing);
+
+      await tester.tap(
+        find.byKey(const ValueKey('add-primary-exercise-from-setup')),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('exercise-picker-search')),
+        'romanian',
+      );
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const ValueKey('existing-exercise-selector')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Romanian Deadlift').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
+      await tester.pumpAndSettle();
+
+      expect(authoringService.placements.single.exercise, 'Romanian Deadlift');
+      expect(authoringService.placements.single.workout, 'Upper');
+      expect(find.text('Upper exercises'), findsOneWidget);
+      expect(find.text('Week 1'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('spreadsheet-selection-input')),
+        findsNothing,
+      );
+      expect(find.text('Return to workout'), findsNothing);
+
+      await tester.tap(find.byTooltip('Back to sheet selection'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('My Drive / Workouts / 2026 Workouts'), findsOneWidget);
+      expect(find.text('Return to workout'), findsOneWidget);
+      expect(find.text('Change sheet'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'keeps exercise picker backup actions reachable on a narrow phone',
     (tester) async {
       tester.view.physicalSize = const Size(320, 700);
