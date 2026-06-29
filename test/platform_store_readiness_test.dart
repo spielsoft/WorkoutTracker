@@ -138,12 +138,21 @@ void main() {
       final mainMenu = File(
         'macos/Runner/Base.lproj/MainMenu.xib',
       ).readAsStringSync();
+      final appDelegate = File(
+        'macos/Runner/AppDelegate.swift',
+      ).readAsStringSync();
 
       expect(
         mainMenu,
         contains(RegExp(r'<window\b[^>]*visibleAtLaunch="YES"')),
         reason:
             'The release app must open a visible window for GUI validation.',
+      );
+      expect(
+        appDelegate,
+        contains('mainFlutterWindow?.makeKeyAndOrderFront(nil)'),
+        reason:
+            'The app delegate must explicitly order the Flutter window front.',
       );
     });
 
