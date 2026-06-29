@@ -87,7 +87,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onAddHistoryBlock,
     required this.onCreateCanonicalExercise,
     required this.onEditCanonicalExercise,
-    required this.highlightedCanonicalExerciseName,
+    required this.highlightedCanonicalExerciseSheetRowNumber,
     required this.onReorderCanonicalExercises,
     required this.onReorderWorkoutExercises,
     required this.onOpenExercise,
@@ -120,7 +120,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final VoidCallback? onAddHistoryBlock;
   final VoidCallback? onCreateCanonicalExercise;
   final ValueChanged<CanonicalExercise>? onEditCanonicalExercise;
-  final String? highlightedCanonicalExerciseName;
+  final int? highlightedCanonicalExerciseSheetRowNumber;
   final Future<bool> Function(ReorderIntent intent)?
   onReorderCanonicalExercises;
   final Future<bool> Function(ReorderIntent intent)? onReorderWorkoutExercises;
@@ -210,7 +210,8 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
         onAddExercise: onCreateCanonicalExercise,
         onEditExercise: onEditCanonicalExercise,
         onReorderExercises: onReorderCanonicalExercises,
-        highlightedExerciseName: highlightedCanonicalExerciseName,
+        highlightedExerciseSheetRowNumber:
+            highlightedCanonicalExerciseSheetRowNumber,
       );
     }
 
@@ -344,30 +345,17 @@ class _WorkoutSelectorField extends StatefulWidget {
 }
 
 class _WorkoutSelectorFieldState extends State<_WorkoutSelectorField> {
-  int _resetEpoch = 0;
-
-  void _openAddWorkoutAfterDropdownCloses() {
-    setState(() {
-      _resetEpoch += 1;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        widget.onAddWorkout?.call();
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      key: ValueKey('workout-selector-${widget.selectedWorkout}-$_resetEpoch'),
-      initialValue: widget.selectedWorkout,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'Workout',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.fitness_center_outlined),
-      ),
+    return _SetupSelectorField(
+      keyPrefix: 'workout-selector',
+      label: 'Workout',
+      emptyPrompt: 'Add workout...',
+      prefixIcon: Icons.fitness_center_outlined,
+      selectedValue: widget.selectedWorkout,
+      addValue: _addWorkoutMenuValue,
+      onAdd: widget.onAddWorkout,
+      onChanged: widget.onWorkoutChanged,
       items: [
         for (final workout in widget.workouts)
           DropdownMenuItem(
@@ -377,30 +365,7 @@ class _WorkoutSelectorFieldState extends State<_WorkoutSelectorField> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-        if (widget.onAddWorkout != null)
-          const DropdownMenuItem(
-            value: _addWorkoutMenuValue,
-            child: Row(
-              children: [
-                Icon(Icons.add_outlined),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Add workout...',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
-      onChanged: (value) {
-        if (value == _addWorkoutMenuValue) {
-          _openAddWorkoutAfterDropdownCloses();
-          return;
-        }
-        widget.onWorkoutChanged(value);
-      },
     );
   }
 }
@@ -425,15 +390,65 @@ class _HistoryBlockSelectorField extends StatefulWidget {
 
 class _HistoryBlockSelectorFieldState
     extends State<_HistoryBlockSelectorField> {
+  @override
+  Widget build(BuildContext context) {
+    return _SetupSelectorField(
+      keyPrefix: 'history-block-selector',
+      label: 'History block',
+      emptyPrompt: 'Add history block...',
+      prefixIcon: Icons.history_outlined,
+      selectedValue: widget.selectedHistoryBlock,
+      addValue: _addHistoryBlockMenuValue,
+      onAdd: widget.onAddHistoryBlock,
+      onChanged: widget.onHistoryBlockChanged,
+      items: [
+        for (final block in widget.historyBlocks)
+          DropdownMenuItem(
+            value: block.label,
+            child: Text(block.label, overflow: TextOverflow.ellipsis),
+          ),
+      ],
+    );
+  }
+}
+
+class _SetupSelectorField extends StatefulWidget {
+  const _SetupSelectorField({
+    required this.keyPrefix,
+    required this.label,
+    required this.emptyPrompt,
+    required this.prefixIcon,
+    required this.selectedValue,
+    required this.addValue,
+    required this.items,
+    required this.onChanged,
+    required this.onAdd,
+  });
+
+  final String keyPrefix;
+  final String label;
+  final String emptyPrompt;
+  final IconData prefixIcon;
+  final String? selectedValue;
+  final String addValue;
+  final List<DropdownMenuItem<String>> items;
+  final ValueChanged<String?> onChanged;
+  final VoidCallback? onAdd;
+
+  @override
+  State<_SetupSelectorField> createState() => _SetupSelectorFieldState();
+}
+
+class _SetupSelectorFieldState extends State<_SetupSelectorField> {
   int _resetEpoch = 0;
 
-  void _openAddHistoryBlockAfterDropdownCloses() {
+  void _openAddAfterDropdownCloses() {
     setState(() {
       _resetEpoch += 1;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        widget.onAddHistoryBlock?.call();
+        widget.onAdd?.call();
       }
     });
   }
@@ -441,32 +456,28 @@ class _HistoryBlockSelectorFieldState
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      key: ValueKey(
-        'history-block-selector-${widget.selectedHistoryBlock}-$_resetEpoch',
-      ),
-      initialValue: widget.selectedHistoryBlock,
+      key: ValueKey('${widget.keyPrefix}-${widget.selectedValue}-$_resetEpoch'),
+      initialValue: widget.selectedValue,
       isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'History block',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.history_outlined),
+      hint: Text(widget.emptyPrompt, overflow: TextOverflow.ellipsis),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        border: const OutlineInputBorder(),
+        prefixIcon: Icon(widget.prefixIcon),
       ),
       items: [
-        for (final block in widget.historyBlocks)
+        ...widget.items,
+        if (widget.onAdd != null)
           DropdownMenuItem(
-            value: block.label,
-            child: Text(block.label, overflow: TextOverflow.ellipsis),
-          ),
-        if (widget.onAddHistoryBlock != null)
-          const DropdownMenuItem(
-            value: _addHistoryBlockMenuValue,
+            value: widget.addValue,
             child: Row(
               children: [
-                Icon(Icons.add_outlined),
-                SizedBox(width: 8),
+                const Icon(Icons.add_outlined),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Add history block...',
+                    widget.emptyPrompt,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -475,11 +486,11 @@ class _HistoryBlockSelectorFieldState
           ),
       ],
       onChanged: (value) {
-        if (value == _addHistoryBlockMenuValue) {
-          _openAddHistoryBlockAfterDropdownCloses();
+        if (value == widget.addValue) {
+          _openAddAfterDropdownCloses();
           return;
         }
-        widget.onHistoryBlockChanged(value);
+        widget.onChanged(value);
       },
     );
   }

@@ -829,7 +829,49 @@ void main() {
     await tester.enterText(input, 'edited-spreadsheet-id');
     await tester.pump();
 
-    expect(store.writes.last, 'edited-spreadsheet-id');
+    expect(
+      store.accessStateWrites.last.spreadsheetText,
+      'edited-spreadsheet-id',
+    );
+    expect(store.accessStateWrites.last.selectedSpreadsheet, isNull);
+    expect(store.accessStateWrites.last.workoutSelection, isNull);
+  });
+
+  testWidgets('editing the sheet selection preserves Google login', (
+    tester,
+  ) async {
+    final store = _MemoryAppStateStore('saved-spreadsheet-id');
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+    final accountSession = _FakeGoogleAccountSession(
+      const GoogleAccountProfile(
+        email: 'saved@example.com',
+        displayName: 'Saved Account',
+      ),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        appStateStore: store,
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('spreadsheet-selection-input')),
+      'other-spreadsheet-id',
+    );
+    await tester.pump();
+
+    expect(store.spreadsheetText, 'other-spreadsheet-id');
+    expect(store.selectedSpreadsheet, isNull);
+    expect(accountSession.signOutCount, 0);
+    expect(accountSession.currentAccount?.email, 'saved@example.com');
   });
 
   testWidgets('restores a selected Google Drive sheet label', (tester) async {
@@ -2673,6 +2715,90 @@ void main() {
   });
 
   testWidgets(
+    'keeps empty workout setup selectors labeled through focus and creation',
+    (tester) async {
+      final service = TestSpreadsheetValidationService.fromRows([
+        activeSheetFixedColumns,
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Workout'), findsOneWidget);
+      expect(find.text('History block'), findsOneWidget);
+      expect(find.text('Add workout...'), findsOneWidget);
+      expect(find.text('Add history block...'), findsOneWidget);
+      final initialWorkoutLabelTopLeft = tester.getTopLeft(
+        find.text('Workout'),
+      );
+      final initialHistoryLabelTopLeft = tester.getTopLeft(
+        find.text('History block'),
+      );
+      final selectors = find.byType(DropdownButtonFormField<String>);
+
+      await tester.tap(selectors.first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add workout...'), findsWidgets);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Workout'), findsOneWidget);
+      expect(find.text('History block'), findsOneWidget);
+      expect(find.text('Add workout...'), findsOneWidget);
+      expect(find.text('Add history block...'), findsOneWidget);
+      expect(
+        (tester.getTopLeft(find.text('Workout')) - initialWorkoutLabelTopLeft)
+            .distance,
+        lessThan(1),
+      );
+      expect(
+        (tester.getTopLeft(find.text('History block')) -
+                initialHistoryLabelTopLeft)
+            .distance,
+        lessThan(1),
+      );
+
+      await tester.tap(selectors.first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add workout...').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(_textFieldWithLabel('Workout name'), 'Push');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Push (0/0 done)'), findsOneWidget);
+      expect(find.text('Add workout...'), findsNothing);
+      expect(find.text('Add history block...'), findsOneWidget);
+
+      await tester.tap(selectors.last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add history block...').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        _textFieldWithLabel('History block label'),
+        'Week 1',
+      );
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+
+      expect(service.appliedPlans, hasLength(1));
+      expect(find.text('Push (0/0 done)'), findsOneWidget);
+      expect(find.text('Week 1'), findsOneWidget);
+      expect(find.text('Add history block...'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'shows setup creation actions in selectors and selects created values',
     (tester) async {
       final service = TestSpreadsheetValidationService.fromRows([
@@ -3699,6 +3825,104 @@ void main() {
     expect(accountSession.currentAccount?.email, 'right@example.com');
   });
 
+  testWidgets('logs out from the Google Sheets account menu', (tester) async {
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+    final accountSession = _FakeGoogleAccountSession(
+      const GoogleAccountProfile(
+        email: 'saved@example.com',
+        displayName: 'Saved Account',
+      ),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(
+      find.byTooltip('Google Sheets account: saved@example.com'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Log out'), findsOneWidget);
+
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+
+    expect(accountSession.signOutCount, 1);
+    expect(accountSession.currentAccount, isNull);
+    expect(find.byTooltip('Connect Google Sheets'), findsOneWidget);
+  });
+
+  testWidgets('logging out disconnects the selected workout sheet', (
+    tester,
+  ) async {
+    final store =
+        _MemoryAppStateStore(
+            null,
+            selectedSpreadsheet: const SelectedSpreadsheet(
+              spreadsheetId: 'selected-spreadsheet-id',
+              name: 'development',
+              accountEmail: 'saved@example.com',
+            ),
+          )
+          ..workoutSelection = const WorkoutSelectionState(
+            spreadsheetId: 'selected-spreadsheet-id',
+            workout: 'Legs',
+            historyBlock: 'Week 1',
+          );
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+    final accountSession = _FakeGoogleAccountSession(
+      const GoogleAccountProfile(
+        email: 'saved@example.com',
+        displayName: 'Saved Account',
+      ),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        appStateStore: store,
+        spreadsheetPicker: _FakeSpreadsheetPicker(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Back to sheet selection'));
+    await tester.pumpAndSettle();
+    expect(find.text('development'), findsOneWidget);
+    expect(find.text('Return to workout'), findsOneWidget);
+
+    await tester.tap(
+      find.byTooltip('Google Sheets account: saved@example.com'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+
+    expect(accountSession.signOutCount, 1);
+    expect(store.clearCount, 1);
+    expect(store.selectedSpreadsheet, isNull);
+    expect(store.spreadsheetText, isNull);
+    expect(store.workoutSelection, isNull);
+    expect(find.text('development'), findsNothing);
+    expect(find.text('Return to workout'), findsNothing);
+    expect(find.text('No workout sheet selected'), findsOneWidget);
+  });
+
   testWidgets('frames missing account state as Google Sheets authorization', (
     tester,
   ) async {
@@ -3776,6 +4000,7 @@ class _FakeGoogleAccountSession extends ChangeNotifier
   final GoogleAccountProfile? restoredAccount;
   int restoreCount = 0;
   int switchCount = 0;
+  int signOutCount = 0;
   final requestedScopes = <List<String>>[];
 
   @override
@@ -3798,6 +4023,13 @@ class _FakeGoogleAccountSession extends ChangeNotifier
       email: 'right@example.com',
       displayName: 'Right Account',
     );
+    notifyListeners();
+  }
+
+  @override
+  Future<void> signOut() async {
+    signOutCount += 1;
+    _currentAccount = null;
     notifyListeners();
   }
 }
@@ -3825,41 +4057,34 @@ class _MemoryAppStateStore implements AppStateStore {
   String? spreadsheetText;
   SelectedSpreadsheet? selectedSpreadsheet;
   WorkoutSelectionState? workoutSelection;
-  final writes = <String>[];
-  final selectedWrites = <SelectedSpreadsheet>[];
-  final workoutSelectionWrites = <WorkoutSelectionState>[];
+  final accessStateWrites = <GoogleWorkspaceAccessState>[];
+  int clearCount = 0;
 
   @override
-  Future<String?> readSpreadsheetText() async {
-    return spreadsheetText;
+  Future<GoogleWorkspaceAccessState> readGoogleWorkspaceAccessState() async {
+    return GoogleWorkspaceAccessState(
+      spreadsheetText: spreadsheetText,
+      selectedSpreadsheet: selectedSpreadsheet,
+      workoutSelection: workoutSelection,
+    );
   }
 
   @override
-  Future<void> writeSpreadsheetText(String value) async {
-    spreadsheetText = value;
-    writes.add(value);
+  Future<void> writeGoogleWorkspaceAccessState(
+    GoogleWorkspaceAccessState value,
+  ) async {
+    spreadsheetText = value.spreadsheetText;
+    selectedSpreadsheet = value.selectedSpreadsheet;
+    workoutSelection = value.workoutSelection;
+    accessStateWrites.add(value);
   }
 
   @override
-  Future<SelectedSpreadsheet?> readSelectedSpreadsheet() async {
-    return selectedSpreadsheet;
-  }
-
-  @override
-  Future<void> writeSelectedSpreadsheet(SelectedSpreadsheet value) async {
-    selectedSpreadsheet = value;
-    selectedWrites.add(value);
-  }
-
-  @override
-  Future<WorkoutSelectionState?> readWorkoutSelection() async {
-    return workoutSelection;
-  }
-
-  @override
-  Future<void> writeWorkoutSelection(WorkoutSelectionState value) async {
-    workoutSelection = value;
-    workoutSelectionWrites.add(value);
+  Future<void> clearGoogleWorkspaceAccessState() async {
+    clearCount += 1;
+    spreadsheetText = null;
+    selectedSpreadsheet = null;
+    workoutSelection = null;
   }
 }
 

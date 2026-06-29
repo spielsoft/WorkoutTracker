@@ -43,6 +43,11 @@ class ActiveSheetWritePlan {
         (first, second) =>
             second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
       );
+    if (sortedInsertions.isNotEmpty) {
+      while (preview.length < 2) {
+        preview.add([]);
+      }
+    }
 
     for (final insertion in sortedRowInsertions) {
       final rowIndex = insertion.sheetRowNumber - 1;
@@ -1834,9 +1839,7 @@ class _ActiveSheetWritePlanner {
       return null;
     }
     final format = slot.logFormat;
-    return format is ParsedLogFormat
-        ? format.render(fieldValues)
-        : null;
+    return format is ParsedLogFormat ? format.render(fieldValues) : null;
   }
 
   WorkoutSlot? _slotForRow(int sheetRowNumber) {
