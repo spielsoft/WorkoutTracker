@@ -11,6 +11,101 @@ import 'app/test_spreadsheet_validation_service.dart';
 import 'fixtures/workout_sheet_fixtures.dart';
 
 void main() {
+  testWidgets('meets Flutter accessibility guidelines across core GUI states', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1', ''],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        'Stay braced.',
+        '',
+        'Legs',
+        '',
+        '150x5@8',
+        '',
+      ],
+      [
+        'Leg Press',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        'Backup if racks are busy.',
+        '',
+        'Legs',
+        'TRUE',
+        '',
+        '',
+      ],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+    await _expectFlutterAccessibilityGuidelines(tester);
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await _expectFlutterAccessibilityGuidelines(tester);
+
+    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+    await tester.pumpAndSettle();
+    await _expectFlutterAccessibilityGuidelines(tester);
+
+    await tester.tap(find.text('Squat').first);
+    await tester.pumpAndSettle();
+    await _expectFlutterAccessibilityGuidelines(tester);
+
+    await tester.tap(find.byTooltip('Back to exercises'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Back to workout setup'));
+    await tester.pumpAndSettle();
+
+    final inventoryService = TestSpreadsheetValidationService(
+      _exerciseInventoryParsedSheet([
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Leg Press', description: 'Machine press'),
+        _exerciseRow('Cable Row', description: 'Seated row'),
+      ]),
+    );
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        key: const ValueKey('inventory-accessibility-app'),
+        validationService: inventoryService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
+    await tester.pumpAndSettle();
+    await _expectFlutterAccessibilityGuidelines(tester);
+
+    await tester.tap(find.byKey(const ValueKey('add-canonical-exercise')));
+    await tester.pumpAndSettle();
+    await _expectFlutterAccessibilityGuidelines(tester);
+  });
+
   testWidgets('renders the main logging flow and sends a save to the service', (
     tester,
   ) async {
@@ -4094,6 +4189,18 @@ EditableText _editableTextFor(Finder textField) {
       as EditableText;
 }
 
+Future<void> _expectFlutterAccessibilityGuidelines(WidgetTester tester) async {
+  final semantics = tester.ensureSemantics();
+  try {
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+  } finally {
+    semantics.dispose();
+  }
+}
+
 class _MemoryAppStateStore implements AppStateStore {
   _MemoryAppStateStore(this.spreadsheetText, {this.selectedSpreadsheet});
 
@@ -4288,7 +4395,7 @@ class _WorkoutPlacementRecordingService
     extends _AppendingExerciseAuthoringService {
   _WorkoutPlacementRecordingService(this._activeSheet) : super(const []);
 
-  ParsedActiveSheet _activeSheet;
+  final ParsedActiveSheet _activeSheet;
   final placements = <({String exercise, String? workout, bool isBackup})>[];
 
   @override

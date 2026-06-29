@@ -19,29 +19,32 @@ class _SetProgressStrip extends StatelessWidget {
         ? currentSetNumber
         : totalSetCount;
     final logged = loggedSetNumbers.length;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        _StateChip(
-          state: _WorkoutVisualState.logged,
-          label: 'Progress $logged/$total',
-          emphasized: true,
-        ),
-        for (var setNumber = 1; setNumber <= total; setNumber += 1)
-          if (loggedSetNumbers.contains(setNumber))
-            _StateChip(
-              state: _WorkoutVisualState.logged,
-              label: 'Logged S$setNumber',
-            )
-          else if (setNumber == currentSetNumber)
-            _StateChip(
-              state: _WorkoutVisualState.current,
-              label: 'Current S$setNumber',
-              emphasized: true,
-            ),
-      ],
+    return _A11yStatus(
+      label: 'Workout progress: $logged of $total sets logged.',
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _StateChip(
+            state: _WorkoutVisualState.logged,
+            label: 'Progress $logged/$total',
+            emphasized: true,
+          ),
+          for (var setNumber = 1; setNumber <= total; setNumber += 1)
+            if (loggedSetNumbers.contains(setNumber))
+              _StateChip(
+                state: _WorkoutVisualState.logged,
+                label: 'Logged S$setNumber',
+              )
+            else if (setNumber == currentSetNumber)
+              _StateChip(
+                state: _WorkoutVisualState.current,
+                label: 'Current S$setNumber',
+                emphasized: true,
+              ),
+        ],
+      ),
     );
   }
 }
@@ -65,37 +68,40 @@ class _StateChip extends StatelessWidget {
                 ? Theme.of(context).textTheme.labelLarge
                 : Theme.of(context).textTheme.labelMedium)
             ?.copyWith(color: style.foreground, fontWeight: FontWeight.w700);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: emphasized
-            ? style.background
-            : style.background.withValues(alpha: 0.55),
-        border: Border.all(color: style.border),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: emphasized ? 10 : 8,
-          vertical: emphasized ? 6 : 5,
+    return _A11yStatus(
+      label: label,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: emphasized
+              ? style.background
+              : style.background.withValues(alpha: 0.55),
+          border: Border.all(color: style.border),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              style.icon,
-              size: emphasized ? 16 : 14,
-              color: style.foreground,
-            ),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textStyle,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: emphasized ? 10 : 8,
+            vertical: emphasized ? 6 : 5,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                style.icon,
+                size: emphasized ? 16 : 14,
+                color: style.foreground,
               ),
-            ),
-          ],
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textStyle,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

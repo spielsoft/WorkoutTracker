@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
@@ -18,6 +19,7 @@ part 'workout_tracker_shell_exercise_manager.dart';
 part 'workout_tracker_shell_visual_states.dart';
 part 'workout_tracker_shell_logging.dart';
 part 'workout_tracker_shell_validation.dart';
+part 'workout_tracker_shell_accessibility.dart';
 
 const _compactSegmentedButtonRadius = 8.0;
 
@@ -308,15 +310,19 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.title),
-      content: TextField(
-        key: widget.textFieldKey,
-        controller: _controller,
-        focusNode: _focusNode,
-        autofocus: true,
-        decoration: InputDecoration(labelText: widget.label),
-        textInputAction: TextInputAction.done,
-        onSubmitted: (_) => _submit(),
-        selectAllOnFocus: true,
+      content: _A11yTextField(
+        label: widget.label,
+        valueListenable: _controller,
+        child: TextField(
+          key: widget.textFieldKey,
+          controller: _controller,
+          focusNode: _focusNode,
+          autofocus: true,
+          decoration: InputDecoration(labelText: widget.label),
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+          selectAllOnFocus: true,
+        ),
       ),
       actions: [
         TextButton(
@@ -358,17 +364,22 @@ class _SpreadsheetTextFallback extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: TextField(
-                key: const ValueKey('spreadsheet-selection-input'),
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: 'Paste Google Sheets URL or ID',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.table_chart_outlined),
+              child: _A11yTextField(
+                label: 'Google Sheets URL or ID',
+                valueListenable: controller,
+                hint: 'Paste a Google Sheets URL or spreadsheet ID.',
+                child: TextField(
+                  key: const ValueKey('spreadsheet-selection-input'),
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Paste Google Sheets URL or ID',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.table_chart_outlined),
+                  ),
+                  onChanged: (_) => onChanged(),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => onSubmitted(),
                 ),
-                onChanged: (_) => onChanged(),
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => onSubmitted(),
               ),
             ),
             if (accountSession != null) ...[
@@ -1050,149 +1061,154 @@ class _SpreadsheetValidationShellState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: _controller,
-          builder: (context, _) {
-            final report = _controller.report;
-            final error = _controller.error;
-            final isBusy = _controller.isBusy || _isPickingSpreadsheet;
-            final spreadsheetPicker = widget.spreadsheetPicker;
-            final pickerAvailability = spreadsheetPicker?.availability;
-            final hasLoadedWorkout =
-                report != null && !report.hasBlockingIssues;
-            final showPickerAvailability =
-                _selectedSpreadsheet == null && pickerAvailability != null;
-            final showSheetSelection =
-                _screen == _WorkoutTrackerScreen.sheetSelection ||
-                report == null ||
-                report.hasBlockingIssues;
-            final showSpreadsheetTextFallback =
-                spreadsheetPicker == null ||
-                (_selectedSpreadsheet == null &&
-                    pickerAvailability != null &&
-                    !pickerAvailability.canChoose);
-            return ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 840),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (showSheetSelection) ...[
-                        if (spreadsheetPicker != null) ...[
-                          _SelectedSpreadsheetChooser(
-                            selectedSpreadsheet: _selectedSpreadsheet,
-                            availability: pickerAvailability!,
-                            showAvailabilitySummary: showPickerAvailability,
-                            isBusy: isBusy,
-                            accountSession: widget.accountSession,
-                            onSignedOut: _handleSignedOut,
-                            onReturnToWorkout: hasLoadedWorkout
-                                ? _returnToLoadedWorkout
-                                : null,
-                            onChooseSpreadsheet: _chooseSpreadsheet,
-                            onCreateSpreadsheet: _createSpreadsheet,
-                          ),
+      body: _A11yScreen(
+        label: 'WorkoutTracker',
+        child: SafeArea(
+          child: ListenableBuilder(
+            listenable: _controller,
+            builder: (context, _) {
+              final report = _controller.report;
+              final error = _controller.error;
+              final isBusy = _controller.isBusy || _isPickingSpreadsheet;
+              final spreadsheetPicker = widget.spreadsheetPicker;
+              final pickerAvailability = spreadsheetPicker?.availability;
+              final hasLoadedWorkout =
+                  report != null && !report.hasBlockingIssues;
+              final showPickerAvailability =
+                  _selectedSpreadsheet == null && pickerAvailability != null;
+              final showSheetSelection =
+                  _screen == _WorkoutTrackerScreen.sheetSelection ||
+                  report == null ||
+                  report.hasBlockingIssues;
+              final showSpreadsheetTextFallback =
+                  spreadsheetPicker == null ||
+                  (_selectedSpreadsheet == null &&
+                      pickerAvailability != null &&
+                      !pickerAvailability.canChoose);
+              return ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 840),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (showSheetSelection) ...[
+                          if (spreadsheetPicker != null) ...[
+                            _SelectedSpreadsheetChooser(
+                              selectedSpreadsheet: _selectedSpreadsheet,
+                              availability: pickerAvailability!,
+                              showAvailabilitySummary: showPickerAvailability,
+                              isBusy: isBusy,
+                              accountSession: widget.accountSession,
+                              onSignedOut: _handleSignedOut,
+                              onReturnToWorkout: hasLoadedWorkout
+                                  ? _returnToLoadedWorkout
+                                  : null,
+                              onChooseSpreadsheet: _chooseSpreadsheet,
+                              onCreateSpreadsheet: _createSpreadsheet,
+                            ),
+                            if (showSpreadsheetTextFallback)
+                              const SizedBox(height: 12),
+                          ],
                           if (showSpreadsheetTextFallback)
-                            const SizedBox(height: 12),
+                            _SpreadsheetTextFallback(
+                              controller: _spreadsheetController,
+                              isBusy: isBusy,
+                              accountSession: widget.accountSession,
+                              onSignedOut: _handleSignedOut,
+                              onChanged: _usePastedSpreadsheetText,
+                              onSubmitted: _validateSelectedSpreadsheet,
+                              onValidate: _validateSelectedSpreadsheet,
+                            ),
+                          const SizedBox(height: 24),
                         ],
-                        if (showSpreadsheetTextFallback)
-                          _SpreadsheetTextFallback(
-                            controller: _spreadsheetController,
-                            isBusy: isBusy,
-                            accountSession: widget.accountSession,
-                            onSignedOut: _handleSignedOut,
-                            onChanged: _usePastedSpreadsheetText,
-                            onSubmitted: _validateSelectedSpreadsheet,
-                            onValidate: _validateSelectedSpreadsheet,
+                        if (error != null) ...[
+                          _IssuePanel(
+                            icon: Icons.error_outline,
+                            title: 'Connection or validation failed',
+                            lines: [error],
+                            tone: _IssueTone.error,
                           ),
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 16),
+                        ],
+                        if (showSheetSelection && report != null)
+                          _ValidationSummary(
+                            report: report,
+                            onRepairUnambiguousFormulaIssues: isBusy
+                                ? null
+                                : _repairUnambiguousFormulaIssues,
+                            onRepairFormulaIssue: isBusy
+                                ? null
+                                : _repairFormulaIssue,
+                            onOpenSpreadsheet: isBusy
+                                ? null
+                                : _openSelectedSpreadsheet,
+                          ),
+                        if (!showSheetSelection)
+                          _WorkoutAndHistorySelection(
+                            setup: _controller.workoutSetup!,
+                            sheetLabel:
+                                _selectedSpreadsheet?.displayLabel ??
+                                report.spreadsheetId,
+                            screen: _screen,
+                            onBackToSheetSelection: _returnToSheetSelection,
+                            onSelectWorkoutSetup: _selectWorkoutSetup,
+                            onBackToWorkoutSetup: _returnToWorkoutSetup,
+                            onOpenExerciseManager: _openExerciseManager,
+                            canonicalExerciseBeingEdited:
+                                _canonicalExerciseBeingEdited,
+                            onWorkoutChanged: _selectWorkout,
+                            onHistoryBlockChanged: _selectHistoryBlock,
+                            onAddWorkout: isBusy ? null : _promptForNewWorkout,
+                            onAddHistoryBlock: isBusy
+                                ? null
+                                : _promptForNewHistoryBlock,
+                            onCreateCanonicalExercise: isBusy
+                                ? null
+                                : _openCanonicalExerciseCreation,
+                            onEditCanonicalExercise: isBusy
+                                ? null
+                                : _openCanonicalExerciseEdit,
+                            highlightedCanonicalExerciseSheetRowNumber:
+                                _highlightedCanonicalExerciseSheetRowNumber,
+                            onReorderCanonicalExercises:
+                                isBusy ||
+                                    widget.exerciseAuthoringService == null
+                                ? null
+                                : _controller.reorderCanonicalExercises,
+                            onReorderWorkoutExercises:
+                                isBusy ||
+                                    widget.exerciseAuthoringService == null
+                                ? null
+                                : _controller.reorderWorkoutExercises,
+                            onOpenExercise: _openExercise,
+                            onAddPrimaryExercise: _openPrimaryExerciseAdd,
+                            onAddBackupExercise: _openBackupExerciseAdd,
+                            exerciseAddReturnScreen: _exerciseAddReturnScreen,
+                            addExercisePlacementIntent:
+                                _addExercisePlacementIntent,
+                            onCloseExerciseAdd: _closeExerciseAdd,
+                            onSubmitCanonicalExercise:
+                                _handleCanonicalExerciseDraft,
+                            onSubmitCanonicalExerciseEdit:
+                                _handleCanonicalExerciseEditDraft,
+                            onCloseExerciseEdit: _closeExerciseEdit,
+                            onSubmitExercisePlacement: _handleExercisePlacement,
+                            onSubmitExercisePlacementAndAddAnother:
+                                _handleExercisePlacementAndAddAnother,
+                            onCloseExercise: _closeExercise,
+                            onLoggingRowChanged: _controller.selectLoggingRow,
+                            onApplyWritePlan:
+                                _controller.applyActiveSheetWritePlan,
+                          ),
                       ],
-                      if (error != null) ...[
-                        _IssuePanel(
-                          icon: Icons.error_outline,
-                          title: 'Connection or validation failed',
-                          lines: [error],
-                          tone: _IssueTone.error,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (showSheetSelection && report != null)
-                        _ValidationSummary(
-                          report: report,
-                          onRepairUnambiguousFormulaIssues: isBusy
-                              ? null
-                              : _repairUnambiguousFormulaIssues,
-                          onRepairFormulaIssue: isBusy
-                              ? null
-                              : _repairFormulaIssue,
-                          onOpenSpreadsheet: isBusy
-                              ? null
-                              : _openSelectedSpreadsheet,
-                        ),
-                      if (!showSheetSelection)
-                        _WorkoutAndHistorySelection(
-                          setup: _controller.workoutSetup!,
-                          sheetLabel:
-                              _selectedSpreadsheet?.displayLabel ??
-                              report.spreadsheetId,
-                          screen: _screen,
-                          onBackToSheetSelection: _returnToSheetSelection,
-                          onSelectWorkoutSetup: _selectWorkoutSetup,
-                          onBackToWorkoutSetup: _returnToWorkoutSetup,
-                          onOpenExerciseManager: _openExerciseManager,
-                          canonicalExerciseBeingEdited:
-                              _canonicalExerciseBeingEdited,
-                          onWorkoutChanged: _selectWorkout,
-                          onHistoryBlockChanged: _selectHistoryBlock,
-                          onAddWorkout: isBusy ? null : _promptForNewWorkout,
-                          onAddHistoryBlock: isBusy
-                              ? null
-                              : _promptForNewHistoryBlock,
-                          onCreateCanonicalExercise: isBusy
-                              ? null
-                              : _openCanonicalExerciseCreation,
-                          onEditCanonicalExercise: isBusy
-                              ? null
-                              : _openCanonicalExerciseEdit,
-                          highlightedCanonicalExerciseSheetRowNumber:
-                              _highlightedCanonicalExerciseSheetRowNumber,
-                          onReorderCanonicalExercises:
-                              isBusy || widget.exerciseAuthoringService == null
-                              ? null
-                              : _controller.reorderCanonicalExercises,
-                          onReorderWorkoutExercises:
-                              isBusy || widget.exerciseAuthoringService == null
-                              ? null
-                              : _controller.reorderWorkoutExercises,
-                          onOpenExercise: _openExercise,
-                          onAddPrimaryExercise: _openPrimaryExerciseAdd,
-                          onAddBackupExercise: _openBackupExerciseAdd,
-                          exerciseAddReturnScreen: _exerciseAddReturnScreen,
-                          addExercisePlacementIntent:
-                              _addExercisePlacementIntent,
-                          onCloseExerciseAdd: _closeExerciseAdd,
-                          onSubmitCanonicalExercise:
-                              _handleCanonicalExerciseDraft,
-                          onSubmitCanonicalExerciseEdit:
-                              _handleCanonicalExerciseEditDraft,
-                          onCloseExerciseEdit: _closeExerciseEdit,
-                          onSubmitExercisePlacement: _handleExercisePlacement,
-                          onSubmitExercisePlacementAndAddAnother:
-                              _handleExercisePlacementAndAddAnother,
-                          onCloseExercise: _closeExercise,
-                          onLoggingRowChanged: _controller.selectLoggingRow,
-                          onApplyWritePlan:
-                              _controller.applyActiveSheetWritePlan,
-                        ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

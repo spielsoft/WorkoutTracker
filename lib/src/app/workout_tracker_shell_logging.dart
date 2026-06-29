@@ -154,147 +154,150 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
         ? viewModel.nextSetNumber
         : visibleSetCount;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ScreenHeader(
-          title: widget.sheetLabel,
-          subtitle: selectedChoice.exercise,
-          compactTitle: true,
-          backTooltip: 'Back to exercises',
-          onBack: widget.onClose,
-        ),
-        const SizedBox(height: 12),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final direction = constraints.maxWidth < 520
-                ? Axis.vertical
-                : Axis.horizontal;
-            return SegmentedButton<int>(
-              direction: direction,
-              style: const ButtonStyle(
-                shape: WidgetStatePropertyAll(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(_compactSegmentedButtonRadius),
+    return _A11yScreen(
+      label: 'Log ${selectedChoice.exercise}',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ScreenHeader(
+            title: widget.sheetLabel,
+            subtitle: selectedChoice.exercise,
+            compactTitle: true,
+            backTooltip: 'Back to exercises',
+            onBack: widget.onClose,
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final direction = constraints.maxWidth < 520
+                  ? Axis.vertical
+                  : Axis.horizontal;
+              return SegmentedButton<int>(
+                direction: direction,
+                style: const ButtonStyle(
+                  shape: WidgetStatePropertyAll(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(_compactSegmentedButtonRadius),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              segments: [
-                for (final choice in loggingContext.choices)
-                  ButtonSegment(
-                    value: choice.sheetRowNumber,
-                    label: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          choice.exercise,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (choice.isBackup)
-                          const _StateChip(
-                            state: _WorkoutVisualState.backup,
-                            label: 'Backup',
+                segments: [
+                  for (final choice in loggingContext.choices)
+                    ButtonSegment(
+                      value: choice.sheetRowNumber,
+                      label: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            choice.exercise,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
+                          if (choice.isBackup)
+                            const _StateChip(
+                              state: _WorkoutVisualState.backup,
+                              label: 'Backup',
+                            ),
+                        ],
+                      ),
+                      icon: Icon(
+                        choice.isBackup
+                            ? Icons.alt_route_outlined
+                            : Icons.fitness_center_outlined,
+                      ),
                     ),
-                    icon: Icon(
-                      choice.isBackup
-                          ? Icons.alt_route_outlined
-                          : Icons.fitness_center_outlined,
-                    ),
-                  ),
-              ],
-              selected: {selectedChoice.sheetRowNumber},
-              onSelectionChanged: (selection) {
-                widget.onChoiceChanged(selection.single);
-              },
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Icon(
-              selectedChoice.isBackup
-                  ? Icons.alt_route_outlined
-                  : Icons.fitness_center_outlined,
-              size: 20,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            Text(
-              selectedChoice.exercise,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            if (selectedChoice.isBackup)
-              const _StateChip(
-                state: _WorkoutVisualState.backup,
-                label: 'Backup',
+                ],
+                selected: {selectedChoice.sheetRowNumber},
+                onSelectionChanged: (selection) {
+                  widget.onChoiceChanged(selection.single);
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Icon(
+                selectedChoice.isBackup
+                    ? Icons.alt_route_outlined
+                    : Icons.fitness_center_outlined,
+                size: 20,
+                color: Theme.of(context).colorScheme.primary,
               ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Next set S${viewModel.nextSetNumber}',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        _StructuredSetEditor(
-          logFormat: loggingContext.logFormat,
-          controllers: viewModel.newSetControllers,
-          isBusy: _isWriting,
-          onSave: _saveStructuredSet,
-        ),
-        if (_writeError != null) ...[
+              Text(
+                selectedChoice.exercise,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              if (selectedChoice.isBackup)
+                const _StateChip(
+                  state: _WorkoutVisualState.backup,
+                  label: 'Backup',
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
-          _InlineLoggingError(message: _writeError!),
+          Text(
+            'Next set S${viewModel.nextSetNumber}',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          _StructuredSetEditor(
+            logFormat: loggingContext.logFormat,
+            controllers: viewModel.newSetControllers,
+            isBusy: _isWriting,
+            onSave: _saveStructuredSet,
+          ),
+          if (_writeError != null) ...[
+            const SizedBox(height: 8),
+            _InlineLoggingError(message: _writeError!),
+          ],
+          const SizedBox(height: 16),
+          _SetProgressStrip(
+            loggedSetNumbers: loggedSetNumbers,
+            currentSetNumber: viewModel.nextSetNumber,
+            totalSetCount: totalSetCount,
+          ),
+          const SizedBox(height: 16),
+          Text('Logged sets', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          if (viewModel.loggedEntries.isEmpty)
+            const Text('No sets logged in this block.')
+          else
+            for (final entry in viewModel.loggedEntries)
+              if (entry.logEntry case FormattedLogEntry(:final fieldLabels))
+                _LoggedFormattedSetEditor(
+                  entry: entry,
+                  fieldLabels: fieldLabels,
+                  controllers:
+                      viewModel.loggedFormattedControllers[entry.setNumber]!,
+                  isBusy: _isWriting,
+                  onSave: () => _saveStructuredSetEdit(entry),
+                  onClear: () => _clearSet(entry),
+                )
+              else
+                _LoggedSetEditor(
+                  entry: entry,
+                  controller: viewModel.rawControllers[entry.setNumber]!,
+                  isBusy: _isWriting,
+                  onSave: () => _saveRawSet(entry),
+                  onClear: () => _clearSet(entry),
+                ),
+          const SizedBox(height: 16),
+          _ExerciseContextPanel(
+            context: loggingContext,
+            latestHistoryValue: _latestHistoryValue(priorHistoryBlocks),
+          ),
+          const SizedBox(height: 16),
+          _RecentHistoryPanel(blocks: priorHistoryBlocks),
         ],
-        const SizedBox(height: 16),
-        _SetProgressStrip(
-          loggedSetNumbers: loggedSetNumbers,
-          currentSetNumber: viewModel.nextSetNumber,
-          totalSetCount: totalSetCount,
-        ),
-        const SizedBox(height: 16),
-        Text('Logged sets', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        if (viewModel.loggedEntries.isEmpty)
-          const Text('No sets logged in this block.')
-        else
-          for (final entry in viewModel.loggedEntries)
-            if (entry.logEntry case FormattedLogEntry(:final fieldLabels))
-              _LoggedFormattedSetEditor(
-                entry: entry,
-                fieldLabels: fieldLabels,
-                controllers:
-                    viewModel.loggedFormattedControllers[entry.setNumber]!,
-                isBusy: _isWriting,
-                onSave: () => _saveStructuredSetEdit(entry),
-                onClear: () => _clearSet(entry),
-              )
-            else
-              _LoggedSetEditor(
-                entry: entry,
-                controller: viewModel.rawControllers[entry.setNumber]!,
-                isBusy: _isWriting,
-                onSave: () => _saveRawSet(entry),
-                onClear: () => _clearSet(entry),
-              ),
-        const SizedBox(height: 16),
-        _ExerciseContextPanel(
-          context: loggingContext,
-          latestHistoryValue: _latestHistoryValue(priorHistoryBlocks),
-        ),
-        const SizedBox(height: 16),
-        _RecentHistoryPanel(blocks: priorHistoryBlocks),
-      ],
+      ),
     );
   }
 }
@@ -554,14 +557,22 @@ class _StructuredSetEditor extends StatelessWidget {
       );
     }
 
+    Widget accessibleField(String label) {
+      return _A11yTextField(
+        label: 'New set $label',
+        valueListenable: controllers[label],
+        child: field(label),
+      );
+    }
+
     List<Widget> compactFields() {
-      return [for (final label in fieldLabels) field(label)];
+      return [for (final label in fieldLabels) accessibleField(label)];
     }
 
     List<Widget> wideFields() {
       return [
         for (final label in fieldLabels)
-          SizedBox(width: 112, child: field(label)),
+          SizedBox(width: 112, child: accessibleField(label)),
       ];
     }
 
@@ -627,12 +638,16 @@ class _LoggedSetEditor extends StatelessWidget {
         children: [
           SizedBox(width: 36, child: Text(entry.setLabel)),
           Expanded(
-            child: TextField(
-              key: ValueKey('raw-${entry.setLabel}'),
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Raw set text',
-                border: OutlineInputBorder(),
+            child: _A11yTextField(
+              label: '${entry.setLabel} raw set text',
+              valueListenable: controller,
+              child: TextField(
+                key: ValueKey('raw-${entry.setLabel}'),
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Raw set text',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
           ),
@@ -674,14 +689,18 @@ class _LoggedFormattedSetEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextField field(String label) {
-      return TextField(
-        key: ValueKey('logged-${entry.setLabel}-field-$label'),
-        controller: controllers[label],
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
+    Widget field(String label) {
+      return _A11yTextField(
+        label: '${entry.setLabel} $label',
+        valueListenable: controllers[label],
+        child: TextField(
+          key: ValueKey('logged-${entry.setLabel}-field-$label'),
+          controller: controllers[label],
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
         ),
       );
     }

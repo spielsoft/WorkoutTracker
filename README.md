@@ -107,6 +107,7 @@ Unparseable cells must be preserved and editable as raw text. The app must not s
 Stable project artifacts:
 
 - [Domain contract](docs/domain_contract.md)
+- [Accessibility](docs/accessibility.md)
 - [Agent prompts](PROMPTS.md)
 - [Agent guidance](AGENTS.md)
 

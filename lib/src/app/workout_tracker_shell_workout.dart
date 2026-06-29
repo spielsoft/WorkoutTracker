@@ -36,19 +36,22 @@ class _ScreenHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                key: compactTitle
-                    ? const ValueKey('current-workout-sheet-label')
-                    : null,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: compactTitle
-                    ? Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      )
-                    : Theme.of(context).textTheme.headlineSmall,
+              _A11yHeader(
+                label: subtitle == null ? title : '$title, $subtitle',
+                child: Text(
+                  title,
+                  key: compactTitle
+                      ? const ValueKey('current-workout-sheet-label')
+                      : null,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: compactTitle
+                      ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        )
+                      : Theme.of(context).textTheme.headlineSmall,
+                ),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
@@ -219,108 +222,114 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       final title = selectedWorkout == null || selectedHistoryBlock == null
           ? 'Exercises'
           : '$selectedWorkout - $selectedHistoryBlock';
-      return Column(
+      return _A11yScreen(
+        label: '$title exercise list',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ScreenHeader(
+              title: sheetLabel,
+              subtitle: title,
+              compactTitle: true,
+              backTooltip: 'Back to workout setup',
+              onBack: onBackToWorkoutSetup,
+              trailing: selectedWorkout == null
+                  ? null
+                  : IconButton.filled(
+                      key: const ValueKey('add-primary-exercise'),
+                      tooltip: 'Add to workout',
+                      onPressed: () => onAddPrimaryExercise(selectedWorkout),
+                      icon: const Icon(Icons.add_outlined),
+                    ),
+            ),
+            const SizedBox(height: 12),
+            if (overview != null)
+              _WorkoutOverviewList(
+                key: const ValueKey('full-workout-overview'),
+                overview: overview,
+                onOpenExercise: onOpenExercise,
+                onAddBackupExercise: onAddBackupExercise,
+                onReorderExercises: onReorderWorkoutExercises,
+                showTitle: false,
+              ),
+          ],
+        ),
+      );
+    }
+
+    return _A11yScreen(
+      label: 'Workout setup',
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ScreenHeader(
             title: sheetLabel,
-            subtitle: title,
             compactTitle: true,
-            backTooltip: 'Back to workout setup',
-            onBack: onBackToWorkoutSetup,
-            trailing: selectedWorkout == null
-                ? null
-                : IconButton.filled(
-                    key: const ValueKey('add-primary-exercise'),
-                    tooltip: 'Add to workout',
-                    onPressed: () => onAddPrimaryExercise(selectedWorkout),
-                    icon: const Icon(Icons.add_outlined),
-                  ),
+            backTooltip: 'Back to sheet selection',
+            onBack: onBackToSheetSelection,
+            trailing: IconButton.filledTonal(
+              key: const ValueKey('open-exercise-manager'),
+              tooltip: 'Edit exercise library',
+              onPressed: onOpenExerciseManager,
+              icon: const Icon(Icons.fitness_center_outlined),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final twoColumn = constraints.maxWidth >= 620;
+              final fieldWidth = twoColumn
+                  ? (constraints.maxWidth - 12) / 2
+                  : constraints.maxWidth;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _WorkoutSelectorField(
+                      workouts: workouts,
+                      selectedWorkout: selectedWorkout,
+                      progressByWorkout: setup.progressByWorkout,
+                      onWorkoutChanged: onWorkoutChanged,
+                      onAddWorkout: onAddWorkout,
+                    ),
+                  ),
+                  SizedBox(
+                    width: fieldWidth,
+                    child: _HistoryBlockSelectorField(
+                      historyBlocks: historyBlocks,
+                      selectedHistoryBlock: selectedHistoryBlock,
+                      onHistoryBlockChanged: onHistoryBlockChanged,
+                      onAddHistoryBlock: onAddHistoryBlock,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            key: const ValueKey('select-workout-setup'),
+            onPressed: overview == null ? null : onSelectWorkoutSetup,
+            icon: const Icon(Icons.check_circle_outline),
+            label: const Text('Select'),
+          ),
+          const SizedBox(height: 16),
           if (overview != null)
             _WorkoutOverviewList(
-              key: const ValueKey('full-workout-overview'),
+              key: const ValueKey('compact-workout-overview'),
               overview: overview,
               onOpenExercise: onOpenExercise,
+              onAddPrimaryExercise: selectedWorkout == null
+                  ? null
+                  : () => onAddPrimaryExercise(selectedWorkout),
               onAddBackupExercise: onAddBackupExercise,
               onReorderExercises: onReorderWorkoutExercises,
-              showTitle: false,
+              compact: true,
             ),
         ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ScreenHeader(
-          title: sheetLabel,
-          compactTitle: true,
-          backTooltip: 'Back to sheet selection',
-          onBack: onBackToSheetSelection,
-          trailing: IconButton.filledTonal(
-            key: const ValueKey('open-exercise-manager'),
-            tooltip: 'Edit exercise library',
-            onPressed: onOpenExerciseManager,
-            icon: const Icon(Icons.fitness_center_outlined),
-          ),
-        ),
-        const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final twoColumn = constraints.maxWidth >= 620;
-            final fieldWidth = twoColumn
-                ? (constraints.maxWidth - 12) / 2
-                : constraints.maxWidth;
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                SizedBox(
-                  width: fieldWidth,
-                  child: _WorkoutSelectorField(
-                    workouts: workouts,
-                    selectedWorkout: selectedWorkout,
-                    progressByWorkout: setup.progressByWorkout,
-                    onWorkoutChanged: onWorkoutChanged,
-                    onAddWorkout: onAddWorkout,
-                  ),
-                ),
-                SizedBox(
-                  width: fieldWidth,
-                  child: _HistoryBlockSelectorField(
-                    historyBlocks: historyBlocks,
-                    selectedHistoryBlock: selectedHistoryBlock,
-                    onHistoryBlockChanged: onHistoryBlockChanged,
-                    onAddHistoryBlock: onAddHistoryBlock,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 24),
-        FilledButton.icon(
-          key: const ValueKey('select-workout-setup'),
-          onPressed: overview == null ? null : onSelectWorkoutSetup,
-          icon: const Icon(Icons.check_circle_outline),
-          label: const Text('Select'),
-        ),
-        const SizedBox(height: 16),
-        if (overview != null)
-          _WorkoutOverviewList(
-            key: const ValueKey('compact-workout-overview'),
-            overview: overview,
-            onOpenExercise: onOpenExercise,
-            onAddPrimaryExercise: selectedWorkout == null
-                ? null
-                : () => onAddPrimaryExercise(selectedWorkout),
-            onAddBackupExercise: onAddBackupExercise,
-            onReorderExercises: onReorderWorkoutExercises,
-            compact: true,
-          ),
-      ],
+      ),
     );
   }
 }
@@ -455,43 +464,51 @@ class _SetupSelectorFieldState extends State<_SetupSelectorField> {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      key: ValueKey('${widget.keyPrefix}-${widget.selectedValue}-$_resetEpoch'),
-      initialValue: widget.selectedValue,
-      isExpanded: true,
-      hint: Text(widget.emptyPrompt, overflow: TextOverflow.ellipsis),
-      decoration: InputDecoration(
-        labelText: widget.label,
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        border: const OutlineInputBorder(),
-        prefixIcon: Icon(widget.prefixIcon),
-      ),
-      items: [
-        ...widget.items,
-        if (widget.onAdd != null)
-          DropdownMenuItem(
-            value: widget.addValue,
-            child: Row(
-              children: [
-                const Icon(Icons.add_outlined),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.emptyPrompt,
-                    overflow: TextOverflow.ellipsis,
+    return Semantics(
+      label: '${widget.label} selector',
+      value:
+          widget.selectedValue ?? 'No ${widget.label.toLowerCase()} selected',
+      hint: 'Choose ${widget.label.toLowerCase()}',
+      child: DropdownButtonFormField<String>(
+        key: ValueKey(
+          '${widget.keyPrefix}-${widget.selectedValue}-$_resetEpoch',
+        ),
+        initialValue: widget.selectedValue,
+        isExpanded: true,
+        hint: Text(widget.emptyPrompt, overflow: TextOverflow.ellipsis),
+        decoration: InputDecoration(
+          labelText: widget.label,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          border: const OutlineInputBorder(),
+          prefixIcon: Icon(widget.prefixIcon),
+        ),
+        items: [
+          ...widget.items,
+          if (widget.onAdd != null)
+            DropdownMenuItem(
+              value: widget.addValue,
+              child: Row(
+                children: [
+                  const Icon(Icons.add_outlined),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.emptyPrompt,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-      ],
-      onChanged: (value) {
-        if (value == widget.addValue) {
-          _openAddAfterDropdownCloses();
-          return;
-        }
-        widget.onChanged(value);
-      },
+        ],
+        onChanged: (value) {
+          if (value == widget.addValue) {
+            _openAddAfterDropdownCloses();
+            return;
+          }
+          widget.onChanged(value);
+        },
+      ),
     );
   }
 }
@@ -518,59 +535,62 @@ class _WorkoutOverviewList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (showTitle) ...[
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${overview.workout} exercises',
-                  style: Theme.of(context).textTheme.titleLarge,
+    return _A11yScreen(
+      label: '${overview.workout} exercises',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showTitle) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${overview.workout} exercises',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
-              ),
-              if (onAddPrimaryExercise != null)
-                IconButton.filled(
-                  key: const ValueKey('add-primary-exercise-from-setup'),
-                  tooltip: 'Add to workout',
-                  onPressed: onAddPrimaryExercise,
-                  icon: const Icon(Icons.add_outlined),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
+                if (onAddPrimaryExercise != null)
+                  IconButton.filled(
+                    key: const ValueKey('add-primary-exercise-from-setup'),
+                    tooltip: 'Add to workout',
+                    onPressed: onAddPrimaryExercise,
+                    icon: const Icon(Icons.add_outlined),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (overview.slots.isNotEmpty)
+            ReorderableListView.builder(
+              buildDefaultDragHandles: false,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: overview.slots.length,
+              onReorderItem: onReorderExercises == null
+                  ? (_, _) {}
+                  : (oldIndex, newIndex) {
+                      onReorderExercises!(
+                        ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
+                      );
+                    },
+              itemBuilder: (context, index) {
+                final slot = overview.slots[index];
+                return Padding(
+                  key: ValueKey('workout-exercise-${slot.sheetRowNumber}'),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _WorkoutOverviewTile(
+                    index: index,
+                    slot: slot,
+                    onOpenExercise: onOpenExercise,
+                    onAddBackupExercise: onAddBackupExercise,
+                    canReorder: onReorderExercises != null,
+                    compact: compact,
+                  ),
+                );
+              },
+            ),
         ],
-        if (overview.slots.isNotEmpty)
-          ReorderableListView.builder(
-            buildDefaultDragHandles: false,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: overview.slots.length,
-            onReorderItem: onReorderExercises == null
-                ? (_, _) {}
-                : (oldIndex, newIndex) {
-                    onReorderExercises!(
-                      ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
-                    );
-                  },
-            itemBuilder: (context, index) {
-              final slot = overview.slots[index];
-              return Padding(
-                key: ValueKey('workout-exercise-${slot.sheetRowNumber}'),
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _WorkoutOverviewTile(
-                  index: index,
-                  slot: slot,
-                  onOpenExercise: onOpenExercise,
-                  onAddBackupExercise: onAddBackupExercise,
-                  canReorder: onReorderExercises != null,
-                  compact: compact,
-                ),
-              );
-            },
-          ),
-      ],
+      ),
     );
   }
 }
@@ -631,6 +651,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
       ),
     );
     return GestureDetector(
+      excludeFromSemantics: true,
       onSecondaryTapDown: onAddBackupExercise == null
           ? null
           : (details) =>
@@ -648,6 +669,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: InkWell(
+            excludeFromSemantics: true,
             borderRadius: BorderRadius.circular(8),
             onTap: () => onOpenExercise(slot.sheetRowNumber),
             child: Padding(
@@ -912,24 +934,27 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBackup = intent.kind == _ExercisePlacementKind.backup;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ScreenHeader(
-          title: sheetLabel,
-          subtitle: isBackup ? 'Add backup exercise' : 'Add to workout',
-          compactTitle: true,
-          backTooltip: backTooltip,
-          onBack: onBack,
-        ),
-        const SizedBox(height: 16),
-        _ExercisePlacementForm(
-          exercises: exercises,
-          initialExercise: null,
-          onSubmit: onSubmit,
-          onSubmitAndAddAnother: onSubmitAndAddAnother,
-        ),
-      ],
+    return _A11yScreen(
+      label: isBackup ? 'Add backup exercise' : 'Add exercise to workout',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ScreenHeader(
+            title: sheetLabel,
+            subtitle: isBackup ? 'Add backup exercise' : 'Add to workout',
+            compactTitle: true,
+            backTooltip: backTooltip,
+            onBack: onBack,
+          ),
+          const SizedBox(height: 16),
+          _ExercisePlacementForm(
+            exercises: exercises,
+            initialExercise: null,
+            onSubmit: onSubmit,
+            onSubmitAndAddAnother: onSubmitAndAddAnother,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1050,56 +1075,65 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          key: const ValueKey('exercise-picker-search'),
-          controller: _exerciseSearchController,
-          decoration: InputDecoration(
-            labelText: 'Search exercises',
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.search_outlined),
-            suffixIcon: exerciseQuery.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Clear exercise search',
-                    onPressed: _exerciseSearchController.clear,
-                    icon: const Icon(Icons.clear_outlined),
-                  ),
+        _A11yTextField(
+          label: 'Search exercises',
+          valueListenable: _exerciseSearchController,
+          child: TextField(
+            key: const ValueKey('exercise-picker-search'),
+            controller: _exerciseSearchController,
+            decoration: InputDecoration(
+              labelText: 'Search exercises',
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.search_outlined),
+              suffixIcon: exerciseQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear exercise search',
+                      onPressed: _exerciseSearchController.clear,
+                      icon: const Icon(Icons.clear_outlined),
+                    ),
+            ),
+            textInputAction: TextInputAction.search,
           ),
-          textInputAction: TextInputAction.search,
         ),
         const SizedBox(height: 12),
-        DropdownButtonFormField<CanonicalExercise>(
-          key: const ValueKey('existing-exercise-selector'),
-          initialValue: selectedExercise,
-          hint: Text(
-            exerciseQuery.isEmpty || selectableExercises.isNotEmpty
-                ? 'Choose exercise'
-                : 'No matching exercises',
-          ),
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Exercise',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.fitness_center_outlined),
-          ),
-          items: [
-            for (final exercise in selectableExercises)
-              DropdownMenuItem(
-                value: exercise,
-                child: Text(
-                  exercise.displayName,
-                  overflow: TextOverflow.ellipsis,
+        Semantics(
+          label: 'Exercise selector',
+          value: selectedExercise?.displayName ?? 'No exercise selected',
+          hint: 'Choose an exercise',
+          child: DropdownButtonFormField<CanonicalExercise>(
+            key: const ValueKey('existing-exercise-selector'),
+            initialValue: selectedExercise,
+            hint: Text(
+              exerciseQuery.isEmpty || selectableExercises.isNotEmpty
+                  ? 'Choose exercise'
+                  : 'No matching exercises',
+            ),
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Exercise',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.fitness_center_outlined),
+            ),
+            items: [
+              for (final exercise in selectableExercises)
+                DropdownMenuItem(
+                  value: exercise,
+                  child: Text(
+                    exercise.displayName,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-          ],
-          onChanged: selectableExercises.isEmpty
-              ? null
-              : (exercise) {
-                  setState(() {
-                    _selectedExercise = exercise;
-                    _loadExerciseDefaults(exercise);
-                  });
-                },
+            ],
+            onChanged: selectableExercises.isEmpty
+                ? null
+                : (exercise) {
+                    setState(() {
+                      _selectedExercise = exercise;
+                      _loadExerciseDefaults(exercise);
+                    });
+                  },
+          ),
         ),
         if (selectedExercise != null) ...[
           const SizedBox(height: 12),
@@ -1228,14 +1262,18 @@ class _PlacementMetadataField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: labelText,
-        border: const OutlineInputBorder(),
+    return _A11yTextField(
+      label: labelText,
+      valueListenable: controller,
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: labelText,
+          border: const OutlineInputBorder(),
+        ),
+        textInputAction: TextInputAction.next,
       ),
-      textInputAction: TextInputAction.next,
     );
   }
 }
@@ -1255,23 +1293,26 @@ class _CanonicalExerciseCreationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ScreenHeader(
-          title: sheetLabel,
-          subtitle: 'New exercise',
-          compactTitle: true,
-          backTooltip: backTooltip,
-          onBack: onBack,
-        ),
-        const SizedBox(height: 16),
-        ExerciseAuthoringForm(
-          authoringContext: ExerciseAuthoringContext.canonicalExercise,
-          onCancel: onBack,
-          onSubmit: onSubmit,
-        ),
-      ],
+    return _A11yScreen(
+      label: 'New exercise',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ScreenHeader(
+            title: sheetLabel,
+            subtitle: 'New exercise',
+            compactTitle: true,
+            backTooltip: backTooltip,
+            onBack: onBack,
+          ),
+          const SizedBox(height: 16),
+          ExerciseAuthoringForm(
+            authoringContext: ExerciseAuthoringContext.canonicalExercise,
+            onCancel: onBack,
+            onSubmit: onSubmit,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1291,24 +1332,27 @@ class _CanonicalExerciseEditScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ScreenHeader(
-          title: sheetLabel,
-          subtitle: 'Edit exercise',
-          compactTitle: true,
-          backTooltip: 'Back to edit exercises',
-          onBack: onBack,
-        ),
-        const SizedBox(height: 16),
-        ExerciseAuthoringForm(
-          authoringContext: ExerciseAuthoringContext.canonicalExercise,
-          initialDraft: CanonicalExerciseDraft.fromExercise(exercise),
-          onCancel: onBack,
-          onSubmit: onSubmit,
-        ),
-      ],
+    return _A11yScreen(
+      label: 'Edit exercise ${exercise.displayName}',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ScreenHeader(
+            title: sheetLabel,
+            subtitle: 'Edit exercise',
+            compactTitle: true,
+            backTooltip: 'Back to edit exercises',
+            onBack: onBack,
+          ),
+          const SizedBox(height: 16),
+          ExerciseAuthoringForm(
+            authoringContext: ExerciseAuthoringContext.canonicalExercise,
+            initialDraft: CanonicalExerciseDraft.fromExercise(exercise),
+            onCancel: onBack,
+            onSubmit: onSubmit,
+          ),
+        ],
+      ),
     );
   }
 }

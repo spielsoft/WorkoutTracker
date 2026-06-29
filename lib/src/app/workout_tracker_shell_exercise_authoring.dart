@@ -296,8 +296,10 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
             ],
           ),
           const SizedBox(height: 16),
-          Semantics(
+          _A11yTextField(
             identifier: 'exercise-authoring-name',
+            label: 'Exercise name',
+            valueListenable: _exerciseNameController,
             child: TextFormField(
               key: const ValueKey('exercise-authoring-name'),
               controller: _exerciseNameController,
@@ -317,8 +319,10 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
             ),
           ),
           const SizedBox(height: 12),
-          Semantics(
+          _A11yTextField(
             identifier: 'exercise-authoring-description',
+            label: 'Description',
+            valueListenable: _descriptionController,
             child: TextFormField(
               key: const ValueKey('exercise-authoring-description'),
               controller: _descriptionController,
@@ -421,8 +425,10 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
             },
           ),
           const SizedBox(height: 12),
-          Semantics(
+          _A11yTextField(
             identifier: 'exercise-authoring-notes',
+            label: 'Notes',
+            valueListenable: _notesController,
             child: TextFormField(
               key: const ValueKey('exercise-authoring-notes'),
               controller: _notesController,
@@ -528,8 +534,10 @@ class _ExerciseAuthoringTextFieldState
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
+    return _A11yTextField(
       identifier: widget.semanticsIdentifier,
+      label: widget.labelText,
+      valueListenable: widget.controller,
       child: TextFormField(
         controller: widget.controller,
         enabled: widget.enabled,
