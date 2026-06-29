@@ -480,7 +480,11 @@ void main() {
           ],
         ),
       );
-      final service = _StaleWriteValidationService(refreshedSheet);
+      final service = _StaleThenFreshWriteValidationService(
+        initialSheet: visibleSheet,
+        writeReportSheet: refreshedSheet,
+        retrySheets: [refreshedSheet],
+      );
       final controller = WorkoutTrackerController(validationService: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
@@ -492,12 +496,19 @@ void main() {
       );
 
       final saved = await controller.applyActiveSheetWritePlan(plan);
+      final context = controller.report!.activeSheet
+          .buildExerciseLoggingContext(
+            primarySheetRowNumber: 3,
+            selectedSheetRowNumber: 3,
+            historyBlockLabel: 'Today',
+          );
 
       expect(saved, isFalse);
       expect(
         controller.error,
         'Unable to save set: saved set was not visible after refresh.',
       );
+      expect(context.selectedHistory.entries[1].rawValue, isEmpty);
       expect(service.appliedPlans, [plan]);
     },
   );

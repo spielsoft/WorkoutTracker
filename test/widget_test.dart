@@ -240,6 +240,74 @@ void main() {
     expect(find.text('Unable to save set. Try again.'), findsOneWidget);
   });
 
+  testWidgets(
+    'keeps attempted next-set input recoverable after confirmation conflict',
+    (tester) async {
+      final service = _RecoverableConfirmationFailureService();
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Squat'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('set-field-Weight')),
+        '155',
+      );
+      await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
+      await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
+      await tester.tap(find.text('Save set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans, hasLength(1));
+      expect(service.appliedPlans.single.nextSetPosition?.setNumber, 3);
+      expect(find.byKey(const ValueKey('logging-write-error')), findsOneWidget);
+      expect(find.text('Next set S2'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+            .controller
+            ?.text,
+        '155',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('set-field-Reps')))
+            .controller
+            ?.text,
+        '6',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('set-field-RPE')))
+            .controller
+            ?.text,
+        '8',
+      );
+
+      await tester.tap(find.text('Save set'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans, hasLength(2));
+      expect(
+        service.appliedPlans.map((plan) => plan.nextSetPosition?.setNumber),
+        [3, 3],
+      );
+      expect(find.byKey(const ValueKey('logging-write-error')), findsNothing);
+      expect(find.text('Next set S3'), findsOneWidget);
+    },
+  );
+
   testWidgets('renders compact spreadsheet selection controls', (tester) async {
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
@@ -658,7 +726,7 @@ void main() {
   });
 
   testWidgets(
-    'returns to validation and drops typed logging input after damage',
+    'keeps typed logging input recoverable after damaged confirmation refresh',
     (tester) async {
       final validSheet = parseActiveSheet(
         ActiveSheetInput(
@@ -701,23 +769,31 @@ void main() {
       await tester.pump();
 
       expect(service.appliedPlans, hasLength(1));
-      expect(find.text('Fix the active sheet structure'), findsOneWidget);
-      expect(find.text('Workout setup'), findsNothing);
-      expect(find.text('Save set'), findsNothing);
-      expect(find.byKey(const ValueKey('set-field-Weight')), findsNothing);
-
-      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-      await tester.pump();
-      await tester.pump();
-      await tester.tap(find.text('Squat'));
-      await tester.pumpAndSettle();
-
+      expect(find.byKey(const ValueKey('logging-write-error')), findsOneWidget);
+      expect(find.text('Unable to save set. Try again.'), findsOneWidget);
+      expect(find.text('Fix the active sheet structure'), findsNothing);
+      expect(find.text('Next set S1'), findsOneWidget);
+      expect(find.text('Save set'), findsOneWidget);
       expect(
         tester
             .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
             .controller
             ?.text,
-        isEmpty,
+        '155',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('set-field-Reps')))
+            .controller
+            ?.text,
+        '6',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('set-field-RPE')))
+            .controller
+            ?.text,
+        '8',
       );
     },
   );
@@ -3863,6 +3939,31 @@ ParsedActiveSheet _loggedSetParsedSheet() {
   );
 }
 
+ParsedActiveSheet _twoSetLoggingSheet({required String s2Value}) {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1', ''],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '',
+          'Legs',
+          '',
+          '150x5@8',
+          s2Value,
+        ],
+      ],
+    ),
+  );
+}
+
 ParsedActiveSheet _exerciseInventoryParsedSheet(
   List<List<String>> exercises, {
   Iterable<CellFormula> cellFormulas = const [
@@ -3980,6 +4081,50 @@ class _FailingWriteValidationService implements SpreadsheetValidationService {
   }) async {
     appliedPlans.add(plan);
     throw StateError('network unavailable');
+  }
+}
+
+class _RecoverableConfirmationFailureService
+    implements SpreadsheetValidationService {
+  _RecoverableConfirmationFailureService()
+    : initialSheet = _twoSetLoggingSheet(s2Value: ''),
+      conflictingSheet = _twoSetLoggingSheet(s2Value: '95x10@7'),
+      savedSheet = _twoSetLoggingSheet(s2Value: '155x6@8');
+
+  final ParsedActiveSheet initialSheet;
+  final ParsedActiveSheet conflictingSheet;
+  final ParsedActiveSheet savedSheet;
+  final appliedPlans = <ActiveSheetWritePlan>[];
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    final activeSheet = switch (appliedPlans.length) {
+      0 => initialSheet,
+      1 => conflictingSheet,
+      _ => savedSheet,
+    };
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    final activeSheet = appliedPlans.length == 1
+        ? conflictingSheet
+        : savedSheet;
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+    );
   }
 }
 

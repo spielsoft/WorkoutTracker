@@ -516,6 +516,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     required ActiveSheetWritePlan plan,
     required SpreadsheetValidationReport firstReport,
   }) async {
+    final lastConfirmedReport = _report;
     var latestReport = firstReport;
     _report = latestReport;
     if (latestReport.writeRejections.isNotEmpty ||
@@ -537,6 +538,7 @@ class WorkoutTrackerController extends ChangeNotifier {
       }
     }
 
+    _report = lastConfirmedReport;
     throw const _ControllerActionFailure(
       'saved set was not visible after refresh.',
     );
