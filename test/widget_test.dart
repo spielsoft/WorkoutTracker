@@ -2727,6 +2727,76 @@ void main() {
     },
   );
 
+  testWidgets(
+    'name prompts opened from selectors keep focus and dismiss cleanly',
+    (tester) async {
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('Legs (0/1 done)').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add workout...').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add workout'), findsOneWidget);
+      final workoutNameField = _textFieldWithLabel('Workout name');
+      expect(
+        _editableTextFor(workoutNameField).focusNode.hasPrimaryFocus,
+        isTrue,
+      );
+
+      tester.testTextInput.enterText('Push');
+      await tester.pump();
+      expect(find.text('Push'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add workout'), findsNothing);
+      expect(find.text('Legs (0/1 done)'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('select-workout-setup')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Legs (0/1 done)').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add workout...').last);
+      await tester.pumpAndSettle();
+      expect(
+        _editableTextFor(
+          _textFieldWithLabel('Workout name'),
+        ).focusNode.hasPrimaryFocus,
+        isTrue,
+      );
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add workout'), findsNothing);
+      expect(find.text('Legs (0/1 done)'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('select-workout-setup')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('requires choosing an exercise before placing it in a workout', (
     tester,
   ) async {
@@ -3738,6 +3808,15 @@ Finder _textFieldWithLabel(String labelText) {
         widget is TextField && widget.decoration?.labelText == labelText,
     description: 'TextField with label "$labelText"',
   );
+}
+
+EditableText _editableTextFor(Finder textField) {
+  return find
+          .descendant(of: textField, matching: find.byType(EditableText))
+          .evaluate()
+          .single
+          .widget
+      as EditableText;
 }
 
 class _MemoryAppStateStore implements AppStateStore {
