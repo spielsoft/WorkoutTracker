@@ -107,6 +107,58 @@ void main() {
     ]);
   });
 
+  test('parses and validates trailing set labels after trimmed headers', () {
+    final activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+          [
+            'Bulgarian Split Squat',
+            '3',
+            '8/side',
+            '8',
+            '',
+            '',
+            '',
+            defaultExerciseLogFormat,
+            'Legs',
+            '',
+            '70x8@8',
+            '75x8@8',
+          ],
+        ],
+      ),
+    );
+
+    expect(activeSheet.schemaViolations, isEmpty);
+    expect(activeSheet.historyBlocks.single.label, 'Week 1');
+    expect(activeSheet.historyBlocks.single.setColumns, [
+      const HistorySetColumn(label: 'S1', sheetColumnNumber: 11),
+      const HistorySetColumn(label: 'S2', sheetColumnNumber: 12),
+    ]);
+
+    final malformedActiveSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S3'],
+        ],
+      ),
+    );
+
+    expect(
+      malformedActiveSheet.schemaViolations,
+      contains(
+        const SchemaViolation(
+          sheetRowNumber: 2,
+          workout: defaultWorkoutName,
+          message: 'History block Week 1 skips set label S2 before S3.',
+        ),
+      ),
+    );
+  });
+
   test('parses app-readable active sheet rows into ordered workout slots', () {
     final workbook = loadLocalWorkoutWorkbookFixture();
     final activeSheet = parseFixtureActiveSheet();

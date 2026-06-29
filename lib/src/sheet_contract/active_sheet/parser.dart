@@ -135,13 +135,17 @@ List<SchemaViolation> _historyBlockViolations({
   final violations = <SchemaViolation>[];
   final seenBlockLabels = <String>{};
   final builders = <_HistoryBlockValidationBuilder>[];
+  final historyWidth = _historyHeaderWidth(
+    header: header,
+    setHeader: setHeader,
+  );
 
   for (
     var columnIndex = firstHistoryColumn;
-    columnIndex < header.length;
+    columnIndex < historyWidth;
     columnIndex += 1
   ) {
-    final blockLabel = header[columnIndex].trim();
+    final blockLabel = _cell(header, columnIndex).trim();
     if (blockLabel.isNotEmpty) {
       if (!seenBlockLabels.add(blockLabel)) {
         violations.add(

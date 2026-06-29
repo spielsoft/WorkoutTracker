@@ -61,12 +61,16 @@ List<HistoryBlock> _discoverHistoryBlocks({
   required int firstHistoryColumn,
 }) {
   final builders = <_HistoryBlockBuilder>[];
+  final historyWidth = _historyHeaderWidth(
+    header: header,
+    setHeader: setHeader,
+  );
   for (
     var columnIndex = firstHistoryColumn;
-    columnIndex < header.length;
+    columnIndex < historyWidth;
     columnIndex += 1
   ) {
-    final label = header[columnIndex].trim();
+    final label = _cell(header, columnIndex).trim();
     if (label.isNotEmpty) {
       builders.add(_HistoryBlockBuilder(label));
     }
@@ -83,6 +87,13 @@ List<HistoryBlock> _discoverHistoryBlocks({
     }
   }
   return builders.map((builder) => builder.toBlock()).toList();
+}
+
+int _historyHeaderWidth({
+  required List<String> header,
+  required List<String> setHeader,
+}) {
+  return header.length > setHeader.length ? header.length : setHeader.length;
 }
 
 class _HistoryBlockBuilder {
