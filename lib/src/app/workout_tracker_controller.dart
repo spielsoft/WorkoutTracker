@@ -16,7 +16,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     this.exerciseAuthoringService,
   });
 
-  static const int _loggedSetConfirmationRetryReads = 2;
+  static const int _loggedSetConfirmationRetryReads = 6;
 
   final SpreadsheetValidationService validationService;
   final ExerciseAuthoringService? exerciseAuthoringService;

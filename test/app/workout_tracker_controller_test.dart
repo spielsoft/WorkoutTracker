@@ -362,7 +362,7 @@ void main() {
   );
 
   test(
-    'confirms a logged next-set save after one stale post-write refresh',
+    'confirms a logged next-set save after several stale post-write refreshes',
     () async {
       final staleRows = [
         [...activeSheetFixedColumns, 'Today', ''],
@@ -405,7 +405,7 @@ void main() {
       final service = _StaleThenFreshWriteValidationService(
         initialSheet: staleSheet,
         writeReportSheet: staleSheet,
-        retrySheets: [freshSheet],
+        retrySheets: [staleSheet, staleSheet, staleSheet, freshSheet],
       );
       final controller = WorkoutTrackerController(validationService: service);
 
@@ -429,7 +429,7 @@ void main() {
       expect(controller.error, isNull);
       expect(context.selectedHistory.entries[1].rawValue, '105x9@9');
       expect(service.appliedPlans, [plan]);
-      expect(service.postWriteValidationCount, 1);
+      expect(service.postWriteValidationCount, 4);
     },
   );
 
