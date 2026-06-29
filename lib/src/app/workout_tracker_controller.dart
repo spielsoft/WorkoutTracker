@@ -16,6 +16,8 @@ class WorkoutTrackerController extends ChangeNotifier {
     this.exerciseAuthoringService,
   });
 
+  static const int _loggedSetConfirmationRetryReads = 2;
+
   final SpreadsheetValidationService validationService;
   final ExerciseAuthoringService? exerciseAuthoringService;
 
@@ -238,13 +240,11 @@ class WorkoutTrackerController extends ChangeNotifier {
           activeSheet: report.activeSheet,
           plan: plan,
         );
-        _report = updatedReport;
+        await _adoptConfirmedWriteReport(
+          plan: plan,
+          firstReport: updatedReport,
+        );
         _error = null;
-        if (!_retainsLoggedSetWrite(plan, updatedReport.activeSheet)) {
-          throw const _ControllerActionFailure(
-            'saved set was not visible after refresh.',
-          );
-        }
       },
     );
   }
@@ -510,6 +510,36 @@ class WorkoutTrackerController extends ChangeNotifier {
   void _clearLoggingSelection() {
     _loggingPrimarySheetRowNumber = null;
     _selectedLoggingSheetRowNumber = null;
+  }
+
+  Future<void> _adoptConfirmedWriteReport({
+    required ActiveSheetWritePlan plan,
+    required SpreadsheetValidationReport firstReport,
+  }) async {
+    var latestReport = firstReport;
+    _report = latestReport;
+    if (latestReport.writeRejections.isNotEmpty ||
+        _retainsLoggedSetWrite(plan, latestReport.activeSheet)) {
+      return;
+    }
+
+    for (
+      var readCount = 0;
+      readCount < _loggedSetConfirmationRetryReads;
+      readCount += 1
+    ) {
+      latestReport = await validationService.validateSpreadsheet(
+        firstReport.spreadsheetId,
+      );
+      _report = latestReport;
+      if (_retainsLoggedSetWrite(plan, latestReport.activeSheet)) {
+        return;
+      }
+    }
+
+    throw const _ControllerActionFailure(
+      'saved set was not visible after refresh.',
+    );
   }
 
   bool _retainsLoggedSetWrite(

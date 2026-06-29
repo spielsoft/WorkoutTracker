@@ -362,6 +362,78 @@ void main() {
   );
 
   test(
+    'confirms a logged next-set save after one stale post-write refresh',
+    () async {
+      final staleRows = [
+        [...activeSheetFixedColumns, 'Today', ''],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+        [
+          'Lat Pulldown',
+          '2',
+          '10',
+          '8',
+          '2 min',
+          '',
+          '',
+          '',
+          'Pull Day',
+          '',
+          '100x10@8',
+          '',
+        ],
+      ];
+      final freshRows = [
+        [...activeSheetFixedColumns, 'Today', ''],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+        [
+          'Lat Pulldown',
+          '2',
+          '10',
+          '8',
+          '2 min',
+          '',
+          '',
+          '',
+          'Pull Day',
+          '',
+          '100x10@8',
+          '105x9@9',
+        ],
+      ];
+      final staleSheet = parseActiveSheet(ActiveSheetInput(rows: staleRows));
+      final freshSheet = parseActiveSheet(ActiveSheetInput(rows: freshRows));
+      final service = _StaleThenFreshWriteValidationService(
+        initialSheet: staleSheet,
+        writeReportSheet: staleSheet,
+        retrySheets: [freshSheet],
+      );
+      final controller = WorkoutTrackerController(validationService: service);
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      controller.openExercise(3);
+      final plan = staleSheet.planSetLoggingWrite(
+        historyBlockLabel: 'Today',
+        sheetRowNumber: 3,
+        fieldValues: const {'Weight': '105', 'Reps': '9', 'RPE': '9'},
+      );
+
+      final saved = await controller.applyActiveSheetWritePlan(plan);
+      final context = controller.report!.activeSheet
+          .buildExerciseLoggingContext(
+            primarySheetRowNumber: 3,
+            selectedSheetRowNumber: 3,
+            historyBlockLabel: 'Today',
+          );
+
+      expect(saved, isTrue);
+      expect(controller.error, isNull);
+      expect(context.selectedHistory.entries[1].rawValue, '105x9@9');
+      expect(service.appliedPlans, [plan]);
+      expect(service.postWriteValidationCount, 1);
+    },
+  );
+
+  test(
     'rejects a logged next-set save when refresh shows a different set value',
     () async {
       final visibleSheet = parseActiveSheet(
@@ -732,6 +804,55 @@ class _StaleWriteValidationService implements SpreadsheetValidationService {
     return SpreadsheetValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: this.activeSheet,
+    );
+  }
+}
+
+class _StaleThenFreshWriteValidationService
+    implements SpreadsheetValidationService {
+  _StaleThenFreshWriteValidationService({
+    required this.initialSheet,
+    required this.writeReportSheet,
+    required Iterable<ParsedActiveSheet> retrySheets,
+  }) : _retrySheets = retrySheets.toList();
+
+  final ParsedActiveSheet initialSheet;
+  final ParsedActiveSheet writeReportSheet;
+  final List<ParsedActiveSheet> _retrySheets;
+  final List<ActiveSheetWritePlan> appliedPlans = [];
+  int postWriteValidationCount = 0;
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) async {
+    if (appliedPlans.isEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: initialSheet,
+      );
+    }
+    final readIndex = postWriteValidationCount;
+    postWriteValidationCount += 1;
+    final activeSheet = readIndex < _retrySheets.length
+        ? _retrySheets[readIndex]
+        : _retrySheets.last;
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) async {
+    appliedPlans.add(plan);
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: writeReportSheet,
     );
   }
 }
