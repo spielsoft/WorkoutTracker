@@ -146,10 +146,13 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     final priorHistoryBlocks = loggingContext.recentHistoryBlocks
         .where((block) => block.label != loggingContext.selectedHistory.label)
         .toList();
-    final totalSetCount =
-        loggingContext.selectedHistory.entries.length < viewModel.nextSetNumber
+    final plannedSetCount = int.tryParse(loggingContext.targets.sets.trim());
+    final visibleSetCount = loggingContext.selectedHistory.entries.length;
+    final totalSetCount = plannedSetCount != null && plannedSetCount > 0
+        ? plannedSetCount
+        : visibleSetCount < viewModel.nextSetNumber
         ? viewModel.nextSetNumber
-        : loggingContext.selectedHistory.entries.length;
+        : visibleSetCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

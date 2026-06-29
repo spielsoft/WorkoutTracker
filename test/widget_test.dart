@@ -2520,7 +2520,7 @@ void main() {
       final nextSet = find.text('Next set S2');
       final nextSetField = find.byKey(const ValueKey('set-field-Distance'));
       final saveSet = find.text('Save set');
-      final progress = find.text('Progress 1/2');
+      final progress = find.text('Progress 1/3');
       final target = find.text('Plan 3 x 40 @ 8');
       final recentHistory = find.text('Recent history');
 
@@ -3734,7 +3734,7 @@ void main() {
     await tester.tap(find.text('Pull Up'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Progress 1/2'), findsOneWidget);
+    expect(find.text('Progress 1/3'), findsOneWidget);
     expect(find.text('Logged S1'), findsOneWidget);
     expect(find.text('Current S2'), findsOneWidget);
     expect(find.text('Backup'), findsOneWidget);
