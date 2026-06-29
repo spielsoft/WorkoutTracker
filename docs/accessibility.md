@@ -42,13 +42,23 @@ but routine GUI additions should first make this global test pass.
 
 ## macOS AX smoke status
 
-A direct macOS Accessibility API probe currently sees the stock Flutter host
-view and app menus, but not the full Flutter semantics subtree. Adding widget
-semantics and forcing a Dart semantics handle did not change that native AX
-dump, so the remaining work is likely in the macOS runner or Flutter macOS
-embedding/accessibility bridge rather than in individual widget annotations.
+Native macOS AX automation is covered by a small smoke probe:
 
-Before relying on native AX automation as a release gate, add a dedicated
-macOS-side investigation that proves labeled Flutter controls such as
-`Google Sheets URL or ID`, `Select`, and `Open logging for Squat` are visible
-to an AX client.
+```text
+swift scripts/verify_macos_ax_labels.swift
+```
+
+Run it after launching the macOS app. It scans the running app with
+`AXUIElementCopyElementAtPosition` and fails unless the initial empty state
+exposes representative Flutter semantics labels, including
+`No workout sheet selected`, `Choose workout sheet`, and `Create sheet`.
+
+The macOS runner explicitly enables Flutter engine semantics after launch so
+native AX automation clients can see the Flutter semantics bridge even when a
+system assistive technology has not already requested it. This uses guarded
+Objective-C runtime selectors because the current FlutterMacOS public headers
+do not expose a runner-level API for forcing the native semantics bridge on.
+
+Tree enumeration through `AXChildren` can still be shallow for the Flutter host
+view, so use hit testing rather than child traversal for the current native AX
+smoke gate.
