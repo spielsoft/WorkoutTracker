@@ -244,15 +244,23 @@ class _NamePromptDialog extends StatefulWidget {
 
 class _NamePromptDialogState extends State<_NamePromptDialog> {
   late final TextEditingController _controller;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
+    _focusNode = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _focusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -267,6 +275,7 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
       title: Text(widget.title),
       content: TextField(
         controller: _controller,
+        focusNode: _focusNode,
         autofocus: true,
         decoration: InputDecoration(labelText: widget.label),
         textInputAction: TextInputAction.done,
