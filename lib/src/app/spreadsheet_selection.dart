@@ -317,7 +317,7 @@ class MobileGoogleDriveSpreadsheetPicker
       'state': state,
       'scope':
           'openid email profile https://www.googleapis.com/auth/drive.file',
-      'prompt': 'consent',
+      'include_granted_scopes': 'true',
       'trigger_onepick': 'true',
       'allow_multiple': 'false',
       'mimetypes': mimetypes,

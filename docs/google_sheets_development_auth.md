@@ -56,6 +56,9 @@ sheet creation also uses this Picker authorization path to choose a destination
 folder before it asks for a sheet name and initializes a new WorkoutTracker
 spreadsheet in Drive. The Picker callback forwards the access token and Google
 account profile used by the app's account menu and persisted launch state.
+Normal Picker launches use incremental authorization with
+`include_granted_scopes=true` and do not force `prompt=consent`; otherwise
+Google is expected to show consent again instead of going straight to Picker.
 Picker selection uses the checked-in web OAuth client ID for the
 `workouttracker-16285` Google Cloud project:
 
@@ -113,6 +116,13 @@ https://workouttracker-16285.web.app/privacy.html
 Production app startup injects the native callback receiver, so Picker
 authorization always uses the hosted HTTPS callback. The app no longer supports
 a local loopback Picker callback path.
+
+The macOS Release app is sandboxed. Persisted sheet/account state must live in
+the app container:
+
+```text
+~/Library/Containers/com.spielman.workouttracker/Data/Library/Application Support/WorkoutTracker/state.json
+```
 
 ## Sheets Scopes
 

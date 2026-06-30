@@ -58,7 +58,11 @@ void main() {
         authorizationUrl.queryParameters['scope'],
         'openid email profile https://www.googleapis.com/auth/drive.file',
       );
-      expect(authorizationUrl.queryParameters['prompt'], 'consent');
+      expect(authorizationUrl.queryParameters['prompt'], isNull);
+      expect(
+        authorizationUrl.queryParameters['include_granted_scopes'],
+        'true',
+      );
       expect(authorizationUrl.queryParameters['trigger_onepick'], 'true');
       expect(
         authorizationUrl.queryParameters['mimetypes'],

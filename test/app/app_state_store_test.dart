@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
@@ -59,5 +61,60 @@ void main() {
       'selected-spreadsheet-id',
     );
     expect(migrated.workoutSelection?.workout, 'Upper');
+  });
+
+  test('file app state store uses macOS app container support directory', () {
+    final directory = FileAppStateStore.defaultStateDirectory(
+      isWindows: false,
+      isMacOS: true,
+      environment: {'HOME': '/Users/athlete'},
+      systemTemp: Directory('/tmp'),
+    );
+
+    expect(
+      directory.path,
+      [
+        '',
+        'Users',
+        'athlete',
+        'Library',
+        'Containers',
+        'com.spielman.workouttracker',
+        'Data',
+        'Library',
+        'Application Support',
+        'WorkoutTracker',
+      ].join(Platform.pathSeparator),
+    );
+  });
+
+  test('file app state store persists grouped state to disk', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'workout-tracker-state-test-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final store = FileAppStateStore(stateDirectory: directory);
+    const state = GoogleWorkspaceAccessState(
+      spreadsheetText: 'spreadsheet-id',
+      selectedSpreadsheet: SelectedSpreadsheet(
+        spreadsheetId: 'spreadsheet-id',
+        name: 'Development Workouts',
+      ),
+      googleAuthorization: GooglePickerAuthorizationSnapshot(
+        accessToken: 'picker-access-token',
+        accountEmail: 'athlete@example.com',
+      ),
+    );
+
+    await store.writeGoogleWorkspaceAccessState(state);
+    final restored = await store.readGoogleWorkspaceAccessState();
+
+    expect(restored.spreadsheetText, 'spreadsheet-id');
+    expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
+    expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
   });
 }

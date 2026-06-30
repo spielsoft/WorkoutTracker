@@ -102,7 +102,10 @@ abstract interface class AppStateStore {
 }
 
 class FileAppStateStore implements AppStateStore {
-  const FileAppStateStore();
+  const FileAppStateStore({Directory? stateDirectory})
+    : _stateDirectoryOverride = stateDirectory;
+
+  final Directory? _stateDirectoryOverride;
 
   static const _googleWorkspaceAccessKey = 'googleWorkspaceAccess';
   static const _spreadsheetTextKey = 'spreadsheetText';
@@ -177,20 +180,46 @@ class FileAppStateStore implements AppStateStore {
   }
 
   Directory _stateDirectory() {
-    if (Platform.isWindows) {
-      final appData = Platform.environment['APPDATA'];
+    return _stateDirectoryOverride ??
+        defaultStateDirectory(
+          isWindows: Platform.isWindows,
+          isMacOS: Platform.isMacOS,
+          environment: Platform.environment,
+          systemTemp: Directory.systemTemp,
+        );
+  }
+
+  static Directory defaultStateDirectory({
+    required bool isWindows,
+    required bool isMacOS,
+    required Map<String, String> environment,
+    required Directory systemTemp,
+  }) {
+    if (isWindows) {
+      final appData = environment['APPDATA'];
       if (appData != null && appData.trim().isNotEmpty) {
         return Directory('$appData${Platform.pathSeparator}WorkoutTracker');
       }
     }
 
-    final home = Platform.environment['HOME'];
+    final home = environment['HOME'];
     if (home != null && home.trim().isNotEmpty) {
+      if (isMacOS) {
+        return Directory(
+          '$home${Platform.pathSeparator}Library'
+          '${Platform.pathSeparator}Containers'
+          '${Platform.pathSeparator}com.spielman.workouttracker'
+          '${Platform.pathSeparator}Data'
+          '${Platform.pathSeparator}Library'
+          '${Platform.pathSeparator}Application Support'
+          '${Platform.pathSeparator}WorkoutTracker',
+        );
+      }
       return Directory('$home${Platform.pathSeparator}.workout_tracker');
     }
 
     return Directory(
-      '${Directory.systemTemp.path}${Platform.pathSeparator}workout_tracker',
+      '${systemTemp.path}${Platform.pathSeparator}workout_tracker',
     );
   }
 }
