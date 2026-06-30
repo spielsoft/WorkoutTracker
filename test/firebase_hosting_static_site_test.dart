@@ -96,6 +96,20 @@ void main() {
       expect(callbackHtml, contains('/google-picker-callback/'));
       expect(callbackHtml, contains('state'));
       expect(callbackHtml, contains('picked_file_ids'));
+      for (final idAlias in [
+        'picked_file_ids',
+        'picked_file_id',
+        'picked_folder_ids',
+        'picked_folder_id',
+        'file_ids',
+        'file_id',
+        'folder_ids',
+        'folder_id',
+        'ids',
+        'id',
+      ]) {
+        expect(callbackHtml, contains(idAlias));
+      }
       expect(callbackHtml, contains('access_denied'));
       expect(callbackHtml, contains('error'));
       expect(callbackHtml, contains('workoutTrackerGooglePickerState'));
@@ -109,7 +123,9 @@ void main() {
         callbackHtml,
         contains('window.location.href = result.openAppUri'),
       );
-      expect(callbackHtml, contains('"state", "picked_file_ids", "error"'));
+      expect(callbackHtml, contains('pickedIdParameterNames'));
+      expect(callbackHtml, contains('readPickedFileIds(params)'));
+      expect(callbackHtml, contains('nativeParams.set("picked_file_ids"'));
       expect(callbackHtml, contains('pickedFileIds.join(", ")'));
       expect(callbackHtml, contains('split(",")'));
       expect(callbackHtml, contains('expected !== state'));

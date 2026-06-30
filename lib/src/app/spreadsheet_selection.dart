@@ -27,6 +27,18 @@ final workoutTrackerGooglePickerHostedCallbackUri = Uri.parse(
   'https://workouttracker-16285.web.app/google-picker-callback/',
 );
 const _googlePickerCallbackStateBytes = 16;
+const _googlePickerPickedIdQueryParameters = [
+  'picked_file_ids',
+  'picked_file_id',
+  'picked_folder_ids',
+  'picked_folder_id',
+  'file_ids',
+  'file_id',
+  'folder_ids',
+  'folder_id',
+  'ids',
+  'id',
+];
 final _googlePickerSpreadsheetIdPattern = RegExp(r'^[A-Za-z0-9_-]+$');
 
 class SelectedSpreadsheet {
@@ -199,6 +211,7 @@ class MobileGoogleDriveSpreadsheetPicker
         clientId: trimmedClientId,
         redirectUri: callbackReceiver.redirectUri,
         state: callbackState,
+        loginHint: authorizationGateway?.currentAccount?.email,
       );
       final launched = await launchUrl(
         authorizationUrl,
@@ -242,17 +255,28 @@ class MobileGoogleDriveSpreadsheetPicker
     required String clientId,
     required Uri redirectUri,
     required String state,
+    String? loginHint,
   }) {
-    return Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
+    final queryParameters = {
       'client_id': clientId,
       'redirect_uri': redirectUri.toString(),
-      'response_type': 'code',
+      'response_type': 'token',
       'state': state,
       'scope': 'https://www.googleapis.com/auth/drive.file',
+      'prompt': 'consent',
       'trigger_onepick': 'true',
       'allow_multiple': 'false',
       'mimetypes': 'application/vnd.google-apps.spreadsheet',
-    });
+    };
+    final trimmedLoginHint = loginHint?.trim();
+    if (trimmedLoginHint != null && trimmedLoginHint.isNotEmpty) {
+      queryParameters['login_hint'] = trimmedLoginHint;
+    }
+    return Uri.https(
+      'accounts.google.com',
+      '/o/oauth2/v2/auth',
+      queryParameters,
+    );
   }
 
   Future<SelectedSpreadsheet> _selectedSpreadsheetForPickedId(
@@ -497,7 +521,7 @@ GooglePickerNativeCallbackValidation validateGooglePickerNativeCallback(
   }
 
   final pickedSpreadsheetIds = _pickedSpreadsheetIds(
-    callbackUri.queryParameters['picked_file_ids'],
+    callbackUri.queryParameters,
   );
   if (pickedSpreadsheetIds == null || pickedSpreadsheetIds.isEmpty) {
     return const GooglePickerNativeCallbackValidation.rejected(
@@ -511,7 +535,14 @@ GooglePickerNativeCallbackValidation validateGooglePickerNativeCallback(
   );
 }
 
-List<String>? _pickedSpreadsheetIds(String? pickedFileIds) {
+List<String>? _pickedSpreadsheetIds(Map<String, String> queryParameters) {
+  String? pickedFileIds;
+  for (final key in _googlePickerPickedIdQueryParameters) {
+    if (queryParameters.containsKey(key)) {
+      pickedFileIds = queryParameters[key];
+      break;
+    }
+  }
   if (pickedFileIds == null) {
     return null;
   }

@@ -180,8 +180,13 @@
         <ul>
           <li>
             Success uses <code>state</code> and comma-separated
-            <code>picked_file_ids</code> values from the query string or URL
-            fragment.
+            selected spreadsheet ID values from the query string or URL
+            fragment. Accepted ID parameters are
+            <code>picked_file_ids</code>, <code>picked_file_id</code>,
+            <code>picked_folder_ids</code>, <code>picked_folder_id</code>,
+            <code>file_ids</code>, <code>file_id</code>,
+            <code>folder_ids</code>, <code>folder_id</code>,
+            <code>ids</code>, and <code>id</code>.
           </li>
           <li>
             Selection cancelled is represented by <code>error=access_denied</code>.
@@ -232,6 +237,18 @@
         var titleEl = document.getElementById("status-title");
         var detailEl = document.getElementById("status-detail");
         var openAppLinkEl = document.getElementById("open-app-link");
+        var pickedIdParameterNames = [
+          "picked_file_ids",
+          "picked_file_id",
+          "picked_folder_ids",
+          "picked_folder_id",
+          "file_ids",
+          "file_id",
+          "folder_ids",
+          "folder_id",
+          "ids",
+          "id",
+        ];
 
         function readCallbackParams() {
           var params = new URLSearchParams(window.location.search);
@@ -274,6 +291,20 @@
           return malformed ? null : ids;
         }
 
+        function readPickedFileIds(params) {
+          var pickedFileIdValue = null;
+
+          pickedIdParameterNames.some(function (key) {
+            if (params.has(key)) {
+              pickedFileIdValue = params.get(key);
+              return true;
+            }
+            return false;
+          });
+
+          return parsePickedFileIds(pickedFileIdValue);
+        }
+
         function expectedState() {
           try {
             return window.sessionStorage.getItem(expectedStateKey);
@@ -284,11 +315,17 @@
 
         function nativeCallbackUri(params) {
           var nativeParams = new URLSearchParams();
-          ["state", "picked_file_ids", "error"].forEach(function (key) {
-            if (params.has(key)) {
-              nativeParams.set(key, params.get(key));
-            }
-          });
+          var pickedFileIds = readPickedFileIds(params);
+
+          if (params.has("state")) {
+            nativeParams.set("state", params.get("state"));
+          }
+          if (pickedFileIds !== null && pickedFileIds.length > 0) {
+            nativeParams.set("picked_file_ids", pickedFileIds.join(","));
+          }
+          if (params.has("error")) {
+            nativeParams.set("error", params.get("error"));
+          }
 
           if (!nativeParams.has("state")) {
             return null;
@@ -346,7 +383,7 @@
             };
           }
 
-          var pickedFileIds = parsePickedFileIds(params.get("picked_file_ids"));
+          var pickedFileIds = readPickedFileIds(params);
           if (pickedFileIds === null || pickedFileIds.length === 0) {
             return {
               kind: "invalid",

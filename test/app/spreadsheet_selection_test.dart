@@ -35,14 +35,34 @@ void main() {
             clientId: 'client-id.apps.googleusercontent.com',
             redirectUri: workoutTrackerGooglePickerHostedCallbackUri,
             state: 'request-state',
+            loginHint: 'athlete@example.com',
           );
 
       expect(authorizationUrl.host, 'accounts.google.com');
       expect(
+        authorizationUrl.queryParameters['client_id'],
+        'client-id.apps.googleusercontent.com',
+      );
+      expect(
         authorizationUrl.queryParameters['redirect_uri'],
         workoutTrackerGooglePickerHostedCallbackUri.toString(),
       );
+      expect(authorizationUrl.queryParameters['response_type'], 'token');
       expect(authorizationUrl.queryParameters['state'], 'request-state');
+      expect(
+        authorizationUrl.queryParameters['scope'],
+        'https://www.googleapis.com/auth/drive.file',
+      );
+      expect(authorizationUrl.queryParameters['prompt'], 'consent');
+      expect(authorizationUrl.queryParameters['trigger_onepick'], 'true');
+      expect(
+        authorizationUrl.queryParameters['mimetypes'],
+        'application/vnd.google-apps.spreadsheet',
+      );
+      expect(
+        authorizationUrl.queryParameters['login_hint'],
+        'athlete@example.com',
+      );
     },
   );
 
@@ -62,6 +82,32 @@ void main() {
         'second-sheet',
       ]);
       expect(success.errorMessage, isNull);
+
+      for (final alias in [
+        'picked_file_ids',
+        'picked_file_id',
+        'picked_folder_ids',
+        'picked_folder_id',
+        'file_ids',
+        'file_id',
+        'folder_ids',
+        'folder_id',
+        'ids',
+        'id',
+      ]) {
+        final aliasSuccess = validateGooglePickerNativeCallback(
+          Uri.parse(
+            'workouttracker://google-picker-callback'
+            '?state=request-state&$alias=spreadsheet-id',
+          ),
+          expectedState: 'request-state',
+        );
+        expect(
+          aliasSuccess.result?.pickedSpreadsheetIds,
+          ['spreadsheet-id'],
+          reason: 'callback ID alias $alias should be accepted',
+        );
+      }
 
       final cancelled = validateGooglePickerNativeCallback(
         Uri.parse(
@@ -110,6 +156,16 @@ void main() {
       );
       expect(malformedSpreadsheetId.result, isNull);
       expect(malformedSpreadsheetId.errorMessage, contains('spreadsheet ID'));
+
+      final tokenWithoutSelection = validateGooglePickerNativeCallback(
+        Uri.parse(
+          'workouttracker://google-picker-callback'
+          '?state=request-state&access_token=oauth-token',
+        ),
+        expectedState: 'request-state',
+      );
+      expect(tokenWithoutSelection.result, isNull);
+      expect(tokenWithoutSelection.errorMessage, contains('spreadsheet IDs'));
 
       final unrelated = validateGooglePickerNativeCallback(
         Uri.parse(
