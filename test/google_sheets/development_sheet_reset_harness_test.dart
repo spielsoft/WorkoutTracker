@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/google_sheets_development.dart'
-    show DevelopmentSheetResetHarness;
+    show DevelopmentSheetResetHarness, workoutTrackerDevelopmentSpreadsheetId;
 import 'package:workout_tracker/google_sheets.dart';
+import 'package:workout_tracker/log_format.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 void main() {
@@ -44,22 +45,16 @@ void main() {
         'Notes',
         'Log Format',
       ]);
+      final exerciseNames = exercisesRows.skip(1).map((row) => row.first);
+      expect(exerciseNames, everyElement(allOf(isA<String>(), isNotEmpty)));
+      expect(exerciseNames.toSet(), hasLength(exercisesRows.length - 1));
       expect(
-        exercisesRows.skip(1).map((row) => row.first),
-        containsAll([
-          'Smith Machine Reverse Lunge',
-          'Lateral Step-Down',
-          'Cable Face Pull',
-        ]),
+        exercisesRows.skip(1),
+        everyElement(hasLength(exercisesRows.first.length)),
       );
       expect(
-        exercisesRows.skip(1).map((row) => row[8]),
-        containsAll([
-          '{Weight}[x]{Reps}[@]{RPE}',
-          '{Reps}[@]{RPE}',
-          '{Height}[x]{Reps}[@]{RPE}[,]{Pain}',
-          '{Seconds}[s@]{RPE}',
-        ]),
+        exercisesRows.skip(1).map((row) => parseLogFormat(row[8])),
+        everyElement(isA<ParsedLogFormat>()),
       );
       expect(
         activeRows.skip(1).where((row) => row.any((cell) => cell.isNotEmpty)),
