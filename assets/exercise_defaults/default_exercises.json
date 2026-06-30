@@ -132,29 +132,14 @@
     "defaultRpe": "8",
     "defaultRest": "3m",
     "defaultTempo": "3-1-1",
-    "notes": "Fall program squat; note says to switch to deep squat on week 11.",
+    "notes": "Squat pattern from fall and winter programs.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
-      "2025 Fall Tracker"
-    ],
-    "aliases": [
-      "Squat"
-    ]
-  },
-  {
-    "exercise": "Deep Squat",
-    "description": "Deep squat",
-    "defaultSets": "2",
-    "defaultReps": "5-6",
-    "defaultRpe": "7-8",
-    "defaultRest": "3m",
-    "defaultTempo": "3-1-1",
-    "notes": "Only two working sets; heavy enough to feel it without excessive soreness.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
-    "sourceTabs": [
+      "2025 Fall Tracker",
       "2026 Winter Tracker"
     ],
     "aliases": [
+      "Squat",
       "Deep Squats"
     ]
   },
@@ -328,26 +313,11 @@
     "notes": "Tuck elbows to 45 degrees and press in a slight arc.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
-      "2026 Spring Tracker"
-    ],
-    "aliases": [
-      "DB Flat Bench Press"
-    ]
-  },
-  {
-    "exercise": "DB Bench Press",
-    "description": "Dumbbell bench press",
-    "defaultSets": "3",
-    "defaultReps": "6-8",
-    "defaultRpe": "8",
-    "defaultRest": "90s",
-    "defaultTempo": "2-0-1",
-    "notes": "Arch light and set shoulder blades.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
-    "sourceTabs": [
+      "2026 Spring Tracker",
       "2025 Fall Tracker"
     ],
     "aliases": [
+      "DB Flat Bench Press",
       "DB Bench Press"
     ]
   },
