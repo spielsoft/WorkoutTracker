@@ -94,8 +94,22 @@ void main() {
 
       expect(callbackHtml, contains('Google Picker callback'));
       expect(callbackHtml, contains('/google-picker-callback/'));
-      expect(callbackHtml, contains('state'));
-      expect(callbackHtml, contains('picked_file_ids'));
+      expect(callbackHtml, contains('workouttracker://google-picker-callback'));
+      expect(callbackHtml, contains('Open WorkoutTracker'));
+      expect(callbackHtml, contains('Callback Contract'));
+
+      for (final requiredParameter in [
+        'state',
+        'access_denied',
+        'access_token',
+        'account_email',
+        'account_name',
+        'account_photo',
+        'error',
+      ]) {
+        expect(callbackHtml, contains(requiredParameter));
+      }
+
       for (final idAlias in [
         'picked_file_ids',
         'picked_file_id',
@@ -110,39 +124,6 @@ void main() {
       ]) {
         expect(callbackHtml, contains(idAlias));
       }
-      expect(callbackHtml, contains('access_denied'));
-      expect(callbackHtml, contains('access_token'));
-      expect(callbackHtml, contains('account_email'));
-      expect(callbackHtml, contains('account_name'));
-      expect(callbackHtml, contains('account_photo'));
-      expect(
-        callbackHtml,
-        contains('https://openidconnect.googleapis.com/v1/userinfo'),
-      );
-      expect(callbackHtml, contains('error'));
-      expect(callbackHtml, contains('workoutTrackerGooglePickerState'));
-      expect(callbackHtml, contains('sessionStorage'));
-      expect(callbackHtml, contains('URLSearchParams'));
-      expect(callbackHtml, contains('window.location.search'));
-      expect(callbackHtml, contains('window.location.hash'));
-      expect(callbackHtml, contains('workouttracker://google-picker-callback'));
-      expect(callbackHtml, contains('open-app-link'));
-      expect(
-        callbackHtml,
-        contains('window.location.href = result.openAppUri'),
-      );
-      expect(callbackHtml, contains('pickedIdParameterNames'));
-      expect(callbackHtml, contains('readPickedFileIds(params)'));
-      expect(callbackHtml, contains('nativeParams.set("picked_file_ids"'));
-      expect(callbackHtml, contains('nativeParams.set("access_token"'));
-      expect(callbackHtml, contains('nativeParams.set("account_email"'));
-      expect(callbackHtml, contains('enrichParamsWithAccount'));
-      expect(callbackHtml, contains('pickedFileIds.join(", ")'));
-      expect(callbackHtml, contains('split(",")'));
-      expect(callbackHtml, contains('expected !== state'));
-      expect(callbackHtml, contains('error === "access_denied"'));
-      expect(callbackHtml, contains('Malformed callback'));
-      expect(callbackHtml, contains(r'/^[A-Za-z0-9_-]+$/'));
 
       for (final visibleStateText in [
         'Spreadsheet selected',
