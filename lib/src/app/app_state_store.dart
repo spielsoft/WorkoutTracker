@@ -161,7 +161,12 @@ class FileAppStateStore implements AppStateStore {
     if (!await file.exists()) {
       return <String, Object?>{};
     }
-    final decoded = jsonDecode(await file.readAsString());
+    Object? decoded;
+    try {
+      decoded = jsonDecode(await file.readAsString());
+    } on FormatException {
+      return <String, Object?>{};
+    }
     if (decoded is Map<String, Object?>) {
       return decoded;
     }
@@ -171,7 +176,9 @@ class FileAppStateStore implements AppStateStore {
   Future<void> _writeState(Map<String, Object?> state) async {
     final file = await _stateFile();
     await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(state));
+    final temporaryFile = File('${file.path}.tmp');
+    await temporaryFile.writeAsString(jsonEncode(state), flush: true);
+    await temporaryFile.rename(file.path);
   }
 
   Future<File> _stateFile() async {
@@ -204,17 +211,6 @@ class FileAppStateStore implements AppStateStore {
 
     final home = environment['HOME'];
     if (home != null && home.trim().isNotEmpty) {
-      if (isMacOS) {
-        return Directory(
-          '$home${Platform.pathSeparator}Library'
-          '${Platform.pathSeparator}Containers'
-          '${Platform.pathSeparator}com.spielman.workouttracker'
-          '${Platform.pathSeparator}Data'
-          '${Platform.pathSeparator}Library'
-          '${Platform.pathSeparator}Application Support'
-          '${Platform.pathSeparator}WorkoutTracker',
-        );
-      }
       return Directory('$home${Platform.pathSeparator}.workout_tracker');
     }
 

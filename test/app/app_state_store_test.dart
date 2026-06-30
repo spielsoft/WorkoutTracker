@@ -63,7 +63,7 @@ void main() {
     expect(migrated.workoutSelection?.workout, 'Upper');
   });
 
-  test('file app state store uses macOS app container support directory', () {
+  test('file app state store uses home-relative app directory on macOS', () {
     final directory = FileAppStateStore.defaultStateDirectory(
       isWindows: false,
       isMacOS: true,
@@ -73,18 +73,7 @@ void main() {
 
     expect(
       directory.path,
-      [
-        '',
-        'Users',
-        'athlete',
-        'Library',
-        'Containers',
-        'com.spielman.workouttracker',
-        'Data',
-        'Library',
-        'Application Support',
-        'WorkoutTracker',
-      ].join(Platform.pathSeparator),
+      ['', 'Users', 'athlete', '.workout_tracker'].join(Platform.pathSeparator),
     );
   });
 
@@ -116,5 +105,26 @@ void main() {
     expect(restored.spreadsheetText, 'spreadsheet-id');
     expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
     expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
+  });
+
+  test('file app state store ignores malformed existing state', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'workout-tracker-malformed-state-test-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    await File(
+      '${directory.path}${Platform.pathSeparator}state.json',
+    ).writeAsString('{"googleWorkspaceAccess":{}}{"extra":true}');
+    final store = FileAppStateStore(stateDirectory: directory);
+
+    final restored = await store.readGoogleWorkspaceAccessState();
+
+    expect(restored.spreadsheetText, isNull);
+    expect(restored.selectedSpreadsheet, isNull);
+    expect(restored.googleAuthorization, isNull);
   });
 }
