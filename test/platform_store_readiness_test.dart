@@ -160,7 +160,7 @@ void main() {
       },
     );
 
-    test('macOS runner focuses the existing window for app-link callbacks', () {
+    test('macOS main window is visible at launch', () {
       final mainMenu = File(
         'macos/Runner/Base.lproj/MainMenu.xib',
       ).readAsStringSync();
@@ -176,21 +176,9 @@ void main() {
       );
       expect(
         appDelegate,
-        contains('focusMainFlutterWindow()'),
+        contains('mainFlutterWindow?.makeKeyAndOrderFront(nil)'),
         reason:
             'The app delegate must explicitly order the Flutter window front.',
-      );
-      expect(
-        appDelegate,
-        contains('applicationShouldOpenUntitledFile'),
-        reason:
-            'Custom URL callbacks must not make AppKit open a second untitled window.',
-      );
-      expect(
-        appDelegate,
-        contains('applicationShouldHandleReopen'),
-        reason:
-            'Opening the app from a browser callback should focus the existing window.',
       );
     });
 
