@@ -8,7 +8,7 @@ import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
   test(
-    'native Google sign-in validation uses writable Sheets authorization',
+    'Google authorization gateway interface is asked for writable Sheets scope before validation',
     () async {
       final gateway = _RecordingGoogleSignInAuthorizationGateway();
       final activeSheet = _minimalParsedActiveSheet();
@@ -38,7 +38,7 @@ void main() {
   );
 
   test(
-    'native Google sign-in history block creation requests write authorization',
+    'Google authorization gateway interface is asked for writable Sheets scope before writes',
     () async {
       final gateway = _RecordingGoogleSignInAuthorizationGateway();
       final activeSheet = _minimalParsedActiveSheet();

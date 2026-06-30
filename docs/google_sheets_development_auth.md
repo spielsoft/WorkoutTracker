@@ -124,6 +124,17 @@ https://www.googleapis.com/auth/drive.file
 
 The app does not request full-drive access for the MVP sheet contract.
 
+## Test Boundaries
+
+Default local tests may use fake Google-facing collaborators only to verify this
+app's interface contracts, such as requested scopes, generated OAuth URLs,
+accepted callback parameters, and adapter write plans. Those tests do not prove
+Google Sign-In, OAuth, Picker, Sheets, Drive, or Firebase Hosting behavior. Do
+not add canned Google HTTP responses or simulated Picker success flows as
+behavior tests. When real Google behavior matters, use explicit opt-in live
+validation against the development sheet and report any required user
+authorization or sheet writes.
+
 ## macOS GUI validation
 
 For macOS native Google Sign-In, open `macos/Runner.xcworkspace` in Xcode,

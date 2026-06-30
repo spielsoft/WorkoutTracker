@@ -68,6 +68,15 @@ GUI code must use completed backend modules instead of duplicating sheet parsing
 
 Tests should describe observable behavior, not implementation details.
 
+Do not treat mocks, fakes, canned HTTP responses, or simulated third-party
+callbacks as behavior tests for systems outside this repository. They may only
+verify this app's own interface contracts: which adapter method is called, which
+scope or URL is requested, which callback shape the app accepts, or which write
+plan the app emits. They do not prove Google, Firebase, OAuth, Picker, or app
+store behavior. If the external system's behavior matters, use an opt-in live
+integration test or document the assumption instead of inventing the answer in a
+mock.
+
 Use the smallest test tier that gives useful signal for the work in front of
 you:
 
