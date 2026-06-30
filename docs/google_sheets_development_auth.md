@@ -56,9 +56,11 @@ sheet creation also uses this Picker authorization path to choose a destination
 folder before it asks for a sheet name and initializes a new WorkoutTracker
 spreadsheet in Drive. The Picker callback forwards the access token and Google
 account profile used by the app's account menu and persisted launch state.
-Normal Picker launches use incremental authorization with
-`include_granted_scopes=true` and do not force `prompt=consent`; otherwise
-Google is expected to show consent again instead of going straight to Picker.
+Normal Picker launches keep the OnePick-compatible URL shape:
+`scope=https://www.googleapis.com/auth/drive.file`,
+`prompt=consent`, and `trigger_onepick=true`. Adding OpenID profile scopes to
+that URL can complete OAuth without opening Picker, leaving the callback with no
+selected spreadsheet.
 Picker selection uses the checked-in web OAuth client ID for the
 `workouttracker-16285` Google Cloud project:
 

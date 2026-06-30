@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis/sheets/v4.dart' as sheets;
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:workout_tracker/google_sheets.dart';
 
@@ -315,9 +317,8 @@ class MobileGoogleDriveSpreadsheetPicker
       'redirect_uri': redirectUri.toString(),
       'response_type': 'token',
       'state': state,
-      'scope':
-          'openid email profile https://www.googleapis.com/auth/drive.file',
-      'include_granted_scopes': 'true',
+      'scope': 'https://www.googleapis.com/auth/drive.file',
+      'prompt': 'consent',
       'trigger_onepick': 'true',
       'allow_multiple': 'false',
       'mimetypes': mimetypes,
@@ -356,6 +357,10 @@ class MobileGoogleDriveSpreadsheetPicker
         ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
     final client = clientFactory(headers);
     try {
+      await _restoreAccountProfileFromDrive(
+        authorizationGateway: authorizationGateway,
+        client: client,
+      );
       final api = sheets.SheetsApi(client);
       final spreadsheet = await api.spreadsheets.get(
         spreadsheetId,
@@ -390,6 +395,39 @@ class MobileGoogleDriveSpreadsheetPicker
           photoUrl: result.accountPhotoUrl,
         ),
       );
+    }
+  }
+
+  Future<void> _restoreAccountProfileFromDrive({
+    required GoogleSignInAuthorizationGateway authorizationGateway,
+    required http.Client client,
+  }) async {
+    if (authorizationGateway case final GooglePickerAuthorizationStore store) {
+      final current = store.currentAuthorization;
+      if (current == null || current.accountEmail?.trim().isNotEmpty == true) {
+        return;
+      }
+      try {
+        final about = await drive.DriveApi(
+          client,
+        ).about.get($fields: 'user(emailAddress,displayName,photoLink)');
+        final user = about.user;
+        final email = user?.emailAddress?.trim();
+        if (email == null || email.isEmpty) {
+          return;
+        }
+        store.updateGooglePickerAuthorization(
+          GooglePickerAuthorizationSnapshot(
+            accessToken: current.accessToken,
+            accountEmail: email,
+            displayName: user?.displayName,
+            photoUrl: user?.photoLink,
+          ),
+        );
+      } on Object {
+        // Account display is best-effort; selected-sheet validation still owns
+        // the user-visible success or failure for this flow.
+      }
     }
   }
 }
