@@ -978,7 +978,12 @@ void main() {
         drivePath: 'My Drive / Workouts / 2026 Workouts',
         accountEmail: 'saved@example.com',
       ),
+      googleAuthorization: const GooglePickerAuthorizationSnapshot(
+        accessToken: 'restored-picker-token',
+        accountEmail: 'saved@example.com',
+      ),
     );
+    final accountSession = GooglePickerAuthorizationGateway();
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -988,6 +993,7 @@ void main() {
     await tester.pumpWidget(
       WorkoutTrackerApp(
         validationService: service,
+        accountSession: accountSession,
         appStateStore: store,
         spreadsheetPicker: const DisabledSpreadsheetPicker(
           reason: 'Google Drive Picker is missing an OAuth client ID.',
@@ -997,6 +1003,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('My Drive / Workouts / 2026 Workouts'), findsOneWidget);
+    expect(
+      accountSession.currentAuthorization?.accessToken,
+      'restored-picker-token',
+    );
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
@@ -1044,107 +1054,103 @@ void main() {
     },
   );
 
-  testWidgets('create sheet signs in before asking for a workbook name', (
-    tester,
-  ) async {
-    final picker = _CountingSpreadsheetPicker();
-    final login = Completer<void>();
-    final accountSession = _FakeGoogleAccountSession(
-      null,
-      switchCompletion: login.future,
-    );
-    final service = TestSpreadsheetValidationService.fromRows([
-      [...activeSheetFixedColumns, 'Week 1'],
-      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
-    ]);
+  testWidgets(
+    'create sheet uses picker authorization before asking for a workbook name',
+    (tester) async {
+      final picker = _CountingSpreadsheetPicker();
+      final authorization = Completer<bool>();
+      picker.creationAuthorization = authorization.future;
+      final accountSession = GooglePickerAuthorizationGateway();
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ]);
 
-    await tester.pumpWidget(
-      WorkoutTrackerApp(
-        validationService: service,
-        accountSession: accountSession,
-        spreadsheetPicker: picker,
-      ),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          accountSession: accountSession,
+          spreadsheetPicker: picker,
+        ),
+      );
+      await tester.pump();
 
-    await tester.tap(find.text('Create sheet'));
-    await tester.pump();
+      await tester.tap(find.text('Create sheet'));
+      await tester.pump();
 
-    expect(accountSession.switchCount, 1);
-    expect(
-      accountSession.requestedScopes.single,
-      GoogleApisSheetsWriteClient.writeScopes,
-    );
-    expect(find.text('Sheet name'), findsNothing);
-    expect(picker.createCount, 0);
+      expect(picker.creationAuthorizationCount, 1);
+      expect(find.text('Sheet name'), findsNothing);
+      expect(picker.createCount, 0);
 
-    login.complete();
-    await tester.pumpAndSettle();
+      authorization.complete(true);
+      await tester.pumpAndSettle();
 
-    expect(find.text('Sheet name'), findsOneWidget);
-    final nameField = find.byKey(const ValueKey('create-spreadsheet-name'));
-    expect(nameField, findsOneWidget);
-    expect(tester.widget<TextField>(nameField).controller!.text, isNotEmpty);
+      expect(find.text('Sheet name'), findsOneWidget);
+      final nameField = find.byKey(const ValueKey('create-spreadsheet-name'));
+      expect(nameField, findsOneWidget);
+      expect(tester.widget<TextField>(nameField).controller!.text, isNotEmpty);
 
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
 
-    expect(picker.createCount, 0);
-    expect(picker.createNames, isEmpty);
+      expect(picker.createCount, 0);
+      expect(picker.createNames, isEmpty);
 
-    await tester.tap(find.text('Create sheet'));
-    await tester.pumpAndSettle();
-    await tester.enterText(nameField, 'Custom Training Log');
-    await tester.tap(find.text('Create'));
-    await tester.pump();
+      await tester.tap(find.text('Create sheet'));
+      await tester.pumpAndSettle();
+      await tester.enterText(nameField, 'Custom Training Log');
+      await tester.tap(find.text('Create'));
+      await tester.pump();
 
-    expect(picker.createCount, 1);
-    expect(picker.createNames, ['Custom Training Log']);
-  });
+      expect(picker.createCount, 1);
+      expect(picker.createNames, ['Custom Training Log']);
+    },
+  );
 
-  testWidgets('create sheet skips login when already connected', (
-    tester,
-  ) async {
-    final picker = _CountingSpreadsheetPicker();
-    final accountSession = _FakeGoogleAccountSession(
-      const GoogleAccountProfile(
-        email: 'saved@example.com',
-        displayName: 'Saved Account',
-      ),
-    );
-    final service = TestSpreadsheetValidationService.fromRows([
-      [...activeSheetFixedColumns, 'Week 1'],
-      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
-    ]);
+  testWidgets(
+    'create sheet skips picker authorization when already connected',
+    (tester) async {
+      final picker = _CountingSpreadsheetPicker();
+      final accountSession = GooglePickerAuthorizationGateway(
+        initial: const GooglePickerAuthorizationSnapshot(
+          accessToken: 'saved-token',
+          accountEmail: 'saved@example.com',
+        ),
+      );
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ]);
 
-    await tester.pumpWidget(
-      WorkoutTrackerApp(
-        validationService: service,
-        accountSession: accountSession,
-        spreadsheetPicker: picker,
-      ),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          accountSession: accountSession,
+          spreadsheetPicker: picker,
+        ),
+      );
+      await tester.pump();
 
-    await tester.tap(find.text('Create sheet'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Create sheet'));
+      await tester.pumpAndSettle();
 
-    expect(accountSession.switchCount, 0);
-    expect(find.text('Sheet name'), findsOneWidget);
-    expect(picker.createCount, 0);
+      expect(picker.creationAuthorizationCount, 0);
+      expect(find.text('Sheet name'), findsOneWidget);
+      expect(picker.createCount, 0);
 
-    await tester.enterText(
-      find.byKey(const ValueKey('create-spreadsheet-name')),
-      'Custom Training Log',
-    );
-    await tester.tap(find.text('Create'));
-    await tester.pump();
+      await tester.enterText(
+        find.byKey(const ValueKey('create-spreadsheet-name')),
+        'Custom Training Log',
+      );
+      await tester.tap(find.text('Create'));
+      await tester.pump();
 
-    expect(picker.createCount, 1);
-    expect(picker.createNames, ['Custom Training Log']);
-  });
+      expect(picker.createCount, 1);
+      expect(picker.createNames, ['Custom Training Log']);
+    },
+  );
 
   testWidgets('returning sheet selection keeps loaded state compact', (
     tester,
@@ -4187,15 +4193,10 @@ void main() {
 
 class _FakeGoogleAccountSession extends ChangeNotifier
     implements GoogleAccountSession {
-  _FakeGoogleAccountSession(
-    this._currentAccount, {
-    this.restoredAccount,
-    this.switchCompletion,
-  });
+  _FakeGoogleAccountSession(this._currentAccount, {this.restoredAccount});
 
   GoogleAccountProfile? _currentAccount;
   final GoogleAccountProfile? restoredAccount;
-  final Future<void>? switchCompletion;
   int restoreCount = 0;
   int switchCount = 0;
   int signOutCount = 0;
@@ -4217,7 +4218,6 @@ class _FakeGoogleAccountSession extends ChangeNotifier
   Future<void> switchAccount({List<String> scopes = const []}) async {
     switchCount += 1;
     requestedScopes.add(scopes);
-    await switchCompletion;
     _currentAccount = const GoogleAccountProfile(
       email: 'right@example.com',
       displayName: 'Right Account',
@@ -4263,10 +4263,15 @@ Future<void> _expectFlutterAccessibilityGuidelines(WidgetTester tester) async {
 }
 
 class _MemoryAppStateStore implements AppStateStore {
-  _MemoryAppStateStore(this.spreadsheetText, {this.selectedSpreadsheet});
+  _MemoryAppStateStore(
+    this.spreadsheetText, {
+    this.selectedSpreadsheet,
+    this.googleAuthorization,
+  });
 
   String? spreadsheetText;
   SelectedSpreadsheet? selectedSpreadsheet;
+  GooglePickerAuthorizationSnapshot? googleAuthorization;
   WorkoutSelectionState? workoutSelection;
   final accessStateWrites = <GoogleWorkspaceAccessState>[];
   int clearCount = 0;
@@ -4276,6 +4281,7 @@ class _MemoryAppStateStore implements AppStateStore {
     return GoogleWorkspaceAccessState(
       spreadsheetText: spreadsheetText,
       selectedSpreadsheet: selectedSpreadsheet,
+      googleAuthorization: googleAuthorization,
       workoutSelection: workoutSelection,
     );
   }
@@ -4286,6 +4292,7 @@ class _MemoryAppStateStore implements AppStateStore {
   ) async {
     spreadsheetText = value.spreadsheetText;
     selectedSpreadsheet = value.selectedSpreadsheet;
+    googleAuthorization = value.googleAuthorization;
     workoutSelection = value.workoutSelection;
     accessStateWrites.add(value);
   }
@@ -4295,6 +4302,7 @@ class _MemoryAppStateStore implements AppStateStore {
     clearCount += 1;
     spreadsheetText = null;
     selectedSpreadsheet = null;
+    googleAuthorization = null;
     workoutSelection = null;
   }
 }
@@ -4560,10 +4568,13 @@ class _ReorderingWorkoutExerciseAuthoringService
   }
 }
 
-class _CountingSpreadsheetPicker implements SpreadsheetPicker {
+class _CountingSpreadsheetPicker
+    implements SpreadsheetPicker, SpreadsheetCreationAuthorizer {
   int chooseCount = 0;
   int createCount = 0;
+  int creationAuthorizationCount = 0;
   final createNames = <String?>[];
+  Future<bool>? creationAuthorization;
 
   @override
   SpreadsheetPickerAvailability get availability {
@@ -4581,6 +4592,12 @@ class _CountingSpreadsheetPicker implements SpreadsheetPicker {
     createCount += 1;
     createNames.add(name);
     return null;
+  }
+
+  @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    creationAuthorizationCount += 1;
+    return creationAuthorization ?? true;
   }
 }
 

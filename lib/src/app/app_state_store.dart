@@ -1,27 +1,32 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'google_account_session.dart';
 import 'spreadsheet_selection.dart';
 
 class GoogleWorkspaceAccessState {
   const GoogleWorkspaceAccessState({
     this.spreadsheetText,
     this.selectedSpreadsheet,
+    this.googleAuthorization,
     this.workoutSelection,
   });
 
   final String? spreadsheetText;
   final SelectedSpreadsheet? selectedSpreadsheet;
+  final GooglePickerAuthorizationSnapshot? googleAuthorization;
   final WorkoutSelectionState? workoutSelection;
 
   GoogleWorkspaceAccessState copyWith({
     String? spreadsheetText,
     SelectedSpreadsheet? selectedSpreadsheet,
+    GooglePickerAuthorizationSnapshot? googleAuthorization,
     WorkoutSelectionState? workoutSelection,
   }) {
     return GoogleWorkspaceAccessState(
       spreadsheetText: spreadsheetText ?? this.spreadsheetText,
       selectedSpreadsheet: selectedSpreadsheet ?? this.selectedSpreadsheet,
+      googleAuthorization: googleAuthorization ?? this.googleAuthorization,
       workoutSelection: workoutSelection ?? this.workoutSelection,
     );
   }
@@ -29,11 +34,13 @@ class GoogleWorkspaceAccessState {
   GoogleWorkspaceAccessState migrateLegacy({
     String? spreadsheetText,
     SelectedSpreadsheet? selectedSpreadsheet,
+    GooglePickerAuthorizationSnapshot? googleAuthorization,
     WorkoutSelectionState? workoutSelection,
   }) {
     return GoogleWorkspaceAccessState(
       spreadsheetText: this.spreadsheetText ?? spreadsheetText,
       selectedSpreadsheet: this.selectedSpreadsheet ?? selectedSpreadsheet,
+      googleAuthorization: this.googleAuthorization ?? googleAuthorization,
       workoutSelection: this.workoutSelection ?? workoutSelection,
     );
   }
@@ -43,6 +50,8 @@ class GoogleWorkspaceAccessState {
       if (spreadsheetText != null) 'spreadsheetText': spreadsheetText,
       if (selectedSpreadsheet != null)
         'selectedSpreadsheet': selectedSpreadsheet!.toJson(),
+      if (googleAuthorization != null)
+        'googleAuthorization': googleAuthorization!.toJson(),
       if (workoutSelection != null)
         'workoutSelection': workoutSelection!.toJson(),
     };
@@ -57,6 +66,9 @@ class GoogleWorkspaceAccessState {
         selectedSpreadsheet: SelectedSpreadsheet.fromJson(
           value['selectedSpreadsheet'],
         ),
+        googleAuthorization: GooglePickerAuthorizationSnapshot.fromJson(
+          value['googleAuthorization'],
+        ),
         workoutSelection: WorkoutSelectionState.fromJson(
           value['workoutSelection'],
         ),
@@ -66,6 +78,9 @@ class GoogleWorkspaceAccessState {
       return GoogleWorkspaceAccessState(
         selectedSpreadsheet: SelectedSpreadsheet.fromJson(
           value['selectedSpreadsheet'],
+        ),
+        googleAuthorization: GooglePickerAuthorizationSnapshot.fromJson(
+          value['googleAuthorization'],
         ),
         workoutSelection: WorkoutSelectionState.fromJson(
           value['workoutSelection'],
@@ -92,6 +107,7 @@ class FileAppStateStore implements AppStateStore {
   static const _googleWorkspaceAccessKey = 'googleWorkspaceAccess';
   static const _spreadsheetTextKey = 'spreadsheetText';
   static const _selectedSpreadsheetKey = 'selectedSpreadsheet';
+  static const _googleAuthorizationKey = 'googleAuthorization';
   static const _workoutSelectionKey = 'workoutSelection';
 
   @override
@@ -103,6 +119,9 @@ class FileAppStateStore implements AppStateStore {
       spreadsheetText: decoded[_spreadsheetTextKey] as String?,
       selectedSpreadsheet: SelectedSpreadsheet.fromJson(
         decoded[_selectedSpreadsheetKey],
+      ),
+      googleAuthorization: GooglePickerAuthorizationSnapshot.fromJson(
+        decoded[_googleAuthorizationKey],
       ),
       workoutSelection: WorkoutSelectionState.fromJson(
         decoded[_workoutSelectionKey],
@@ -118,6 +137,7 @@ class FileAppStateStore implements AppStateStore {
     state[_googleWorkspaceAccessKey] = value.toJson();
     state.remove(_spreadsheetTextKey);
     state.remove(_selectedSpreadsheetKey);
+    state.remove(_googleAuthorizationKey);
     state.remove(_workoutSelectionKey);
     await _writeState(state);
   }
@@ -128,6 +148,7 @@ class FileAppStateStore implements AppStateStore {
     state.remove(_googleWorkspaceAccessKey);
     state.remove(_spreadsheetTextKey);
     state.remove(_selectedSpreadsheetKey);
+    state.remove(_googleAuthorizationKey);
     state.remove(_workoutSelectionKey);
     await _writeState(state);
   }

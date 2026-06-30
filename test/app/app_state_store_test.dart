@@ -10,6 +10,10 @@ void main() {
         name: 'Development Workouts',
         accountEmail: 'user@example.com',
       ),
+      googleAuthorization: GooglePickerAuthorizationSnapshot(
+        accessToken: 'picker-access-token',
+        accountEmail: 'user@example.com',
+      ),
       workoutSelection: WorkoutSelectionState(
         spreadsheetId: 'spreadsheet-id',
         workout: 'Legs',
@@ -22,6 +26,8 @@ void main() {
     expect(decoded.spreadsheetText, 'spreadsheet-id');
     expect(decoded.selectedSpreadsheet?.name, 'Development Workouts');
     expect(decoded.selectedSpreadsheet?.accountEmail, 'user@example.com');
+    expect(decoded.googleAuthorization?.accessToken, 'picker-access-token');
+    expect(decoded.googleAuthorization?.accountEmail, 'user@example.com');
     expect(decoded.workoutSelection?.workout, 'Legs');
     expect(decoded.workoutSelection?.historyBlock, 'Week 1');
   });

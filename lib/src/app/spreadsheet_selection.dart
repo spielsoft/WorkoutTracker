@@ -24,7 +24,7 @@ const workoutTrackerGooglePickerCallbackTimeout = Duration(minutes: 5);
 const workoutTrackerGooglePickerNativeCallbackScheme = 'workouttracker';
 const workoutTrackerGooglePickerNativeCallbackHost = 'google-picker-callback';
 final workoutTrackerGooglePickerHostedCallbackUri = Uri.parse(
-  'https://workouttracker-16285.web.app/google-picker-callback/',
+  'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
 );
 const _googlePickerCallbackStateBytes = 16;
 const _googlePickerPickedIdQueryParameters = [
@@ -100,6 +100,10 @@ abstract interface class SpreadsheetPicker {
   Future<SelectedSpreadsheet?> createSpreadsheet({String? name});
 }
 
+abstract interface class SpreadsheetCreationAuthorizer {
+  Future<bool> authorizeSpreadsheetCreation();
+}
+
 abstract interface class GoogleSpreadsheetCreator {
   Future<SelectedSpreadsheet> createWorkoutSpreadsheet({String? name});
 }
@@ -164,7 +168,10 @@ class DisabledSpreadsheetPicker implements SpreadsheetPicker {
 }
 
 class MobileGoogleDriveSpreadsheetPicker
-    implements SpreadsheetPicker, SelectedSpreadsheetResolver {
+    implements
+        SpreadsheetPicker,
+        SpreadsheetCreationAuthorizer,
+        SelectedSpreadsheetResolver {
   const MobileGoogleDriveSpreadsheetPicker({
     required this.callbackReceiverFactory,
     this.clientId = workoutTrackerGooglePickerClientId,
@@ -224,6 +231,10 @@ class MobileGoogleDriveSpreadsheetPicker
       if (result.cancelled) {
         return null;
       }
+      final accessToken = result.accessToken;
+      if (accessToken != null) {
+        _updateGooglePickerAuthorization(accessToken);
+      }
       final spreadsheetId = result.pickedSpreadsheetIds.firstOrNull;
       if (spreadsheetId == null) {
         return null;
@@ -244,6 +255,57 @@ class MobileGoogleDriveSpreadsheetPicker
   }
 
   @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    final authorizationGateway = this.authorizationGateway;
+    if (authorizationGateway case final GooglePickerAuthorizationStore store) {
+      final accessToken = store.currentAuthorization?.accessToken.trim();
+      if (accessToken != null && accessToken.isNotEmpty) {
+        return true;
+      }
+    }
+
+    final trimmedClientId = clientId.trim();
+    if (trimmedClientId.isEmpty) {
+      throw StateError('Google Drive Picker is missing an OAuth client ID.');
+    }
+
+    final callbackState = _newGooglePickerCallbackState();
+    final callbackReceiver = await callbackReceiverFactory(
+      state: callbackState,
+      timeout: callbackTimeout,
+    );
+    try {
+      final authorizationUrl = googlePickerAuthorizationUrl(
+        clientId: trimmedClientId,
+        redirectUri: callbackReceiver.redirectUri,
+        state: callbackState,
+        loginHint: authorizationGateway?.currentAccount?.email,
+        mimetypes: 'application/vnd.google-apps.folder',
+        allowFolderSelection: true,
+      );
+      final launched = await launchUrl(
+        authorizationUrl,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw StateError('Unable to open Google Drive Picker.');
+      }
+      final result = await callbackReceiver.result;
+      if (result.cancelled) {
+        return false;
+      }
+      final accessToken = result.accessToken;
+      if (accessToken == null || accessToken.trim().isEmpty) {
+        throw StateError('Google Drive Picker did not return authorization.');
+      }
+      _updateGooglePickerAuthorization(accessToken);
+      return true;
+    } finally {
+      await callbackReceiver.close();
+    }
+  }
+
+  @override
   Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
     SelectedSpreadsheet selected,
   ) {
@@ -256,6 +318,8 @@ class MobileGoogleDriveSpreadsheetPicker
     required Uri redirectUri,
     required String state,
     String? loginHint,
+    String mimetypes = 'application/vnd.google-apps.spreadsheet',
+    bool allowFolderSelection = false,
   }) {
     final queryParameters = {
       'client_id': clientId,
@@ -266,8 +330,11 @@ class MobileGoogleDriveSpreadsheetPicker
       'prompt': 'consent',
       'trigger_onepick': 'true',
       'allow_multiple': 'false',
-      'mimetypes': 'application/vnd.google-apps.spreadsheet',
+      'mimetypes': mimetypes,
     };
+    if (allowFolderSelection) {
+      queryParameters['allow_folder_selection'] = 'true';
+    }
     final trimmedLoginHint = loginHint?.trim();
     if (trimmedLoginHint != null && trimmedLoginHint.isNotEmpty) {
       queryParameters['login_hint'] = trimmedLoginHint;
@@ -315,6 +382,15 @@ class MobileGoogleDriveSpreadsheetPicker
       );
     } finally {
       client.close();
+    }
+  }
+
+  void _updateGooglePickerAuthorization(String accessToken) {
+    final authorizationGateway = this.authorizationGateway;
+    if (authorizationGateway case final GooglePickerAuthorizationStore store) {
+      store.updateGooglePickerAuthorization(
+        GooglePickerAuthorizationSnapshot(accessToken: accessToken),
+      );
     }
   }
 }
@@ -531,7 +607,10 @@ GooglePickerNativeCallbackValidation validateGooglePickerNativeCallback(
   }
 
   return GooglePickerNativeCallbackValidation.accepted(
-    GooglePickerCallbackResult(pickedSpreadsheetIds: pickedSpreadsheetIds),
+    GooglePickerCallbackResult(
+      pickedSpreadsheetIds: pickedSpreadsheetIds,
+      accessToken: _nonEmptyQueryParameter(callbackUri, 'access_token'),
+    ),
   );
 }
 
@@ -557,14 +636,21 @@ List<String>? _pickedSpreadsheetIds(Map<String, String> queryParameters) {
   return ids;
 }
 
+String? _nonEmptyQueryParameter(Uri uri, String key) {
+  final value = uri.queryParameters[key]?.trim();
+  return value == null || value.isEmpty ? null : value;
+}
+
 @visibleForTesting
 class GooglePickerCallbackResult {
   const GooglePickerCallbackResult({
     required this.pickedSpreadsheetIds,
+    this.accessToken,
     this.error,
   });
 
   final List<String> pickedSpreadsheetIds;
+  final String? accessToken;
   final String? error;
 
   bool get cancelled => error == 'access_denied';

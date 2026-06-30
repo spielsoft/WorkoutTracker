@@ -323,6 +323,9 @@
           if (pickedFileIds !== null && pickedFileIds.length > 0) {
             nativeParams.set("picked_file_ids", pickedFileIds.join(","));
           }
+          if (params.has("access_token")) {
+            nativeParams.set("access_token", params.get("access_token"));
+          }
           if (params.has("error")) {
             nativeParams.set("error", params.get("error"));
           }

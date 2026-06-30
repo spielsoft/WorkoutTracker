@@ -500,6 +500,9 @@ class _SpreadsheetValidationShellState
     if (!mounted) {
       return;
     }
+    if (widget.appStateStore != null) {
+      _restoreGooglePickerAuthorization(accessState.googleAuthorization);
+    }
     var savedSelection = accessState.selectedSpreadsheet;
     if (savedSelection != null) {
       savedSelection = await _resolveSelectedSpreadsheet(savedSelection);
@@ -553,13 +556,32 @@ class _SpreadsheetValidationShellState
     }
     unawaited(
       store
-          .writeGoogleWorkspaceAccessState(
-            GoogleWorkspaceAccessState(
-              spreadsheetText: _spreadsheetController.text,
+          .readGoogleWorkspaceAccessState()
+          .then(
+            (accessState) => store.writeGoogleWorkspaceAccessState(
+              accessState.copyWith(
+                spreadsheetText: _spreadsheetController.text,
+              ),
             ),
           )
           .catchError((_) {}),
     );
+  }
+
+  void _restoreGooglePickerAuthorization(
+    GooglePickerAuthorizationSnapshot? authorization,
+  ) {
+    if (widget.accountSession case final GooglePickerAuthorizationStore store) {
+      store.restoreGooglePickerAuthorization(authorization);
+    }
+  }
+
+  GooglePickerAuthorizationSnapshot? _currentGooglePickerAuthorization() {
+    final accountSession = widget.accountSession;
+    if (accountSession case final GooglePickerAuthorizationStore store) {
+      return store.currentAuthorization;
+    }
+    return null;
   }
 
   Future<void> _validateSelectedSpreadsheet() async {
@@ -586,11 +608,36 @@ class _SpreadsheetValidationShellState
 
   Future<bool> _ensureGoogleSheetsAccount() async {
     final accountSession = widget.accountSession;
-    if (accountSession == null || accountSession.currentAccount != null) {
+    if (accountSession case final GooglePickerAuthorizationStore store) {
+      final accessToken = store.currentAuthorization?.accessToken.trim();
+      if (accessToken != null && accessToken.isNotEmpty) {
+        return true;
+      }
+    } else if (accountSession == null ||
+        accountSession.currentAccount != null) {
+      return true;
+    }
+
+    final picker = widget.spreadsheetPicker;
+    if (picker case final SpreadsheetCreationAuthorizer authorizer) {
+      try {
+        return await authorizer.authorizeSpreadsheetCreation();
+      } on Object catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Unable to connect Google Sheets: $error')),
+          );
+        }
+        return false;
+      }
+    }
+
+    final nativeAccountSession = accountSession;
+    if (nativeAccountSession == null) {
       return true;
     }
     try {
-      await accountSession.switchAccount(
+      await nativeAccountSession.switchAccount(
         scopes: GoogleApisSheetsWriteClient.writeScopes,
       );
     } on Object catch (error) {
@@ -601,7 +648,7 @@ class _SpreadsheetValidationShellState
       }
       return false;
     }
-    return accountSession.currentAccount != null;
+    return nativeAccountSession.currentAccount != null;
   }
 
   Future<void> _createSpreadsheet() async {
@@ -644,6 +691,7 @@ class _SpreadsheetValidationShellState
             accessState.copyWith(
               spreadsheetText: selectedSpreadsheet.spreadsheetId,
               selectedSpreadsheet: selectedSpreadsheet,
+              googleAuthorization: _currentGooglePickerAuthorization(),
             ),
           );
         }

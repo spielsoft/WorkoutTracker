@@ -50,9 +50,11 @@ client:
 https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=657151291920
 ```
 
-Google Drive Picker is used for choosing an existing spreadsheet, and
-Google-backed sheet creation initializes a new WorkoutTracker spreadsheet in
-Drive. Picker selection uses the checked-in web OAuth client ID for the
+Google Drive Picker is used for choosing an existing spreadsheet and for the
+OAuth authorization that backs later Google Sheets API calls. Google-backed
+sheet creation also uses this Picker authorization path before it asks for a
+sheet name and initializes a new WorkoutTracker spreadsheet in Drive. Picker
+selection uses the checked-in web OAuth client ID for the
 `workouttracker-16285` Google Cloud project:
 
 ```text
@@ -82,8 +84,12 @@ https://workouttracker-16285.firebaseapp.com
 The Google Picker OAuth redirect/callback URL to deploy and register is:
 
 ```text
-https://workouttracker-16285.web.app/google-picker-callback/
+https://workouttracker-16285.firebaseapp.com/google-picker-callback/
 ```
+
+This URI must match the Web OAuth client's Authorized redirect URI exactly.
+Using the alternate `web.app` hosting origin for this OAuth redirect causes
+Google to return `Error 400: redirect_uri_mismatch`.
 
 The hosted callback page preserves Google Picker result parameters and returns
 them to the native Flutter app through this app-owned URL scheme:

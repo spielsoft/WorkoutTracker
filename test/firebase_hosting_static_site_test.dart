@@ -111,6 +111,7 @@ void main() {
         expect(callbackHtml, contains(idAlias));
       }
       expect(callbackHtml, contains('access_denied'));
+      expect(callbackHtml, contains('access_token'));
       expect(callbackHtml, contains('error'));
       expect(callbackHtml, contains('workoutTrackerGooglePickerState'));
       expect(callbackHtml, contains('sessionStorage'));
@@ -126,6 +127,7 @@ void main() {
       expect(callbackHtml, contains('pickedIdParameterNames'));
       expect(callbackHtml, contains('readPickedFileIds(params)'));
       expect(callbackHtml, contains('nativeParams.set("picked_file_ids"'));
+      expect(callbackHtml, contains('nativeParams.set("access_token"'));
       expect(callbackHtml, contains('pickedFileIds.join(", ")'));
       expect(callbackHtml, contains('split(",")'));
       expect(callbackHtml, contains('expected !== state'));

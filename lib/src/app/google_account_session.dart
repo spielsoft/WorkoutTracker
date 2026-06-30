@@ -44,6 +44,110 @@ abstract interface class GoogleSignInAuthorizationGateway
   Future<Map<String, String>> authorizationHeaders(List<String> scopes);
 }
 
+abstract interface class GooglePickerAuthorizationStore {
+  GooglePickerAuthorizationSnapshot? get currentAuthorization;
+
+  void restoreGooglePickerAuthorization(
+    GooglePickerAuthorizationSnapshot? authorization,
+  );
+
+  void updateGooglePickerAuthorization(
+    GooglePickerAuthorizationSnapshot authorization,
+  );
+}
+
+class GooglePickerAuthorizationSnapshot {
+  const GooglePickerAuthorizationSnapshot({
+    required this.accessToken,
+    this.accountEmail,
+  });
+
+  final String accessToken;
+  final String? accountEmail;
+
+  Map<String, Object?> toJson() {
+    return {
+      'accessToken': accessToken,
+      if (accountEmail != null) 'accountEmail': accountEmail,
+    };
+  }
+
+  static GooglePickerAuthorizationSnapshot? fromJson(Object? value) {
+    if (value case <String, Object?>{'accessToken': final String accessToken}) {
+      final trimmedToken = accessToken.trim();
+      if (trimmedToken.isEmpty) {
+        return null;
+      }
+      return GooglePickerAuthorizationSnapshot(
+        accessToken: trimmedToken,
+        accountEmail: value['accountEmail'] as String?,
+      );
+    }
+    return null;
+  }
+}
+
+class GooglePickerAuthorizationGateway extends ChangeNotifier
+    implements
+        GoogleSignInAuthorizationGateway,
+        GooglePickerAuthorizationStore {
+  GooglePickerAuthorizationGateway({GooglePickerAuthorizationSnapshot? initial})
+    : _authorization = initial;
+
+  GooglePickerAuthorizationSnapshot? _authorization;
+
+  @override
+  GooglePickerAuthorizationSnapshot? get currentAuthorization => _authorization;
+
+  @override
+  GoogleAccountProfile? get currentAccount {
+    final email = _authorization?.accountEmail?.trim();
+    if (email == null || email.isEmpty) {
+      return null;
+    }
+    return GoogleAccountProfile(email: email);
+  }
+
+  @override
+  Future<void> restoreAccount() async {}
+
+  @override
+  Future<void> switchAccount({List<String> scopes = const []}) async {
+    throw StateError(
+      'Use Choose workout sheet or Create sheet to connect Google Sheets.',
+    );
+  }
+
+  @override
+  Future<void> signOut() async {
+    restoreGooglePickerAuthorization(null);
+  }
+
+  @override
+  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
+    final accessToken = _authorization?.accessToken.trim();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw StateError('Choose a Google Sheets file before using Google APIs.');
+    }
+    return {'Authorization': 'Bearer $accessToken'};
+  }
+
+  @override
+  void restoreGooglePickerAuthorization(
+    GooglePickerAuthorizationSnapshot? authorization,
+  ) {
+    _authorization = authorization;
+    notifyListeners();
+  }
+
+  @override
+  void updateGooglePickerAuthorization(
+    GooglePickerAuthorizationSnapshot authorization,
+  ) {
+    restoreGooglePickerAuthorization(authorization);
+  }
+}
+
 class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
     implements GoogleSignInAuthorizationGateway {
   NativeGoogleSignInAuthorizationGateway({

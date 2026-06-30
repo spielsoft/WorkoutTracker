@@ -30,6 +30,11 @@ void main() {
   test(
     'Google Picker authorization URL carries the app callback path and request state',
     () {
+      expect(
+        workoutTrackerGooglePickerHostedCallbackUri.toString(),
+        'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
+      );
+
       final authorizationUrl =
           MobileGoogleDriveSpreadsheetPicker.googlePickerAuthorizationUrl(
             clientId: 'client-id.apps.googleusercontent.com',
@@ -82,6 +87,17 @@ void main() {
         'second-sheet',
       ]);
       expect(success.errorMessage, isNull);
+
+      final successWithToken = validateGooglePickerNativeCallback(
+        Uri.parse(
+          'workouttracker://google-picker-callback'
+          '?state=request-state&picked_file_ids=spreadsheet-id'
+          '&access_token=oauth-token',
+        ),
+        expectedState: 'request-state',
+      );
+      expect(successWithToken.result?.pickedSpreadsheetIds, ['spreadsheet-id']);
+      expect(successWithToken.result?.accessToken, 'oauth-token');
 
       for (final alias in [
         'picked_file_ids',

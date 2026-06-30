@@ -4,7 +4,7 @@ import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
   final appLinks = AppLinks();
-  final googleSignInGateway = NativeGoogleSignInAuthorizationGateway();
+  final googleSignInGateway = GooglePickerAuthorizationGateway();
   final googleSpreadsheetService = GoogleSignInSpreadsheetValidationService(
     authorizationGateway: googleSignInGateway,
   );

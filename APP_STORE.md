@@ -33,9 +33,11 @@ TestFlight are the release gates.
 - Configured production privacy URL, after live Firebase deploy:
   `https://workouttracker-16285.web.app/privacy.html`.
 - Configured production Google Picker callback URL, after live Firebase deploy:
-  `https://workouttracker-16285.web.app/google-picker-callback/`.
+  `https://workouttracker-16285.firebaseapp.com/google-picker-callback/`.
 - App-owned Picker return URL scheme:
   `workouttracker://google-picker-callback`.
+- Google Picker OAuth is the shared authorization path for selecting sheets and
+  obtaining the access token used by Google Sheets API calls.
 - Firebase Hosting is a static support/privacy/callback surface. It is not a
   Workout Tracker account server and does not store workout data.
 
@@ -114,19 +116,23 @@ https://www.googleapis.com/auth/spreadsheets
 7. Add this exact URL to the Web OAuth client's Authorized redirect URIs:
 
 ```text
-https://workouttracker-16285.web.app/google-picker-callback/
+https://workouttracker-16285.firebaseapp.com/google-picker-callback/
 ```
 
-8. Confirm the hosted callback page hands Picker results back to the native app
+8. Confirm this value matches character-for-character. The alternate
+   `https://workouttracker-16285.web.app/google-picker-callback/` origin is not
+   interchangeable unless it is also explicitly registered on the Web OAuth
+   client.
+9. Confirm the hosted callback page hands Picker results back to the native app
    through:
 
 ```text
 workouttracker://google-picker-callback
 ```
 
-9. Update `ios/Flutter/GoogleSignIn.xcconfig` if the production client differs
+10. Update `ios/Flutter/GoogleSignIn.xcconfig` if the production client differs
    from the current development client.
-10. Keep secret JSON exports and API keys out of source control. Public mobile
+11. Keep secret JSON exports and API keys out of source control. Public mobile
    OAuth client IDs are embedded in app config; client secrets are not app
    secrets in an installed mobile binary.
 
