@@ -20,9 +20,10 @@ class DevelopmentSheetResetHarness {
       );
     }
 
+    final workbook = await loadWorkoutTrackerWorkbookTemplate();
     await initializer.initializeWorkbook(
       spreadsheetId: spreadsheetId,
-      workbook: workoutTrackerWorkbookTemplate(),
+      workbook: workbook,
     );
   }
 }

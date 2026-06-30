@@ -5,6 +5,8 @@ import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test(
     'resets only the known development spreadsheet to a deterministic fixture',
     () async {
@@ -45,9 +47,9 @@ void main() {
       expect(
         exercisesRows.skip(1).map((row) => row.first),
         containsAll([
-          'Bulgarian Split Squat',
-          'Romanian Deadlift',
-          'Standing Calf Raise',
+          'Smith Machine Reverse Lunge',
+          'Lateral Step-Down',
+          'Cable Face Pull',
         ]),
       );
       expect(
@@ -55,7 +57,7 @@ void main() {
         containsAll([
           '{Weight}[x]{Reps}[@]{RPE}',
           '{Reps}[@]{RPE}',
-          '{Height}[x]{Reps}[@]{RPE}',
+          '{Height}[x]{Reps}[@]{RPE}[,]{Pain}',
           '{Seconds}[s@]{RPE}',
         ]),
       );

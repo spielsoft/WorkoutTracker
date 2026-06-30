@@ -474,10 +474,10 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
         throw StateError('Google Sheets did not return a spreadsheet ID.');
       }
 
-      await workbookInitializerFactory(api).initializeWorkbook(
-        spreadsheetId: spreadsheetId,
-        workbook: workoutTrackerWorkbookTemplate(),
-      );
+      final workbook = await loadWorkoutTrackerWorkbookTemplate();
+      await workbookInitializerFactory(
+        api,
+      ).initializeWorkbook(spreadsheetId: spreadsheetId, workbook: workbook);
 
       return SelectedSpreadsheet(
         spreadsheetId: spreadsheetId,

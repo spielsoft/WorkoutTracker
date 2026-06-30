@@ -1,0 +1,782 @@
+[
+  {
+    "exercise": "Smith Machine Reverse Lunge",
+    "description": "Smith machine reverse lunge",
+    "defaultSets": "3",
+    "defaultReps": "8-10/leg",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Keep front shin vertical to minimize knee shear.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "Smith Machine Reverse Lunges"
+    ]
+  },
+  {
+    "exercise": "DB Reverse Lunge",
+    "description": "Dumbbell reverse lunge",
+    "defaultSets": "3",
+    "defaultReps": "8-10/leg",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Backup reverse-lunge option when the Smith machine is busy.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "Backup; DB reverse"
+    ]
+  },
+  {
+    "exercise": "Leg Press",
+    "description": "Machine leg press",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "8",
+    "defaultRest": "120s",
+    "defaultTempo": "",
+    "notes": "Place feet high and wide; do not lock knees at the top.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Backup: Leg press",
+      "Leg press [backup]"
+    ]
+  },
+  {
+    "exercise": "Smith Machine RDL",
+    "description": "Smith machine Romanian deadlift",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Hinge at the hips and stop when hamstrings are fully stretched.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Smith Machine RDL"
+    ]
+  },
+  {
+    "exercise": "DB RDL",
+    "description": "Dumbbell Romanian deadlift",
+    "defaultSets": "3",
+    "defaultReps": "8",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Backup hinge when rack or Smith machine space is unavailable.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "DB RDL",
+      "dB Rm. Deadlift [backup]"
+    ]
+  },
+  {
+    "exercise": "Romanian Deadlift",
+    "description": "Romanian deadlift",
+    "defaultSets": "3",
+    "defaultReps": "6-8",
+    "defaultRpe": "8",
+    "defaultRest": "2m",
+    "defaultTempo": "2-1-1",
+    "notes": "Feel hamstrings and keep a neutral spine.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Rom. Deadlift"
+    ]
+  },
+  {
+    "exercise": "Leg Extension",
+    "description": "Machine leg extension",
+    "defaultSets": "3",
+    "defaultReps": "8",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Quad isolation option inferred from logged leg-extension work.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Let extension"
+    ]
+  },
+  {
+    "exercise": "Squat",
+    "description": "Squat",
+    "defaultSets": "3",
+    "defaultReps": "5-6",
+    "defaultRpe": "8",
+    "defaultRest": "3m",
+    "defaultTempo": "3-1-1",
+    "notes": "Fall program squat; note says to switch to deep squat on week 11.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Squat"
+    ]
+  },
+  {
+    "exercise": "Deep Squat",
+    "description": "Deep squat",
+    "defaultSets": "2",
+    "defaultReps": "5-6",
+    "defaultRpe": "7-8",
+    "defaultRest": "3m",
+    "defaultTempo": "3-1-1",
+    "notes": "Only two working sets; heavy enough to feel it without excessive soreness.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Deep Squats"
+    ]
+  },
+  {
+    "exercise": "Lateral Step-Down",
+    "description": "Eccentric lateral step-down",
+    "defaultSets": "3",
+    "defaultReps": "8/leg",
+    "defaultRpe": "7",
+    "defaultRest": "60s",
+    "defaultTempo": "3-1-1",
+    "notes": "Do not drop; keep knee aligned over toe.",
+    "logFormat": "{Height}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Lateral Step-Down",
+      "Lateral Step-Down (eccentric focus)"
+    ]
+  },
+  {
+    "exercise": "DB Step-Up",
+    "description": "Dumbbell step-up",
+    "defaultSets": "3",
+    "defaultReps": "8-10/leg",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "3-1-1",
+    "notes": "Control the descent to prep knees for downhill hiking.",
+    "logFormat": "{Height}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "DB Step-Ups"
+    ]
+  },
+  {
+    "exercise": "Box Jump",
+    "description": "Clustered box jump",
+    "defaultSets": "3",
+    "defaultReps": "(3x3)",
+    "defaultRpe": "7",
+    "defaultRest": "15s",
+    "defaultTempo": "",
+    "notes": "Rest 15 seconds after each cluster.",
+    "logFormat": "{Height}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Box Jump"
+    ]
+  },
+  {
+    "exercise": "Calf Raise",
+    "description": "Standing or machine calf raise",
+    "defaultSets": "3",
+    "defaultReps": "12-15",
+    "defaultRpe": "9",
+    "defaultRest": "90s",
+    "defaultTempo": "2-1-1",
+    "notes": "Full stretch at the bottom and a one-second pause at the top.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Calf Raise"
+    ]
+  },
+  {
+    "exercise": "Smith Calf Raise",
+    "description": "Smith machine calf raise",
+    "defaultSets": "3",
+    "defaultReps": "12-15",
+    "defaultRpe": "9",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Pause for one second at the bottom stretch and top squeeze.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "Smith Calf Raise"
+    ]
+  },
+  {
+    "exercise": "Machine Calf Raise",
+    "description": "Machine calf raise",
+    "defaultSets": "3",
+    "defaultReps": "12-15",
+    "defaultRpe": "9",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Calf raise machine option with controlled pauses.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "Machine Calf Raise"
+    ]
+  },
+  {
+    "exercise": "Calf Raise (Leg Press)",
+    "description": "Leg press machine calf raise",
+    "defaultSets": "3",
+    "defaultReps": "12-15",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Backup calf raise using the leg press machine.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Backup: Calf raise (leg press machine)",
+      "Calf raise (leg press)"
+    ]
+  },
+  {
+    "exercise": "Seated Calf Raise",
+    "description": "Seated calf raise",
+    "defaultSets": "3",
+    "defaultReps": "12-15",
+    "defaultRpe": "9",
+    "defaultRest": "90s",
+    "defaultTempo": "2-1-1",
+    "notes": "Seated calf raise option with controlled stretch and squeeze.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Seated Calf Raise"
+    ]
+  },
+  {
+    "exercise": "DB Incline Bench",
+    "description": "Dumbbell incline bench press",
+    "defaultSets": "3",
+    "defaultReps": "8-10",
+    "defaultRpe": "8",
+    "defaultRest": "120s",
+    "defaultTempo": "",
+    "notes": "Set bench to 30 degrees; retract scapula and lower to upper chest.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "DB Incline Bench"
+    ]
+  },
+  {
+    "exercise": "DB Flat Bench Press",
+    "description": "Dumbbell flat bench press",
+    "defaultSets": "3",
+    "defaultReps": "8-12",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Tuck elbows to 45 degrees and press in a slight arc.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "DB Flat Bench Press"
+    ]
+  },
+  {
+    "exercise": "DB Bench Press",
+    "description": "Dumbbell bench press",
+    "defaultSets": "3",
+    "defaultReps": "6-8",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "2-0-1",
+    "notes": "Arch light and set shoulder blades.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "DB Bench Press"
+    ]
+  },
+  {
+    "exercise": "DB Skullcrusher",
+    "description": "Dumbbell skullcrusher",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Elbow health and arm-size accessory.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "DB Skullcrushers"
+    ]
+  },
+  {
+    "exercise": "DB Lateral Raise",
+    "description": "Dumbbell lateral raise",
+    "defaultSets": "3",
+    "defaultReps": "12-15",
+    "defaultRpe": "9",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Slight bend in elbows; push dumbbells out toward the walls.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "DB Seated Lateral Raises",
+      "DB Lateral Raise"
+    ]
+  },
+  {
+    "exercise": "DB Bicep Curl to Overhead Press",
+    "description": "Dumbbell curl to overhead press",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "9",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Strict curl, smooth wrist rotation, and no leg drive on the press.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "DB Bicep Curl to Overhead Press"
+    ]
+  },
+  {
+    "exercise": "Seated DB Press",
+    "description": "Seated dumbbell press",
+    "defaultSets": "3",
+    "defaultReps": "8-10",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Vertical dumbbell press from a seated bench.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Seated DB Press"
+    ]
+  },
+  {
+    "exercise": "Hammer Curl",
+    "description": "Dumbbell hammer curl",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "9",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Neutral grip targeting brachialis and forearms.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Hammer Curls"
+    ]
+  },
+  {
+    "exercise": "Cable Bicep Curl",
+    "description": "Cable bicep curl",
+    "defaultSets": "3",
+    "defaultReps": "12-15",
+    "defaultRpe": "9",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Use constant tension and squeeze at the top.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Cable Bicep Curl"
+    ]
+  },
+  {
+    "exercise": "Cable Tricep Pushdown",
+    "description": "Cable rope tricep pushdown",
+    "defaultSets": "3",
+    "defaultReps": "10-15",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Keep elbows pinned and flare the rope at the bottom.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Cable Rope Tricep Pushdown",
+      "Cable Tricep Pushdown"
+    ]
+  },
+  {
+    "exercise": "Bench Row",
+    "description": "Bench-supported dumbbell row",
+    "defaultSets": "3",
+    "defaultReps": "8-10",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "2-1-1",
+    "notes": "Fall upper-body row variation logged as bench rows.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Bench rows"
+    ]
+  },
+  {
+    "exercise": "DB Chest-Supported Row",
+    "description": "Dumbbell chest-supported row",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Set bench to incline and pull elbows toward hips.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "DB Chest-Supported Row",
+      "Chest-Supported DB Row [backup]"
+    ]
+  },
+  {
+    "exercise": "Smith Bent Over Row",
+    "description": "Smith machine bent-over row",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "9",
+    "defaultRest": "2m",
+    "defaultTempo": "",
+    "notes": "Keep torso parallel to the floor and squeeze at the top.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Smith Bent Over Row"
+    ]
+  },
+  {
+    "exercise": "Seated Cable Row",
+    "description": "Seated cable row",
+    "defaultSets": "3",
+    "defaultReps": "10-12",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Depress shoulders before pulling and keep torso upright.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "Seated Cable Row"
+    ]
+  },
+  {
+    "exercise": "Lat Pulldown",
+    "description": "Cable lat pulldown",
+    "defaultSets": "3",
+    "defaultReps": "8-12",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Drive elbows down and keep a tall chest.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Cable Lat Pulldown",
+      "Lat Pulldown"
+    ]
+  },
+  {
+    "exercise": "Cable Face Pull",
+    "description": "Rope cable face pull",
+    "defaultSets": "3",
+    "defaultReps": "15-20",
+    "defaultRpe": "9",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Pull the rope to face height and focus on shoulder external rotation.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Rope Cable Face Pulls",
+      "Cable Face Pull",
+      "Face Pull (rope)"
+    ]
+  },
+  {
+    "exercise": "Cable Dorsiflexion",
+    "description": "Cable dorsiflexion",
+    "defaultSets": "3",
+    "defaultReps": "15-20",
+    "defaultRpe": "9",
+    "defaultRest": "30s",
+    "defaultTempo": "",
+    "notes": "Snowboarding accessory; elevate foot with a bench or step.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Cable Dorsiflexion",
+      "Cable Dorsiflexion (ankle strap)"
+    ]
+  },
+  {
+    "exercise": "Pallof Press",
+    "description": "Cable Pallof press",
+    "defaultSets": "3",
+    "defaultReps": "10/side",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Brace hard and resist cable rotation.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker",
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Cable Pallof Press",
+      "Pallof Press",
+      "Pallof Press (cable)"
+    ]
+  },
+  {
+    "exercise": "Cable Woodchop",
+    "description": "Cable woodchop",
+    "defaultSets": "3",
+    "defaultReps": "10/side",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Rotate with hips instead of spine.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Cable Woodchop"
+    ]
+  },
+  {
+    "exercise": "Floor Plank w/ Shoulder Taps",
+    "description": "Floor plank with shoulder taps",
+    "defaultSets": "3",
+    "defaultReps": "20 taps",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Keep hips square to the floor; widen feet if needed.",
+    "logFormat": "{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "Floor Plank w/ Shoulder Taps"
+    ]
+  },
+  {
+    "exercise": "Copenhagen Side Plank",
+    "description": "Copenhagen side plank",
+    "defaultSets": "3",
+    "defaultReps": "20-30s",
+    "defaultRpe": "7-8",
+    "defaultRest": "45s",
+    "defaultTempo": "",
+    "notes": "Top leg on bench, hips high, body in a straight line.",
+    "logFormat": "{Seconds}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Copenhagen Side Plank"
+    ]
+  },
+  {
+    "exercise": "Dead Bug",
+    "description": "Dead bug core drill",
+    "defaultSets": "3",
+    "defaultReps": "10/side",
+    "defaultRpe": "7",
+    "defaultRest": "45s",
+    "defaultTempo": "",
+    "notes": "Press lower back into the floor hard.",
+    "logFormat": "{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker"
+    ],
+    "aliases": [
+      "Dead Bug"
+    ]
+  },
+  {
+    "exercise": "Dips",
+    "description": "Bodyweight dips",
+    "defaultSets": "2-3",
+    "defaultReps": "15",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "",
+    "notes": "Lean torso forward; switch if shoulders pinch.",
+    "logFormat": "{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2026 Winter Tracker",
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Dips"
+    ]
+  },
+  {
+    "exercise": "Russian Twist",
+    "description": "Russian twist",
+    "defaultSets": "2",
+    "defaultReps": "10/side",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "1-1-1",
+    "notes": "Rotational core accessory.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Russian twist"
+    ]
+  },
+  {
+    "exercise": "DB Overhead Press",
+    "description": "Dumbbell overhead press",
+    "defaultSets": "2",
+    "defaultReps": "8-10",
+    "defaultRpe": "8",
+    "defaultRest": "90s",
+    "defaultTempo": "2-0-1",
+    "notes": "Strict vertical press.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "DB Overhead Press"
+    ]
+  },
+  {
+    "exercise": "DB Shoulder Shrug",
+    "description": "Dumbbell shoulder shrug",
+    "defaultSets": "3",
+    "defaultReps": "10-15",
+    "defaultRpe": "8",
+    "defaultRest": "60s",
+    "defaultTempo": "",
+    "notes": "Dumbbell shrug accessory.",
+    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "DB Shoulder Shrug"
+    ]
+  },
+  {
+    "exercise": "Side Plank",
+    "description": "Side plank hold",
+    "defaultSets": "2",
+    "defaultReps": "30-45s/side",
+    "defaultRpe": "8",
+    "defaultRest": "45s",
+    "defaultTempo": "hold",
+    "notes": "Anti-lateral-flexion core hold.",
+    "logFormat": "{Seconds}[s@]{RPE}",
+    "sourceTabs": [
+      "2025 Fall Tracker"
+    ],
+    "aliases": [
+      "Side Plank"
+    ]
+  }
+]
