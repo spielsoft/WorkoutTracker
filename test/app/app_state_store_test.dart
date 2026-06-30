@@ -63,7 +63,7 @@ void main() {
     expect(migrated.workoutSelection?.workout, 'Upper');
   });
 
-  test('file app state store uses home-relative app directory on macOS', () {
+  test('file app state store uses Application Support on macOS', () {
     final directory = FileAppStateStore.defaultStateDirectory(
       isWindows: false,
       isMacOS: true,
@@ -73,7 +73,14 @@ void main() {
 
     expect(
       directory.path,
-      ['', 'Users', 'athlete', '.workout_tracker'].join(Platform.pathSeparator),
+      [
+        '',
+        'Users',
+        'athlete',
+        'Library',
+        'Application Support',
+        'WorkoutTracker',
+      ].join(Platform.pathSeparator),
     );
   });
 
@@ -106,6 +113,43 @@ void main() {
     expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
     expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
   });
+
+  test(
+    'file app state store reads legacy state when primary is absent',
+    () async {
+      final primaryDirectory = await Directory.systemTemp.createTemp(
+        'workout-tracker-primary-state-test-',
+      );
+      final legacyDirectory = await Directory.systemTemp.createTemp(
+        'workout-tracker-legacy-state-test-',
+      );
+      addTearDown(() async {
+        for (final directory in [primaryDirectory, legacyDirectory]) {
+          if (await directory.exists()) {
+            await directory.delete(recursive: true);
+          }
+        }
+      });
+      await File(
+        '${legacyDirectory.path}${Platform.pathSeparator}state.json',
+      ).writeAsString(
+        '{"googleWorkspaceAccess":{"spreadsheetText":"legacy-spreadsheet-id",'
+        '"selectedSpreadsheet":{"spreadsheetId":"legacy-spreadsheet-id",'
+        '"name":"Legacy Workouts"},"googleAuthorization":{'
+        '"accessToken":"legacy-token","accountEmail":"legacy@example.com"}}}',
+      );
+      final store = FileAppStateStore(
+        stateDirectory: primaryDirectory,
+        legacyStateDirectories: [legacyDirectory],
+      );
+
+      final restored = await store.readGoogleWorkspaceAccessState();
+
+      expect(restored.spreadsheetText, 'legacy-spreadsheet-id');
+      expect(restored.selectedSpreadsheet?.name, 'Legacy Workouts');
+      expect(restored.googleAuthorization?.accountEmail, 'legacy@example.com');
+    },
+  );
 
   test('file app state store ignores malformed existing state', () async {
     final directory = await Directory.systemTemp.createTemp(

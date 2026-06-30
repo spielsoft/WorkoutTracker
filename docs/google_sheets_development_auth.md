@@ -119,11 +119,12 @@ Production app startup injects the native callback receiver, so Picker
 authorization always uses the hosted HTTPS callback. The app no longer supports
 a local loopback Picker callback path.
 
-The macOS Release app is sandboxed. Persisted sheet/account state must live in
-the app container:
+The macOS Release app is sandboxed, so `HOME` resolves to the app container's
+`Data` directory. Persisted sheet/account state uses the standard
+home-relative Application Support path:
 
 ```text
-~/Library/Containers/com.spielman.workouttracker/Data/Library/Application Support/WorkoutTracker/state.json
+$HOME/Library/Application Support/WorkoutTracker/state.json
 ```
 
 ## Sheets Scopes
