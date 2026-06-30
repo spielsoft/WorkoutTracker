@@ -608,13 +608,8 @@ class _SpreadsheetValidationShellState
 
   Future<bool> _ensureGoogleSheetsAccount() async {
     final accountSession = widget.accountSession;
-    if (accountSession case final GooglePickerAuthorizationStore store) {
-      final accessToken = store.currentAuthorization?.accessToken.trim();
-      if (accessToken != null && accessToken.isNotEmpty) {
-        return true;
-      }
-    } else if (accountSession == null ||
-        accountSession.currentAccount != null) {
+    if (accountSession is! GooglePickerAuthorizationStore &&
+        (accountSession == null || accountSession.currentAccount != null)) {
       return true;
     }
 

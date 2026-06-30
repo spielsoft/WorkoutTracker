@@ -17,10 +17,14 @@ void main() {
         const GooglePickerAuthorizationSnapshot(
           accessToken: 'picker-access-token',
           accountEmail: 'user@example.com',
+          displayName: 'User Name',
+          photoUrl: 'https://example.com/user.png',
         ),
       );
 
       expect(gateway.currentAccount?.email, 'user@example.com');
+      expect(gateway.currentAccount?.displayName, 'User Name');
+      expect(gateway.currentAccount?.photoUrl, 'https://example.com/user.png');
       expect(
         await gateway.authorizationHeaders(
           GoogleApisSheetsWriteClient.writeScopes,
@@ -34,4 +38,24 @@ void main() {
       expect(gateway.currentAccount, isNull);
     },
   );
+
+  test('Picker authorization refresh preserves existing account profile', () {
+    final gateway = GooglePickerAuthorizationGateway(
+      initial: const GooglePickerAuthorizationSnapshot(
+        accessToken: 'old-token',
+        accountEmail: 'user@example.com',
+        displayName: 'User Name',
+        photoUrl: 'https://example.com/user.png',
+      ),
+    );
+
+    gateway.updateGooglePickerAuthorization(
+      const GooglePickerAuthorizationSnapshot(accessToken: 'new-token'),
+    );
+
+    expect(gateway.currentAuthorization?.accessToken, 'new-token');
+    expect(gateway.currentAccount?.email, 'user@example.com');
+    expect(gateway.currentAccount?.displayName, 'User Name');
+    expect(gateway.currentAccount?.photoUrl, 'https://example.com/user.png');
+  });
 }

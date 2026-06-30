@@ -326,6 +326,15 @@
           if (params.has("access_token")) {
             nativeParams.set("access_token", params.get("access_token"));
           }
+          if (params.has("account_email")) {
+            nativeParams.set("account_email", params.get("account_email"));
+          }
+          if (params.has("account_name")) {
+            nativeParams.set("account_name", params.get("account_name"));
+          }
+          if (params.has("account_photo")) {
+            nativeParams.set("account_photo", params.get("account_photo"));
+          }
           if (params.has("error")) {
             nativeParams.set("error", params.get("error"));
           }
@@ -424,7 +433,40 @@
           }
         }
 
-        renderResult(evaluateCallback(readCallbackParams()));
+        function enrichParamsWithAccount(params) {
+          var token = params.get("access_token");
+          if (!token || params.has("account_email")) {
+            return Promise.resolve(params);
+          }
+
+          return window.fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          }).then(function (response) {
+            if (!response.ok) {
+              return params;
+            }
+            return response.json();
+          }).then(function (profile) {
+            if (profile && typeof profile.email === "string") {
+              params.set("account_email", profile.email);
+            }
+            if (profile && typeof profile.name === "string") {
+              params.set("account_name", profile.name);
+            }
+            if (profile && typeof profile.picture === "string") {
+              params.set("account_photo", profile.picture);
+            }
+            return params;
+          }).catch(function () {
+            return params;
+          });
+        }
+
+        enrichParamsWithAccount(readCallbackParams()).then(function (params) {
+          renderResult(evaluateCallback(params));
+        });
       })();
     </script>
   </body>

@@ -112,6 +112,13 @@ void main() {
       }
       expect(callbackHtml, contains('access_denied'));
       expect(callbackHtml, contains('access_token'));
+      expect(callbackHtml, contains('account_email'));
+      expect(callbackHtml, contains('account_name'));
+      expect(callbackHtml, contains('account_photo'));
+      expect(
+        callbackHtml,
+        contains('https://openidconnect.googleapis.com/v1/userinfo'),
+      );
       expect(callbackHtml, contains('error'));
       expect(callbackHtml, contains('workoutTrackerGooglePickerState'));
       expect(callbackHtml, contains('sessionStorage'));
@@ -128,6 +135,8 @@ void main() {
       expect(callbackHtml, contains('readPickedFileIds(params)'));
       expect(callbackHtml, contains('nativeParams.set("picked_file_ids"'));
       expect(callbackHtml, contains('nativeParams.set("access_token"'));
+      expect(callbackHtml, contains('nativeParams.set("account_email"'));
+      expect(callbackHtml, contains('enrichParamsWithAccount'));
       expect(callbackHtml, contains('pickedFileIds.join(", ")'));
       expect(callbackHtml, contains('split(",")'));
       expect(callbackHtml, contains('expected !== state'));

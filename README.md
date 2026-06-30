@@ -160,8 +160,10 @@ Integration slices may write to this sheet, but they must include reset and clea
 
 ## Spreadsheet Selection
 
-Native Google Sign-In remains wired for account access and Sheets API
-authorization. Google Drive Picker is used for choosing an existing sheet.
-Google-backed sheet creation creates a new spreadsheet, initializes it with the
-WorkoutTracker contract, selects it, and persists that selection for later
-launches.
+Google Drive Picker is the shared path for account discovery, authorization,
+choosing an existing sheet, and choosing the target folder for a new sheet.
+The Picker callback provides the access token and account profile that the app
+persists for later launches. Google-backed sheet creation opens the folder
+picker first, then asks for the sheet name, creates a new spreadsheet,
+initializes it with the WorkoutTracker contract, selects it, and persists that
+selection for later launches.

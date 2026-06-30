@@ -52,9 +52,11 @@ https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=6571
 
 Google Drive Picker is used for choosing an existing spreadsheet and for the
 OAuth authorization that backs later Google Sheets API calls. Google-backed
-sheet creation also uses this Picker authorization path before it asks for a
-sheet name and initializes a new WorkoutTracker spreadsheet in Drive. Picker
-selection uses the checked-in web OAuth client ID for the
+sheet creation also uses this Picker authorization path to choose a destination
+folder before it asks for a sheet name and initializes a new WorkoutTracker
+spreadsheet in Drive. The Picker callback forwards the access token and Google
+account profile used by the app's account menu and persisted launch state.
+Picker selection uses the checked-in web OAuth client ID for the
 `workouttracker-16285` Google Cloud project:
 
 ```text
@@ -155,8 +157,8 @@ Build the macOS bundle:
 flutter build macos
 ```
 
-Run the app and press Validate. A browser/account-picker prompt should appear
-when Google authorization is needed:
+Run the app and use Choose workout sheet or Create sheet. A browser Picker flow
+should appear when Google authorization is needed:
 
 ```sh
 open build/macos/Build/Products/Release/workout_tracker.app

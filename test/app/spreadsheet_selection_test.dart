@@ -56,7 +56,7 @@ void main() {
       expect(authorizationUrl.queryParameters['state'], 'request-state');
       expect(
         authorizationUrl.queryParameters['scope'],
-        'https://www.googleapis.com/auth/drive.file',
+        'openid email profile https://www.googleapis.com/auth/drive.file',
       );
       expect(authorizationUrl.queryParameters['prompt'], 'consent');
       expect(authorizationUrl.queryParameters['trigger_onepick'], 'true');
@@ -92,12 +92,21 @@ void main() {
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&picked_file_ids=spreadsheet-id'
-          '&access_token=oauth-token',
+          '&access_token=oauth-token'
+          '&account_email=athlete%40example.com'
+          '&account_name=Athlete%20Name'
+          '&account_photo=https%3A%2F%2Fexample.com%2Fathlete.png',
         ),
         expectedState: 'request-state',
       );
       expect(successWithToken.result?.pickedSpreadsheetIds, ['spreadsheet-id']);
       expect(successWithToken.result?.accessToken, 'oauth-token');
+      expect(successWithToken.result?.accountEmail, 'athlete@example.com');
+      expect(successWithToken.result?.accountName, 'Athlete Name');
+      expect(
+        successWithToken.result?.accountPhotoUrl,
+        'https://example.com/athlete.png',
+      );
 
       for (final alias in [
         'picked_file_ids',

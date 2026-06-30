@@ -60,15 +60,33 @@ class GooglePickerAuthorizationSnapshot {
   const GooglePickerAuthorizationSnapshot({
     required this.accessToken,
     this.accountEmail,
+    this.displayName,
+    this.photoUrl,
   });
 
   final String accessToken;
   final String? accountEmail;
+  final String? displayName;
+  final String? photoUrl;
+
+  GooglePickerAuthorizationSnapshot mergeMissingProfileFrom(
+    GooglePickerAuthorizationSnapshot? existing,
+  ) {
+    return GooglePickerAuthorizationSnapshot(
+      accessToken: accessToken,
+      accountEmail:
+          _nonEmpty(accountEmail) ?? _nonEmpty(existing?.accountEmail),
+      displayName: _nonEmpty(displayName) ?? _nonEmpty(existing?.displayName),
+      photoUrl: _nonEmpty(photoUrl) ?? _nonEmpty(existing?.photoUrl),
+    );
+  }
 
   Map<String, Object?> toJson() {
     return {
       'accessToken': accessToken,
       if (accountEmail != null) 'accountEmail': accountEmail,
+      if (displayName != null) 'displayName': displayName,
+      if (photoUrl != null) 'photoUrl': photoUrl,
     };
   }
 
@@ -80,10 +98,17 @@ class GooglePickerAuthorizationSnapshot {
       }
       return GooglePickerAuthorizationSnapshot(
         accessToken: trimmedToken,
-        accountEmail: value['accountEmail'] as String?,
+        accountEmail: _nonEmpty(value['accountEmail'] as String?),
+        displayName: _nonEmpty(value['displayName'] as String?),
+        photoUrl: _nonEmpty(value['photoUrl'] as String?),
       );
     }
     return null;
+  }
+
+  static String? _nonEmpty(String? value) {
+    final trimmed = value?.trim();
+    return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 }
 
@@ -105,7 +130,11 @@ class GooglePickerAuthorizationGateway extends ChangeNotifier
     if (email == null || email.isEmpty) {
       return null;
     }
-    return GoogleAccountProfile(email: email);
+    return GoogleAccountProfile(
+      email: email,
+      displayName: _authorization?.displayName,
+      photoUrl: _authorization?.photoUrl,
+    );
   }
 
   @override
@@ -144,7 +173,9 @@ class GooglePickerAuthorizationGateway extends ChangeNotifier
   void updateGooglePickerAuthorization(
     GooglePickerAuthorizationSnapshot authorization,
   ) {
-    restoreGooglePickerAuthorization(authorization);
+    restoreGooglePickerAuthorization(
+      authorization.mergeMissingProfileFrom(_authorization),
+    );
   }
 }
 

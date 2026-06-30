@@ -231,10 +231,7 @@ class MobileGoogleDriveSpreadsheetPicker
       if (result.cancelled) {
         return null;
       }
-      final accessToken = result.accessToken;
-      if (accessToken != null) {
-        _updateGooglePickerAuthorization(accessToken);
-      }
+      _updateGooglePickerAuthorization(result);
       final spreadsheetId = result.pickedSpreadsheetIds.firstOrNull;
       if (spreadsheetId == null) {
         return null;
@@ -256,14 +253,6 @@ class MobileGoogleDriveSpreadsheetPicker
 
   @override
   Future<bool> authorizeSpreadsheetCreation() async {
-    final authorizationGateway = this.authorizationGateway;
-    if (authorizationGateway case final GooglePickerAuthorizationStore store) {
-      final accessToken = store.currentAuthorization?.accessToken.trim();
-      if (accessToken != null && accessToken.isNotEmpty) {
-        return true;
-      }
-    }
-
     final trimmedClientId = clientId.trim();
     if (trimmedClientId.isEmpty) {
       throw StateError('Google Drive Picker is missing an OAuth client ID.');
@@ -298,7 +287,7 @@ class MobileGoogleDriveSpreadsheetPicker
       if (accessToken == null || accessToken.trim().isEmpty) {
         throw StateError('Google Drive Picker did not return authorization.');
       }
-      _updateGooglePickerAuthorization(accessToken);
+      _updateGooglePickerAuthorization(result);
       return true;
     } finally {
       await callbackReceiver.close();
@@ -326,7 +315,8 @@ class MobileGoogleDriveSpreadsheetPicker
       'redirect_uri': redirectUri.toString(),
       'response_type': 'token',
       'state': state,
-      'scope': 'https://www.googleapis.com/auth/drive.file',
+      'scope':
+          'openid email profile https://www.googleapis.com/auth/drive.file',
       'prompt': 'consent',
       'trigger_onepick': 'true',
       'allow_multiple': 'false',
@@ -385,11 +375,20 @@ class MobileGoogleDriveSpreadsheetPicker
     }
   }
 
-  void _updateGooglePickerAuthorization(String accessToken) {
+  void _updateGooglePickerAuthorization(GooglePickerCallbackResult result) {
     final authorizationGateway = this.authorizationGateway;
     if (authorizationGateway case final GooglePickerAuthorizationStore store) {
+      final accessToken = result.accessToken?.trim();
+      if (accessToken == null || accessToken.isEmpty) {
+        return;
+      }
       store.updateGooglePickerAuthorization(
-        GooglePickerAuthorizationSnapshot(accessToken: accessToken),
+        GooglePickerAuthorizationSnapshot(
+          accessToken: accessToken,
+          accountEmail: result.accountEmail,
+          displayName: result.accountName,
+          photoUrl: result.accountPhotoUrl,
+        ),
       );
     }
   }
@@ -610,6 +609,9 @@ GooglePickerNativeCallbackValidation validateGooglePickerNativeCallback(
     GooglePickerCallbackResult(
       pickedSpreadsheetIds: pickedSpreadsheetIds,
       accessToken: _nonEmptyQueryParameter(callbackUri, 'access_token'),
+      accountEmail: _nonEmptyQueryParameter(callbackUri, 'account_email'),
+      accountName: _nonEmptyQueryParameter(callbackUri, 'account_name'),
+      accountPhotoUrl: _nonEmptyQueryParameter(callbackUri, 'account_photo'),
     ),
   );
 }
@@ -646,11 +648,17 @@ class GooglePickerCallbackResult {
   const GooglePickerCallbackResult({
     required this.pickedSpreadsheetIds,
     this.accessToken,
+    this.accountEmail,
+    this.accountName,
+    this.accountPhotoUrl,
     this.error,
   });
 
   final List<String> pickedSpreadsheetIds;
   final String? accessToken;
+  final String? accountEmail;
+  final String? accountName;
+  final String? accountPhotoUrl;
   final String? error;
 
   bool get cancelled => error == 'access_denied';
