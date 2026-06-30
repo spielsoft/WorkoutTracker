@@ -1044,10 +1044,15 @@ void main() {
     },
   );
 
-  testWidgets('create sheet prompts for a workbook name before creating', (
+  testWidgets('create sheet signs in before asking for a workbook name', (
     tester,
   ) async {
     final picker = _CountingSpreadsheetPicker();
+    final login = Completer<void>();
+    final accountSession = _FakeGoogleAccountSession(
+      null,
+      switchCompletion: login.future,
+    );
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -1055,11 +1060,26 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        spreadsheetPicker: picker,
+      ),
     );
     await tester.pump();
 
     await tester.tap(find.text('Create sheet'));
+    await tester.pump();
+
+    expect(accountSession.switchCount, 1);
+    expect(
+      accountSession.requestedScopes.single,
+      GoogleApisSheetsWriteClient.writeScopes,
+    );
+    expect(find.text('Sheet name'), findsNothing);
+    expect(picker.createCount, 0);
+
+    login.complete();
     await tester.pumpAndSettle();
 
     expect(find.text('Sheet name'), findsOneWidget);
@@ -1076,6 +1096,49 @@ void main() {
     await tester.tap(find.text('Create sheet'));
     await tester.pumpAndSettle();
     await tester.enterText(nameField, 'Custom Training Log');
+    await tester.tap(find.text('Create'));
+    await tester.pump();
+
+    expect(picker.createCount, 1);
+    expect(picker.createNames, ['Custom Training Log']);
+  });
+
+  testWidgets('create sheet skips login when already connected', (
+    tester,
+  ) async {
+    final picker = _CountingSpreadsheetPicker();
+    final accountSession = _FakeGoogleAccountSession(
+      const GoogleAccountProfile(
+        email: 'saved@example.com',
+        displayName: 'Saved Account',
+      ),
+    );
+    final service = TestSpreadsheetValidationService.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        accountSession: accountSession,
+        spreadsheetPicker: picker,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Create sheet'));
+    await tester.pumpAndSettle();
+
+    expect(accountSession.switchCount, 0);
+    expect(find.text('Sheet name'), findsOneWidget);
+    expect(picker.createCount, 0);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('create-spreadsheet-name')),
+      'Custom Training Log',
+    );
     await tester.tap(find.text('Create'));
     await tester.pump();
 
@@ -4124,10 +4187,15 @@ void main() {
 
 class _FakeGoogleAccountSession extends ChangeNotifier
     implements GoogleAccountSession {
-  _FakeGoogleAccountSession(this._currentAccount, {this.restoredAccount});
+  _FakeGoogleAccountSession(
+    this._currentAccount, {
+    this.restoredAccount,
+    this.switchCompletion,
+  });
 
   GoogleAccountProfile? _currentAccount;
   final GoogleAccountProfile? restoredAccount;
+  final Future<void>? switchCompletion;
   int restoreCount = 0;
   int switchCount = 0;
   int signOutCount = 0;
@@ -4149,6 +4217,7 @@ class _FakeGoogleAccountSession extends ChangeNotifier
   Future<void> switchAccount({List<String> scopes = const []}) async {
     switchCount += 1;
     requestedScopes.add(scopes);
+    await switchCompletion;
     _currentAccount = const GoogleAccountProfile(
       email: 'right@example.com',
       displayName: 'Right Account',

@@ -584,7 +584,31 @@ class _SpreadsheetValidationShellState
     await _pickSpreadsheet((picker) => picker.chooseSpreadsheet());
   }
 
+  Future<bool> _ensureGoogleSheetsAccount() async {
+    final accountSession = widget.accountSession;
+    if (accountSession == null || accountSession.currentAccount != null) {
+      return true;
+    }
+    try {
+      await accountSession.switchAccount(
+        scopes: GoogleApisSheetsWriteClient.writeScopes,
+      );
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to connect Google Sheets: $error')),
+        );
+      }
+      return false;
+    }
+    return accountSession.currentAccount != null;
+  }
+
   Future<void> _createSpreadsheet() async {
+    final hasGoogleAccount = await _ensureGoogleSheetsAccount();
+    if (!mounted || !hasGoogleAccount) {
+      return;
+    }
     final defaultName = defaultWorkoutSpreadsheetTitle();
     final name = await _promptForSpreadsheetName(defaultName);
     if (!mounted || name == null) {
