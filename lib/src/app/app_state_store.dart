@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -116,10 +117,12 @@ class FileAppStateStore implements AppStateStore {
   static const _selectedSpreadsheetKey = 'selectedSpreadsheet';
   static const _googleAuthorizationKey = 'googleAuthorization';
   static const _workoutSelectionKey = 'workoutSelection';
+  static final _stateFileLocks = <String, Future<void>>{};
+  static int _temporaryFileCounter = 0;
 
   @override
   Future<GoogleWorkspaceAccessState> readGoogleWorkspaceAccessState() async {
-    final decoded = await _readState();
+    final decoded = await _withStateFileLock(_readState);
     return GoogleWorkspaceAccessState.fromJson(
       decoded[_googleWorkspaceAccessKey],
     ).migrateLegacy(
@@ -140,24 +143,43 @@ class FileAppStateStore implements AppStateStore {
   Future<void> writeGoogleWorkspaceAccessState(
     GoogleWorkspaceAccessState value,
   ) async {
-    final state = await _readState();
-    state[_googleWorkspaceAccessKey] = value.toJson();
-    state.remove(_spreadsheetTextKey);
-    state.remove(_selectedSpreadsheetKey);
-    state.remove(_googleAuthorizationKey);
-    state.remove(_workoutSelectionKey);
-    await _writeState(state);
+    await _withStateFileLock(() async {
+      final state = await _readState();
+      state[_googleWorkspaceAccessKey] = value.toJson();
+      state.remove(_spreadsheetTextKey);
+      state.remove(_selectedSpreadsheetKey);
+      state.remove(_googleAuthorizationKey);
+      state.remove(_workoutSelectionKey);
+      await _writeState(state);
+    });
   }
 
   @override
   Future<void> clearGoogleWorkspaceAccessState() async {
-    final state = await _readState();
-    state.remove(_googleWorkspaceAccessKey);
-    state.remove(_spreadsheetTextKey);
-    state.remove(_selectedSpreadsheetKey);
-    state.remove(_googleAuthorizationKey);
-    state.remove(_workoutSelectionKey);
-    await _writeState(state);
+    await _withStateFileLock(() async {
+      final state = await _readState();
+      state.remove(_googleWorkspaceAccessKey);
+      state.remove(_spreadsheetTextKey);
+      state.remove(_selectedSpreadsheetKey);
+      state.remove(_googleAuthorizationKey);
+      state.remove(_workoutSelectionKey);
+      await _writeState(state);
+    });
+  }
+
+  Future<T> _withStateFileLock<T>(Future<T> Function() action) async {
+    final stateFilePath = (await _stateFile()).path;
+    final previous = _stateFileLocks[stateFilePath] ?? Future<void>.value();
+    final lock = Completer<void>();
+    _stateFileLocks[stateFilePath] = previous
+        .catchError((_) {})
+        .then((_) => lock.future);
+    await previous.catchError((_) {});
+    try {
+      return await action();
+    } finally {
+      lock.complete();
+    }
   }
 
   Future<Map<String, Object?>> _readState() async {
@@ -189,7 +211,10 @@ class FileAppStateStore implements AppStateStore {
   Future<void> _writeState(Map<String, Object?> state) async {
     final file = await _stateFile();
     await file.parent.create(recursive: true);
-    final temporaryFile = File('${file.path}.tmp');
+    final temporaryFile = File(
+      '${file.path}.${DateTime.now().microsecondsSinceEpoch}.'
+      '${_temporaryFileCounter++}.tmp',
+    );
     await temporaryFile.writeAsString(jsonEncode(state), flush: true);
     await temporaryFile.rename(file.path);
   }

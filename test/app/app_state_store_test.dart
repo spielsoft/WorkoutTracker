@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -112,6 +113,44 @@ void main() {
     expect(restored.spreadsheetText, 'spreadsheet-id');
     expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
     expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
+  });
+
+  test('file app state store serializes overlapping writes as JSON', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'workout-tracker-concurrent-state-test-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final store = FileAppStateStore(stateDirectory: directory);
+
+    await Future.wait([
+      store.writeGoogleWorkspaceAccessState(
+        const GoogleWorkspaceAccessState(spreadsheetText: 'spreadsheet-id'),
+      ),
+      store.writeGoogleWorkspaceAccessState(
+        const GoogleWorkspaceAccessState(
+          spreadsheetText: 'spreadsheet-id',
+          selectedSpreadsheet: SelectedSpreadsheet(
+            spreadsheetId: 'spreadsheet-id',
+            name: 'Development Workouts',
+          ),
+          googleAuthorization: GooglePickerAuthorizationSnapshot(
+            accessToken: 'picker-access-token',
+            accountEmail: 'athlete@example.com',
+          ),
+        ),
+      ),
+    ]);
+
+    final file = File('${directory.path}${Platform.pathSeparator}state.json');
+    final decoded = jsonDecode(await file.readAsString());
+
+    expect(decoded, isA<Map<String, Object?>>());
+    final restored = await store.readGoogleWorkspaceAccessState();
+    expect(restored.spreadsheetText, 'spreadsheet-id');
   });
 
   test(
