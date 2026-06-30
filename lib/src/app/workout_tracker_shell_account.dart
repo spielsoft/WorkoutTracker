@@ -16,33 +16,6 @@ class _GoogleAccountMenu extends StatefulWidget {
 class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
   bool _isBusy = false;
 
-  Future<void> _switchAccount() async {
-    setState(() {
-      _isBusy = true;
-    });
-    try {
-      await widget.accountSession.switchAccount(
-        scopes: GoogleApisSheetsWriteClient.writeScopes,
-      );
-    } on Object catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Unable to update Google Sheets authorization: $error',
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isBusy = false;
-        });
-      }
-    }
-  }
-
   Future<void> _signOut() async {
     setState(() {
       _isBusy = true;
@@ -79,8 +52,6 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
           icon: _GoogleAccountAvatar(account: account, isBusy: _isBusy),
           onSelected: (action) {
             switch (action) {
-              case _GoogleAccountAction.switchAccount:
-                _switchAccount();
               case _GoogleAccountAction.signOut:
                 _signOut();
             }
@@ -96,18 +67,6 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
             return [
               summaryItem,
               const PopupMenuDivider(),
-              PopupMenuItem<_GoogleAccountAction>(
-                value: _GoogleAccountAction.switchAccount,
-                child: Row(
-                  children: [
-                    const Icon(Icons.switch_account_outlined),
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: Text('Switch Google Sheets account', maxLines: 2),
-                    ),
-                  ],
-                ),
-              ),
               PopupMenuItem<_GoogleAccountAction>(
                 value: _GoogleAccountAction.signOut,
                 child: Row(
@@ -126,7 +85,7 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
   }
 }
 
-enum _GoogleAccountAction { switchAccount, signOut }
+enum _GoogleAccountAction { signOut }
 
 class _GoogleAccountSummary extends StatelessWidget {
   const _GoogleAccountSummary({required this.account});

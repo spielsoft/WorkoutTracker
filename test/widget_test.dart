@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
@@ -4037,7 +4036,7 @@ void main() {
     },
   );
 
-  testWidgets('shows a top-right Google Sheets authorization menu', (
+  testWidgets('shows account summary and logout in the Google Sheets menu', (
     tester,
   ) async {
     final service = TestSpreadsheetValidationService.fromRows([
@@ -4067,16 +4066,10 @@ void main() {
 
     expect(find.text('Wrong Account'), findsOneWidget);
     expect(find.text('wrong@example.com'), findsOneWidget);
-
-    await tester.tap(find.text('Switch Google Sheets account'));
-    await tester.pumpAndSettle();
-
-    expect(accountSession.switchCount, 1);
-    expect(
-      accountSession.requestedScopes.single,
-      GoogleApisSheetsWriteClient.writeScopes,
-    );
-    expect(accountSession.currentAccount?.email, 'right@example.com');
+    expect(find.text('Switch Google Sheets account'), findsNothing);
+    expect(find.text('Log out'), findsOneWidget);
+    expect(accountSession.switchCount, 0);
+    expect(accountSession.requestedScopes, isEmpty);
   });
 
   testWidgets('logs out from the Google Sheets account menu', (tester) async {
