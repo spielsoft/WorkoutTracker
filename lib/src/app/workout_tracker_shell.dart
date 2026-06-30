@@ -447,6 +447,7 @@ class _SpreadsheetValidationShellState
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
   CanonicalExercise? _canonicalExerciseBeingEdited;
   int? _highlightedCanonicalExerciseSheetRowNumber;
+  GoogleWorkspaceAccessStateOwner? _accessStateController;
   bool _isPickingSpreadsheet = false;
   bool _isClearingSession = false;
 
@@ -463,6 +464,12 @@ class _SpreadsheetValidationShellState
           widget.initialSelectedSpreadsheet?.spreadsheetId ??
           widget.initialSpreadsheetText,
     );
+    final appStateStore = widget.appStateStore;
+    if (appStateStore != null) {
+      _accessStateController = GoogleWorkspaceAccessStateController(
+        appStateStore,
+      );
+    }
     _spreadsheetController.addListener(_persistSpreadsheetText);
     unawaited(_restoreStartupState());
   }
@@ -492,7 +499,7 @@ class _SpreadsheetValidationShellState
     GoogleWorkspaceAccessState accessState;
     try {
       accessState =
-          await widget.appStateStore?.readGoogleWorkspaceAccessState() ??
+          await _accessStateController?.restore() ??
           const GoogleWorkspaceAccessState();
     } on Object {
       return;
@@ -500,7 +507,7 @@ class _SpreadsheetValidationShellState
     if (!mounted) {
       return;
     }
-    if (widget.appStateStore != null) {
+    if (_accessStateController != null) {
       _restoreGooglePickerAuthorization(accessState.googleAuthorization);
     }
     var savedSelection = accessState.selectedSpreadsheet;
@@ -530,11 +537,10 @@ class _SpreadsheetValidationShellState
     final resolver = picker as SelectedSpreadsheetResolver;
     try {
       final resolved = await resolver.resolveSelectedSpreadsheet(selected);
-      final store = widget.appStateStore;
-      if (store != null) {
-        final accessState = await store.readGoogleWorkspaceAccessState();
-        await store.writeGoogleWorkspaceAccessState(
-          accessState.copyWith(
+      final accessStateController = _accessStateController;
+      if (accessStateController != null) {
+        await accessStateController.update(
+          (accessState) => accessState.copyWith(
             spreadsheetText: resolved.spreadsheetId,
             selectedSpreadsheet: resolved,
           ),
@@ -550,22 +556,21 @@ class _SpreadsheetValidationShellState
     if (_isClearingSession) {
       return;
     }
-    final store = widget.appStateStore;
-    if (store == null) {
+    final accessStateController = _accessStateController;
+    if (accessStateController == null) {
       return;
     }
-    unawaited(
-      store
-          .readGoogleWorkspaceAccessState()
-          .then(
-            (accessState) => store.writeGoogleWorkspaceAccessState(
-              accessState.copyWith(
-                spreadsheetText: _spreadsheetController.text,
-              ),
-            ),
-          )
-          .catchError((_) {}),
-    );
+    unawaited(() async {
+      try {
+        await accessStateController.update(
+          (accessState) => accessState.copyWith(
+            spreadsheetText: _spreadsheetController.text,
+          ),
+        );
+      } on Object {
+        // Text fallback persistence is best-effort.
+      }
+    }());
   }
 
   void _restoreGooglePickerAuthorization(
@@ -679,11 +684,10 @@ class _SpreadsheetValidationShellState
         _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
       });
       try {
-        final store = widget.appStateStore;
-        if (store != null) {
-          final accessState = await store.readGoogleWorkspaceAccessState();
-          await store.writeGoogleWorkspaceAccessState(
-            accessState.copyWith(
+        final accessStateController = _accessStateController;
+        if (accessStateController != null) {
+          await accessStateController.update(
+            (accessState) => accessState.copyWith(
               spreadsheetText: selectedSpreadsheet.spreadsheetId,
               selectedSpreadsheet: selectedSpreadsheet,
               googleAuthorization: _currentGooglePickerAuthorization(),
@@ -723,7 +727,7 @@ class _SpreadsheetValidationShellState
         _addExercisePlacementIntent = null;
         _canonicalExerciseBeingEdited = null;
       });
-      await widget.appStateStore?.clearGoogleWorkspaceAccessState();
+      await _accessStateController?.clear();
     } finally {
       _isClearingSession = false;
     }
@@ -1104,10 +1108,10 @@ class _SpreadsheetValidationShellState
   }
 
   void _persistWorkoutSelection() {
-    final store = widget.appStateStore;
+    final accessStateController = _accessStateController;
     final report = _controller.report;
     final setup = _controller.workoutSetup;
-    if (store == null || report == null || setup == null) {
+    if (accessStateController == null || report == null || setup == null) {
       return;
     }
     final selection = WorkoutSelectionState(
@@ -1115,14 +1119,15 @@ class _SpreadsheetValidationShellState
       workout: setup.selectedWorkout,
       historyBlock: setup.selectedHistoryBlock,
     );
-    unawaited(
-      (() async {
-        final accessState = await store.readGoogleWorkspaceAccessState();
-        await store.writeGoogleWorkspaceAccessState(
-          accessState.copyWith(workoutSelection: selection),
+    unawaited(() async {
+      try {
+        await accessStateController.update(
+          (accessState) => accessState.copyWith(workoutSelection: selection),
         );
-      })().catchError((_) {}),
-    );
+      } on Object {
+        // Workout-selection persistence is best-effort.
+      }
+    }());
   }
 
   @override

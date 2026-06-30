@@ -115,9 +115,9 @@ void main() {
     expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
   });
 
-  test('file app state store serializes overlapping writes as JSON', () async {
+  test('state controller preserves overlapping workspace updates', () async {
     final directory = await Directory.systemTemp.createTemp(
-      'workout-tracker-concurrent-state-test-',
+      'workout-tracker-controller-state-test-',
     );
     addTearDown(() async {
       if (await directory.exists()) {
@@ -125,14 +125,14 @@ void main() {
       }
     });
     final store = FileAppStateStore(stateDirectory: directory);
+    final controller = GoogleWorkspaceAccessStateController(store);
 
     await Future.wait([
-      store.writeGoogleWorkspaceAccessState(
-        const GoogleWorkspaceAccessState(spreadsheetText: 'spreadsheet-id'),
+      controller.update(
+        (state) => state.copyWith(spreadsheetText: 'spreadsheet-id'),
       ),
-      store.writeGoogleWorkspaceAccessState(
-        const GoogleWorkspaceAccessState(
-          spreadsheetText: 'spreadsheet-id',
+      controller.update(
+        (state) => state.copyWith(
           selectedSpreadsheet: SelectedSpreadsheet(
             spreadsheetId: 'spreadsheet-id',
             name: 'Development Workouts',
@@ -140,6 +140,15 @@ void main() {
           googleAuthorization: GooglePickerAuthorizationSnapshot(
             accessToken: 'picker-access-token',
             accountEmail: 'athlete@example.com',
+          ),
+        ),
+      ),
+      controller.update(
+        (state) => state.copyWith(
+          workoutSelection: const WorkoutSelectionState(
+            spreadsheetId: 'spreadsheet-id',
+            workout: 'Legs',
+            historyBlock: 'Week 1',
           ),
         ),
       ),
@@ -151,6 +160,9 @@ void main() {
     expect(decoded, isA<Map<String, Object?>>());
     final restored = await store.readGoogleWorkspaceAccessState();
     expect(restored.spreadsheetText, 'spreadsheet-id');
+    expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
+    expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
+    expect(restored.workoutSelection?.workout, 'Legs');
   });
 
   test(
