@@ -86,11 +86,15 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
             }
           },
           itemBuilder: (context) {
+            final summaryItem = PopupMenuItem<_GoogleAccountAction>(
+              enabled: false,
+              child: _GoogleAccountSummary(account: account),
+            );
+            if (account == null) {
+              return [summaryItem];
+            }
             return [
-              PopupMenuItem<_GoogleAccountAction>(
-                enabled: false,
-                child: _GoogleAccountSummary(account: account),
-              ),
+              summaryItem,
               const PopupMenuDivider(),
               PopupMenuItem<_GoogleAccountAction>(
                 value: _GoogleAccountAction.switchAccount,
@@ -99,27 +103,21 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
                     const Icon(Icons.switch_account_outlined),
                     const SizedBox(width: 12),
                     Flexible(
-                      child: Text(
-                        account == null
-                            ? 'Connect Google Sheets'
-                            : 'Switch Google Sheets account',
-                        maxLines: 2,
-                      ),
+                      child: Text('Switch Google Sheets account', maxLines: 2),
                     ),
                   ],
                 ),
               ),
-              if (account != null)
-                PopupMenuItem<_GoogleAccountAction>(
-                  value: _GoogleAccountAction.signOut,
-                  child: Row(
-                    children: const [
-                      Icon(Icons.logout),
-                      SizedBox(width: 12),
-                      Flexible(child: Text('Log out')),
-                    ],
-                  ),
+              PopupMenuItem<_GoogleAccountAction>(
+                value: _GoogleAccountAction.signOut,
+                child: Row(
+                  children: const [
+                    Icon(Icons.logout),
+                    SizedBox(width: 12),
+                    Flexible(child: Text('Log out')),
+                  ],
                 ),
+              ),
             ];
           },
         );

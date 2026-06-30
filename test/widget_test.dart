@@ -4061,9 +4061,7 @@ void main() {
     expect(find.text('No workout sheet selected'), findsOneWidget);
   });
 
-  testWidgets('frames missing account state as Google Sheets authorization', (
-    tester,
-  ) async {
+  testWidgets('shows only the account summary when logged out', (tester) async {
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -4083,16 +4081,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No Google Sheets account connected'), findsOneWidget);
-
-    await tester.tap(find.text('Connect Google Sheets'));
-    await tester.pumpAndSettle();
-
-    expect(accountSession.switchCount, 1);
-    expect(
-      accountSession.requestedScopes.single,
-      GoogleApisSheetsWriteClient.writeScopes,
-    );
-    expect(accountSession.currentAccount?.email, 'right@example.com');
+    expect(find.text('Connect Google Sheets'), findsNothing);
+    expect(find.text('Switch Google Sheets account'), findsNothing);
+    expect(find.text('Log out'), findsNothing);
+    expect(accountSession.switchCount, 0);
   });
 
   testWidgets('shows the Google Sheets account menu in picker mode', (
