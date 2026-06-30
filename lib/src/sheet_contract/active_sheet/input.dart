@@ -27,7 +27,7 @@ const exercisesSheetColumns = [
   'Log Format',
 ];
 
-const defaultExerciseLogFormat = '{Weight}[x]{Reps}[@]{RPE}';
+const defaultExerciseLogFormat = workoutTrackerDefaultLogFormat;
 
 class ActiveSheetInput {
   ActiveSheetInput({

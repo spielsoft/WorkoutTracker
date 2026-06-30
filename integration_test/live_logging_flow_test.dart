@@ -5,14 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
-import 'package:workout_tracker/google_sheets_development.dart'
-    show DevelopmentSheetResetHarness;
 import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
+import '../test/support/development_sheet_reset.dart'
+    show DevelopmentSheetResetHarness, workoutTrackerDevelopmentSpreadsheetId;
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  const workoutTrackerDevelopmentSpreadsheetUrl =
+      'https://docs.google.com/spreadsheets/d/'
+      '$workoutTrackerDevelopmentSpreadsheetId/edit?gid=0#gid=0';
 
   final runLiveGoogleTests =
       Platform.environment['WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS'] == '1';

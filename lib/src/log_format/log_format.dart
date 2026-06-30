@@ -1,8 +1,10 @@
+import '../workout_tracker_defaults.dart';
+
 sealed class LogFormatParseResult {
   const LogFormatParseResult();
 }
 
-const defaultLogFormatText = '{Weight}[x]{Reps}[@]{RPE}';
+const defaultLogFormatText = workoutTrackerDefaultLogFormat;
 
 class ParsedLogFormat extends LogFormatParseResult {
   const ParsedLogFormat(this.segments);

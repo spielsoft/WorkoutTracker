@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:workout_tracker/google_sheets_development.dart'
-    show DevelopmentSheetResetHarness, workoutTrackerDevelopmentSpreadsheetId;
 import 'package:workout_tracker/google_sheets.dart';
-import 'package:workout_tracker/log_format.dart';
 import 'package:workout_tracker/sheet_contract.dart';
+
+import '../support/development_sheet_reset.dart'
+    show DevelopmentSheetResetHarness, workoutTrackerDevelopmentSpreadsheetId;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -1,5 +1,4 @@
-import 'workout_tracker_workbook_template.dart';
-import 'workout_tracker_workbook_initializer.dart';
+import 'package:workout_tracker/google_sheets.dart';
 
 const workoutTrackerDevelopmentSpreadsheetId =
     '1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E';

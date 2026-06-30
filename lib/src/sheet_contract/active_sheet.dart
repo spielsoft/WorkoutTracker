@@ -1,4 +1,5 @@
 import '../log_format/log_format.dart';
+import '../workout_tracker_defaults.dart';
 
 part 'active_sheet/formula_healing.dart';
 part 'active_sheet/helpers.dart';
