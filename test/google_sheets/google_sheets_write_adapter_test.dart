@@ -475,6 +475,131 @@ void main() {
   );
 
   test(
+    'applies planned Exercises row appends to the Exercises sheet',
+    () async {
+      final client = _FakeGoogleSheetsWriteClient(
+        const GoogleSheetsActiveSheetTarget(
+          sheetId: 42,
+          title: 'Active Workout',
+        ),
+        sheetTargets: const {
+          'Exercises': GoogleSheetsActiveSheetTarget(
+            sheetId: 84,
+            title: 'Exercises',
+          ),
+        },
+      );
+      final adapter = GoogleSheetsWriteAdapter(client: client);
+
+      await adapter.applyExercisesWritePlan(
+        spreadsheetId: 'spreadsheet-id',
+        plan: ExercisesWritePlan(
+          rowAppends: [
+            ExercisesRowAppend(
+              sheetRowNumber: 2,
+              values: const [
+                'A New Movement',
+                'Freshly added exercise',
+                '3',
+                '10',
+                '8',
+                '2 min',
+                '',
+                '',
+                '{Weight}[x]{Reps}[@]{RPE}',
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(client.writeBatches, isEmpty);
+      expect(client.structuralBatches, [
+        _StructuralBatch(
+          spreadsheetId: 'spreadsheet-id',
+          sheetId: 84,
+          sheetTitle: 'Exercises',
+          rowInsertions: const [
+            _InsertedRows(
+              spreadsheetId: 'spreadsheet-id',
+              sheetId: 84,
+              sheetRowNumber: 2,
+              rowCount: 1,
+            ),
+          ],
+          columnInsertions: const [],
+          writes: const [
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 1,
+              value: 'A New Movement',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 2,
+              value: 'Freshly added exercise',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 3,
+              value: '3',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 4,
+              value: '10',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 5,
+              value: '8',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 6,
+              value: '2 min',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 7,
+              value: '',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 8,
+              value: '',
+            ),
+            _CellWrite(
+              spreadsheetId: 'spreadsheet-id',
+              sheetTitle: 'Exercises',
+              sheetRowNumber: 2,
+              sheetColumnNumber: 9,
+              value: '{Weight}[x]{Reps}[@]{RPE}',
+            ),
+          ],
+          clears: const [],
+        ),
+      ]);
+    },
+  );
+
+  test(
     'applies planned active formula repairs after Exercises row updates',
     () async {
       final client = _FakeGoogleSheetsWriteClient(
@@ -535,9 +660,10 @@ void main() {
 }
 
 class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
-  _FakeGoogleSheetsWriteClient(this.target);
+  _FakeGoogleSheetsWriteClient(this.target, {this.sheetTargets = const {}});
 
   final GoogleSheetsActiveSheetTarget target;
+  final Map<String, GoogleSheetsActiveSheetTarget> sheetTargets;
   final List<String> fetchedSpreadsheetIds = [];
   final List<_CellWrite> writes = [];
   final List<_WriteBatch> writeBatches = [];
@@ -550,6 +676,19 @@ class _FakeGoogleSheetsWriteClient implements GoogleSheetsWriteClient {
     String spreadsheetId,
   ) async {
     fetchedSpreadsheetIds.add(spreadsheetId);
+    return target;
+  }
+
+  @override
+  Future<GoogleSheetsActiveSheetTarget> fetchSheetTarget(
+    String spreadsheetId, {
+    required String sheetTitle,
+  }) async {
+    fetchedSpreadsheetIds.add(spreadsheetId);
+    final target = sheetTargets[sheetTitle];
+    if (target == null) {
+      throw StateError('$sheetTitle sheet is missing a sheet ID.');
+    }
     return target;
   }
 

@@ -4,6 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('loads Google Picker app config from the bundled JSON asset', () async {
+    final config = await loadGooglePickerAppConfig();
+
+    expect(config.clientId, isNotEmpty);
+    expect(config.callbackTimeout, const Duration(minutes: 5));
+    expect(
+      config.hostedCallbackUri.toString(),
+      'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
+    );
+    expect(config.nativeCallbackScheme, 'workouttracker');
+    expect(config.nativeCallbackHost, 'google-picker-callback');
+  });
+
   test(
     'disabled spreadsheet picker reports both actions unavailable',
     () async {
@@ -18,9 +33,12 @@ void main() {
   );
 
   test('production picker client ID enables app builds', () {
-    expect(workoutTrackerGooglePickerClientId, isNotEmpty);
+    final config = _testGooglePickerConfig();
+
+    expect(config.clientId, isNotEmpty);
     expect(
       MobileGoogleDriveSpreadsheetPicker(
+        config: config,
         callbackReceiverFactory: _unusedCallbackReceiverFactory,
       ).availability.canChoose,
       isTrue,
@@ -30,15 +48,17 @@ void main() {
   test(
     'Google Picker authorization URL carries the app callback path and request state',
     () {
+      final config = _testGooglePickerConfig();
+
       expect(
-        workoutTrackerGooglePickerHostedCallbackUri.toString(),
+        config.hostedCallbackUri.toString(),
         'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
       );
 
       final authorizationUrl =
           MobileGoogleDriveSpreadsheetPicker.googlePickerAuthorizationUrl(
             clientId: 'client-id.apps.googleusercontent.com',
-            redirectUri: workoutTrackerGooglePickerHostedCallbackUri,
+            redirectUri: config.hostedCallbackUri,
             state: 'request-state',
             loginHint: 'athlete@example.com',
           );
@@ -50,7 +70,7 @@ void main() {
       );
       expect(
         authorizationUrl.queryParameters['redirect_uri'],
-        workoutTrackerGooglePickerHostedCallbackUri.toString(),
+        config.hostedCallbackUri.toString(),
       );
       expect(authorizationUrl.queryParameters['response_type'], 'token');
       expect(authorizationUrl.queryParameters['state'], 'request-state');
@@ -78,12 +98,15 @@ void main() {
   test(
     'native Google Picker callback parser accepts only app-owned results',
     () {
+      final config = _testGooglePickerConfig();
+
       final success = validateGooglePickerNativeCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&picked_file_ids=first_sheet,second-sheet',
         ),
         expectedState: 'request-state',
+        config: config,
       );
 
       expect(success.result?.pickedSpreadsheetIds, [
@@ -102,6 +125,7 @@ void main() {
           '&account_photo=https%3A%2F%2Fexample.com%2Fathlete.png',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(successWithToken.result?.pickedSpreadsheetIds, ['spreadsheet-id']);
       expect(successWithToken.result?.accessToken, 'oauth-token');
@@ -130,6 +154,7 @@ void main() {
             '?state=request-state&$alias=spreadsheet-id',
           ),
           expectedState: 'request-state',
+          config: config,
         );
         expect(
           aliasSuccess.result?.pickedSpreadsheetIds,
@@ -144,6 +169,7 @@ void main() {
           '?state=request-state&error=access_denied',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(cancelled.result?.cancelled, isTrue);
 
@@ -153,6 +179,7 @@ void main() {
           '?state=request-state&error=server_error',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(pickerError.result?.error, 'server_error');
 
@@ -162,6 +189,7 @@ void main() {
           '?picked_file_ids=spreadsheet-id',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(missingState.result, isNull);
       expect(missingState.errorMessage, contains('missing request state'));
@@ -172,6 +200,7 @@ void main() {
           '?state=other-state&picked_file_ids=spreadsheet-id',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(wrongState.result, isNull);
       expect(wrongState.errorMessage, contains('state'));
@@ -182,6 +211,7 @@ void main() {
           '?state=request-state&picked_file_ids=spreadsheet.id',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(malformedSpreadsheetId.result, isNull);
       expect(malformedSpreadsheetId.errorMessage, contains('spreadsheet ID'));
@@ -192,6 +222,7 @@ void main() {
           '?state=request-state&access_token=oauth-token',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(tokenWithoutSelection.result, isNull);
       expect(tokenWithoutSelection.errorMessage, contains('spreadsheet IDs'));
@@ -202,6 +233,7 @@ void main() {
           '?state=request-state&picked_file_ids=spreadsheet-id',
         ),
         expectedState: 'request-state',
+        config: config,
       );
       expect(unrelated.result, isNull);
       expect(unrelated.errorMessage, contains('workouttracker'));
@@ -231,6 +263,31 @@ void main() {
       ),
     );
   });
+}
+
+GooglePickerAppConfig _testGooglePickerConfig() {
+  return GooglePickerAppConfig(
+    clientId:
+        '657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com',
+    callbackTimeout: const Duration(minutes: 5),
+    nativeCallbackScheme: 'workouttracker',
+    nativeCallbackHost: 'google-picker-callback',
+    hostedCallbackUri: Uri.parse(
+      'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
+    ),
+    pickedIdQueryParameters: const [
+      'picked_file_ids',
+      'picked_file_id',
+      'picked_folder_ids',
+      'picked_folder_id',
+      'file_ids',
+      'file_id',
+      'folder_ids',
+      'folder_id',
+      'ids',
+      'id',
+    ],
+  );
 }
 
 Future<GooglePickerCallbackReceiver> _unusedCallbackReceiverFactory({

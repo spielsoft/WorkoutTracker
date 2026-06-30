@@ -71,7 +71,7 @@ WorkoutTrackerWorkbook workoutTrackerWorkbookTemplate({
   final exercisesSheet = WorkoutTrackerWorkbookTab(
     title: 'Exercises',
     rows: [
-      _exerciseHeaderRow,
+      exercisesSheetColumns,
       for (final exercise in sortedExerciseDefaults) _exerciseRow(exercise),
     ],
   );
@@ -90,18 +90,6 @@ int _compareExerciseDefaults(
 ) {
   return left.exercise.toLowerCase().compareTo(right.exercise.toLowerCase());
 }
-
-const _exerciseHeaderRow = [
-  'Exercise',
-  'Description',
-  'Default Sets',
-  'Default Reps',
-  'Default RPE',
-  'Default Rest',
-  'Default Tempo',
-  'Notes',
-  'Log Format',
-];
 
 CanonicalExerciseDefinition _exerciseDefaultFromJson(Object? value) {
   if (value is! Map<String, Object?>) {

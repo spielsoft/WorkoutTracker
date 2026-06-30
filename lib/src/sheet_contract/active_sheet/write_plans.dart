@@ -1132,7 +1132,7 @@ class _ActiveSheetWritePlanner {
     CanonicalExerciseDefinition exercise,
   ) {
     final append = ExercisesRowAppend(
-      sheetRowNumber: sheet._exercisesRows.length + 1,
+      sheetRowNumber: 2,
       values: _canonicalExerciseRowValues(exercise),
     );
     return ExercisesWritePlan(rowAppends: [append]);

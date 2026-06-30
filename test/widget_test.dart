@@ -4436,7 +4436,7 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
     required CanonicalExerciseDefinition exercise,
   }) async {
     createdExercises.add(exercise);
-    _exercises.add([
+    _exercises.insert(0, [
       exercise.exercise,
       exercise.description,
       exercise.defaultSets,
@@ -4447,9 +4447,29 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
       exercise.notes,
       exercise.resolvedLogFormat,
     ]);
+    final activeExerciseIndex = _exercises.indexWhere(
+      (row) => row.first == 'Squat',
+    );
+    final activeExerciseRowNumber = activeExerciseIndex == -1
+        ? 2
+        : activeExerciseIndex + 2;
     return SpreadsheetValidationReport(
       spreadsheetId: spreadsheetId,
-      activeSheet: _exerciseInventoryParsedSheet(_exercises),
+      activeSheet: _exerciseInventoryParsedSheet(
+        _exercises,
+        cellFormulas: [
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 1,
+            formula: '=Exercises!A$activeExerciseRowNumber',
+          ),
+          CellFormula(
+            sheetRowNumber: 3,
+            sheetColumnNumber: 8,
+            formula: '=Exercises!I$activeExerciseRowNumber',
+          ),
+        ],
+      ),
     );
   }
 

@@ -113,6 +113,11 @@ class GoogleSheetsWriteAdapter {
     required String spreadsheetId,
     required ExercisesWritePlan plan,
   }) async {
+    final sortedRowAppends = [...plan.rowAppends]
+      ..sort(
+        (first, second) =>
+            second.sheetRowNumber.compareTo(first.sheetRowNumber),
+      );
     final cells = <GoogleSheetsCellWrite>[
       for (final update in plan.rowUpdates)
         for (var index = 0; index < update.values.length; index += 1)
@@ -131,12 +136,33 @@ class GoogleSheetsWriteAdapter {
             mode: GoogleSheetsValueInputMode.literalText,
           ),
     ];
-    await client.writeCells(
-      spreadsheetId: spreadsheetId,
-      sheetTitle: 'Exercises',
-      cells: cells,
-      mode: GoogleSheetsValueInputMode.literalText,
-    );
+    if (plan.rowAppends.isNotEmpty) {
+      final exercisesSheet = await client.fetchSheetTarget(
+        spreadsheetId,
+        sheetTitle: 'Exercises',
+      );
+      await client.applyActiveSheetStructuralBatch(
+        spreadsheetId: spreadsheetId,
+        sheetId: exercisesSheet.sheetId,
+        sheetTitle: exercisesSheet.title,
+        rowInsertions: sortedRowAppends.map(
+          (append) => GoogleSheetsRowInsertion(
+            sheetRowNumber: append.sheetRowNumber,
+            rowCount: 1,
+          ),
+        ),
+        columnInsertions: const [],
+        cells: cells,
+        clears: const [],
+      );
+    } else {
+      await client.writeCells(
+        spreadsheetId: spreadsheetId,
+        sheetTitle: 'Exercises',
+        cells: cells,
+        mode: GoogleSheetsValueInputMode.literalText,
+      );
+    }
     if (plan.activeSheetFormulaUpdates.isNotEmpty) {
       final activeSheet = await client.fetchActiveSheetTarget(spreadsheetId);
       await client.writeCells(
@@ -189,6 +215,11 @@ abstract interface class GoogleSheetsWriteClient {
   Future<GoogleSheetsActiveSheetTarget> fetchActiveSheetTarget(
     String spreadsheetId,
   );
+
+  Future<GoogleSheetsActiveSheetTarget> fetchSheetTarget(
+    String spreadsheetId, {
+    required String sheetTitle,
+  });
 
   Future<void> applyActiveSheetStructuralBatch({
     required String spreadsheetId,
@@ -281,6 +312,29 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
   Future<GoogleSheetsActiveSheetTarget> fetchActiveSheetTarget(
     String spreadsheetId,
   ) async {
+    final sheetTargets = await _fetchSheetTargets(spreadsheetId);
+    if (sheetTargets.isEmpty) {
+      throw StateError('Spreadsheet has no sheets.');
+    }
+    return sheetTargets.first;
+  }
+
+  @override
+  Future<GoogleSheetsActiveSheetTarget> fetchSheetTarget(
+    String spreadsheetId, {
+    required String sheetTitle,
+  }) async {
+    for (final target in await _fetchSheetTargets(spreadsheetId)) {
+      if (target.title == sheetTitle) {
+        return target;
+      }
+    }
+    throw StateError('$sheetTitle sheet is missing a sheet ID.');
+  }
+
+  Future<List<GoogleSheetsActiveSheetTarget>> _fetchSheetTargets(
+    String spreadsheetId,
+  ) async {
     final spreadsheet = await _api.spreadsheets.get(
       spreadsheetId,
       $fields: 'sheets(properties(sheetId,index,title,sheetType))',
@@ -291,20 +345,14 @@ class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
           right.properties?.index ?? 0,
         );
       });
-    if (apiSheets.isEmpty) {
-      throw StateError('Spreadsheet has no sheets.');
-    }
-
-    final activeSheetProperties = apiSheets.first.properties;
-    final activeSheetId = activeSheetProperties?.sheetId;
-    if (activeSheetId == null) {
-      throw StateError('Active sheet is missing a sheet ID.');
-    }
-
-    return GoogleSheetsActiveSheetTarget(
-      sheetId: activeSheetId,
-      title: activeSheetProperties?.title ?? '',
-    );
+    return [
+      for (final sheet in apiSheets)
+        if (sheet.properties?.sheetId != null)
+          GoogleSheetsActiveSheetTarget(
+            sheetId: sheet.properties!.sheetId!,
+            title: sheet.properties?.title ?? '',
+          ),
+    ];
   }
 
   @override

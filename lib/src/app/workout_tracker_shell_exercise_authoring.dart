@@ -1,7 +1,5 @@
 part of 'workout_tracker_shell.dart';
 
-const workoutTrackerDefaultLogFormat = '{Weight}[x]{Reps}[@]{RPE}';
-
 enum ExerciseAuthoringContext { canonicalExercise, workoutPlacement }
 
 class CanonicalExerciseDraft {
@@ -26,7 +24,7 @@ class CanonicalExerciseDraft {
     defaultRest: '2 min',
     defaultTempo: '',
     notes: '',
-    logFormat: workoutTrackerDefaultLogFormat,
+    logFormat: defaultExerciseLogFormat,
   );
 
   factory CanonicalExerciseDraft.fromExercise(CanonicalExercise exercise) {
@@ -65,7 +63,7 @@ class CanonicalExerciseDraft {
       defaultTempo: defaultTempo.trim(),
       notes: notes.trim(),
       logFormat: trimmedLogFormat.isEmpty
-          ? workoutTrackerDefaultLogFormat
+          ? defaultExerciseLogFormat
           : trimmedLogFormat,
     );
   }

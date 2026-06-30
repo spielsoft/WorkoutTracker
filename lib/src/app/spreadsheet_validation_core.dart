@@ -1,11 +1,5 @@
-import 'package:workout_tracker/google_sheets.dart'
-    show workoutTrackerDevelopmentSpreadsheetId;
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const workoutTrackerDevelopmentSpreadsheetUrl =
-    'https://docs.google.com/spreadsheets/d/'
-    '$workoutTrackerDevelopmentSpreadsheetId/edit?gid=0#gid=0';
 
 abstract interface class SpreadsheetValidationService {
   /// Reads and reparses the active sheet for [spreadsheetId].

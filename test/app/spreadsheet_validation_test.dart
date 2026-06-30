@@ -1008,6 +1008,14 @@ class _RecordingWriteClient implements GoogleSheetsWriteClient {
   }
 
   @override
+  Future<GoogleSheetsActiveSheetTarget> fetchSheetTarget(
+    String spreadsheetId, {
+    required String sheetTitle,
+  }) async {
+    return GoogleSheetsActiveSheetTarget(sheetId: 84, title: sheetTitle);
+  }
+
+  @override
   Future<void> applyActiveSheetStructuralBatch({
     required String spreadsheetId,
     required int sheetId,
