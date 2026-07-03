@@ -34,7 +34,7 @@ void main() {
 
     final authorizationGateway = NativeGoogleSignInAuthorizationGateway();
     final headers = await authorizationGateway.authorizationHeaders(
-      GoogleApisSheetsWriteClient.writeScopes,
+      GoogleApisSheetsWorkbookClient.writeScopes,
     );
     final authenticatedClient = GoogleAuthorizationHeadersClient(
       headers: headers,
@@ -45,7 +45,7 @@ void main() {
       initializer: GoogleApisWorkoutTrackerWorkbookInitializer(api),
     );
     readAdapter = GoogleSheetsReadAdapter(
-      client: GoogleApisSheetsSpreadsheetClient(api),
+      client: GoogleApisSheetsWorkbookClient(api),
     );
     validationService = GoogleSignInSpreadsheetValidationService(
       authorizationGateway: authorizationGateway,

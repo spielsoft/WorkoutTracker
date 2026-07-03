@@ -74,50 +74,122 @@ void main() {
     );
   });
 
-  test('plans workbook writes with typed cell values and text formatting', () {
-    final tab = WorkoutTrackerWorkbookTab(
-      title: 'Active Workout',
-      rows: [
-        ['Exercise', 'Tempo', 'History'],
-        ['=Exercises!A2', '3-1-1', ''],
-        ['Timed Drill', '45s', '12-15'],
-      ],
-    );
+  test(
+    'plans workbook seeding through workbook operations and keeps formatting requests local',
+    () {
+      final tab = WorkoutTrackerWorkbookTab(
+        title: 'Active Workout',
+        rows: [
+          ['Exercise', 'Tempo', 'History'],
+          ['=Exercises!A2', '3-1-1', ''],
+          ['Timed Drill', '45s', '12-15'],
+        ],
+      );
 
-    final plan = WorkoutTrackerWorkbookTabRewritePlan(
-      sheetId: 42,
-      tab: tab,
-      frozenRowCount: 1,
-    );
+      final plan = WorkoutTrackerWorkbookTabRewritePlan(
+        sheetId: 42,
+        tab: tab,
+        frozenRowCount: 1,
+      );
 
-    final textFormatRequest = plan.requests.singleWhere(
-      (request) =>
-          request.repeatCell?.fields == 'userEnteredFormat.numberFormat',
-    );
-    expect(
-      textFormatRequest.repeatCell?.cell?.userEnteredFormat?.numberFormat?.type,
-      'TEXT',
-    );
-    expect(textFormatRequest.repeatCell?.range?.sheetId, 42);
-    expect(textFormatRequest.repeatCell?.range?.startRowIndex, 0);
-    expect(textFormatRequest.repeatCell?.range?.endRowIndex, 50);
-    expect(textFormatRequest.repeatCell?.range?.startColumnIndex, 0);
-    expect(textFormatRequest.repeatCell?.range?.endColumnIndex, 3);
+      final textFormatRequest = plan.requests.singleWhere(
+        (request) =>
+            request.repeatCell?.fields == 'userEnteredFormat.numberFormat',
+      );
+      expect(
+        textFormatRequest
+            .repeatCell
+            ?.cell
+            ?.userEnteredFormat
+            ?.numberFormat
+            ?.type,
+        'TEXT',
+      );
+      expect(textFormatRequest.repeatCell?.range?.sheetId, 42);
+      expect(textFormatRequest.repeatCell?.range?.startRowIndex, 0);
+      expect(textFormatRequest.repeatCell?.range?.endRowIndex, 50);
+      expect(textFormatRequest.repeatCell?.range?.startColumnIndex, 0);
+      expect(textFormatRequest.repeatCell?.range?.endColumnIndex, 3);
 
-    final writeRequest = plan.requests.singleWhere(
-      (request) => request.updateCells != null,
-    );
-    expect(writeRequest.updateCells?.fields, 'userEnteredValue');
-
-    final rows = writeRequest.updateCells!.rows!;
-    expect(rows[1].values![0].userEnteredValue?.formulaValue, '=Exercises!A2');
-    expect(rows[1].values![0].userEnteredValue?.stringValue, isNull);
-    expect(rows[1].values![1].userEnteredValue?.stringValue, '3-1-1');
-    expect(rows[1].values![2].userEnteredValue, isNull);
-    expect(rows[2].values![0].userEnteredValue?.stringValue, 'Timed Drill');
-    expect(rows[2].values![1].userEnteredValue?.stringValue, '45s');
-    expect(rows[2].values![2].userEnteredValue?.stringValue, '12-15');
-  });
+      expect(
+        plan.requests.where((request) => request.updateCells != null),
+        isEmpty,
+      );
+      expect(
+        [
+          for (final operation in plan.operations)
+            if (operation is SheetsCellWrite)
+              (
+                operation.sheet.sheetId,
+                operation.sheet.title,
+                operation.sheetRowNumber,
+                operation.sheetColumnNumber,
+                operation.value,
+                operation.mode,
+              ),
+        ],
+        [
+          (
+            42,
+            'Active Workout',
+            1,
+            1,
+            'Exercise',
+            SheetsValueInputMode.literalText,
+          ),
+          (
+            42,
+            'Active Workout',
+            1,
+            2,
+            'Tempo',
+            SheetsValueInputMode.literalText,
+          ),
+          (
+            42,
+            'Active Workout',
+            1,
+            3,
+            'History',
+            SheetsValueInputMode.literalText,
+          ),
+          (
+            42,
+            'Active Workout',
+            2,
+            1,
+            '=Exercises!A2',
+            SheetsValueInputMode.userEntered,
+          ),
+          (
+            42,
+            'Active Workout',
+            2,
+            2,
+            '3-1-1',
+            SheetsValueInputMode.literalText,
+          ),
+          (
+            42,
+            'Active Workout',
+            3,
+            1,
+            'Timed Drill',
+            SheetsValueInputMode.literalText,
+          ),
+          (42, 'Active Workout', 3, 2, '45s', SheetsValueInputMode.literalText),
+          (
+            42,
+            'Active Workout',
+            3,
+            3,
+            '12-15',
+            SheetsValueInputMode.literalText,
+          ),
+        ],
+      );
+    },
+  );
 }
 
 class _FakeWorkbookInitializer implements WorkoutTrackerWorkbookInitializer {

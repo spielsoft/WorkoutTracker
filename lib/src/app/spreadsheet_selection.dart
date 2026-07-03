@@ -415,7 +415,7 @@ class MobileGoogleDriveSpreadsheetPicker
     }
 
     final headers = await authorizationGateway.authorizationHeaders(
-      GoogleApisSheetsWriteClient.writeScopes,
+      GoogleApisSheetsWorkbookClient.writeScopes,
     );
     final clientFactory =
         authorizationClientFactory ??

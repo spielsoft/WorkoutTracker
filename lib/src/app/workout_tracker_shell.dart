@@ -638,7 +638,7 @@ class _SpreadsheetValidationShellState
     }
     try {
       await nativeAccountSession.switchAccount(
-        scopes: GoogleApisSheetsWriteClient.writeScopes,
+        scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       );
     } on Object catch (error) {
       if (mounted) {

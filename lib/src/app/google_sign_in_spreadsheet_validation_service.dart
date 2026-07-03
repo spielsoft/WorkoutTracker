@@ -30,7 +30,7 @@ class GoogleSignInSpreadsheetValidationService
     String spreadsheetId,
   ) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       canWrite: true,
       action: (service) => service.validateSpreadsheet(spreadsheetId),
     );
@@ -43,7 +43,7 @@ class GoogleSignInSpreadsheetValidationService
     required ActiveSheetWritePlan plan,
   }) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       canWrite: true,
       action: (service) => service.applyActiveSheetWritePlan(
         spreadsheetId: spreadsheetId,
@@ -60,7 +60,7 @@ class GoogleSignInSpreadsheetValidationService
     required CanonicalExerciseDefinition exercise,
   }) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       canWrite: true,
       action: (service) {
         if (service case final ExerciseAuthoringService authoringService) {
@@ -83,7 +83,7 @@ class GoogleSignInSpreadsheetValidationService
     required CanonicalExerciseDefinition exercise,
   }) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       canWrite: true,
       action: (service) {
         if (service case final ExerciseAuthoringService authoringService) {
@@ -108,7 +108,7 @@ class GoogleSignInSpreadsheetValidationService
     required ExercisePlacementTarget placement,
   }) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       canWrite: true,
       action: (service) {
         if (service case final ExerciseAuthoringService authoringService) {
@@ -132,7 +132,7 @@ class GoogleSignInSpreadsheetValidationService
     required ReorderIntent intent,
   }) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       canWrite: true,
       action: (service) {
         if (service case final ExerciseAuthoringService authoringService) {
@@ -155,7 +155,7 @@ class GoogleSignInSpreadsheetValidationService
     required ReorderIntent intent,
   }) async {
     return _withGoogleSheetsService(
-      scopes: GoogleApisSheetsWriteClient.writeScopes,
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       canWrite: true,
       action: (service) {
         if (service case final ExerciseAuthoringService authoringService) {

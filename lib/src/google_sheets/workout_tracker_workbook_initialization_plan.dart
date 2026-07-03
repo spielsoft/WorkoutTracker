@@ -1,5 +1,6 @@
 import 'package:googleapis/sheets/v4.dart' as sheets;
 
+import 'workbook_client.dart';
 import 'workout_tracker_workbook_template.dart';
 
 class WorkoutTrackerWorkbookTabRewritePlan {
@@ -7,7 +8,13 @@ class WorkoutTrackerWorkbookTabRewritePlan {
     required int sheetId,
     required WorkoutTrackerWorkbookTab tab,
     required int frozenRowCount,
-  }) : requests = List<sheets.Request>.unmodifiable([
+  }) : operations = List<SheetsWorkbookOperation>.unmodifiable(
+         _operationsForWorkbookInitialization(
+           SheetsSheetIdentity(sheetId: sheetId, title: tab.title),
+           tab.rows,
+         ),
+       ),
+       requests = List<sheets.Request>.unmodifiable([
          sheets.Request(
            unmergeCells: sheets.UnmergeCellsRequest(
              range: sheets.GridRange(sheetId: sheetId),
@@ -58,20 +65,10 @@ class WorkoutTrackerWorkbookTabRewritePlan {
              fields: 'userEnteredFormat.textFormat.bold',
            ),
          ),
-         sheets.Request(
-           updateCells: sheets.UpdateCellsRequest(
-             start: sheets.GridCoordinate(
-               sheetId: sheetId,
-               rowIndex: 0,
-               columnIndex: 0,
-             ),
-             rows: _rowDataForWorkbookInitialization(tab.rows),
-             fields: 'userEnteredValue',
-           ),
-         ),
        ]);
 
   final List<sheets.Request> requests;
+  final List<SheetsWorkbookOperation> operations;
 }
 
 int usableWorkbookRowCount(WorkoutTrackerWorkbookTab tab) {
@@ -79,28 +76,33 @@ int usableWorkbookRowCount(WorkoutTrackerWorkbookTab tab) {
   return tab.rows.length > minimumRows ? tab.rows.length : minimumRows;
 }
 
-List<sheets.RowData> _rowDataForWorkbookInitialization(
+List<SheetsWorkbookOperation> _operationsForWorkbookInitialization(
+  SheetsSheetIdentity sheet,
   List<List<String>> rows,
 ) {
   return [
-    for (final row in rows)
-      sheets.RowData(
-        values: [
-          for (final value in row)
-            sheets.CellData(
-              userEnteredValue: _extendedValueForWorkbookInitialization(value),
+    for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1)
+      for (
+        var columnIndex = 0;
+        columnIndex < rows[rowIndex].length;
+        columnIndex += 1
+      )
+        if (rows[rowIndex][columnIndex].isNotEmpty)
+          SheetsCellWrite(
+            sheet: sheet,
+            sheetRowNumber: rowIndex + 1,
+            sheetColumnNumber: columnIndex + 1,
+            value: rows[rowIndex][columnIndex],
+            mode: _valueInputModeForWorkbookInitialization(
+              rows[rowIndex][columnIndex],
             ),
-        ],
-      ),
+          ),
   ];
 }
 
-sheets.ExtendedValue? _extendedValueForWorkbookInitialization(String value) {
-  if (value.isEmpty) {
-    return null;
-  }
+SheetsValueInputMode _valueInputModeForWorkbookInitialization(String value) {
   if (value.startsWith('=')) {
-    return sheets.ExtendedValue(formulaValue: value);
+    return SheetsValueInputMode.userEntered;
   }
-  return sheets.ExtendedValue(stringValue: value);
+  return SheetsValueInputMode.literalText;
 }

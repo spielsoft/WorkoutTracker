@@ -13,7 +13,7 @@ slice is complete. Preserve unrelated worktree changes.
 ## Checklist
 
 - [x] Slice 1: Create A Generic Sheets Workbook Operation Port
-- [ ] Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization Through The Workbook Port
+- [x] Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization Through The Workbook Port
 - [ ] Slice 3: Centralize Scoped Google Client Lifecycle
 - [ ] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
 - [ ] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
@@ -81,17 +81,17 @@ should continue to behave the same after the migration.
 
 ### Acceptance criteria
 
-- [ ] Active-sheet and Exercises reads still parse through the existing public
+- [x] Active-sheet and Exercises reads still parse through the existing public
       sheet-contract input path.
-- [ ] Existing active-sheet write plans still apply history column insertions,
+- [x] Existing active-sheet write plans still apply history column insertions,
       row insertions, cell writes, and clears correctly.
-- [ ] Existing Exercises write plans still apply row appends, row updates, and
+- [x] Existing Exercises write plans still apply row appends, row updates, and
       active-sheet formula updates correctly.
-- [ ] Workbook initialization no longer owns broad duplicate raw Google Sheets
+- [x] Workbook initialization no longer owns broad duplicate raw Google Sheets
       request construction for operations covered by the workbook port.
-- [ ] Existing adapter and workbook initialization tests are preserved or
+- [x] Existing adapter and workbook initialization tests are preserved or
       rewritten around the deeper public interface.
-- [ ] Relevant targeted Flutter tests pass.
+- [x] Relevant targeted Flutter tests pass.
 
 ### Blocked by
 

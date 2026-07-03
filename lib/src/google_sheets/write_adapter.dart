@@ -1,10 +1,11 @@
-import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:workout_tracker/sheet_contract.dart';
+
+import 'workbook_client.dart';
 
 class GoogleSheetsWriteAdapter {
   GoogleSheetsWriteAdapter({required this.client});
 
-  final GoogleSheetsWriteClient client;
+  final SheetsWorkbookClient client;
 
   Future<void> applyActiveSheetWritePlan({
     required String spreadsheetId,
@@ -16,557 +17,200 @@ class GoogleSheetsWriteAdapter {
       return;
     }
 
-    final activeSheet = await client.fetchActiveSheetTarget(spreadsheetId);
-    final sortedRowInsertions = [...plan.rowInsertions]
-      ..sort(
-        (first, second) =>
-            second.sheetRowNumber.compareTo(first.sheetRowNumber),
-      );
-    final sortedInsertions = [...plan.columnInsertions]
-      ..sort(
-        (first, second) =>
-            second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
-      );
-
-    final cells = <GoogleSheetsCellWrite>[
+    final activeSheet = await _activeSheet(spreadsheetId);
+    final operations = <SheetsWorkbookOperation>[
+      for (final insertion in _sortedRowInsertions(plan.rowInsertions))
+        SheetsRowInsertion(
+          sheet: activeSheet,
+          sheetRowNumber: insertion.sheetRowNumber,
+          rowCount: insertion.rowCount,
+        ),
+      for (final insertion in _sortedColumnInsertions(plan.columnInsertions))
+        SheetsColumnInsertion(
+          sheet: activeSheet,
+          sheetColumnNumber: insertion.sheetColumnNumber,
+          columnCount: insertion.setLabels.length,
+        ),
       for (final insertion in plan.columnInsertions)
-        ..._headerWritesForInsertion(insertion),
+        ..._headerWritesForInsertion(activeSheet, insertion),
       for (final update in plan.cellUpdates)
         if (update.value.isNotEmpty)
-          GoogleSheetsCellWrite(
+          SheetsCellWrite(
+            sheet: activeSheet,
             sheetRowNumber: update.sheetRowNumber,
             sheetColumnNumber: update.sheetColumnNumber,
             value: update.value,
             mode: _modeForCellUpdate(update),
           ),
-    ];
-    final clears = <GoogleSheetsCellClear>[
       for (final update in plan.cellUpdates)
         if (update.value.isEmpty &&
             update.valueKind == CellUpdateValueKind.literalText)
-          GoogleSheetsCellClear(
+          SheetsCellClear(
+            sheet: activeSheet,
             sheetRowNumber: update.sheetRowNumber,
             sheetColumnNumber: update.sheetColumnNumber,
           ),
     ];
 
-    if (plan.rowInsertions.isNotEmpty || plan.columnInsertions.isNotEmpty) {
-      await client.applyActiveSheetStructuralBatch(
-        spreadsheetId: spreadsheetId,
-        sheetId: activeSheet.sheetId,
-        sheetTitle: activeSheet.title,
-        rowInsertions: sortedRowInsertions.map(
-          (insertion) => GoogleSheetsRowInsertion(
-            sheetRowNumber: insertion.sheetRowNumber,
-            rowCount: insertion.rowCount,
-          ),
-        ),
-        columnInsertions: sortedInsertions.map(
-          (insertion) => GoogleSheetsColumnInsertion(
-            sheetColumnNumber: insertion.sheetColumnNumber,
-            columnCount: insertion.setLabels.length,
-          ),
-        ),
-        cells: cells,
-        clears: clears,
-      );
-      return;
-    }
-
-    if (cells.isEmpty && clears.isEmpty) {
-      return;
-    }
-
-    final literalCells = cells
-        .where((cell) => cell.mode == GoogleSheetsValueInputMode.literalText)
-        .toList();
-    final userEnteredCells = cells
-        .where((cell) => cell.mode == GoogleSheetsValueInputMode.userEntered)
-        .toList();
-
-    if (literalCells.isNotEmpty) {
-      await client.writeCells(
-        spreadsheetId: spreadsheetId,
-        sheetTitle: activeSheet.title,
-        cells: literalCells,
-        mode: GoogleSheetsValueInputMode.literalText,
-      );
-    }
-    if (userEnteredCells.isNotEmpty) {
-      await client.writeCells(
-        spreadsheetId: spreadsheetId,
-        sheetTitle: activeSheet.title,
-        cells: userEnteredCells,
-        mode: GoogleSheetsValueInputMode.userEntered,
-      );
-    }
-    if (clears.isNotEmpty) {
-      await client.clearCells(
-        spreadsheetId: spreadsheetId,
-        sheetTitle: activeSheet.title,
-        cells: clears,
-      );
-    }
+    await client.applyOperations(
+      spreadsheetId: spreadsheetId,
+      operations: operations,
+    );
   }
 
   Future<void> applyExercisesWritePlan({
     required String spreadsheetId,
     required ExercisesWritePlan plan,
   }) async {
-    final sortedRowAppends = [...plan.rowAppends]
-      ..sort(
-        (first, second) =>
-            second.sheetRowNumber.compareTo(first.sheetRowNumber),
-      );
-    final cells = <GoogleSheetsCellWrite>[
-      for (final update in plan.rowUpdates)
-        for (var index = 0; index < update.values.length; index += 1)
-          GoogleSheetsCellWrite(
-            sheetRowNumber: update.sheetRowNumber,
-            sheetColumnNumber: index + 1,
-            value: update.values[index],
-            mode: GoogleSheetsValueInputMode.literalText,
-          ),
-      for (final append in plan.rowAppends)
-        for (var index = 0; index < append.values.length; index += 1)
-          GoogleSheetsCellWrite(
-            sheetRowNumber: append.sheetRowNumber,
-            sheetColumnNumber: index + 1,
-            value: append.values[index],
-            mode: GoogleSheetsValueInputMode.literalText,
-          ),
-    ];
-    if (plan.rowAppends.isNotEmpty) {
-      final exercisesSheet = await client.fetchSheetTarget(
-        spreadsheetId,
-        sheetTitle: 'Exercises',
-      );
-      await client.applyActiveSheetStructuralBatch(
-        spreadsheetId: spreadsheetId,
-        sheetId: exercisesSheet.sheetId,
-        sheetTitle: exercisesSheet.title,
-        rowInsertions: sortedRowAppends.map(
-          (append) => GoogleSheetsRowInsertion(
-            sheetRowNumber: append.sheetRowNumber,
-            rowCount: 1,
-          ),
+    if (plan.rowAppends.isEmpty &&
+        plan.rowUpdates.isEmpty &&
+        plan.activeSheetFormulaUpdates.isEmpty) {
+      return;
+    }
+
+    final metadata = await client.fetchMetadata(spreadsheetId);
+    final exercisesSheet = _requiredSheet(metadata, 'Exercises');
+    final operations = <SheetsWorkbookOperation>[
+      for (final append in _sortedRowAppends(plan.rowAppends))
+        SheetsRowInsertion(
+          sheet: exercisesSheet,
+          sheetRowNumber: append.sheetRowNumber,
+          rowCount: 1,
         ),
-        columnInsertions: const [],
-        cells: cells,
-        clears: const [],
-      );
-    } else {
-      await client.writeCells(
-        spreadsheetId: spreadsheetId,
-        sheetTitle: 'Exercises',
-        cells: cells,
-        mode: GoogleSheetsValueInputMode.literalText,
-      );
-    }
+      ..._exerciseRowUpdateWrites(exercisesSheet, plan.rowUpdates),
+      ..._exerciseRowAppendWrites(exercisesSheet, plan.rowAppends),
+    ];
+
     if (plan.activeSheetFormulaUpdates.isNotEmpty) {
-      final activeSheet = await client.fetchActiveSheetTarget(spreadsheetId);
-      await client.writeCells(
-        spreadsheetId: spreadsheetId,
-        sheetTitle: activeSheet.title,
-        cells: [
-          for (final update in plan.activeSheetFormulaUpdates)
-            GoogleSheetsCellWrite(
-              sheetRowNumber: update.sheetRowNumber,
-              sheetColumnNumber: update.sheetColumnNumber,
-              value: update.value,
-              mode: GoogleSheetsValueInputMode.userEntered,
-            ),
-        ],
-        mode: GoogleSheetsValueInputMode.userEntered,
-      );
+      final activeSheet = _requiredActiveSheet(metadata);
+      operations.addAll([
+        for (final update in plan.activeSheetFormulaUpdates)
+          SheetsCellWrite(
+            sheet: activeSheet,
+            sheetRowNumber: update.sheetRowNumber,
+            sheetColumnNumber: update.sheetColumnNumber,
+            value: update.value,
+            mode: SheetsValueInputMode.userEntered,
+          ),
+      ]);
     }
+
+    await client.applyOperations(
+      spreadsheetId: spreadsheetId,
+      operations: operations,
+    );
   }
 
-  Iterable<GoogleSheetsCellWrite> _headerWritesForInsertion(
+  Future<SheetsSheetIdentity> _activeSheet(String spreadsheetId) async {
+    final metadata = await client.fetchMetadata(spreadsheetId);
+    return _requiredActiveSheet(metadata);
+  }
+
+  Iterable<SheetsCellWrite> _headerWritesForInsertion(
+    SheetsSheetIdentity sheet,
     HistoryColumnInsertion insertion,
   ) sync* {
     for (var offset = 0; offset < insertion.headers.length; offset += 1) {
-      yield GoogleSheetsCellWrite(
+      yield SheetsCellWrite(
+        sheet: sheet,
         sheetRowNumber: 1,
         sheetColumnNumber: insertion.sheetColumnNumber + offset,
         value: insertion.headers[offset],
-        mode: GoogleSheetsValueInputMode.literalText,
+        mode: SheetsValueInputMode.literalText,
       );
     }
     for (var offset = 0; offset < insertion.setLabels.length; offset += 1) {
-      yield GoogleSheetsCellWrite(
+      yield SheetsCellWrite(
+        sheet: sheet,
         sheetRowNumber: 2,
         sheetColumnNumber: insertion.sheetColumnNumber + offset,
         value: insertion.setLabels[offset],
-        mode: GoogleSheetsValueInputMode.literalText,
+        mode: SheetsValueInputMode.literalText,
       );
     }
   }
 
-  GoogleSheetsValueInputMode _modeForCellUpdate(CellUpdate update) {
+  Iterable<SheetsCellWrite> _exerciseRowUpdateWrites(
+    SheetsSheetIdentity sheet,
+    Iterable<ExercisesRowUpdate> rows,
+  ) sync* {
+    for (final row in rows) {
+      for (var index = 0; index < row.values.length; index += 1) {
+        yield SheetsCellWrite(
+          sheet: sheet,
+          sheetRowNumber: row.sheetRowNumber,
+          sheetColumnNumber: index + 1,
+          value: row.values[index],
+          mode: SheetsValueInputMode.literalText,
+        );
+      }
+    }
+  }
+
+  Iterable<SheetsCellWrite> _exerciseRowAppendWrites(
+    SheetsSheetIdentity sheet,
+    Iterable<ExercisesRowAppend> rows,
+  ) sync* {
+    for (final row in rows) {
+      for (var index = 0; index < row.values.length; index += 1) {
+        yield SheetsCellWrite(
+          sheet: sheet,
+          sheetRowNumber: row.sheetRowNumber,
+          sheetColumnNumber: index + 1,
+          value: row.values[index],
+          mode: SheetsValueInputMode.literalText,
+        );
+      }
+    }
+  }
+
+  SheetsValueInputMode _modeForCellUpdate(CellUpdate update) {
     return switch (update.valueKind) {
-      CellUpdateValueKind.literalText => GoogleSheetsValueInputMode.literalText,
-      CellUpdateValueKind.formula => GoogleSheetsValueInputMode.userEntered,
+      CellUpdateValueKind.literalText => SheetsValueInputMode.literalText,
+      CellUpdateValueKind.formula => SheetsValueInputMode.userEntered,
     };
   }
 }
 
-abstract interface class GoogleSheetsWriteClient {
-  Future<GoogleSheetsActiveSheetTarget> fetchActiveSheetTarget(
-    String spreadsheetId,
-  );
-
-  Future<GoogleSheetsActiveSheetTarget> fetchSheetTarget(
-    String spreadsheetId, {
-    required String sheetTitle,
-  });
-
-  Future<void> applyActiveSheetStructuralBatch({
-    required String spreadsheetId,
-    required int sheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsRowInsertion> rowInsertions,
-    required Iterable<GoogleSheetsColumnInsertion> columnInsertions,
-    required Iterable<GoogleSheetsCellWrite> cells,
-    required Iterable<GoogleSheetsCellClear> clears,
-  });
-
-  Future<void> writeCells({
-    required String spreadsheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsCellWrite> cells,
-    required GoogleSheetsValueInputMode mode,
-  });
-
-  Future<void> clearCells({
-    required String spreadsheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsCellClear> cells,
-  });
-}
-
-class GoogleSheetsActiveSheetTarget {
-  const GoogleSheetsActiveSheetTarget({
-    required this.sheetId,
-    required this.title,
-  });
-
-  final int sheetId;
-  final String title;
-}
-
-class GoogleSheetsCellWrite {
-  const GoogleSheetsCellWrite({
-    required this.sheetRowNumber,
-    required this.sheetColumnNumber,
-    required this.value,
-    required this.mode,
-  });
-
-  final int sheetRowNumber;
-  final int sheetColumnNumber;
-  final String value;
-  final GoogleSheetsValueInputMode mode;
-}
-
-class GoogleSheetsCellClear {
-  const GoogleSheetsCellClear({
-    required this.sheetRowNumber,
-    required this.sheetColumnNumber,
-  });
-
-  final int sheetRowNumber;
-  final int sheetColumnNumber;
-}
-
-enum GoogleSheetsValueInputMode { literalText, userEntered }
-
-class GoogleSheetsRowInsertion {
-  const GoogleSheetsRowInsertion({
-    required this.sheetRowNumber,
-    required this.rowCount,
-  });
-
-  final int sheetRowNumber;
-  final int rowCount;
-}
-
-class GoogleSheetsColumnInsertion {
-  const GoogleSheetsColumnInsertion({
-    required this.sheetColumnNumber,
-    required this.columnCount,
-  });
-
-  final int sheetColumnNumber;
-  final int columnCount;
-}
-
-class GoogleApisSheetsWriteClient implements GoogleSheetsWriteClient {
-  GoogleApisSheetsWriteClient(this._api);
-
-  final sheets.SheetsApi _api;
-
-  static const writeScopes = [sheets.SheetsApi.spreadsheetsScope];
-
-  @override
-  Future<GoogleSheetsActiveSheetTarget> fetchActiveSheetTarget(
-    String spreadsheetId,
-  ) async {
-    final sheetTargets = await _fetchSheetTargets(spreadsheetId);
-    if (sheetTargets.isEmpty) {
-      throw StateError('Spreadsheet has no sheets.');
-    }
-    return sheetTargets.first;
-  }
-
-  @override
-  Future<GoogleSheetsActiveSheetTarget> fetchSheetTarget(
-    String spreadsheetId, {
-    required String sheetTitle,
-  }) async {
-    for (final target in await _fetchSheetTargets(spreadsheetId)) {
-      if (target.title == sheetTitle) {
-        return target;
-      }
-    }
-    throw StateError('$sheetTitle sheet is missing a sheet ID.');
-  }
-
-  Future<List<GoogleSheetsActiveSheetTarget>> _fetchSheetTargets(
-    String spreadsheetId,
-  ) async {
-    final spreadsheet = await _api.spreadsheets.get(
-      spreadsheetId,
-      $fields: 'sheets(properties(sheetId,index,title,sheetType))',
-    );
-    final apiSheets = [...?spreadsheet.sheets]
-      ..sort((left, right) {
-        return (left.properties?.index ?? 0).compareTo(
-          right.properties?.index ?? 0,
-        );
-      });
-    return [
-      for (final sheet in apiSheets)
-        if (sheet.properties?.sheetId != null)
-          GoogleSheetsActiveSheetTarget(
-            sheetId: sheet.properties!.sheetId!,
-            title: sheet.properties?.title ?? '',
-          ),
-    ];
-  }
-
-  @override
-  Future<void> applyActiveSheetStructuralBatch({
-    required String spreadsheetId,
-    required int sheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsRowInsertion> rowInsertions,
-    required Iterable<GoogleSheetsColumnInsertion> columnInsertions,
-    required Iterable<GoogleSheetsCellWrite> cells,
-    required Iterable<GoogleSheetsCellClear> clears,
-  }) async {
-    final requests = <sheets.Request>[
-      for (final insertion in rowInsertions)
-        if (insertion.rowCount > 0)
-          _insertDimensionRequest(
-            sheetId: sheetId,
-            dimension: 'ROWS',
-            sheetStartNumber: insertion.sheetRowNumber,
-            count: insertion.rowCount,
-            inheritFromBefore: insertion.sheetRowNumber > 1,
-          ),
-      for (final insertion in columnInsertions)
-        if (insertion.columnCount > 0)
-          _insertDimensionRequest(
-            sheetId: sheetId,
-            dimension: 'COLUMNS',
-            sheetStartNumber: insertion.sheetColumnNumber,
-            count: insertion.columnCount,
-            inheritFromBefore: true,
-          ),
-      for (final cell in cells)
-        _updateCellRequest(sheetId: sheetId, cell: cell),
-      for (final cell in clears)
-        _clearCellRequest(sheetId: sheetId, cell: cell),
-    ];
-    if (requests.isEmpty) {
-      return;
-    }
-
-    await _api.spreadsheets.batchUpdate(
-      sheets.BatchUpdateSpreadsheetRequest(requests: requests),
-      spreadsheetId,
-      $fields: 'spreadsheetId',
-    );
-  }
-
-  @override
-  Future<void> writeCells({
-    required String spreadsheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsCellWrite> cells,
-    required GoogleSheetsValueInputMode mode,
-  }) async {
-    final valueRanges = [
-      for (final cell in cells)
-        sheets.ValueRange(
-          range:
-              '${_quotedSheetTitle(sheetTitle)}!'
-              '${_cellReference(cell.sheetRowNumber, cell.sheetColumnNumber)}',
-          values: [
-            [cell.value],
-          ],
-        ),
-    ];
-    if (valueRanges.isEmpty) {
-      return;
-    }
-
-    await _api.spreadsheets.values.batchUpdate(
-      sheets.BatchUpdateValuesRequest(
-        data: valueRanges,
-        valueInputOption: _valueInputOption(mode),
-      ),
-      spreadsheetId,
-      $fields: 'spreadsheetId,totalUpdatedCells',
-    );
-  }
-
-  @override
-  Future<void> clearCells({
-    required String spreadsheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsCellClear> cells,
-  }) async {
-    final ranges = [
-      for (final cell in cells)
-        '${_quotedSheetTitle(sheetTitle)}!'
-            '${_cellReference(cell.sheetRowNumber, cell.sheetColumnNumber)}',
-    ];
-    if (ranges.isEmpty) {
-      return;
-    }
-
-    await _api.spreadsheets.values.batchClear(
-      sheets.BatchClearValuesRequest(ranges: ranges),
-      spreadsheetId,
-      $fields: 'spreadsheetId,clearedRanges',
-    );
-  }
-}
-
-sheets.Request _insertDimensionRequest({
-  required int sheetId,
-  required String dimension,
-  required int sheetStartNumber,
-  required int count,
-  required bool inheritFromBefore,
-}) {
-  final startIndex = sheetStartNumber - 1;
-  return sheets.Request(
-    insertDimension: sheets.InsertDimensionRequest(
-      inheritFromBefore: inheritFromBefore,
-      range: sheets.DimensionRange(
-        sheetId: sheetId,
-        dimension: dimension,
-        startIndex: startIndex,
-        endIndex: startIndex + count,
-      ),
-    ),
+List<ActiveSheetRowInsertion> _sortedRowInsertions(
+  List<ActiveSheetRowInsertion> rowInsertions,
+) {
+  return [...rowInsertions]..sort(
+    (first, second) => second.sheetRowNumber.compareTo(first.sheetRowNumber),
   );
 }
 
-sheets.Request _updateCellRequest({
-  required int sheetId,
-  required GoogleSheetsCellWrite cell,
-}) {
-  return sheets.Request(
-    updateCells: sheets.UpdateCellsRequest(
-      fields: 'userEnteredValue',
-      range: _singleCellRange(
-        sheetId: sheetId,
-        sheetRowNumber: cell.sheetRowNumber,
-        sheetColumnNumber: cell.sheetColumnNumber,
-      ),
-      rows: [
-        sheets.RowData(
-          values: [
-            sheets.CellData(userEnteredValue: _extendedValueForCell(cell)),
-          ],
-        ),
-      ],
-    ),
+List<HistoryColumnInsertion> _sortedColumnInsertions(
+  List<HistoryColumnInsertion> columnInsertions,
+) {
+  return [...columnInsertions]..sort(
+    (first, second) =>
+        second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
   );
 }
 
-sheets.ExtendedValue _extendedValueForCell(GoogleSheetsCellWrite cell) {
-  return switch (cell.mode) {
-    GoogleSheetsValueInputMode.literalText => sheets.ExtendedValue(
-      stringValue: cell.value,
-    ),
-    GoogleSheetsValueInputMode.userEntered => sheets.ExtendedValue(
-      formulaValue: cell.value,
-    ),
-  };
-}
-
-sheets.Request _clearCellRequest({
-  required int sheetId,
-  required GoogleSheetsCellClear cell,
-}) {
-  return sheets.Request(
-    updateCells: sheets.UpdateCellsRequest(
-      fields: 'userEnteredValue',
-      range: _singleCellRange(
-        sheetId: sheetId,
-        sheetRowNumber: cell.sheetRowNumber,
-        sheetColumnNumber: cell.sheetColumnNumber,
-      ),
-      rows: [
-        sheets.RowData(values: [sheets.CellData()]),
-      ],
-    ),
+List<ExercisesRowAppend> _sortedRowAppends(
+  List<ExercisesRowAppend> rowAppends,
+) {
+  return [...rowAppends]..sort(
+    (first, second) => second.sheetRowNumber.compareTo(first.sheetRowNumber),
   );
 }
 
-sheets.GridRange _singleCellRange({
-  required int sheetId,
-  required int sheetRowNumber,
-  required int sheetColumnNumber,
-}) {
-  final rowIndex = sheetRowNumber - 1;
-  final columnIndex = sheetColumnNumber - 1;
-  return sheets.GridRange(
-    sheetId: sheetId,
-    startRowIndex: rowIndex,
-    endRowIndex: rowIndex + 1,
-    startColumnIndex: columnIndex,
-    endColumnIndex: columnIndex + 1,
-  );
-}
-
-String _valueInputOption(GoogleSheetsValueInputMode mode) {
-  return switch (mode) {
-    GoogleSheetsValueInputMode.literalText => 'RAW',
-    GoogleSheetsValueInputMode.userEntered => 'USER_ENTERED',
-  };
-}
-
-String _cellReference(int sheetRowNumber, int sheetColumnNumber) {
-  return '${_columnLetter(sheetColumnNumber)}$sheetRowNumber';
-}
-
-String _columnLetter(int oneBasedColumnNumber) {
-  var columnNumber = oneBasedColumnNumber;
-  var letters = '';
-  while (columnNumber > 0) {
-    final remainder = (columnNumber - 1) % 26;
-    letters = String.fromCharCode(65 + remainder) + letters;
-    columnNumber = (columnNumber - 1) ~/ 26;
+SheetsSheetIdentity _requiredActiveSheet(SheetsWorkbookMetadata metadata) {
+  if (metadata.sheets.isEmpty) {
+    throw StateError('Spreadsheet has no sheets.');
   }
-  return letters;
+  return metadata.sheets.first;
 }
 
-String _quotedSheetTitle(String title) {
-  return "'${title.replaceAll("'", "''")}'";
+SheetsSheetIdentity _requiredSheet(
+  SheetsWorkbookMetadata metadata,
+  String title,
+) {
+  final sheet = metadata.sheetByTitle(title);
+  if (sheet == null) {
+    throw StateError('$title sheet is missing a sheet ID.');
+  }
+  return sheet;
 }

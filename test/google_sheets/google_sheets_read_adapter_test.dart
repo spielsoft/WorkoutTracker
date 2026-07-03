@@ -6,11 +6,20 @@ void main() {
   test(
     'requests grid data only for the active sheet and Exercises tab',
     () async {
-      final client = _FakeGoogleSheetsSpreadsheetClient(
-        GoogleSpreadsheetSnapshot(
+      final client = _FakeSheetsWorkbookClient(
+        SheetsWorkbookSnapshot(
           sheets: [
-            GoogleSheetSnapshot(title: 'Active Workout', rows: const []),
-            GoogleSheetSnapshot(title: 'Exercises', rows: const []),
+            SheetsGridSnapshot(
+              sheet: const SheetsSheetIdentity(
+                sheetId: 42,
+                title: 'Active Workout',
+              ),
+              rows: const [],
+            ),
+            SheetsGridSnapshot(
+              sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
+              rows: const [],
+            ),
           ],
         ),
       );
@@ -22,7 +31,10 @@ void main() {
       expect(client.gridRequests, [
         const _GridRequest(
           spreadsheetId: 'spreadsheet-id',
-          ranges: ["'Active Workout'", "'Exercises'"],
+          reads: [
+            _GridRead(sheetTitle: 'Active Workout'),
+            _GridRead(sheetTitle: 'Exercises'),
+          ],
         ),
       ]);
     },
@@ -32,11 +44,14 @@ void main() {
     'reads the first tab and Exercises tab into the sheet-contract parser',
     () async {
       final adapter = GoogleSheetsReadAdapter(
-        client: _FakeGoogleSheetsSpreadsheetClient(
-          GoogleSpreadsheetSnapshot(
+        client: _FakeSheetsWorkbookClient(
+          SheetsWorkbookSnapshot(
             sheets: [
-              GoogleSheetSnapshot(
-                title: 'Active Workout',
+              SheetsGridSnapshot(
+                sheet: const SheetsSheetIdentity(
+                  sheetId: 42,
+                  title: 'Active Workout',
+                ),
                 rows: const [
                   [
                     'Exercise',
@@ -67,50 +82,53 @@ void main() {
                   ],
                 ],
                 cellFormulas: const [
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 1,
                     formula: '=Exercises!A2',
                   ),
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 2,
                     formula: '=Exercises!C2',
                   ),
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 3,
                     formula: '=Exercises!D2',
                   ),
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 4,
                     formula: '=Exercises!E2',
                   ),
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 5,
                     formula: '=Exercises!F2',
                   ),
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 6,
                     formula: '=Exercises!G2',
                   ),
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 7,
                     formula: '=Exercises!H2',
                   ),
-                  GoogleSheetCellFormula(
+                  SheetsCellFormula(
                     sheetRowNumber: 3,
                     sheetColumnNumber: 8,
                     formula: '=Exercises!I2',
                   ),
                 ],
               ),
-              GoogleSheetSnapshot(
-                title: 'Exercises',
+              SheetsGridSnapshot(
+                sheet: const SheetsSheetIdentity(
+                  sheetId: 84,
+                  title: 'Exercises',
+                ),
                 rows: const [
                   [
                     'Exercise',
@@ -136,8 +154,11 @@ void main() {
                   ],
                 ],
               ),
-              GoogleSheetSnapshot(
-                title: 'Archive',
+              SheetsGridSnapshot(
+                sheet: const SheetsSheetIdentity(
+                  sheetId: 126,
+                  title: 'Archive',
+                ),
                 rows: const [
                   ['Exercise'],
                   ['This tab must not be treated as active.'],
@@ -169,59 +190,87 @@ void main() {
   );
 }
 
-class _FakeGoogleSheetsSpreadsheetClient
-    implements GoogleSheetsSpreadsheetClient {
-  _FakeGoogleSheetsSpreadsheetClient(this.snapshot);
+class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {
+  _FakeSheetsWorkbookClient(this.snapshot);
 
-  final GoogleSpreadsheetSnapshot snapshot;
+  final SheetsWorkbookSnapshot snapshot;
   final List<String> metadataSpreadsheetIds = [];
   final List<_GridRequest> gridRequests = [];
 
   @override
-  Future<GoogleSpreadsheetMetadata> fetchSpreadsheetMetadata(
-    String spreadsheetId,
-  ) async {
+  Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
     metadataSpreadsheetIds.add(spreadsheetId);
-    return GoogleSpreadsheetMetadata(
-      sheets: snapshot.sheets.map(
-        (sheet) => GoogleSheetMetadata(title: sheet.title),
-      ),
+    return SheetsWorkbookMetadata(
+      sheets: snapshot.sheets.map((sheet) => sheet.sheet),
     );
   }
 
   @override
-  Future<GoogleSpreadsheetSnapshot> fetchSpreadsheetGridData(
-    String spreadsheetId, {
-    required Iterable<String> ranges,
+  Future<SheetsWorkbookSnapshot> readGrids({
+    required String spreadsheetId,
+    required Iterable<SheetsGridRead> reads,
   }) {
     expect(spreadsheetId, 'spreadsheet-id');
     gridRequests.add(
-      _GridRequest(spreadsheetId: spreadsheetId, ranges: ranges.toList()),
+      _GridRequest(
+        spreadsheetId: spreadsheetId,
+        reads: [
+          for (final read in reads) _GridRead(sheetTitle: read.sheet.title),
+        ],
+      ),
     );
     return Future.value(snapshot);
+  }
+
+  @override
+  Future<void> applyOperations({
+    required String spreadsheetId,
+    required Iterable<SheetsWorkbookOperation> operations,
+  }) {
+    throw UnimplementedError();
   }
 }
 
 class _GridRequest {
-  const _GridRequest({required this.spreadsheetId, required this.ranges});
+  const _GridRequest({required this.spreadsheetId, required this.reads});
 
   final String spreadsheetId;
-  final List<String> ranges;
+  final List<_GridRead> reads;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is _GridRequest &&
             spreadsheetId == other.spreadsheetId &&
-            _listEquals(ranges, other.ranges);
+            _listEquals(reads, other.reads);
   }
 
   @override
-  int get hashCode => Object.hash(spreadsheetId, Object.hashAll(ranges));
+  int get hashCode => Object.hash(spreadsheetId, Object.hashAll(reads));
 
   @override
   String toString() {
-    return '_GridRequest(spreadsheetId: $spreadsheetId, ranges: $ranges)';
+    return '_GridRequest(spreadsheetId: $spreadsheetId, reads: $reads)';
+  }
+}
+
+class _GridRead {
+  const _GridRead({required this.sheetTitle});
+
+  final String sheetTitle;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is _GridRead && sheetTitle == other.sheetTitle;
+  }
+
+  @override
+  int get hashCode => sheetTitle.hashCode;
+
+  @override
+  String toString() {
+    return '_GridRead(sheetTitle: $sheetTitle)';
   }
 }
 

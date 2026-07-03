@@ -555,12 +555,12 @@ void main() {
           activeRows,
           exercisesRows,
           activeFormulas: const [
-            GoogleSheetCellFormula(
+            SheetsCellFormula(
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               formula: '=Exercises!A2',
             ),
-            GoogleSheetCellFormula(
+            SheetsCellFormula(
               sheetRowNumber: 4,
               sheetColumnNumber: 1,
               formula: '=Exercises!A3',
@@ -571,12 +571,12 @@ void main() {
           activeRows,
           exercisesRows,
           activeFormulas: const [
-            GoogleSheetCellFormula(
+            SheetsCellFormula(
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               formula: '=Exercises!A2',
             ),
-            GoogleSheetCellFormula(
+            SheetsCellFormula(
               sheetRowNumber: 4,
               sheetColumnNumber: 1,
               formula: '=Exercises!A3',
@@ -939,120 +939,109 @@ ParsedActiveSheet _minimalParsedActiveSheet() {
   );
 }
 
-GoogleSpreadsheetSnapshot _snapshot(List<List<String>> rows) {
-  return GoogleSpreadsheetSnapshot(
-    sheets: [GoogleSheetSnapshot(title: 'Active Workout', rows: rows)],
-  );
-}
-
-GoogleSpreadsheetSnapshot _workbookSnapshot(
-  List<List<String>> activeRows,
-  List<List<String>> exercisesRows, {
-  Iterable<GoogleSheetCellFormula> activeFormulas = const [],
-}) {
-  return GoogleSpreadsheetSnapshot(
+SheetsWorkbookSnapshot _snapshot(List<List<String>> rows) {
+  return SheetsWorkbookSnapshot(
     sheets: [
-      GoogleSheetSnapshot(
-        title: 'Active Workout',
-        rows: activeRows,
-        cellFormulas: activeFormulas,
+      SheetsGridSnapshot(
+        sheet: const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
+        rows: rows,
       ),
-      GoogleSheetSnapshot(title: 'Exercises', rows: exercisesRows),
     ],
   );
 }
 
-class _SequencedSpreadsheetClient implements GoogleSheetsSpreadsheetClient {
+SheetsWorkbookSnapshot _workbookSnapshot(
+  List<List<String>> activeRows,
+  List<List<String>> exercisesRows, {
+  Iterable<SheetsCellFormula> activeFormulas = const [],
+}) {
+  return SheetsWorkbookSnapshot(
+    sheets: [
+      SheetsGridSnapshot(
+        sheet: const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
+        rows: activeRows,
+        cellFormulas: activeFormulas,
+      ),
+      SheetsGridSnapshot(
+        sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
+        rows: exercisesRows,
+      ),
+    ],
+  );
+}
+
+class _SequencedSpreadsheetClient implements SheetsWorkbookClient {
   _SequencedSpreadsheetClient(this.snapshots);
 
-  final List<GoogleSpreadsheetSnapshot> snapshots;
+  final List<SheetsWorkbookSnapshot> snapshots;
   var _nextSnapshot = 0;
 
   @override
-  Future<GoogleSpreadsheetMetadata> fetchSpreadsheetMetadata(
-    String spreadsheetId,
-  ) async {
+  Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
     final snapshot = _nextSnapshot < snapshots.length
         ? snapshots[_nextSnapshot]
         : snapshots.last;
-    return GoogleSpreadsheetMetadata(
-      sheets: snapshot.sheets.map(
-        (sheet) => GoogleSheetMetadata(title: sheet.title),
-      ),
-    );
+    return SheetsWorkbookMetadata(sheets: snapshot.sheets.map((s) => s.sheet));
   }
 
   @override
-  Future<GoogleSpreadsheetSnapshot> fetchSpreadsheetGridData(
-    String spreadsheetId, {
-    required Iterable<String> ranges,
+  Future<SheetsWorkbookSnapshot> readGrids({
+    required String spreadsheetId,
+    required Iterable<SheetsGridRead> reads,
   }) async {
     if (_nextSnapshot >= snapshots.length) {
       return snapshots.last;
     }
     return snapshots[_nextSnapshot++];
   }
+
+  @override
+  Future<void> applyOperations({
+    required String spreadsheetId,
+    required Iterable<SheetsWorkbookOperation> operations,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
-class _RecordingWriteClient implements GoogleSheetsWriteClient {
+class _RecordingWriteClient implements SheetsWorkbookClient {
   var writeCount = 0;
 
   @override
-  Future<GoogleSheetsActiveSheetTarget> fetchActiveSheetTarget(
-    String spreadsheetId,
-  ) async {
-    return const GoogleSheetsActiveSheetTarget(
-      sheetId: 42,
-      title: 'Active Workout',
+  Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
+    return SheetsWorkbookMetadata(
+      sheets: const [
+        SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
+        SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
+      ],
     );
   }
 
   @override
-  Future<GoogleSheetsActiveSheetTarget> fetchSheetTarget(
-    String spreadsheetId, {
-    required String sheetTitle,
-  }) async {
-    return GoogleSheetsActiveSheetTarget(sheetId: 84, title: sheetTitle);
+  Future<SheetsWorkbookSnapshot> readGrids({
+    required String spreadsheetId,
+    required Iterable<SheetsGridRead> reads,
+  }) {
+    throw UnimplementedError();
   }
 
   @override
-  Future<void> applyActiveSheetStructuralBatch({
+  Future<void> applyOperations({
     required String spreadsheetId,
-    required int sheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsRowInsertion> rowInsertions,
-    required Iterable<GoogleSheetsColumnInsertion> columnInsertions,
-    required Iterable<GoogleSheetsCellWrite> cells,
-    required Iterable<GoogleSheetsCellClear> clears,
+    required Iterable<SheetsWorkbookOperation> operations,
   }) async {
-    writeCount += rowInsertions.fold<int>(
-      0,
-      (sum, insertion) => sum + insertion.rowCount,
-    );
-    writeCount += columnInsertions.fold<int>(
-      0,
-      (sum, insertion) => sum + insertion.columnCount,
-    );
-    writeCount += cells.length + clears.length;
-  }
-
-  @override
-  Future<void> writeCells({
-    required String spreadsheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsCellWrite> cells,
-    required GoogleSheetsValueInputMode mode,
-  }) async {
-    writeCount += cells.length;
-  }
-
-  @override
-  Future<void> clearCells({
-    required String spreadsheetId,
-    required String sheetTitle,
-    required Iterable<GoogleSheetsCellClear> cells,
-  }) async {
-    writeCount += cells.length;
+    for (final operation in operations) {
+      writeCount += switch (operation) {
+        SheetsRowInsertion(:final rowCount) => rowCount,
+        SheetsColumnInsertion(:final columnCount) => columnCount,
+        SheetsCellWrite() => 1,
+        SheetsCellClear() => 1,
+        SheetsRowDeletion(:final rowCount) => rowCount,
+        SheetsColumnDeletion(:final columnCount) => columnCount,
+        SheetsRowMove(:final rowCount) => rowCount,
+        SheetsColumnMove(:final columnCount) => columnCount,
+      };
+    }
   }
 }
 

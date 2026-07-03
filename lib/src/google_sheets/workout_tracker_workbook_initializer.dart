@@ -1,5 +1,6 @@
 import 'package:googleapis/sheets/v4.dart' as sheets;
 
+import 'workbook_client.dart';
 import 'workout_tracker_workbook_initialization_plan.dart';
 import 'workout_tracker_workbook_template.dart';
 
@@ -12,9 +13,13 @@ abstract interface class WorkoutTrackerWorkbookInitializer {
 
 class GoogleApisWorkoutTrackerWorkbookInitializer
     implements WorkoutTrackerWorkbookInitializer {
-  GoogleApisWorkoutTrackerWorkbookInitializer(this._api);
+  GoogleApisWorkoutTrackerWorkbookInitializer(
+    this._api, {
+    SheetsWorkbookClient? workbookClient,
+  }) : _workbookClient = workbookClient ?? GoogleApisSheetsWorkbookClient(_api);
 
   final sheets.SheetsApi _api;
+  final SheetsWorkbookClient _workbookClient;
 
   static const writeScopes = [sheets.SheetsApi.spreadsheetsScope];
 
@@ -64,7 +69,6 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
       );
       activeSheet = _SheetShape(
         sheetId: activeSheet.sheetId,
-        index: activeSheet.index,
         title: workbook.activeSheet.title,
       );
     }
@@ -131,29 +135,18 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
       spreadsheetId,
       $fields: 'spreadsheetId',
     );
+    await _workbookClient.applyOperations(
+      spreadsheetId: spreadsheetId,
+      operations: plan.operations,
+    );
   }
 
   Future<_SpreadsheetShape> _fetchSpreadsheetShape(String spreadsheetId) async {
-    final spreadsheet = await _api.spreadsheets.get(
-      spreadsheetId,
-      $fields: 'sheets(properties(sheetId,index,title,sheetType))',
-    );
-    final apiSheets = [...?spreadsheet.sheets]
-      ..sort((left, right) {
-        return (left.properties?.index ?? 0).compareTo(
-          right.properties?.index ?? 0,
-        );
-      });
-
+    final metadata = await _workbookClient.fetchMetadata(spreadsheetId);
     return _SpreadsheetShape(
       sheets: [
-        for (final sheet in apiSheets)
-          if (sheet.properties?.sheetId != null)
-            _SheetShape(
-              sheetId: sheet.properties!.sheetId!,
-              index: sheet.properties?.index ?? 0,
-              title: sheet.properties?.title ?? '',
-            ),
+        for (final sheet in metadata.sheets)
+          _SheetShape(sheetId: sheet.sheetId, title: sheet.title),
       ],
     );
   }
@@ -190,14 +183,9 @@ class _SpreadsheetShape {
 }
 
 class _SheetShape {
-  const _SheetShape({
-    required this.sheetId,
-    required this.index,
-    required this.title,
-  });
+  const _SheetShape({required this.sheetId, required this.title});
 
   final int sheetId;
-  final int index;
   final String title;
 }
 

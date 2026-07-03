@@ -14,12 +14,11 @@ SpreadsheetValidationService defaultGoogleSpreadsheetValidationServiceFactory(
   sheets.SheetsApi api, {
   required bool canWrite,
 }) {
+  final workbookClient = GoogleApisSheetsWorkbookClient(api);
   return GoogleSpreadsheetValidationService(
-    readAdapter: GoogleSheetsReadAdapter(
-      client: GoogleApisSheetsSpreadsheetClient(api),
-    ),
+    readAdapter: GoogleSheetsReadAdapter(client: workbookClient),
     writeAdapter: canWrite
-        ? GoogleSheetsWriteAdapter(client: GoogleApisSheetsWriteClient(api))
+        ? GoogleSheetsWriteAdapter(client: workbookClient)
         : null,
   );
 }
