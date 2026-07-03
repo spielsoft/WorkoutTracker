@@ -4512,6 +4512,15 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
   }) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int primarySheetRowNumber,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 class _EditingExerciseAuthoringService

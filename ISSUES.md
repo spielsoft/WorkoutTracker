@@ -16,7 +16,7 @@ slice is complete. Preserve unrelated worktree changes.
 - [x] Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization Through The Workbook Port
 - [x] Slice 3: Centralize Scoped Google Client Lifecycle
 - [x] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
-- [ ] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
+- [x] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
 - [ ] Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
 - [ ] Slice 7: Clean Up Refactor And Feature Tests
 
@@ -204,20 +204,20 @@ exercise placement and associated backups.
 
 ### Acceptance criteria
 
-- [ ] The app service/controller exposes a public delete-workout-exercise
+- [x] The app service/controller exposes a public delete-workout-exercise
       operation using a primary workout slot or sheet row selected from the
       current parsed report.
-- [ ] The operation rereads the sheet before applying delete.
-- [ ] The operation returns write rejections instead of deleting when
+- [x] The operation rereads the sheet before applying delete.
+- [x] The operation returns write rejections instead of deleting when
       expectations fail.
-- [ ] A successful delete applies structural row delete operations through the
+- [x] A successful delete applies structural row delete operations through the
       generic Sheets workbook port.
-- [ ] A successful delete returns a refreshed report without the primary or
+- [x] A successful delete returns a refreshed report without the primary or
       attached backups.
-- [ ] The selected workout and history block remain usable after refresh when
+- [x] The selected workout and history block remain usable after refresh when
       they still exist.
-- [ ] Targeted service/controller tests cover success and stale rejection.
-- [ ] Relevant targeted Flutter tests pass.
+- [x] Targeted service/controller tests cover success and stale rejection.
+- [x] Relevant targeted Flutter tests pass.
 
 ### Blocked by
 

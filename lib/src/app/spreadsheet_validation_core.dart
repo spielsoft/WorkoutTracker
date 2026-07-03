@@ -56,6 +56,12 @@ abstract interface class ExerciseAuthoringService {
     required String workout,
     required ReorderIntent intent,
   });
+
+  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int primarySheetRowNumber,
+  });
 }
 
 class ExercisePlacementTarget {

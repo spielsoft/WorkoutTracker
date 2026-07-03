@@ -256,6 +256,51 @@ class GoogleSpreadsheetValidationService
     );
     return validateSpreadsheet(spreadsheetId);
   }
+
+  @override
+  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int primarySheetRowNumber,
+  }) async {
+    final writeAdapter = this.writeAdapter;
+    if (writeAdapter == null) {
+      throw StateError('Workout exercise deletion requires a write adapter.');
+    }
+
+    final currentActiveSheet = await readAdapter.readParsedActiveSheet(
+      spreadsheetId,
+    );
+    final activePlan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      primarySheetRowNumber: primarySheetRowNumber,
+    );
+    final writeRejections = activePlan.writeRejections(currentActiveSheet);
+    if (writeRejections.isNotEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: writeRejections,
+      );
+    }
+    if (activePlan.rowDeletions.isEmpty) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: currentActiveSheet,
+        writeRejections: [
+          ActiveSheetWriteRejection(
+            'Row $primarySheetRowNumber is no longer a primary workout '
+            'exercise.',
+          ),
+        ],
+      );
+    }
+
+    await writeAdapter.applyActiveSheetWritePlan(
+      spreadsheetId: spreadsheetId,
+      plan: activePlan,
+    );
+    return validateSpreadsheet(spreadsheetId);
+  }
 }
 
 ActiveSheetWriteRejection? _canonicalExerciseRowRejection({

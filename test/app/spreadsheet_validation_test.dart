@@ -803,6 +803,160 @@ void main() {
   );
 
   test(
+    'deletes a primary workout exercise with attached backups and returns a refreshed report',
+    () async {
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'primary notes',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '225x5@8',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '12',
+          '8',
+          '2 min',
+          '',
+          'backup notes',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          'TRUE',
+          '12@8',
+        ],
+        [
+          'Lunge',
+          '2',
+          '10',
+          '7',
+          '90s',
+          '',
+          'single leg',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '50x10@7',
+        ],
+      ];
+      final deletedActiveRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Lunge',
+          '2',
+          '10',
+          '7',
+          '90s',
+          '',
+          'single leg',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '50x10@7',
+        ],
+      ];
+      final exercisesRows = [
+        exercisesSheetColumns,
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Leg Press', description: 'Machine press'),
+        _exerciseRow('Lunge', description: 'Single leg'),
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, exercisesRows),
+        _workbookSnapshot(activeRows, exercisesRows),
+        _workbookSnapshot(deletedActiveRows, exercisesRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final deleted = await service.deleteWorkoutExercise(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        primarySheetRowNumber: 3,
+      );
+      final overview = deleted.activeSheet.buildWorkoutOverview(
+        workout: 'Legs',
+        historyBlockLabel: 'Week 1',
+      );
+
+      expect(writeClient.writeCount, 2);
+      expect(overview.slots.map((slot) => slot.exercise), ['Lunge']);
+      expect(deleted.activeSheet.selectableWorkouts, ['Legs']);
+      expect(deleted.activeSheet.selectHistoryBlock('Week 1'), isNotNull);
+      expect(
+        deleted.activeSheet.canonicalExercises.map(
+          (exercise) => exercise.exercise,
+        ),
+        ['Squat', 'Leg Press', 'Lunge'],
+      );
+    },
+  );
+
+  test(
+    'rejects workout exercise deletion when the sheet changed after the UI snapshot',
+    () async {
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Leg Press', '3', '12', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
+      ];
+      final changedRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Hack Squat', '3', '10', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
+      ];
+      final exercisesRows = [
+        exercisesSheetColumns,
+        _exerciseRow('Squat', description: 'Back squat'),
+        _exerciseRow('Leg Press', description: 'Machine press'),
+      ];
+      final readClient = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, exercisesRows),
+        _workbookSnapshot(changedRows, exercisesRows),
+      ]);
+      final writeClient = _RecordingWriteClient();
+      final service = GoogleSpreadsheetValidationService(
+        readAdapter: GoogleSheetsReadAdapter(client: readClient),
+        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+      );
+
+      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final rejected = await service.deleteWorkoutExercise(
+        spreadsheetId: 'spreadsheet-id',
+        activeSheet: report.activeSheet,
+        primarySheetRowNumber: 3,
+      );
+
+      expect(rejected.hasBlockingIssues, isTrue);
+      expect(
+        rejected.manualRepairItems.map((item) => item.problem),
+        contains(
+          contains(
+            'Backup group for row 3 no longer matches the planned delete',
+          ),
+        ),
+      );
+      expect(writeClient.writeCount, 0);
+    },
+  );
+
+  test(
     'rejects canonical exercise reorder when the sheet changed after the UI snapshot',
     () async {
       final activeRows = [

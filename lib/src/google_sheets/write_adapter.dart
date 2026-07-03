@@ -13,6 +13,7 @@ class GoogleSheetsWriteAdapter {
   }) async {
     if (plan.columnInsertions.isEmpty &&
         plan.rowInsertions.isEmpty &&
+        plan.rowDeletions.isEmpty &&
         plan.cellUpdates.isEmpty) {
       return;
     }
@@ -24,6 +25,12 @@ class GoogleSheetsWriteAdapter {
           sheet: activeSheet,
           sheetRowNumber: insertion.sheetRowNumber,
           rowCount: insertion.rowCount,
+        ),
+      for (final deletion in _sortedRowDeletions(plan.rowDeletions))
+        SheetsRowDeletion(
+          sheet: activeSheet,
+          sheetRowNumber: deletion.sheetRowNumber,
+          rowCount: deletion.rowCount,
         ),
       for (final insertion in _sortedColumnInsertions(plan.columnInsertions))
         SheetsColumnInsertion(
@@ -176,6 +183,14 @@ List<ActiveSheetRowInsertion> _sortedRowInsertions(
   List<ActiveSheetRowInsertion> rowInsertions,
 ) {
   return [...rowInsertions]..sort(
+    (first, second) => second.sheetRowNumber.compareTo(first.sheetRowNumber),
+  );
+}
+
+List<ActiveSheetRowDeletion> _sortedRowDeletions(
+  List<ActiveSheetRowDeletion> rowDeletions,
+) {
+  return [...rowDeletions]..sort(
     (first, second) => second.sheetRowNumber.compareTo(first.sheetRowNumber),
   );
 }

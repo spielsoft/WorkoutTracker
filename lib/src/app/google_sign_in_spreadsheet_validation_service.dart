@@ -173,6 +173,28 @@ class GoogleSignInSpreadsheetValidationService
     );
   }
 
+  @override
+  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int primarySheetRowNumber,
+  }) async {
+    return _withGoogleSheetsService(
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
+      canWrite: true,
+      action: (service) {
+        if (service case final ExerciseAuthoringService authoringService) {
+          return authoringService.deleteWorkoutExercise(
+            spreadsheetId: spreadsheetId,
+            activeSheet: activeSheet,
+            primarySheetRowNumber: primarySheetRowNumber,
+          );
+        }
+        throw StateError('Exercise authoring service is not configured.');
+      },
+    );
+  }
+
   Future<SpreadsheetValidationReport> _withGoogleSheetsService({
     required List<String> scopes,
     required bool canWrite,

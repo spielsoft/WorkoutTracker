@@ -247,6 +247,51 @@ void main() {
   );
 
   test(
+    'deletes a workout exercise and preserves usable workout and history selections',
+    () async {
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+        [
+          'Leg Press',
+          '3',
+          '10',
+          '8',
+          '2 min',
+          '',
+          '',
+          '',
+          'Legs',
+          'TRUE',
+          '10@8',
+        ],
+        ['Lunge', '2', '10', '7', '90s', '', '', '', 'Legs', '', '50x10@7'],
+      ]);
+      final controller = WorkoutTrackerController(
+        validationService: service,
+        exerciseAuthoringService: service,
+      );
+
+      await controller.validateSpreadsheetSelection('spreadsheet-id');
+
+      final deleted = await controller.deleteWorkoutExercise(
+        primarySheetRowNumber: 3,
+      );
+      final setup = controller.workoutSetup;
+
+      expect(deleted, isTrue);
+      expect(service.appliedPlans.single.rowDeletions, const [
+        ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 2),
+      ]);
+      expect(setup?.selectedWorkout, 'Legs');
+      expect(setup?.selectedHistoryBlock, 'Week 1');
+      expect(setup?.overview?.slots.map((slot) => slot.exercise), ['Lunge']);
+      expect(controller.error, isNull);
+    },
+  );
+
+  test(
     'blocks duplicate history block labels before applying a write',
     () async {
       final service = TestSpreadsheetValidationService.fromRows([

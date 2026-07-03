@@ -401,6 +401,42 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
+  Future<bool> deleteWorkoutExercise({
+    required int primarySheetRowNumber,
+  }) async {
+    final report = _report;
+    final selectedWorkout = workoutSetup?.selectedWorkout;
+    final selectedHistoryBlock = workoutSetup?.selectedHistoryBlock;
+    final exerciseAuthoringService = this.exerciseAuthoringService;
+    if (report == null || exerciseAuthoringService == null) {
+      _error = 'Exercise authoring is not connected yet.';
+      notifyListeners();
+      return false;
+    }
+
+    return _runServiceAction(
+      failurePrefix: 'Unable to delete exercise',
+      action: () async {
+        _report = await exerciseAuthoringService.deleteWorkoutExercise(
+          spreadsheetId: report.spreadsheetId,
+          activeSheet: report.activeSheet,
+          primarySheetRowNumber: primarySheetRowNumber,
+        );
+        _error = null;
+        _prunePendingWorkouts(_report!.activeSheet);
+        _selectedWorkout = _preservedWorkout(
+          activeSheet: _report!.activeSheet,
+          selectedWorkout: selectedWorkout,
+        );
+        _selectedHistoryBlock = _preservedHistoryBlock(
+          activeSheet: _report!.activeSheet,
+          selectedHistoryBlock: selectedHistoryBlock,
+        );
+        _clearLoggingSelection();
+      },
+    );
+  }
+
   void selectWorkout(String? workout) {
     _selectedWorkout = workout;
     _clearLoggingSelection();
@@ -515,6 +551,30 @@ class WorkoutTrackerController extends ChangeNotifier {
   void _prunePendingWorkouts(ParsedActiveSheet activeSheet) {
     final durableWorkouts = activeSheet.selectableWorkouts;
     _pendingWorkouts.removeWhere(durableWorkouts.contains);
+  }
+
+  String? _preservedWorkout({
+    required ParsedActiveSheet activeSheet,
+    required String? selectedWorkout,
+  }) {
+    final workouts = _workoutsFor(activeSheet);
+    if (selectedWorkout != null && workouts.contains(selectedWorkout)) {
+      return selectedWorkout;
+    }
+    return workouts.firstOrNull;
+  }
+
+  String? _preservedHistoryBlock({
+    required ParsedActiveSheet activeSheet,
+    required String? selectedHistoryBlock,
+  }) {
+    if (selectedHistoryBlock != null &&
+        activeSheet.historyBlocks.any(
+          (block) => block.label == selectedHistoryBlock,
+        )) {
+      return selectedHistoryBlock;
+    }
+    return activeSheet.historyBlocks.firstOrNull?.label;
   }
 
   void _clearLoggingSelection() {

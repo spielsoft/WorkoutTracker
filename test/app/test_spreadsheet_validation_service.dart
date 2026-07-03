@@ -1,7 +1,8 @@
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
-class TestSpreadsheetValidationService implements SpreadsheetValidationService {
+class TestSpreadsheetValidationService
+    implements SpreadsheetValidationService, ExerciseAuthoringService {
   TestSpreadsheetValidationService(ParsedActiveSheet activeSheet)
     : _activeSheet = activeSheet,
       _rows = null;
@@ -43,6 +44,70 @@ class TestSpreadsheetValidationService implements SpreadsheetValidationService {
     appliedPlans.add(plan);
     _applyPlan(plan);
     return _report(spreadsheetId);
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> createCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExerciseDefinition exercise,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise exercise,
+    required WorkoutPlacementMetadata metadata,
+    required ExercisePlacementTarget placement,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ReorderIntent intent,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required ReorderIntent intent,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int primarySheetRowNumber,
+  }) {
+    return applyActiveSheetWritePlan(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      plan: activeSheet.planPrimaryWorkoutExerciseDeletion(
+        primarySheetRowNumber: primarySheetRowNumber,
+      ),
+    );
   }
 
   void _applyPlan(ActiveSheetWritePlan plan) {

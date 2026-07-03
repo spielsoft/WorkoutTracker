@@ -372,6 +372,46 @@ void main() {
   );
 
   test(
+    'applies planned active-sheet row deletions to the active sheet',
+    () async {
+      final client = _FakeSheetsWorkbookClient(
+        const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
+      );
+      final adapter = GoogleSheetsWriteAdapter(client: client);
+
+      await adapter.applyActiveSheetWritePlan(
+        spreadsheetId: 'spreadsheet-id',
+        plan: ActiveSheetWritePlan(
+          rowDeletions: const [
+            ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 2),
+          ],
+        ),
+      );
+
+      expect(client.fetchedSpreadsheetIds, ['spreadsheet-id']);
+      expect(client.structuralBatches, [
+        _StructuralBatch(
+          spreadsheetId: 'spreadsheet-id',
+          sheetId: 42,
+          sheetTitle: 'Active Workout',
+          rowInsertions: const [],
+          rowDeletions: const [
+            _DeletedRows(
+              spreadsheetId: 'spreadsheet-id',
+              sheetId: 42,
+              sheetRowNumber: 3,
+              rowCount: 2,
+            ),
+          ],
+          columnInsertions: const [],
+          writes: const [],
+          clears: const [],
+        ),
+      ]);
+    },
+  );
+
+  test(
     'applies planned Exercises row updates without inserting rows',
     () async {
       final client = _FakeSheetsWorkbookClient(
@@ -716,6 +756,16 @@ class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {
                   rowCount: operation.rowCount,
                 ),
           ],
+          rowDeletions: [
+            for (final operation in operationList)
+              if (operation is SheetsRowDeletion)
+                _DeletedRows(
+                  spreadsheetId: spreadsheetId,
+                  sheetId: operation.sheet.sheetId,
+                  sheetRowNumber: operation.sheetRowNumber,
+                  rowCount: operation.rowCount,
+                ),
+          ],
           columnInsertions: [
             for (final operation in operationList)
               if (operation is SheetsColumnInsertion)
@@ -864,12 +914,52 @@ class _InsertedRows {
   }
 }
 
+class _DeletedRows {
+  const _DeletedRows({
+    required this.spreadsheetId,
+    required this.sheetId,
+    required this.sheetRowNumber,
+    required this.rowCount,
+  });
+
+  final String spreadsheetId;
+  final int sheetId;
+  final int sheetRowNumber;
+  final int rowCount;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is _DeletedRows &&
+            spreadsheetId == other.spreadsheetId &&
+            sheetId == other.sheetId &&
+            sheetRowNumber == other.sheetRowNumber &&
+            rowCount == other.rowCount;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(spreadsheetId, sheetId, sheetRowNumber, rowCount);
+  }
+
+  @override
+  String toString() {
+    return '_DeletedRows('
+        'spreadsheetId: $spreadsheetId, '
+        'sheetId: $sheetId, '
+        'sheetRowNumber: $sheetRowNumber, '
+        'rowCount: $rowCount'
+        ')';
+  }
+}
+
 class _StructuralBatch {
   const _StructuralBatch({
     required this.spreadsheetId,
     required this.sheetId,
     required this.sheetTitle,
     required this.rowInsertions,
+    this.rowDeletions = const [],
     required this.columnInsertions,
     required this.writes,
     required this.clears,
@@ -879,6 +969,7 @@ class _StructuralBatch {
   final int sheetId;
   final String sheetTitle;
   final List<_InsertedRows> rowInsertions;
+  final List<_DeletedRows> rowDeletions;
   final List<_InsertedColumns> columnInsertions;
   final List<_CellWrite> writes;
   final List<_CellClear> clears;
@@ -891,6 +982,7 @@ class _StructuralBatch {
             sheetId == other.sheetId &&
             sheetTitle == other.sheetTitle &&
             _listEquals(rowInsertions, other.rowInsertions) &&
+            _listEquals(rowDeletions, other.rowDeletions) &&
             _listEquals(columnInsertions, other.columnInsertions) &&
             _listEquals(writes, other.writes) &&
             _listEquals(clears, other.clears);
@@ -903,6 +995,7 @@ class _StructuralBatch {
       sheetId,
       sheetTitle,
       Object.hashAll(rowInsertions),
+      Object.hashAll(rowDeletions),
       Object.hashAll(columnInsertions),
       Object.hashAll(writes),
       Object.hashAll(clears),
@@ -916,6 +1009,7 @@ class _StructuralBatch {
         'sheetId: $sheetId, '
         'sheetTitle: $sheetTitle, '
         'rowInsertions: $rowInsertions, '
+        'rowDeletions: $rowDeletions, '
         'columnInsertions: $columnInsertions, '
         'writes: $writes, '
         'clears: $clears'
