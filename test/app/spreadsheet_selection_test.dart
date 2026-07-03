@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:googleapis/sheets/v4.dart' as sheets;
+import 'package:http/http.dart' as http;
+import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
@@ -263,6 +268,32 @@ void main() {
       ),
     );
   });
+
+  test(
+    'Google Sheets creator runs workbook creation through scoped Sheets access',
+    () async {
+      final client = _SheetsCreateClient();
+      final access = _RecordingScopedGoogleApiAccess(client);
+      final initializer = _RecordingWorkbookInitializer(client);
+      final creator = GoogleSheetsSpreadsheetCreator(
+        authorizationGateway: _UnusedGoogleSignInAuthorizationGateway(),
+        googleAccess: access,
+        workbookInitializerFactory: (_) => initializer,
+        titleFactory: () => 'Workout Log',
+      );
+
+      final selected = await creator.createWorkoutSpreadsheet();
+
+      expect(access.requestedScopes.single, [
+        sheets.SheetsApi.spreadsheetsScope,
+      ]);
+      expect(initializer.initializedSpreadsheetIds, ['created-spreadsheet-id']);
+      expect(initializer.clientWasOpenDuringInitialization, isTrue);
+      expect(client.closed, isTrue);
+      expect(selected.spreadsheetId, 'created-spreadsheet-id');
+      expect(selected.name, 'Workout Log');
+    },
+  );
 }
 
 GooglePickerAppConfig _testGooglePickerConfig() {
@@ -295,4 +326,98 @@ Future<GooglePickerCallbackReceiver> _unusedCallbackReceiverFactory({
   required Duration timeout,
 }) async {
   throw StateError('Spreadsheet picker callback receiver was not expected.');
+}
+
+class _RecordingScopedGoogleApiAccess implements ScopedGoogleApiAccess {
+  _RecordingScopedGoogleApiAccess(this.client);
+
+  final http.Client client;
+  final List<List<String>> requestedScopes = [];
+
+  @override
+  Future<T> run<T>({
+    required List<String> scopes,
+    required Future<T> Function(GoogleScopedApiResources resources) action,
+  }) async {
+    requestedScopes.add(scopes);
+    try {
+      return await action(GoogleScopedApiResources(client));
+    } finally {
+      client.close();
+    }
+  }
+}
+
+class _SheetsCreateClient extends http.BaseClient {
+  bool closed = false;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (closed) {
+      throw StateError('Client was closed before the Google action finished.');
+    }
+    return http.StreamedResponse(
+      Stream.value(
+        utf8.encode(
+          jsonEncode({
+            'spreadsheetId': 'created-spreadsheet-id',
+            'spreadsheetUrl':
+                'https://docs.google.com/spreadsheets/d/created-spreadsheet-id/edit',
+            'properties': {'title': 'Workout Log'},
+          }),
+        ),
+      ),
+      200,
+      headers: const {'content-type': 'application/json'},
+    );
+  }
+
+  @override
+  void close() {
+    closed = true;
+  }
+}
+
+class _RecordingWorkbookInitializer
+    implements WorkoutTrackerWorkbookInitializer {
+  _RecordingWorkbookInitializer(this.client);
+
+  final _SheetsCreateClient client;
+  final List<String> initializedSpreadsheetIds = [];
+  bool clientWasOpenDuringInitialization = false;
+
+  @override
+  Future<void> initializeWorkbook({
+    required String spreadsheetId,
+    required WorkoutTrackerWorkbook workbook,
+  }) async {
+    initializedSpreadsheetIds.add(spreadsheetId);
+    clientWasOpenDuringInitialization = !client.closed;
+  }
+}
+
+class _UnusedGoogleSignInAuthorizationGateway
+    implements GoogleSignInAuthorizationGateway {
+  @override
+  GoogleAccountProfile? get currentAccount => null;
+
+  @override
+  Future<Map<String, String>> authorizationHeaders(List<String> scopes) {
+    throw StateError('Creator should use injected scoped access.');
+  }
+
+  @override
+  Future<void> restoreAccount() async {}
+
+  @override
+  Future<void> signOut() async {}
+
+  @override
+  Future<void> switchAccount({List<String> scopes = const []}) async {}
+
+  @override
+  void addListener(VoidCallback listener) {}
+
+  @override
+  void removeListener(VoidCallback listener) {}
 }

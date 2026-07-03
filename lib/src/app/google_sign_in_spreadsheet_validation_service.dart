@@ -1,4 +1,3 @@
-import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
@@ -13,17 +12,20 @@ class GoogleSignInSpreadsheetValidationService
     GoogleSignInAuthorizationGateway? authorizationGateway,
     GoogleSpreadsheetValidationServiceFactory? serviceFactory,
     GoogleAuthorizationClientFactory? authorizationClientFactory,
-  }) : _authorizationGateway =
-           authorizationGateway ?? NativeGoogleSignInAuthorizationGateway(),
-       _serviceFactory =
+    ScopedGoogleApiAccess? googleAccess,
+  }) : _serviceFactory =
            serviceFactory ?? defaultGoogleSpreadsheetValidationServiceFactory,
-       _authorizationClientFactory =
-           authorizationClientFactory ??
-           ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
+       _googleAccess =
+           googleAccess ??
+           GoogleScopedApiAccess(
+             authorizationGateway:
+                 authorizationGateway ??
+                 NativeGoogleSignInAuthorizationGateway(),
+             authorizationClientFactory: authorizationClientFactory,
+           );
 
-  final GoogleSignInAuthorizationGateway _authorizationGateway;
   final GoogleSpreadsheetValidationServiceFactory _serviceFactory;
-  final GoogleAuthorizationClientFactory _authorizationClientFactory;
+  final ScopedGoogleApiAccess _googleAccess;
 
   @override
   Future<SpreadsheetValidationReport> validateSpreadsheet(
@@ -179,13 +181,11 @@ class GoogleSignInSpreadsheetValidationService
     )
     action,
   }) async {
-    final headers = await _authorizationGateway.authorizationHeaders(scopes);
-    final client = _authorizationClientFactory(headers);
-    try {
-      final api = sheets.SheetsApi(client);
-      return await action(_serviceFactory(api, canWrite: canWrite));
-    } finally {
-      client.close();
-    }
+    return _googleAccess.run(
+      scopes: scopes,
+      action: (resources) async {
+        return action(_serviceFactory(resources.sheetsApi, canWrite: canWrite));
+      },
+    );
   }
 }

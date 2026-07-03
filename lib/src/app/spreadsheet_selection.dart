@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis/sheets/v4.dart' as sheets;
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:workout_tracker/google_sheets.dart';
 
@@ -246,6 +245,7 @@ class MobileGoogleDriveSpreadsheetPicker
     required this.config,
     this.authorizationGateway,
     this.authorizationClientFactory,
+    this.googleAccess,
     this.spreadsheetCreator,
   });
 
@@ -253,6 +253,7 @@ class MobileGoogleDriveSpreadsheetPicker
   final GooglePickerCallbackReceiverFactory callbackReceiverFactory;
   final GoogleSignInAuthorizationGateway? authorizationGateway;
   final GoogleAuthorizationClientFactory? authorizationClientFactory;
+  final ScopedGoogleApiAccess? googleAccess;
   final GoogleSpreadsheetCreator? spreadsheetCreator;
 
   @override
@@ -414,35 +415,34 @@ class MobileGoogleDriveSpreadsheetPicker
       );
     }
 
-    final headers = await authorizationGateway.authorizationHeaders(
-      GoogleApisSheetsWorkbookClient.writeScopes,
+    final access =
+        googleAccess ??
+        GoogleScopedApiAccess(
+          authorizationGateway: authorizationGateway,
+          authorizationClientFactory: authorizationClientFactory,
+        );
+    return access.run(
+      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
+      action: (resources) async {
+        await _restoreAccountProfileFromDrive(
+          authorizationGateway: authorizationGateway,
+          driveApi: resources.driveApi,
+        );
+        final spreadsheet = await resources.sheetsApi.spreadsheets.get(
+          spreadsheetId,
+          includeGridData: false,
+          $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
+        );
+        final title = spreadsheet.properties?.title?.trim();
+        return SelectedSpreadsheet(
+          spreadsheetId: spreadsheetId,
+          name: title == null || title.isEmpty ? spreadsheetId : title,
+          webViewLink:
+              spreadsheet.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
+          accountEmail: authorizationGateway.currentAccount?.email,
+        );
+      },
     );
-    final clientFactory =
-        authorizationClientFactory ??
-        ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
-    final client = clientFactory(headers);
-    try {
-      await _restoreAccountProfileFromDrive(
-        authorizationGateway: authorizationGateway,
-        client: client,
-      );
-      final api = sheets.SheetsApi(client);
-      final spreadsheet = await api.spreadsheets.get(
-        spreadsheetId,
-        includeGridData: false,
-        $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
-      );
-      final title = spreadsheet.properties?.title?.trim();
-      return SelectedSpreadsheet(
-        spreadsheetId: spreadsheetId,
-        name: title == null || title.isEmpty ? spreadsheetId : title,
-        webViewLink:
-            spreadsheet.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
-        accountEmail: authorizationGateway.currentAccount?.email,
-      );
-    } finally {
-      client.close();
-    }
   }
 
   void _updateGooglePickerAuthorization(GooglePickerCallbackResult result) {
@@ -465,7 +465,7 @@ class MobileGoogleDriveSpreadsheetPicker
 
   Future<void> _restoreAccountProfileFromDrive({
     required GoogleSignInAuthorizationGateway authorizationGateway,
-    required http.Client client,
+    required drive.DriveApi driveApi,
   }) async {
     if (authorizationGateway case final GooglePickerAuthorizationStore store) {
       final current = store.currentAuthorization;
@@ -473,9 +473,9 @@ class MobileGoogleDriveSpreadsheetPicker
         return;
       }
       try {
-        final about = await drive.DriveApi(
-          client,
-        ).about.get($fields: 'user(emailAddress,displayName,photoLink)');
+        final about = await driveApi.about.get(
+          $fields: 'user(emailAddress,displayName,photoLink)',
+        );
         final user = about.user;
         final email = user?.emailAddress?.trim();
         if (email == null || email.isEmpty) {
@@ -501,18 +501,22 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
   GoogleSheetsSpreadsheetCreator({
     required this.authorizationGateway,
     GoogleAuthorizationClientFactory? authorizationClientFactory,
+    ScopedGoogleApiAccess? googleAccess,
     WorkoutTrackerWorkbookInitializerFactory? workbookInitializerFactory,
     String Function()? titleFactory,
-  }) : authorizationClientFactory =
-           authorizationClientFactory ??
-           ((headers) => GoogleAuthorizationHeadersClient(headers: headers)),
+  }) : googleAccess =
+           googleAccess ??
+           GoogleScopedApiAccess(
+             authorizationGateway: authorizationGateway,
+             authorizationClientFactory: authorizationClientFactory,
+           ),
        workbookInitializerFactory =
            workbookInitializerFactory ??
            ((api) => GoogleApisWorkoutTrackerWorkbookInitializer(api)),
        titleFactory = titleFactory ?? defaultWorkoutSpreadsheetTitle;
 
   final GoogleSignInAuthorizationGateway authorizationGateway;
-  final GoogleAuthorizationClientFactory authorizationClientFactory;
+  final ScopedGoogleApiAccess googleAccess;
   final WorkoutTrackerWorkbookInitializerFactory workbookInitializerFactory;
   final String Function() titleFactory;
 
@@ -522,37 +526,33 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
     final title = requestedTitle.isEmpty
         ? defaultWorkoutSpreadsheetTitle()
         : requestedTitle;
-    final headers = await authorizationGateway.authorizationHeaders(
-      GoogleApisWorkoutTrackerWorkbookInitializer.writeScopes,
+    return googleAccess.run(
+      scopes: GoogleApisWorkoutTrackerWorkbookInitializer.writeScopes,
+      action: (resources) async {
+        final created = await resources.sheetsApi.spreadsheets.create(
+          sheets.Spreadsheet(
+            properties: sheets.SpreadsheetProperties(title: title),
+          ),
+          $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
+        );
+        final spreadsheetId = created.spreadsheetId;
+        if (spreadsheetId == null || spreadsheetId.trim().isEmpty) {
+          throw StateError('Google Sheets did not return a spreadsheet ID.');
+        }
+
+        final workbook = await loadWorkoutTrackerWorkbookTemplate();
+        await workbookInitializerFactory(
+          resources.sheetsApi,
+        ).initializeWorkbook(spreadsheetId: spreadsheetId, workbook: workbook);
+
+        return SelectedSpreadsheet(
+          spreadsheetId: spreadsheetId,
+          name: created.properties?.title ?? title,
+          webViewLink: created.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
+          accountEmail: authorizationGateway.currentAccount?.email,
+        );
+      },
     );
-    final client = authorizationClientFactory(headers);
-    try {
-      final api = sheets.SheetsApi(client);
-      final created = await api.spreadsheets.create(
-        sheets.Spreadsheet(
-          properties: sheets.SpreadsheetProperties(title: title),
-        ),
-        $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
-      );
-      final spreadsheetId = created.spreadsheetId;
-      if (spreadsheetId == null || spreadsheetId.trim().isEmpty) {
-        throw StateError('Google Sheets did not return a spreadsheet ID.');
-      }
-
-      final workbook = await loadWorkoutTrackerWorkbookTemplate();
-      await workbookInitializerFactory(
-        api,
-      ).initializeWorkbook(spreadsheetId: spreadsheetId, workbook: workbook);
-
-      return SelectedSpreadsheet(
-        spreadsheetId: spreadsheetId,
-        name: created.properties?.title ?? title,
-        webViewLink: created.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
-        accountEmail: authorizationGateway.currentAccount?.email,
-      );
-    } finally {
-      client.close();
-    }
   }
 }
 

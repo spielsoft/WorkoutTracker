@@ -1,7 +1,53 @@
+import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:http/http.dart' as http;
+
+import 'google_account_session.dart';
 
 typedef GoogleAuthorizationClientFactory =
     http.Client Function(Map<String, String> headers);
+
+abstract interface class ScopedGoogleApiAccess {
+  Future<T> run<T>({
+    required List<String> scopes,
+    required Future<T> Function(GoogleScopedApiResources resources) action,
+  });
+}
+
+class GoogleScopedApiAccess implements ScopedGoogleApiAccess {
+  GoogleScopedApiAccess({
+    required this.authorizationGateway,
+    GoogleAuthorizationClientFactory? authorizationClientFactory,
+  }) : authorizationClientFactory =
+           authorizationClientFactory ??
+           ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
+
+  final GoogleSignInAuthorizationGateway authorizationGateway;
+  final GoogleAuthorizationClientFactory authorizationClientFactory;
+
+  @override
+  Future<T> run<T>({
+    required List<String> scopes,
+    required Future<T> Function(GoogleScopedApiResources resources) action,
+  }) async {
+    final headers = await authorizationGateway.authorizationHeaders(scopes);
+    final client = authorizationClientFactory(headers);
+    try {
+      return await action(GoogleScopedApiResources(client));
+    } finally {
+      client.close();
+    }
+  }
+}
+
+class GoogleScopedApiResources {
+  GoogleScopedApiResources(this.client);
+
+  final http.Client client;
+
+  late final sheets.SheetsApi sheetsApi = sheets.SheetsApi(client);
+  late final drive.DriveApi driveApi = drive.DriveApi(client);
+}
 
 class GoogleAuthorizationHeadersClient extends http.BaseClient {
   GoogleAuthorizationHeadersClient({

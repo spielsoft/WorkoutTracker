@@ -14,7 +14,7 @@ slice is complete. Preserve unrelated worktree changes.
 
 - [x] Slice 1: Create A Generic Sheets Workbook Operation Port
 - [x] Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization Through The Workbook Port
-- [ ] Slice 3: Centralize Scoped Google Client Lifecycle
+- [x] Slice 3: Centralize Scoped Google Client Lifecycle
 - [ ] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
 - [ ] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
 - [ ] Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
@@ -123,15 +123,15 @@ repeated across Google-facing callers.
 
 ### Acceptance criteria
 
-- [ ] A public app-owned helper or interface runs scoped Google actions with
+- [x] A public app-owned helper or interface runs scoped Google actions with
       authenticated resources and guaranteed cleanup.
-- [ ] Spreadsheet validation and write services use the centralized lifecycle.
-- [ ] Spreadsheet creation or selected-spreadsheet resolution uses the
+- [x] Spreadsheet validation and write services use the centralized lifecycle.
+- [x] Spreadsheet creation or selected-spreadsheet resolution uses the
       centralized lifecycle where practical.
-- [ ] Tests verify requested scopes and cleanup through fakes, without
+- [x] Tests verify requested scopes and cleanup through fakes, without
       simulating third-party Google behavior as product behavior.
-- [ ] Existing Google account and Picker behavior remains unchanged.
-- [ ] Relevant targeted Flutter tests pass.
+- [x] Existing Google account and Picker behavior remains unchanged.
+- [x] Relevant targeted Flutter tests pass.
 
 ### Blocked by
 
