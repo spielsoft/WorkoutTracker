@@ -64,8 +64,8 @@ When both are present, announce that you are using `to-prd` first and
    be ready to paste into a new Codex thread and should explicitly instruct the
    fresh agent to:
 
-   - Read `AGENTS.md`, `docs/development-guidance.md`, `ISSUES_PRD.md`, and
-     `ISSUES.md`.
+   - Read `AGENTS.md` first, follow its project-specific read-first guidance,
+     then read `ISSUES_PRD.md` and `ISSUES.md`.
    - Work through `ISSUES.md` in dependency order.
    - Use a fresh subagent for each issue or slice.
    - Keep each subagent scoped to one slice.
@@ -83,9 +83,9 @@ files:
 ```text
 We are moving this project through the cleanup plan in ISSUES.md.
 
-First read AGENTS.md, docs/development-guidance.md, ISSUES_PRD.md, and
-ISSUES.md. Treat ISSUES_PRD.md as the product/architecture source and ISSUES.md
-as the implementation checklist.
+First read AGENTS.md and follow its project-specific read-first guidance. Then
+read ISSUES_PRD.md and ISSUES.md. Treat ISSUES_PRD.md as the
+product/architecture source and ISSUES.md as the implementation checklist.
 
 Work through ISSUES.md in dependency order. For each slice, spawn a fresh
 subagent dedicated only to that slice; do not reuse subagents between slices.
