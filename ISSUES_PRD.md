@@ -1,147 +1,195 @@
-# Remaining GUI MVP Reliability PRD
+# Google Sheets Consolidation And Exercise Delete PRD
 
 ## Problem Statement
 
-WorkoutTracker's remaining MVP risk is not that Google failed to save the
-second logged set. Live evidence shows the second set was written to the
-Google-backed sheet. The problem is that the app's immediate post-write refresh
-can fail to observe that just-written set, report a save failure, and leave the
-user unsure whether the sheet contains the set.
+WorkoutTracker relies on a user-owned Google Sheet as the source of truth, but
+the Google-facing implementation is split across account authorization, Picker
+selection, workbook initialization, sheet reads, sheet writes, and
+WorkoutTracker-specific validation services. The current shape is workable, but
+it makes upcoming spreadsheet operations harder than they should be. In
+particular, generic row and column operations such as delete and move are not
+available through one reusable sheet interface.
 
-That false failure is serious in a gym context. A lifter may retry the same set,
-change values unnecessarily, or stop trusting the app. The app must report set
-save outcomes based on a reliable post-write confirmation path, not on a single
-possibly stale read immediately after the Sheets API write returns.
+The next product feature exposes that gap directly. A user needs to delete a
+primary exercise from a workout from the same tap-and-hold or right-click menu
+that currently only offers Add backup. Deleting that primary exercise must also
+delete all of its associated backup rows and all logged history on those rows.
+Because this permanently removes sheet rows and history, the app must require
+an explicit confirmation before applying the delete.
 
-The remaining GUI hardening work also needs one observed navigation regression
-to be revalidated and fixed if present: returning from Add to workout sometimes
-lands on the account/sheet screen rather than workout setup. Final black-box
-validation cannot complete until multi-set logging and navigation are reliable
-in the rebuilt macOS release app.
+The desired refactor is not a broad rewrite. The goal is to deepen the existing
+Google seams so Google account/picker concerns and generic Sheets workbook
+operations live in one or two clear locations, while WorkoutTracker domain
+behavior remains in the sheet-contract and controller/service modules.
 
 ## Solution
 
-Make set-save confirmation resilient to Google Sheets read-after-write
-staleness while preserving the app's existing safety rule: do not clear user
-input or advance the visible logging state unless the refreshed public logging
-context contains the saved value.
+Create a deeper generic Google Sheets workbook module that owns low-level sheet
+operations: sheet metadata, grid reads, cell writes, cell clears, row and column
+insertions, row and column deletions, and row and column moves. Existing
+WorkoutTracker-specific read/write adapters and workbook initialization should
+use this generic module instead of each owning raw Google request construction.
 
-The implementation should confirm a logged-set write by rereading the selected
-spreadsheet until either:
+Create a small authenticated Google access module that owns the repeated
+pattern of requesting scoped authorization, creating authenticated clients or
+Google API objects, and closing resources. Picker and account session behavior
+should remain conceptually separate from generic Sheets workbook operations, but
+callers should no longer need to recreate the same authorization/client
+lifecycle by hand.
 
-- the expected saved set appears in the parsed logging context;
-- a real conflicting value appears in the target set cell;
-- a real schema/write rejection blocks the target; or
-- a bounded retry window expires.
+After those seams exist, add a domain delete plan for workout exercise rows. The
+delete plan should remove a primary active-sheet row and every backup row
+attached to it by the current sheet contract. It must preserve the rule that the
+Google Sheet is the source of truth, and it must not delete the canonical
+exercise definition from the Exercises tab.
 
-When confirmation succeeds after a stale read, the user should see the normal
-logged-set progression with no false error. When confirmation truly fails, the
-user should still see a visible error and retain the attempted input.
-
-After the confirmation path is fixed, rebuild the macOS release app and run
-live GUI validation through visible mouse and keyboard interactions. Use the
-connected Google Sheet itself as evidence: inspect the created workbook after
-the GUI run to verify what the app wrote and what the app displayed.
+Expose the delete plan through the existing workout overview action menu. The
+primary exercise menu should contain Add backup exercise and Delete exercise.
+Selecting Delete exercise should show a confirmation dialog that names the
+exercise, explains that associated backups and logged history will be deleted,
+and requires the user to confirm before any sheet write occurs. After a
+successful delete, the workout overview should refresh from the sheet and no
+longer show the deleted primary or its backups.
 
 ## User Stories
 
-1. As a lifter, I want a saved second set to appear in the app after Google
-   accepts the write, so that I can continue logging without second-guessing
-   the sheet.
-2. As a lifter, I want the app to tolerate brief Google Sheets read-after-write
-   lag, so that a successful save is not reported as a failure.
-3. As a lifter, I want a real failed save to leave my input visible, so that I
-   can retry or correct it without retyping from memory.
-4. As a lifter, I want the app to distinguish stale reads from conflicting
-   sheet values, so that the app does not hide real data races or manual edits.
-5. As a lifter, I want retrying a set save to avoid duplicate or out-of-order
-   set entries, so that my workout history stays clean.
-6. As a lifter, I want Add to workout back navigation to return to workout
-   setup, so that I do not lose context while building a plan.
-7. As a tester, I want live validation to inspect the Google-backed sheet after
-   the GUI run, so that apparent app failures can be compared with actual sheet
-   contents.
-8. As a tester, I want the macOS black-box pass to create a fresh sheet, add
-   custom exercises, build multiple workouts, and log multiple sets, so that
-   the MVP flow is validated end to end.
-9. As a maintainer, I want the stale-read behavior covered by focused tests, so
-   that future refactors do not reintroduce false save failures.
-10. As a maintainer, I want temporary TDD scaffolding cleaned up after the fix,
-    so that the test suite protects behavior without pinning incidental
-    implementation details.
+1. As a lifter, I want the exercise row action menu to include Delete exercise,
+   so that I can remove an exercise I no longer want in a workout.
+2. As a lifter, I want deleting a primary exercise to also remove its backup
+   exercises, so that the workout does not keep orphaned backup rows.
+3. As a lifter, I want the app to warn me before deleting an exercise row and
+   history, so that I do not accidentally lose workout data.
+4. As a lifter, I want the confirmation message to mention associated backups
+   and history, so that I understand the consequence before confirming.
+5. As a lifter, I want cancelling the confirmation dialog to leave the sheet
+   unchanged, so that accidental menu taps are harmless.
+6. As a lifter, I want the workout overview to refresh after delete, so that I
+   can immediately see the remaining exercises.
+7. As a lifter, I want deleting one primary exercise to leave unrelated primary
+   exercises and their backups untouched, so that the rest of my workout remains
+   intact.
+8. As a lifter, I want canonical exercise definitions to remain in the exercise
+   library after deleting a workout placement, so that I can add the exercise to
+   another workout later.
+9. As a maintainer, I want generic row and column delete operations in the
+   Sheets library, so that future sheet features do not duplicate Google request
+   construction.
+10. As a maintainer, I want generic row and column move operations in the Sheets
+    library, so that reorder and future structure features have a single
+    implementation path.
+11. As a maintainer, I want workbook initialization to use the same generic
+    Sheets module as normal writes, so that structure and value request behavior
+    is localized.
+12. As a maintainer, I want Google API authorization/client lifecycle code in
+    one place, so that Picker, validation, creation, and integration tests do
+    not each reinvent it.
+13. As a maintainer, I want the delete plan tested through public sheet-contract
+    behavior, so that backup attachment rules are protected without testing
+    private helpers.
+14. As a maintainer, I want the service to reread and reject stale delete plans
+    when sheet order changes, so that manual sheet edits cannot delete the wrong
+    rows.
+15. As a maintainer, I want widget tests for the menu and confirmation flow, so
+    that the irreversible UI path stays reachable and guarded.
+16. As a maintainer, I want temporary TDD scaffolding cleaned up at the end, so
+    that the suite remains behavior-focused after the refactor.
 
 ## Implementation Decisions
 
-- Keep the Google Sheet as the source of truth. Do not add an app-owned workout
-  database or optimistic local workout history store.
-- Preserve the current safety invariant: the logging UI may only report a save
-  as successful when the parsed public logging context contains the saved set
-  value.
-- Treat one stale refresh after a Sheets write as an expected live-service
-  condition. Confirmation should allow a bounded number of additional reads
-  before reporting failure.
-- Keep retry policy explicit and small. It should be deterministic under test
-  and should not produce unbounded waits in the GUI.
-- Do not blindly accept any later sheet state. A conflicting value in the
-  target set position should remain a visible failure rather than being treated
-  as success.
-- Keep post-write confirmation behind the existing spreadsheet validation and
-  controller boundaries so widget code does not duplicate sheet parsing or set
-  matching logic.
-- Keep live Google validation opt-in and HITL. The release app must be logged
-  in and the tester must authorize test workbook creation and writes.
-- Use the connected spreadsheet contents as part of live validation evidence.
-  The prior live sheet showed `S2 = 140x6@8.5` even though the app displayed a
-  stale-refresh error, which is the core evidence for this PRD.
-- Preserve unrelated worktree changes. Stage and commit only files that belong
-  to the active slice.
-- Rebuild the macOS release bundle after GUI-facing changes and before live
-  GUI validation.
+- Keep two Google-facing locations rather than one large module: one for
+  Google account, authorization, Picker, and authenticated client lifecycle;
+  one for generic Google Sheets workbook operations.
+- The generic Sheets workbook interface should be deeper than the current
+  plan-specific write client. It should expose a workbook operation vocabulary
+  that can represent cell writes, cell clears, row and column insertions, row
+  and column deletions, and row and column moves.
+- Row and column operations should use one-based sheet coordinates at the app
+  interface and hide Google API zero-based index conversion inside the Google
+  adapter.
+- Deletion and movement should support rows and columns, even though the first
+  product consumer is deleting active-sheet rows.
+- Existing WorkoutTracker-specific plan application should translate domain
+  write plans into generic workbook operations rather than building Google
+  request details directly.
+- Workbook initialization should reuse generic workbook operations where
+  practical. Any remaining initialization-only formatting operations should live
+  near the generic Sheets adapter, not in app workflow code.
+- The authenticated Google access module should own scoped authorization,
+  authenticated HTTP client creation, Sheets or Drive API construction, and
+  cleanup. It should not own WorkoutTracker domain parsing or write planning.
+- The delete feature deletes workout placements from the active sheet only. It
+  does not delete canonical exercise rows from Exercises.
+- The delete plan removes the selected primary row plus the backup rows that are
+  attached to that primary by the current parsed sheet model.
+- The delete plan should carry enough expectations to reject the write if the
+  target row identity, workout, backup state, or attached backup rows no longer
+  match the parsed sheet used to plan the delete.
+- The UI should add Delete exercise to the existing primary exercise action
+  menu used by overflow, right-click, and long-press actions.
+- Delete exercise must show a confirmation dialog before any controller or
+  service write method runs.
+- The confirmation dialog should use clear, direct language: deleting removes
+  the exercise from the workout, deletes associated backups, and deletes logged
+  history for those rows.
+- The delete operation should use the existing validation/report refresh
+  behavior after write so the visible overview reflects the sheet source of
+  truth.
+- Keep the refactor incremental and test-driven. Each implementation slice
+  should leave the app compiling and the relevant targeted tests green.
 
 ## Testing Decisions
 
-- Use TDD for implementation slices. Start with a failing behavior test through
-  a public controller, validation-service, or widget interface.
-- Add a focused stale-read confirmation test: the first post-write refresh does
-  not contain the saved set, a later refresh does, and the user-facing save
-  result is success.
-- Keep an explicit true-failure test: if the refreshed sheet never contains the
-  expected set or contains a conflicting value, the save reports a visible
-  error and preserves input.
-- Add or update a navigation behavior test for Add to workout back behavior
-  only if the current test suite does not already catch the observed live path.
-- Use targeted Flutter tests for controller and widget behavior. These tests
-  must not require Google credentials.
-- Use live Google GUI validation only after local tests and release rebuild
-  pass. The live validation should create a fresh test workbook, log S1 and S2,
-  verify visible app state, then inspect the created sheet contents.
-- After the implementation and validation slices, use the `test-cleanup` skill
-  to remove or rewrite tests that only served the TDD loop while preserving
-  durable behavior coverage.
+- Use TDD for implementation slices. Start each behavior change with a failing
+  test through a public sheet-contract, adapter, service, controller, or widget
+  interface.
+- Add generic Sheets workbook tests that verify row/column delete and move
+  operations are represented correctly through the app-owned interface. These
+  tests should not claim to prove Google behavior.
+- Preserve or adapt existing read/write adapter tests so they verify the app's
+  request intent without requiring Google credentials.
+- Add sheet-contract tests showing that deleting a primary exercise plans
+  removal of the primary row and attached backups, leaves unrelated rows alone,
+  and rejects stale row/order changes.
+- Add service/controller tests showing that a delete plan rereads the sheet,
+  applies structural row deletion only when expectations still match, and
+  returns a refreshed report.
+- Add widget tests showing that the primary exercise action menu includes both
+  Add backup exercise and Delete exercise, that the delete confirmation is
+  required, that cancel does not call delete, and that confirm calls the delete
+  path.
+- Use targeted Flutter tests for backend, adapter, controller, and widget
+  behavior. These tests must not require Google credentials or write to the
+  development sheet.
+- Do not run opt-in live Google integration unless a later slice explicitly
+  asks for live validation and the user authorizes Google login and sheet
+  writes.
+- Include a final test-cleanup slice to remove or rewrite TDD scaffolding that
+  pins private implementation details while preserving durable behavior tests.
 
 ## Out of Scope
 
-- Replacing Google Sheets as the durable data artifact.
-- Building an offline workout database or sync engine.
-- Broad visual redesign.
-- Coaching, progression, or programming logic.
-- Directly editing live spreadsheets to make validation pass.
-- Treating Computer Use or accessibility-tool failures as product bugs unless
-  the app itself visibly crashes or reproduces the behavior outside the
-  automation tool.
-- Reworking unrelated GUI areas except where they are needed to fix the
-  remaining navigation or validation failures.
+- Deleting canonical exercise definitions from the Exercises tab.
+- Bulk deleting multiple primary exercises at once.
+- Undo or restore for deleted rows.
+- A recycle bin, archive tab, or backup export.
+- Changing the sheet contract's backup attachment rule.
+- Replacing Google Sheets as the source of truth.
+- Building an app-owned workout database.
+- Broad visual redesign of the workout overview.
+- Live Google validation unless separately authorized.
+- Reworking unrelated GUI reliability issues from the previous superseded root
+  plan.
 
 ## Further Notes
 
-Live evidence from the recent GUI pass:
+This PRD replaces the previous root-level GUI MVP reliability plan at the
+user's request. The previous plan is no longer the active root issue plan.
 
-- The app created a Google-backed sheet named `WorkoutTracker 2026-06-28`.
-- The GUI logged S1 for Bench Press and advanced to S2.
-- The GUI attempted S2 as `140 / 6 / 8.5` and showed
-  `saved set was not visible after refresh`.
-- Later spreadsheet inspection showed the active sheet contained
-  `S1 = 135x6@8` and `S2 = 140x6@8.5`.
+The current code already has useful seams: app-level validation services, a
+Google account/session abstraction, a Picker abstraction, read/write adapters,
+and sheet-contract write plans. The refactor should deepen those seams instead
+of replacing them wholesale.
 
-This means the likely cause is read-after-write confirmation staleness, not a
-missing write and not obvious workbook corruption.
+The current primary exercise action menu already has both visible overflow and
+right-click/long-press entry points. Adding Delete exercise should reuse that
+single menu path so desktop and touch behavior remain consistent.

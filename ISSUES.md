@@ -1,28 +1,26 @@
-# Remaining GUI MVP Reliability Issues
+# Google Sheets Consolidation And Exercise Delete Issues
 
-This is the active vertical-slice plan for the remaining GUI/MVP reliability
-work. `ISSUES_PRD.md` is the product source; this file is the implementation
-checklist.
+This is the vertical-slice plan for consolidating Google Sheets access,
+centralizing authenticated Google client lifecycle, and adding delete exercise
+from the workout exercise action menu. The source PRD is
+`ISSUES_PRD.md`.
 
 Work through slices in dependency order. Use TDD for implementation slices:
 write or update one failing behavior test through a public interface, implement
 the smallest fix, run targeted tests, then update this checklist only after the
-slice is complete.
-
-Do not run live Google integration tests or write to live test spreadsheets
-unless explicitly authorized for that slice. Rebuild the macOS release bundle
-after GUI-facing changes and before live GUI validation.
+slice is complete. Preserve unrelated worktree changes.
 
 ## Checklist
 
-- [x] Slice 1: Confirm Logged Sets Across Stale Post-Write Reads
-- [ ] Slice 2: Preserve Recoverable Logging State On True Save Failure
-- [ ] Slice 3: Repair Add-To-Workout Back Navigation Regression
-- [ ] Slice 4: Run Live Multi-Set Confirmation Validation
-- [ ] Slice 5: Repeat Black-Box GUI Regression Pass
-- [ ] Slice 6: Clean Up Temporary GUI Tests
+- [x] Slice 1: Create A Generic Sheets Workbook Operation Port
+- [ ] Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization Through The Workbook Port
+- [ ] Slice 3: Centralize Scoped Google Client Lifecycle
+- [ ] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
+- [ ] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
+- [ ] Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
+- [ ] Slice 7: Clean Up Refactor And Feature Tests
 
-## Slice 1: Confirm Logged Sets Across Stale Post-Write Reads
+## Slice 1: Create A Generic Sheets Workbook Operation Port
 
 ### Type
 
@@ -30,26 +28,28 @@ after GUI-facing changes and before live GUI validation.
 
 ### What to build
 
-Make logged-set save confirmation resilient when Google Sheets accepts a write
-but the first immediate reread does not yet show the written value. The app
-should keep rereading within a small bounded confirmation window and report
-success once the parsed logging context contains the expected set value.
+Introduce a generic Sheets workbook interface that represents sheet metadata,
+grid reads, cell writes, cell clears, row and column insertions, row and column
+deletions, and row and column moves behind one app-owned interface. The Google
+adapter should hide Google API request construction and index conversion.
 
-This slice must keep the existing safety rule: success is only reported after
-the saved set is visible through the public parsed logging context. The fix
-must not introduce an app-owned workout history cache.
+This slice is the foundation for the delete feature, but it should be useful on
+its own: callers can express delete rows and delete columns without knowing
+Google request details.
 
 ### Acceptance criteria
 
-- [x] A stale first post-write refresh followed by a fresh refresh reports the
-      set save as successful.
-- [x] The refreshed controller/report state contains the saved set after
-      confirmation succeeds.
-- [x] The implementation uses a bounded retry policy with deterministic test
-      behavior.
-- [x] The write is not repeated just because the first read was stale.
-- [x] A targeted controller or validation-service test covers the stale-read
-      success path.
+- [x] A public app-owned workbook operation interface can represent row
+      insertion, row deletion, row move, column insertion, column deletion,
+      column move, cell write, and cell clear.
+- [x] The interface uses one-based sheet coordinates at the app boundary.
+- [x] The Google adapter owns conversion to Google zero-based ranges and batch
+      requests.
+- [x] Empty operation batches are no-ops.
+- [x] Operations can target a sheet by resolved sheet identity rather than
+      requiring callers to construct raw Google request objects.
+- [x] Focused adapter tests cover row/column delete and move request intent
+      without Google credentials.
 - [x] Relevant targeted Flutter tests pass.
 
 ### Blocked by
@@ -58,11 +58,11 @@ None - can start immediately.
 
 ### User stories covered
 
-- Saved S2 appears after Google accepts the write.
-- Brief Google Sheets read-after-write lag does not create a false failure.
-- Future refactors preserve the confirmation behavior.
+- Generic row and column delete operations exist in the Sheets library.
+- Generic row and column move operations exist in the Sheets library.
+- Future sheet features do not duplicate Google request construction.
 
-## Slice 2: Preserve Recoverable Logging State On True Save Failure
+## Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization Through The Workbook Port
 
 ### Type
 
@@ -70,38 +70,40 @@ None - can start immediately.
 
 ### What to build
 
-Keep true save failures visibly recoverable after the retrying confirmation
-path exists. If confirmation expires, the target row disappears, or a
-conflicting value appears in the target set position, the app should show a
-clear error and keep the attempted input available without falsely advancing
-the current set.
+Migrate existing WorkoutTracker-specific sheet reads, write-plan application,
+and workbook initialization to use the generic Sheets workbook port. This slice
+should preserve existing user behavior while moving request construction and
+sheet identity lookup behind the deeper interface.
 
-This slice protects against the opposite failure mode from Slice 1: retrying
-must not hide real write conflicts, schema drift, or manual sheet edits.
+The goal is consolidation, not product change. Existing validation, exercise
+authoring, formula healing, history block creation, and workbook reset behavior
+should continue to behave the same after the migration.
 
 ### Acceptance criteria
 
-- [ ] A confirmation timeout still shows a visible logging error.
-- [ ] A conflicting refreshed set value remains a failure rather than being
-      treated as success.
-- [ ] The attempted values remain visible and editable after true failure.
-- [ ] The current-set indicator and progress do not advance on true failure.
-- [ ] Retrying after a recoverable failure does not create duplicate or
-      out-of-order set entries.
-- [ ] Targeted controller and/or widget tests cover the true-failure path.
+- [ ] Active-sheet and Exercises reads still parse through the existing public
+      sheet-contract input path.
+- [ ] Existing active-sheet write plans still apply history column insertions,
+      row insertions, cell writes, and clears correctly.
+- [ ] Existing Exercises write plans still apply row appends, row updates, and
+      active-sheet formula updates correctly.
+- [ ] Workbook initialization no longer owns broad duplicate raw Google Sheets
+      request construction for operations covered by the workbook port.
+- [ ] Existing adapter and workbook initialization tests are preserved or
+      rewritten around the deeper public interface.
 - [ ] Relevant targeted Flutter tests pass.
 
 ### Blocked by
 
-- Slice 1: Confirm Logged Sets Across Stale Post-Write Reads
+- Slice 1: Create A Generic Sheets Workbook Operation Port
 
 ### User stories covered
 
-- Real failed saves leave input visible.
-- Conflicting sheet values are not hidden.
-- Retrying a set save keeps workout history clean.
+- Workbook initialization uses the same generic Sheets module as normal writes.
+- Request behavior is localized.
+- Existing sheet-contract behavior is preserved.
 
-## Slice 3: Repair Add-To-Workout Back Navigation Regression
+## Slice 3: Centralize Scoped Google Client Lifecycle
 
 ### Type
 
@@ -109,26 +111,27 @@ must not hide real write conflicts, schema drift, or manual sheet edits.
 
 ### What to build
 
-Recheck and repair the live-observed navigation path where Back from Add to
-workout returned to the account/sheet screen instead of workout setup. The user
-should return to the selected workout and history block after leaving exercise
-placement, including after placing an exercise and after using search.
+Introduce a small authenticated Google access module that owns requesting
+scoped authorization, creating authenticated clients or Google API objects,
+running an action, and closing resources. Replace repeated call-site lifecycle
+plumbing in validation, selection/creation, and live integration wiring where it
+can be done without broad behavior changes.
 
-Keep this slice narrow: it is a navigation/context repair, not a redesign of
-sheet selection, exercise authoring, or workout setup.
+This slice should keep Picker/account responsibilities separate from generic
+Sheets workbook operations. It only centralizes the lifecycle that is currently
+repeated across Google-facing callers.
 
 ### Acceptance criteria
 
-- [ ] Back from Add to workout returns to workout setup for the selected sheet.
-- [ ] Back after placing an exercise returns to the same workout and history
-      block.
-- [ ] Back after using exercise search does not route to the account/sheet
-      screen.
-- [ ] Existing account/sheet selection navigation remains available through
-      its explicit controls.
-- [ ] A focused widget test covers the observed live navigation path.
+- [ ] A public app-owned helper or interface runs scoped Google actions with
+      authenticated resources and guaranteed cleanup.
+- [ ] Spreadsheet validation and write services use the centralized lifecycle.
+- [ ] Spreadsheet creation or selected-spreadsheet resolution uses the
+      centralized lifecycle where practical.
+- [ ] Tests verify requested scopes and cleanup through fakes, without
+      simulating third-party Google behavior as product behavior.
+- [ ] Existing Google account and Picker behavior remains unchanged.
 - [ ] Relevant targeted Flutter tests pass.
-- [ ] The macOS release bundle is rebuilt if GUI-facing code changes.
 
 ### Blocked by
 
@@ -136,138 +139,11 @@ None - can start immediately.
 
 ### User stories covered
 
-- Add to workout preserves user context.
-- Building a plan does not require recovery from the sheet-selection screen.
+- Google API authorization and client lifecycle live in one place.
+- Picker, validation, creation, and integration wiring do not reinvent the same
+  lifecycle.
 
-## Slice 4: Run Live Multi-Set Confirmation Validation
-
-### Type
-
-`HITL`
-
-### What to build
-
-Run a GUI-only macOS validation pass after the stale-read confirmation fix and
-release rebuild. The app must be logged in to a valid Google account, and the
-tester must explicitly authorize live test workbook creation and writes. All
-app input must use visible mouse and keyboard interactions.
-
-The validation must compare app behavior with actual Google Sheet contents. The
-goal is to prove that S1 and S2 both appear in the app after save and both
-exist in the created workbook.
-
-### Acceptance criteria
-
-- [ ] The rebuilt macOS release app creates or selects a fresh test sheet
-      through the GUI.
-- [ ] A workout and history block are created or selected through the GUI.
-- [ ] An exercise is added and S1 plus S2 are logged through the GUI.
-- [ ] The app visibly shows the S2 save as successful after confirmation.
-- [ ] The logged list and progress update visibly after S2.
-- [ ] The created Google Sheet is inspected and contains the same S1 and S2
-      values that the app displayed.
-- [ ] The app is quit at the end of the pass.
-- [ ] Findings are recorded with exact visible reproduction steps and the
-      created sheet ID.
-
-### Current live findings and uncertainty
-
-- 2026-06-29: A GUI-only live pass created workbook
-  `1x-qr7mNUqXwZNf54PnlCMCrS6WpRKyg6NakYL1OkEZ0`, built workout
-  `Slice4 Test`, history block `Slice4 Block`, added Bench Press, and wrote
-  `S1=135x6@8` and `S2=140x6@8.5` to the Google Sheet. The app still reported
-  `saved set was not visible after refresh` for S2 in that pass, proving the
-  stale read-after-write confirmation failure mode. A follow-up AFK fix extended
-  bounded confirmation rereads, but the full Slice 4 live pass still needs to be
-  rerun end to end before this slice can be marked complete.
-- 2026-06-29 user HITL clarification: after clicking `Create sheet`, the app
-  reached the expected setup screen with Workout and History block selectors
-  visible. This means the earlier Computer Use failure to activate `Create
-  sheet` should be treated as a live-validation tooling/click-target ambiguity,
-  not as confirmed app product behavior.
-- 2026-06-29 user HITL clarification: using the workout dropdown arrow and
-  choosing `Add workout...` allowed a human tester to create workout `Test`,
-  after which the workout dropdown showed `Test (0/0 done)`. This reduces
-  confidence that the earlier Computer Use text-entry failures in the Add
-  workout prompt represent an app bug. Keep the prompt-focus test coverage, but
-  do not treat the human Add workout path as blocked without a fresh observed
-  failure.
-- 2026-06-29 user HITL observation: after `Add history block` and entering a
-  label such as `S1` or `S2`, the history dropdown did not refresh immediately;
-  it showed the new item after roughly one second. This is not yet known to be a
-  correctness failure because history-block creation writes to Google and then
-  revalidates the workbook, but it is a UX/reliability ambiguity. The next live
-  pass should record whether a busy/disabled state is visible during this delay
-  and whether the dropdown consistently lands on the new history block after the
-  refresh completes.
-
-### Blocked by
-
-- Slice 1: Confirm Logged Sets Across Stale Post-Write Reads
-- Slice 2: Preserve Recoverable Logging State On True Save Failure
-- User must provide live Google login/authorization and permit test writes.
-
-### User stories covered
-
-- In-gym multi-set logging can be trusted.
-- Live validation compares app state with the sheet source of truth.
-
-## Slice 5: Repeat Black-Box GUI Regression Pass
-
-### Type
-
-`HITL`
-
-### What to build
-
-Repeat the macOS GUI-only stress pass after implementation fixes, targeted
-tests, release rebuild, and Slice 4 live confirmation validation. The pass should
-create a new sheet, add custom canonical exercises, build at least two workouts,
-log multiple sets including S2 or later, and try plausible gym-use
-interactions.
-
-The tester must not use accessibility setters, direct APIs, source inspection,
-or direct sheet edits to drive the app. Spreadsheet inspection is allowed only
-as validation evidence after GUI actions.
-
-### Acceptance criteria
-
-- [ ] The pass uses only visible mouse and keyboard interactions to operate the
-      app.
-- [ ] A new Google-backed sheet is created through the GUI.
-- [ ] Several custom canonical exercises are added through the GUI.
-- [ ] At least two workouts are built through the GUI.
-- [ ] Multiple sets, including S2 or later, are logged through the GUI.
-- [ ] Add-to-workout back navigation preserves workout setup context during the
-      pass.
-- [ ] The created Google Sheet is inspected after the pass and matches the
-      visible logged app state.
-- [ ] The app is quit when the pass is complete or when a blocker is hit.
-- [ ] Pain points and blockers are reported with reproduction steps.
-
-### Blocked by
-
-- Slice 3: Repair Add-To-Workout Back Navigation Regression
-- Slice 4: Run Live Multi-Set Confirmation Validation
-- User must provide live Google login/authorization and permit test writes.
-
-### Carry-forward notes from Slice 4
-
-- Do not classify Computer Use-only failures to click `Create sheet` or type in
-  the Add workout prompt as product blockers unless they are reproduced by a
-  human tester or by a macOS-specific app-level test. User HITL evidence shows
-  the sheet-creation and Add workout paths can work through normal visible UI.
-- Treat the delayed history-block dropdown refresh as a live UX item to observe
-  during this stress pass. If the app gives no visible pending state or the
-  delay causes plausible duplicate submissions/confusion, convert that finding
-  into a narrow AFK implementation slice before completing Slice 5.
-
-### User stories covered
-
-- The MVP flow works under realistic gym use.
-- GUI validation reflects actual user interactions and sheet contents.
-
-## Slice 6: Clean Up Temporary GUI Tests
+## Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
 
 ### Type
 
@@ -275,31 +151,173 @@ as validation evidence after GUI actions.
 
 ### What to build
 
-Use the `test-cleanup` skill to review tests added during the remaining
-reliability work. Keep durable behavior tests that protect user-facing
-contracts and remove or rewrite tests that only pin temporary implementation
-details.
+Add sheet-contract behavior for planning deletion of a primary workout
+exercise placement from the active sheet. The plan should delete the selected
+primary row and every backup row attached to it by the parsed sheet model. It
+must leave unrelated primary rows, unrelated backups, history blocks, and
+canonical Exercises rows intact.
 
-This slice should preserve focused coverage for stale read-after-write
-confirmation, true failure recovery, Add-to-workout navigation, and the public
-MVP logging flow.
+The plan should include expectations that reject the delete if the target row
+or attached backup group no longer matches the parsed sheet used to create the
+plan.
 
 ### Acceptance criteria
 
-- [ ] Tests assert observable behavior through public app, controller, widget,
-      or adapter interfaces.
-- [ ] Tests do not over-constrain private helper structure, retry internals, or
-      incidental widget shape.
-- [ ] Durable tests still cover stale post-write confirmation success, true
-      save-failure recovery, and Add-to-workout navigation.
-- [ ] Relevant targeted tests pass.
-- [ ] The macOS release bundle is rebuilt if any GUI-facing code changes.
+- [ ] Planning delete for a primary workout slot produces row deletion intent
+      for the primary row and its attached backups.
+- [ ] The planned delete does not include canonical Exercises rows.
+- [ ] The planned delete leaves unrelated workout rows and backups untouched.
+- [ ] The planned delete preserves history block columns and unrelated history.
+- [ ] The plan rejects if the primary row identity, workout, or backup state
+      changed before apply.
+- [ ] The plan rejects if the attached backup group changed before apply.
+- [ ] Public sheet-contract tests cover no-backup, one-backup, and
+      multiple-backup cases.
+- [ ] Relevant targeted Flutter tests pass.
 
 ### Blocked by
 
-- Slice 5: Repeat Black-Box GUI Regression Pass
+None - can start immediately.
 
 ### User stories covered
 
-- Future refactors keep the MVP GUI path reliable.
-- The test suite stays maintainable after TDD.
+- Deleting a primary exercise also removes its backup exercises.
+- Deleting one primary leaves unrelated workout rows untouched.
+- Canonical exercise definitions remain available.
+- Stale delete plans do not delete the wrong rows.
+
+## Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
+
+### Type
+
+`AFK`
+
+### What to build
+
+Expose workout exercise deletion through the app's service/controller path.
+The service should reread the spreadsheet, validate the delete plan against the
+fresh parsed sheet, apply row deletions through the generic Sheets workbook
+port, and return a refreshed report.
+
+This slice provides a complete non-visual behavior path for deleting a workout
+exercise placement and associated backups.
+
+### Acceptance criteria
+
+- [ ] The app service/controller exposes a public delete-workout-exercise
+      operation using a primary workout slot or sheet row selected from the
+      current parsed report.
+- [ ] The operation rereads the sheet before applying delete.
+- [ ] The operation returns write rejections instead of deleting when
+      expectations fail.
+- [ ] A successful delete applies structural row delete operations through the
+      generic Sheets workbook port.
+- [ ] A successful delete returns a refreshed report without the primary or
+      attached backups.
+- [ ] The selected workout and history block remain usable after refresh when
+      they still exist.
+- [ ] Targeted service/controller tests cover success and stale rejection.
+- [ ] Relevant targeted Flutter tests pass.
+
+### Blocked by
+
+- Slice 1: Create A Generic Sheets Workbook Operation Port
+- Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization
+  Through The Workbook Port
+- Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
+
+### User stories covered
+
+- The workout overview refreshes after delete.
+- Manual sheet edits cannot cause the wrong rows to be deleted.
+- Deleting a workout placement does not delete canonical exercise definitions.
+
+## Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
+
+### Type
+
+`AFK`
+
+### What to build
+
+Add Delete exercise to the existing primary exercise action menu that is opened
+from the visible overflow button, right-click, and long-press. Selecting Delete
+exercise must show a confirmation dialog before any write runs. Confirming the
+dialog should call the service/controller delete path and refresh the workout
+overview; cancelling should leave the sheet and app state unchanged.
+
+Keep this slice focused on the existing workout overview menu. Do not redesign
+the exercise manager or add canonical exercise deletion.
+
+### Acceptance criteria
+
+- [ ] The primary exercise action menu shows Add backup exercise and Delete
+      exercise.
+- [ ] The menu remains reachable from the visible overflow button.
+- [ ] The menu remains reachable from right-click on desktop.
+- [ ] The menu remains reachable from long-press on touch.
+- [ ] Selecting Delete exercise opens a confirmation dialog before any delete
+      operation runs.
+- [ ] The confirmation dialog names the exercise and warns that associated
+      backups and logged history will be deleted.
+- [ ] Cancelling the dialog does not call the delete path and leaves the
+      visible overview unchanged.
+- [ ] Confirming the dialog calls the delete path and removes the primary plus
+      attached backups after refresh.
+- [ ] A failed or rejected delete leaves a visible error and does not hide the
+      target row from the last confirmed report.
+- [ ] Focused widget tests cover menu contents, cancel, and confirm behavior.
+- [ ] Relevant targeted Flutter tests pass.
+
+### Blocked by
+
+- Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row
+  Deletes
+
+### User stories covered
+
+- The action menu includes Delete exercise.
+- The user must confirm an irreversible delete.
+- Associated backups and history are explicitly called out.
+- The workout overview updates after successful delete.
+
+## Slice 7: Clean Up Refactor And Feature Tests
+
+### Type
+
+`AFK`
+
+### What to build
+
+Use the test-cleanup skill to review tests added during this refactor and
+feature work. Preserve durable behavior tests and remove or rewrite tests that
+only pin temporary TDD scaffolding, private helper structure, or incidental
+widget composition.
+
+This slice should leave a small, high-signal safety net around the generic
+Sheets workbook port, authenticated Google lifecycle, delete planning,
+service/controller application, and delete confirmation UI.
+
+### Acceptance criteria
+
+- [ ] Tests assert observable behavior through public sheet-contract, adapter,
+      service, controller, or widget interfaces.
+- [ ] Tests do not over-constrain private helper names, internal batching
+      order beyond externally meaningful ordering, or incidental widget tree
+      shape.
+- [ ] Durable tests still cover row/column delete and move operations.
+- [ ] Durable tests still cover primary-plus-backups delete planning and stale
+      rejection.
+- [ ] Durable tests still cover confirmation-required UI behavior.
+- [ ] Relevant targeted Flutter tests pass.
+- [ ] Any architecture guard or review step requested by the active slice is
+      run and findings are resolved or documented.
+
+### Blocked by
+
+- Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
+
+### User stories covered
+
+- Future refactors keep the generic Sheets and delete behavior reliable.
+- The test suite remains maintainable after TDD.
