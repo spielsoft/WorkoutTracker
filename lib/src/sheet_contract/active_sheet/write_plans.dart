@@ -4,6 +4,7 @@ class ActiveSheetWritePlan {
   ActiveSheetWritePlan({
     Iterable<HistoryColumnInsertion> columnInsertions = const [],
     Iterable<ActiveSheetRowInsertion> rowInsertions = const [],
+    Iterable<ActiveSheetRowDeletion> rowDeletions = const [],
     Iterable<CellUpdate> cellUpdates = const [],
     Iterable<ActiveSheetWriteExpectation> expectations = const [],
     this.nextSetPosition,
@@ -13,6 +14,7 @@ class ActiveSheetWritePlan {
        rowInsertions = List<ActiveSheetRowInsertion>.unmodifiable(
          rowInsertions,
        ),
+       rowDeletions = List<ActiveSheetRowDeletion>.unmodifiable(rowDeletions),
        cellUpdates = List<CellUpdate>.unmodifiable(cellUpdates),
        expectations = List<ActiveSheetWriteExpectation>.unmodifiable(
          expectations,
@@ -20,6 +22,7 @@ class ActiveSheetWritePlan {
 
   final List<HistoryColumnInsertion> columnInsertions;
   final List<ActiveSheetRowInsertion> rowInsertions;
+  final List<ActiveSheetRowDeletion> rowDeletions;
   final List<CellUpdate> cellUpdates;
   final List<ActiveSheetWriteExpectation> expectations;
   final SetPosition? nextSetPosition;
@@ -42,6 +45,11 @@ class ActiveSheetWritePlan {
       ..sort(
         (first, second) =>
             second.sheetColumnNumber.compareTo(first.sheetColumnNumber),
+      );
+    final sortedRowDeletions = [...rowDeletions]
+      ..sort(
+        (first, second) =>
+            second.sheetRowNumber.compareTo(first.sheetRowNumber),
       );
     if (sortedInsertions.isNotEmpty) {
       while (preview.length < 2) {
@@ -96,6 +104,18 @@ class ActiveSheetWritePlan {
       row[columnIndex] = update.value;
     }
 
+    for (final deletion in sortedRowDeletions) {
+      final rowIndex = deletion.sheetRowNumber - 1;
+      if (rowIndex < 0 || rowIndex >= preview.length) {
+        continue;
+      }
+      final endIndex = rowIndex + deletion.rowCount;
+      preview.removeRange(
+        rowIndex,
+        endIndex > preview.length ? preview.length : endIndex,
+      );
+    }
+
     return preview.map((row) => List<String>.unmodifiable(row)).toList();
   }
 
@@ -105,6 +125,7 @@ class ActiveSheetWritePlan {
         other is ActiveSheetWritePlan &&
             _listEquals(columnInsertions, other.columnInsertions) &&
             _listEquals(rowInsertions, other.rowInsertions) &&
+            _listEquals(rowDeletions, other.rowDeletions) &&
             _listEquals(cellUpdates, other.cellUpdates) &&
             _listEquals(expectations, other.expectations) &&
             nextSetPosition == other.nextSetPosition;
@@ -114,6 +135,7 @@ class ActiveSheetWritePlan {
   int get hashCode => Object.hash(
     Object.hashAll(columnInsertions),
     Object.hashAll(rowInsertions),
+    Object.hashAll(rowDeletions),
     Object.hashAll(cellUpdates),
     Object.hashAll(expectations),
     nextSetPosition,
@@ -124,6 +146,7 @@ class ActiveSheetWritePlan {
     return 'ActiveSheetWritePlan('
         'columnInsertions: $columnInsertions, '
         'rowInsertions: $rowInsertions, '
+        'rowDeletions: $rowDeletions, '
         'cellUpdates: $cellUpdates, '
         'expectations: $expectations, '
         'nextSetPosition: $nextSetPosition'
@@ -301,6 +324,69 @@ class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
     return 'ActiveSheetRowValuesExpectation('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedValues: $expectedValues'
+        ')';
+  }
+}
+
+class ActiveSheetBackupGroupExpectation extends ActiveSheetWriteExpectation {
+  ActiveSheetBackupGroupExpectation({
+    required this.primarySheetRowNumber,
+    required Iterable<ActiveSheetRowExpectation> expectedBackups,
+  }) : expectedBackups = List<ActiveSheetRowExpectation>.unmodifiable(
+         expectedBackups,
+       );
+
+  final int primarySheetRowNumber;
+  final List<ActiveSheetRowExpectation> expectedBackups;
+
+  @override
+  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+    WorkoutSlot? primary;
+    for (final slot in sheet.primarySlots) {
+      if (slot.sheetRowNumber == primarySheetRowNumber) {
+        primary = slot;
+        break;
+      }
+    }
+    final actualBackups = [
+      if (primary != null)
+        for (final backup in primary.backups)
+          ActiveSheetRowExpectation(
+            sheetRowNumber: backup.sheetRowNumber,
+            exercise: backup.exercise,
+            workout: backup.workout,
+            isBackup: backup.isBackup,
+          ),
+    ];
+    if (_listEquals(actualBackups, expectedBackups)) {
+      return const [];
+    }
+    return [
+      ActiveSheetWriteRejection(
+        'Backup group for row $primarySheetRowNumber no longer matches '
+        'the planned delete.',
+      ),
+    ];
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ActiveSheetBackupGroupExpectation &&
+            primarySheetRowNumber == other.primarySheetRowNumber &&
+            _listEquals(expectedBackups, other.expectedBackups);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(primarySheetRowNumber, Object.hashAll(expectedBackups));
+  }
+
+  @override
+  String toString() {
+    return 'ActiveSheetBackupGroupExpectation('
+        'primarySheetRowNumber: $primarySheetRowNumber, '
+        'expectedBackups: $expectedBackups'
         ')';
   }
 }
@@ -977,6 +1063,35 @@ class ActiveSheetRowInsertion {
   }
 }
 
+class ActiveSheetRowDeletion {
+  const ActiveSheetRowDeletion({
+    required this.sheetRowNumber,
+    this.rowCount = 1,
+  });
+
+  final int sheetRowNumber;
+  final int rowCount;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ActiveSheetRowDeletion &&
+            sheetRowNumber == other.sheetRowNumber &&
+            rowCount == other.rowCount;
+  }
+
+  @override
+  int get hashCode => Object.hash(sheetRowNumber, rowCount);
+
+  @override
+  String toString() {
+    return 'ActiveSheetRowDeletion('
+        'sheetRowNumber: $sheetRowNumber, '
+        'rowCount: $rowCount'
+        ')';
+  }
+}
+
 class CellUpdate {
   const CellUpdate({
     required this.sheetRowNumber,
@@ -1295,6 +1410,33 @@ class _ActiveSheetWritePlanner {
       isBackup: true,
       parentPrimary: primary,
       metadata: metadata,
+    );
+  }
+
+  ActiveSheetWritePlan planPrimaryWorkoutExerciseDeletion({
+    required int primarySheetRowNumber,
+  }) {
+    final primary = _primarySlotForRow(primarySheetRowNumber);
+    if (primary == null) {
+      return ActiveSheetWritePlan();
+    }
+    return ActiveSheetWritePlan(
+      rowDeletions: [
+        ActiveSheetRowDeletion(
+          sheetRowNumber: primary.sheetRowNumber,
+          rowCount: 1 + primary.backups.length,
+        ),
+      ],
+      expectations: [
+        _rowExpectation(primary),
+        for (final backup in primary.backups) _rowExpectation(backup),
+        ActiveSheetBackupGroupExpectation(
+          primarySheetRowNumber: primary.sheetRowNumber,
+          expectedBackups: [
+            for (final backup in primary.backups) _rowExpectation(backup),
+          ],
+        ),
+      ],
     );
   }
 

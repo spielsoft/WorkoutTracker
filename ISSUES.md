@@ -15,7 +15,7 @@ slice is complete. Preserve unrelated worktree changes.
 - [x] Slice 1: Create A Generic Sheets Workbook Operation Port
 - [x] Slice 2: Route WorkoutTracker Sheet Reads, Writes, And Initialization Through The Workbook Port
 - [x] Slice 3: Centralize Scoped Google Client Lifecycle
-- [ ] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
+- [x] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
 - [ ] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
 - [ ] Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
 - [ ] Slice 7: Clean Up Refactor And Feature Tests
@@ -163,17 +163,17 @@ plan.
 
 ### Acceptance criteria
 
-- [ ] Planning delete for a primary workout slot produces row deletion intent
+- [x] Planning delete for a primary workout slot produces row deletion intent
       for the primary row and its attached backups.
-- [ ] The planned delete does not include canonical Exercises rows.
-- [ ] The planned delete leaves unrelated workout rows and backups untouched.
-- [ ] The planned delete preserves history block columns and unrelated history.
-- [ ] The plan rejects if the primary row identity, workout, or backup state
+- [x] The planned delete does not include canonical Exercises rows.
+- [x] The planned delete leaves unrelated workout rows and backups untouched.
+- [x] The planned delete preserves history block columns and unrelated history.
+- [x] The plan rejects if the primary row identity, workout, or backup state
       changed before apply.
-- [ ] The plan rejects if the attached backup group changed before apply.
-- [ ] Public sheet-contract tests cover no-backup, one-backup, and
+- [x] The plan rejects if the attached backup group changed before apply.
+- [x] Public sheet-contract tests cover no-backup, one-backup, and
       multiple-backup cases.
-- [ ] Relevant targeted Flutter tests pass.
+- [x] Relevant targeted Flutter tests pass.
 
 ### Blocked by
 

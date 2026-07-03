@@ -219,6 +219,14 @@ class ParsedActiveSheet {
     );
   }
 
+  ActiveSheetWritePlan planPrimaryWorkoutExerciseDeletion({
+    required int primarySheetRowNumber,
+  }) {
+    return _ActiveSheetWritePlanner(this).planPrimaryWorkoutExerciseDeletion(
+      primarySheetRowNumber: primarySheetRowNumber,
+    );
+  }
+
   ActiveSheetWritePlan planFormulaHealing({
     required int activeSheetRowNumber,
     int? selectedExerciseSheetRowNumber,

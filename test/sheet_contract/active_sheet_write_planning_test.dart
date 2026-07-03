@@ -940,6 +940,332 @@ void main() {
     ]);
   });
 
+  test('plans deleting a primary workout exercise with no backups', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '225x5@8',
+      ],
+      [
+        'Lunge',
+        '2',
+        '10',
+        '7',
+        '90s',
+        '',
+        '',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '50x10@7',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      primarySheetRowNumber: 3,
+    );
+
+    expect(plan.rowDeletions, const [
+      ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 1),
+    ]);
+    expect(plan.rowInsertions, isEmpty);
+    expect(plan.columnInsertions, isEmpty);
+    expect(plan.cellUpdates, isEmpty);
+    expect(plan.previewRowsAfterApplying(rows), [rows[0], rows[1], rows[3]]);
+  });
+
+  test(
+    'plans deleting a primary workout exercise with one attached backup',
+    () {
+      final rows = [
+        historyHeaderRow(['Session A', '']),
+        setLabelRow(['S1', 'S2']),
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          'primary notes',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '225x5@8',
+          '',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '12',
+          '8',
+          '2 min',
+          '',
+          'backup notes',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          'TRUE',
+          '12@8',
+          '',
+        ],
+        [
+          'Bench Press',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          'upper notes',
+          defaultExerciseLogFormat,
+          'Upper',
+          '',
+          '185x6@8',
+          '',
+        ],
+      ];
+      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+      final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+        primarySheetRowNumber: 3,
+      );
+
+      expect(plan.rowDeletions, const [
+        ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 2),
+      ]);
+      expect(plan.cellUpdates, isEmpty);
+      expect(plan.previewRowsAfterApplying(rows), [rows[0], rows[1], rows[4]]);
+    },
+  );
+
+  test('plans deleting a primary workout exercise with multiple backups', () {
+    final rows = [
+      historyHeaderRow(['Session A', '']),
+      setLabelRow(['S1', 'S2']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        'primary notes',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '225x5@8',
+        '',
+      ],
+      [
+        'Leg Press',
+        '3',
+        '12',
+        '8',
+        '2 min',
+        '',
+        'backup notes',
+        '{Reps}[@]{RPE}',
+        'Legs',
+        'TRUE',
+        '12@8',
+        '',
+      ],
+      [
+        'Hack Squat',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        'second backup',
+        '{Reps}[@]{RPE}',
+        'Legs',
+        'TRUE',
+        '10@8',
+        '',
+      ],
+      [
+        'Bench Press',
+        '4',
+        '6',
+        '8',
+        '3 min',
+        '',
+        'upper notes',
+        defaultExerciseLogFormat,
+        'Upper',
+        '',
+        '185x6@8',
+        '',
+      ],
+      [
+        'Chest Press',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        'upper backup',
+        '{Reps}[@]{RPE}',
+        'Upper',
+        'TRUE',
+        '10@8',
+        '',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      primarySheetRowNumber: 3,
+    );
+    final previewRows = plan.previewRowsAfterApplying(rows);
+    final previewSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
+
+    expect(plan.rowDeletions, const [
+      ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 3),
+    ]);
+    expect(previewRows, [rows[0], rows[1], rows[5], rows[6]]);
+    expect(previewSheet.primarySlots.map((slot) => slot.exercise), [
+      'Bench Press',
+    ]);
+    expect(
+      previewSheet.primarySlots.single.backups.map((slot) => slot.exercise),
+      ['Chest Press'],
+    );
+  });
+
+  test(
+    'rejects deleting a primary workout exercise when backup group changed',
+    () {
+      final rows = [
+        historyHeaderRow(['Session A']),
+        setLabelRow(['S1']),
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '225x5@8',
+        ],
+        [
+          'Leg Press',
+          '3',
+          '12',
+          '8',
+          '2 min',
+          '',
+          '',
+          '{Reps}[@]{RPE}',
+          'Legs',
+          'TRUE',
+          '12@8',
+        ],
+        [
+          'Lunge',
+          '2',
+          '10',
+          '7',
+          '90s',
+          '',
+          '',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '50x10@7',
+        ],
+      ];
+      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+      final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+        primarySheetRowNumber: 3,
+      );
+      final changedRows = rows.map((row) => [...row]).toList();
+      changedRows.insert(4, [
+        'Hack Squat',
+        '3',
+        '10',
+        '8',
+        '2 min',
+        '',
+        '',
+        '{Reps}[@]{RPE}',
+        'Legs',
+        'TRUE',
+        '',
+      ]);
+      final changedSheet = parseActiveSheet(
+        ActiveSheetInput(rows: changedRows),
+      );
+
+      expect(plan.writeRejections(changedSheet), [
+        const ActiveSheetWriteRejection(
+          'Backup group for row 3 no longer matches the planned delete.',
+        ),
+      ]);
+    },
+  );
+
+  test(
+    'rejects deleting a primary workout exercise when primary row changed',
+    () {
+      final rows = [
+        historyHeaderRow(['Session A']),
+        setLabelRow(['S1']),
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '225x5@8',
+        ],
+      ];
+      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+      final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+        primarySheetRowNumber: 3,
+      );
+
+      for (final mutation in [
+        (List<List<String>> changedRows) => changedRows[2][0] = 'Front Squat',
+        (List<List<String>> changedRows) => changedRows[2][8] = 'Upper',
+        (List<List<String>> changedRows) => changedRows[2][9] = 'TRUE',
+      ]) {
+        final changedRows = rows.map((row) => [...row]).toList();
+        mutation(changedRows);
+        final changedSheet = parseActiveSheet(
+          ActiveSheetInput(rows: changedRows),
+        );
+
+        expect(plan.writeRejections(changedSheet), [
+          const ActiveSheetWriteRejection(
+            'Row 3 no longer matches Squat in workout Legs.',
+          ),
+        ]);
+      }
+    },
+  );
+
   test(
     'plans canonical exercise reorder as metadata-preserving row updates with formula repairs',
     () {
