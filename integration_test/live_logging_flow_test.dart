@@ -25,7 +25,7 @@ void main() {
   http.Client? client;
   late DevelopmentSheetResetHarness resetHarness;
   late GoogleSheetsReadAdapter readAdapter;
-  late SpreadsheetValidationService validationService;
+  late WorkbookCommandService workbookCommands;
 
   setUpAll(() async {
     if (!runLiveGoogleTests) {
@@ -47,7 +47,7 @@ void main() {
     readAdapter = GoogleSheetsReadAdapter(
       client: GoogleApisSheetsWorkbookClient(api),
     );
-    validationService = GoogleSignInSpreadsheetValidationService(
+    workbookCommands = GoogleSignInSpreadsheetValidationService(
       authorizationGateway: authorizationGateway,
     );
   });
@@ -67,7 +67,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: validationService,
+          workbookCommands: workbookCommands,
           initialSpreadsheetText: workoutTrackerDevelopmentSpreadsheetUrl,
         ),
       );

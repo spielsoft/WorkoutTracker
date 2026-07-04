@@ -55,8 +55,7 @@ class _AddExercisePlacementIntent {
 
 class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
-    required this.validationService,
-    this.exerciseAuthoringService,
+    required this.workbookCommands,
     this.accountSession,
     this.appStateStore,
     this.initialSpreadsheetText = '',
@@ -66,8 +65,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     super.key,
   });
 
-  final SpreadsheetValidationService validationService;
-  final ExerciseAuthoringService? exerciseAuthoringService;
+  final WorkbookCommandService workbookCommands;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
@@ -85,8 +83,7 @@ class WorkoutTrackerApp extends StatelessWidget {
       ),
       scrollBehavior: const WorkoutTrackerScrollBehavior(),
       home: SpreadsheetValidationShell(
-        validationService: validationService,
-        exerciseAuthoringService: exerciseAuthoringService,
+        workbookCommands: workbookCommands,
         accountSession: accountSession,
         appStateStore: appStateStore,
         initialSpreadsheetText: initialSpreadsheetText,
@@ -410,8 +407,7 @@ class _SpreadsheetTextFallback extends StatelessWidget {
 
 class SpreadsheetValidationShell extends StatefulWidget {
   const SpreadsheetValidationShell({
-    required this.validationService,
-    this.exerciseAuthoringService,
+    required this.workbookCommands,
     this.accountSession,
     this.appStateStore,
     required this.initialSpreadsheetText,
@@ -421,8 +417,7 @@ class SpreadsheetValidationShell extends StatefulWidget {
     super.key,
   });
 
-  final SpreadsheetValidationService validationService;
-  final ExerciseAuthoringService? exerciseAuthoringService;
+  final WorkbookCommandService workbookCommands;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
@@ -455,8 +450,7 @@ class _SpreadsheetValidationShellState
   void initState() {
     super.initState();
     _controller = WorkoutTrackerController(
-      validationService: widget.validationService,
-      exerciseAuthoringService: widget.exerciseAuthoringService,
+      workbookCommands: widget.workbookCommands,
     );
     _selectedSpreadsheet = widget.initialSelectedSpreadsheet;
     _spreadsheetController = TextEditingController(
@@ -1192,22 +1186,16 @@ class _SpreadsheetValidationShellState
                                 : _openCanonicalExerciseEdit,
                             highlightedCanonicalExerciseSheetRowNumber:
                                 _highlightedCanonicalExerciseSheetRowNumber,
-                            onReorderCanonicalExercises:
-                                isBusy ||
-                                    widget.exerciseAuthoringService == null
+                            onReorderCanonicalExercises: isBusy
                                 ? null
                                 : _controller.reorderCanonicalExercises,
-                            onReorderWorkoutExercises:
-                                isBusy ||
-                                    widget.exerciseAuthoringService == null
+                            onReorderWorkoutExercises: isBusy
                                 ? null
                                 : _controller.reorderWorkoutExercises,
                             onOpenExercise: _openExercise,
                             onAddPrimaryExercise: _openPrimaryExerciseAdd,
                             onAddBackupExercise: _openBackupExerciseAdd,
-                            onDeleteWorkoutExercise:
-                                isBusy ||
-                                    widget.exerciseAuthoringService == null
+                            onDeleteWorkoutExercise: isBusy
                                 ? null
                                 : _confirmDeleteWorkoutExercise,
                             exerciseAddReturnScreen: _exerciseAddReturnScreen,

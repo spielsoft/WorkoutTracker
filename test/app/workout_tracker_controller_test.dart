@@ -31,7 +31,7 @@ void main() {
           '',
         ],
       ]);
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       controller.openExercise(99);
 
@@ -63,7 +63,7 @@ void main() {
         final service = TestSpreadsheetValidationService(
           _parseWorkbookFixture(fixture),
         );
-        final controller = WorkoutTrackerController(validationService: service);
+        final controller = WorkoutTrackerController(workbookCommands: service);
 
         final validated = await controller.validateSpreadsheetSelection(
           'spreadsheet-id',
@@ -100,7 +100,7 @@ void main() {
         ],
         ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '', '', ''],
       ]);
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -171,7 +171,7 @@ void main() {
           '',
         ],
       ]);
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
       controller.selectWorkout('Missing');
@@ -199,7 +199,7 @@ void main() {
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ['Leg Press', '3', '10', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
     ]);
-    final controller = WorkoutTrackerController(validationService: service);
+    final controller = WorkoutTrackerController(workbookCommands: service);
 
     await controller.validateSpreadsheetSelection('spreadsheet-id');
     controller.openExercise(3);
@@ -222,7 +222,7 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
         ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '45s@8'],
       ]);
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
       controller.selectWorkout('Legs');
@@ -268,10 +268,7 @@ void main() {
         ],
         ['Lunge', '2', '10', '7', '90s', '', '', '', 'Legs', '', '50x10@7'],
       ]);
-      final controller = WorkoutTrackerController(
-        validationService: service,
-        exerciseAuthoringService: service,
-      );
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
 
@@ -299,7 +296,7 @@ void main() {
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
 
@@ -335,7 +332,7 @@ void main() {
       visibleSheet: visibleSheet,
       currentSheet: changedSheet,
     );
-    final controller = WorkoutTrackerController(validationService: service);
+    final controller = WorkoutTrackerController(workbookCommands: service);
 
     await controller.validateSpreadsheetSelection('spreadsheet-id');
     final plan = visibleSheet.planSetLoggingWrite(
@@ -378,7 +375,7 @@ void main() {
         ),
       );
       final service = _StaleWriteValidationService(visibleSheet);
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -452,7 +449,7 @@ void main() {
         writeReportSheet: staleSheet,
         retrySheets: [staleSheet, staleSheet, staleSheet, freshSheet],
       );
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -530,7 +527,7 @@ void main() {
         writeReportSheet: refreshedSheet,
         retrySheets: [refreshedSheet],
       );
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -614,7 +611,7 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: repairedSheet,
       );
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
 
@@ -651,7 +648,7 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
       );
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
 
@@ -683,7 +680,7 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
       );
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
 
@@ -709,7 +706,7 @@ void main() {
     'blank spreadsheet selection reports a user error without calling the service',
     () async {
       final controller = WorkoutTrackerController(
-        validationService: TestSpreadsheetValidationService.fromRows([
+        workbookCommands: TestSpreadsheetValidationService.fromRows([
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
           ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -722,7 +719,7 @@ void main() {
       expect(controller.error, 'Enter a Google Sheets URL or spreadsheet ID.');
       expect(controller.report, isNull);
       expect(
-        (controller.validationService as TestSpreadsheetValidationService)
+        (controller.workbookCommands as TestSpreadsheetValidationService)
             .spreadsheetIds,
         isEmpty,
       );
@@ -733,7 +730,7 @@ void main() {
     'disabled Google Sheets API errors explain the project setup action',
     () async {
       final controller = WorkoutTrackerController(
-        validationService: _FailingSpreadsheetValidationService(
+        workbookCommands: _FailingSpreadsheetValidationService(
           'DetailedApiRequestError(status: 403, message: Google Sheets API '
           'has not been used in project 657151291920 before or it is disabled. '
           'Enable it by visiting https://console.developers.google.com/apis/'
@@ -774,7 +771,7 @@ void main() {
         activeSheet: activeSheet,
         writeCompleter: writeCompleter,
       );
-      final controller = WorkoutTrackerController(validationService: service);
+      final controller = WorkoutTrackerController(workbookCommands: service);
 
       await controller.validateSpreadsheetSelection('spreadsheet-id');
 
@@ -792,7 +789,7 @@ void main() {
   );
 }
 
-class _RejectingWriteValidationService implements SpreadsheetValidationService {
+class _RejectingWriteValidationService extends WorkbookCommandService {
   _RejectingWriteValidationService({
     required this.visibleSheet,
     required this.currentSheet,
@@ -834,7 +831,7 @@ class _RejectingWriteValidationService implements SpreadsheetValidationService {
   }
 }
 
-class _StaleWriteValidationService implements SpreadsheetValidationService {
+class _StaleWriteValidationService extends WorkbookCommandService {
   _StaleWriteValidationService(this.activeSheet);
 
   final ParsedActiveSheet activeSheet;
@@ -864,8 +861,7 @@ class _StaleWriteValidationService implements SpreadsheetValidationService {
   }
 }
 
-class _StaleThenFreshWriteValidationService
-    implements SpreadsheetValidationService {
+class _StaleThenFreshWriteValidationService extends WorkbookCommandService {
   _StaleThenFreshWriteValidationService({
     required this.initialSheet,
     required this.writeReportSheet,
@@ -913,8 +909,7 @@ class _StaleThenFreshWriteValidationService
   }
 }
 
-class _FailingSpreadsheetValidationService
-    implements SpreadsheetValidationService {
+class _FailingSpreadsheetValidationService extends WorkbookCommandService {
   const _FailingSpreadsheetValidationService(this.message);
 
   final String message;
@@ -936,8 +931,7 @@ class _FailingSpreadsheetValidationService
   }
 }
 
-class _PendingCreateHistoryBlockService
-    implements SpreadsheetValidationService {
+class _PendingCreateHistoryBlockService extends WorkbookCommandService {
   _PendingCreateHistoryBlockService({
     required this.activeSheet,
     required this.writeCompleter,
@@ -966,7 +960,7 @@ class _PendingCreateHistoryBlockService
   }
 }
 
-class _FormulaRepairValidationService implements SpreadsheetValidationService {
+class _FormulaRepairValidationService extends WorkbookCommandService {
   _FormulaRepairValidationService({
     required this.initialSheet,
     required this.repairedSheet,

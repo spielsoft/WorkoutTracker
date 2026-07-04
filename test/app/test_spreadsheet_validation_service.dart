@@ -1,8 +1,7 @@
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
-class TestSpreadsheetValidationService
-    implements SpreadsheetValidationService, ExerciseAuthoringService {
+class TestSpreadsheetValidationService implements WorkbookCommandService {
   TestSpreadsheetValidationService(ParsedActiveSheet activeSheet)
     : _activeSheet = activeSheet,
       _rows = null;

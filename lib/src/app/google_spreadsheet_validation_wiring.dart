@@ -9,8 +9,7 @@ import 'spreadsheet_validation_core.dart';
 typedef GoogleSheetsWorkbookClientFactory =
     SheetsWorkbookClient Function(sheets.SheetsApi api);
 
-class GoogleSpreadsheetWorkbookAccess
-    implements SpreadsheetValidationService, ExerciseAuthoringService {
+class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   GoogleSpreadsheetWorkbookAccess(
     this._googleAccess, {
     GoogleSheetsWorkbookClientFactory? workbookClientFactory,

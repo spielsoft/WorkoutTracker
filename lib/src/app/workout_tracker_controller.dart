@@ -11,15 +11,11 @@ import 'spreadsheet_selection.dart';
 /// valid while [report] remains current, so the controller clears them whenever
 /// workout or history selection changes or a new report is adopted.
 class WorkoutTrackerController extends ChangeNotifier {
-  WorkoutTrackerController({
-    required this.validationService,
-    this.exerciseAuthoringService,
-  });
+  WorkoutTrackerController({required this.workbookCommands});
 
   static const int _loggedSetConfirmationRetryReads = 6;
 
-  final SpreadsheetValidationService validationService;
-  final ExerciseAuthoringService? exerciseAuthoringService;
+  final WorkbookCommandService workbookCommands;
 
   SpreadsheetValidationReport? _report;
   String? _error;
@@ -98,7 +94,7 @@ class WorkoutTrackerController extends ChangeNotifier {
       clearReport: true,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
-        final report = await validationService.validateSpreadsheet(
+        final report = await workbookCommands.validateSpreadsheet(
           spreadsheetId,
         );
         _adoptReport(report);
@@ -111,7 +107,7 @@ class WorkoutTrackerController extends ChangeNotifier {
       clearReport: true,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
-        final report = await validationService.validateSpreadsheet(
+        final report = await workbookCommands.validateSpreadsheet(
           selection.spreadsheetId,
         );
         _adoptReport(report);
@@ -148,7 +144,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create history block',
       action: () async {
-        final updatedReport = await validationService.applyActiveSheetWritePlan(
+        final updatedReport = await workbookCommands.applyActiveSheetWritePlan(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           plan: report.activeSheet.planNewHistoryBlock(label: trimmedLabel),
@@ -200,7 +196,7 @@ class WorkoutTrackerController extends ChangeNotifier {
       failurePrefix: 'Unable to repair formulas',
       action: () async {
         _adoptReport(
-          await validationService.applyActiveSheetWritePlan(
+          await workbookCommands.applyActiveSheetWritePlan(
             spreadsheetId: report.spreadsheetId,
             activeSheet: report.activeSheet,
             plan: report.activeSheet.planUnambiguousFormulaHealing(),
@@ -223,7 +219,7 @@ class WorkoutTrackerController extends ChangeNotifier {
       failurePrefix: 'Unable to repair formula',
       action: () async {
         _adoptReport(
-          await validationService.applyActiveSheetWritePlan(
+          await workbookCommands.applyActiveSheetWritePlan(
             spreadsheetId: report.spreadsheetId,
             activeSheet: report.activeSheet,
             plan: report.activeSheet.planFormulaHealing(
@@ -245,7 +241,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to save set',
       action: () async {
-        final updatedReport = await validationService.applyActiveSheetWritePlan(
+        final updatedReport = await workbookCommands.applyActiveSheetWritePlan(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           plan: plan,
@@ -263,9 +259,8 @@ class WorkoutTrackerController extends ChangeNotifier {
     required CanonicalExerciseDefinition exercise,
   }) async {
     final report = _report;
-    final exerciseAuthoringService = this.exerciseAuthoringService;
-    if (report == null || exerciseAuthoringService == null) {
-      _error = 'Exercise authoring is not connected yet.';
+    if (report == null) {
+      _error = 'Validate a spreadsheet before creating exercises.';
       notifyListeners();
       return false;
     }
@@ -273,7 +268,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create exercise',
       action: () async {
-        _report = await exerciseAuthoringService.createCanonicalExercise(
+        _report = await workbookCommands.createCanonicalExercise(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           exercise: exercise,
@@ -289,9 +284,8 @@ class WorkoutTrackerController extends ChangeNotifier {
     required CanonicalExerciseDefinition exercise,
   }) async {
     final report = _report;
-    final exerciseAuthoringService = this.exerciseAuthoringService;
-    if (report == null || exerciseAuthoringService == null) {
-      _error = 'Exercise authoring is not connected yet.';
+    if (report == null) {
+      _error = 'Validate a spreadsheet before updating exercises.';
       notifyListeners();
       return false;
     }
@@ -299,7 +293,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to update exercise',
       action: () async {
-        _report = await exerciseAuthoringService.updateCanonicalExercise(
+        _report = await workbookCommands.updateCanonicalExercise(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           selectedExercise: selectedExercise,
@@ -317,9 +311,8 @@ class WorkoutTrackerController extends ChangeNotifier {
     required ExercisePlacementTarget placement,
   }) async {
     final report = _report;
-    final exerciseAuthoringService = this.exerciseAuthoringService;
-    if (report == null || exerciseAuthoringService == null) {
-      _error = 'Exercise authoring is not connected yet.';
+    if (report == null) {
+      _error = 'Validate a spreadsheet before adding exercises.';
       notifyListeners();
       return false;
     }
@@ -327,7 +320,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to add exercise',
       action: () async {
-        _report = await exerciseAuthoringService.addExistingExerciseToWorkout(
+        _report = await workbookCommands.addExistingExerciseToWorkout(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           exercise: exercise,
@@ -355,9 +348,8 @@ class WorkoutTrackerController extends ChangeNotifier {
 
   Future<bool> reorderCanonicalExercises(ReorderIntent intent) async {
     final report = _report;
-    final exerciseAuthoringService = this.exerciseAuthoringService;
-    if (report == null || exerciseAuthoringService == null) {
-      _error = 'Exercise authoring is not connected yet.';
+    if (report == null) {
+      _error = 'Validate a spreadsheet before reordering exercises.';
       notifyListeners();
       return false;
     }
@@ -365,7 +357,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to reorder exercises',
       action: () async {
-        _report = await exerciseAuthoringService.reorderCanonicalExercises(
+        _report = await workbookCommands.reorderCanonicalExercises(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           intent: intent,
@@ -379,9 +371,8 @@ class WorkoutTrackerController extends ChangeNotifier {
   Future<bool> reorderWorkoutExercises(ReorderIntent intent) async {
     final report = _report;
     final workout = workoutSetup?.selectedWorkout;
-    final exerciseAuthoringService = this.exerciseAuthoringService;
-    if (report == null || workout == null || exerciseAuthoringService == null) {
-      _error = 'Exercise authoring is not connected yet.';
+    if (report == null || workout == null) {
+      _error = 'Select a workout before reordering workout exercises.';
       notifyListeners();
       return false;
     }
@@ -389,7 +380,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to reorder workout exercises',
       action: () async {
-        _report = await exerciseAuthoringService.reorderWorkoutExercises(
+        _report = await workbookCommands.reorderWorkoutExercises(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           workout: workout,
@@ -407,9 +398,8 @@ class WorkoutTrackerController extends ChangeNotifier {
     final report = _report;
     final selectedWorkout = workoutSetup?.selectedWorkout;
     final selectedHistoryBlock = workoutSetup?.selectedHistoryBlock;
-    final exerciseAuthoringService = this.exerciseAuthoringService;
-    if (report == null || exerciseAuthoringService == null) {
-      _error = 'Exercise authoring is not connected yet.';
+    if (report == null) {
+      _error = 'Validate a spreadsheet before deleting exercises.';
       notifyListeners();
       return false;
     }
@@ -417,12 +407,11 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to delete exercise',
       action: () async {
-        final deleteReport = await exerciseAuthoringService
-            .deleteWorkoutExercise(
-              spreadsheetId: report.spreadsheetId,
-              activeSheet: report.activeSheet,
-              primarySheetRowNumber: primarySheetRowNumber,
-            );
+        final deleteReport = await workbookCommands.deleteWorkoutExercise(
+          spreadsheetId: report.spreadsheetId,
+          activeSheet: report.activeSheet,
+          primarySheetRowNumber: primarySheetRowNumber,
+        );
         if (deleteReport.writeRejections.isNotEmpty) {
           _error =
               'Unable to delete exercise: '
@@ -607,7 +596,7 @@ class WorkoutTrackerController extends ChangeNotifier {
       readCount < _loggedSetConfirmationRetryReads;
       readCount += 1
     ) {
-      latestReport = await validationService.validateSpreadsheet(
+      latestReport = await workbookCommands.validateSpreadsheet(
         firstReport.spreadsheetId,
       );
       _report = latestReport;

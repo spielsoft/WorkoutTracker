@@ -17,7 +17,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );

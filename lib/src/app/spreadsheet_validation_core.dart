@@ -1,7 +1,9 @@
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-abstract interface class SpreadsheetValidationService {
+abstract class WorkbookCommandService {
+  const WorkbookCommandService();
+
   /// Reads and reparses the active sheet for [spreadsheetId].
   ///
   /// The returned [ParsedActiveSheet] becomes the ordering source for every
@@ -20,21 +22,23 @@ abstract interface class SpreadsheetValidationService {
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   });
-}
 
-abstract interface class ExerciseAuthoringService {
   Future<SpreadsheetValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExerciseDefinition exercise,
-  });
+  }) {
+    throw UnsupportedError('Exercise authoring is not supported.');
+  }
 
   Future<SpreadsheetValidationReport> updateCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
     required CanonicalExerciseDefinition exercise,
-  });
+  }) {
+    throw UnsupportedError('Exercise authoring is not supported.');
+  }
 
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
@@ -42,26 +46,34 @@ abstract interface class ExerciseAuthoringService {
     required CanonicalExercise exercise,
     required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
-  });
+  }) {
+    throw UnsupportedError('Exercise placement is not supported.');
+  }
 
   Future<SpreadsheetValidationReport> reorderCanonicalExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
-  });
+  }) {
+    throw UnsupportedError('Exercise reorder is not supported.');
+  }
 
   Future<SpreadsheetValidationReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
     required ReorderIntent intent,
-  });
+  }) {
+    throw UnsupportedError('Workout exercise reorder is not supported.');
+  }
 
   Future<SpreadsheetValidationReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int primarySheetRowNumber,
-  });
+  }) {
+    throw UnsupportedError('Workout exercise deletion is not supported.');
+  }
 }
 
 class ExercisePlacementTarget {

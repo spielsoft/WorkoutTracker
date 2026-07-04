@@ -3,8 +3,7 @@ import 'package:workout_tracker/sheet_contract.dart';
 
 import 'spreadsheet_validation_core.dart';
 
-class GoogleSpreadsheetValidationService
-    implements SpreadsheetValidationService, ExerciseAuthoringService {
+class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   const GoogleSpreadsheetValidationService({
     required this.readAdapter,
     this.writeAdapter,

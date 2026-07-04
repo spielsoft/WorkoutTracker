@@ -56,7 +56,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -90,7 +90,7 @@ void main() {
     await tester.pumpWidget(
       WorkoutTrackerApp(
         key: const ValueKey('inventory-accessibility-app'),
-        validationService: inventoryService,
+        workbookCommands: inventoryService,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -131,7 +131,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -207,7 +207,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -238,7 +238,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -275,7 +275,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -309,7 +309,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -342,7 +342,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -412,7 +412,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -433,7 +433,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -492,7 +492,7 @@ void main() {
       await tester.pumpWidget(
         WorkoutTrackerApp(
           key: ValueKey(entry.key),
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -516,7 +516,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -564,7 +564,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -620,7 +620,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -669,7 +669,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -724,7 +724,7 @@ void main() {
       await tester.pumpWidget(
         WorkoutTrackerApp(
           key: ValueKey(entry.expectedText),
-          validationService: service,
+          workbookCommands: service,
           spreadsheetOpener: opener,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
@@ -784,7 +784,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -842,7 +842,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -903,7 +903,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         appStateStore: store,
         initialSpreadsheetText: 'initial-spreadsheet-id',
       ),
@@ -950,7 +950,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         appStateStore: store,
       ),
@@ -992,7 +992,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         appStateStore: store,
         spreadsheetPicker: const DisabledSpreadsheetPicker(
@@ -1056,7 +1056,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           appStateStore: store,
           spreadsheetPicker: _FakeSpreadsheetPicker(),
         ),
@@ -1095,7 +1095,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           accountSession: accountSession,
           appStateStore: store,
           spreadsheetPicker: picker,
@@ -1140,10 +1140,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          validationService: service,
-          spreadsheetPicker: picker,
-        ),
+        WorkoutTrackerApp(workbookCommands: service, spreadsheetPicker: picker),
       );
       await tester.pump();
 
@@ -1181,7 +1178,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           accountSession: accountSession,
           spreadsheetPicker: picker,
         ),
@@ -1238,7 +1235,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         spreadsheetPicker: picker,
       ),
@@ -1283,7 +1280,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         appStateStore: store,
         spreadsheetPicker: _FakeSpreadsheetPicker(),
       ),
@@ -1321,10 +1318,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          validationService: service,
-          spreadsheetPicker: picker,
-        ),
+        WorkoutTrackerApp(workbookCommands: service, spreadsheetPicker: picker),
       );
       await tester.pump();
 
@@ -1386,7 +1380,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
+      WorkoutTrackerApp(workbookCommands: service, spreadsheetPicker: picker),
     );
     await tester.pump();
 
@@ -1407,7 +1401,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(validationService: service, spreadsheetPicker: picker),
+      WorkoutTrackerApp(workbookCommands: service, spreadsheetPicker: picker),
     );
     await tester.pump();
 
@@ -1448,7 +1442,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
@@ -1499,7 +1493,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -1580,7 +1574,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -1596,7 +1590,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add backup exercise'), findsOneWidget);
-    expect(find.text('Delete exercise'), findsNothing);
+    expect(find.text('Delete exercise'), findsOneWidget);
 
     await tester.tap(find.text('Add backup exercise'));
     await tester.pumpAndSettle();
@@ -1636,8 +1630,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: service,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -1702,8 +1698,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: service,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -1758,8 +1756,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: service,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -1805,8 +1805,10 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
-          exerciseAuthoringService: authoringService,
+          workbookCommands: _CompositeWorkbookCommandService(
+            validation: service,
+            authoring: authoringService,
+          ),
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -1892,7 +1894,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -1931,7 +1933,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -1996,7 +1998,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2135,8 +2137,10 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
-          exerciseAuthoringService: authoringService,
+          workbookCommands: _CompositeWorkbookCommandService(
+            validation: service,
+            authoring: authoringService,
+          ),
           appStateStore: store,
           spreadsheetPicker: _FakeSpreadsheetPicker(),
         ),
@@ -2237,8 +2241,10 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
-          exerciseAuthoringService: authoringService,
+          workbookCommands: _CompositeWorkbookCommandService(
+            validation: service,
+            authoring: authoringService,
+          ),
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -2298,7 +2304,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2341,7 +2347,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2372,8 +2378,10 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: validationService,
-          exerciseAuthoringService: authoringService,
+          workbookCommands: _CompositeWorkbookCommandService(
+            validation: validationService,
+            authoring: authoringService,
+          ),
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -2453,8 +2461,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: validationService,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: validationService,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2518,8 +2528,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: validationService,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: validationService,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2572,8 +2584,10 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: validationService,
-          exerciseAuthoringService: authoringService,
+          workbookCommands: _CompositeWorkbookCommandService(
+            validation: validationService,
+            authoring: authoringService,
+          ),
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -2619,8 +2633,10 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: validationService,
-          exerciseAuthoringService: authoringService,
+          workbookCommands: _CompositeWorkbookCommandService(
+            validation: validationService,
+            authoring: authoringService,
+          ),
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -2697,8 +2713,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: validationService,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: validationService,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2740,7 +2758,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2782,8 +2800,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: validationService,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: validationService,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2871,8 +2891,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: validationService,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: validationService,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -2929,7 +2951,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3007,7 +3029,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -3081,7 +3103,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3134,7 +3156,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3192,7 +3214,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3239,7 +3261,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3267,7 +3289,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -3353,7 +3375,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -3408,7 +3430,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -3520,7 +3542,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3613,7 +3635,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3713,8 +3735,10 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
-        exerciseAuthoringService: authoringService,
+        workbookCommands: _CompositeWorkbookCommandService(
+          validation: service,
+          authoring: authoringService,
+        ),
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3830,7 +3854,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3912,7 +3936,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -3975,7 +3999,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -4045,7 +4069,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: validationService,
+          workbookCommands: validationService,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -4092,8 +4116,10 @@ void main() {
 
         await tester.pumpWidget(
           WorkoutTrackerApp(
-            validationService: validationService,
-            exerciseAuthoringService: authoringService,
+            workbookCommands: _CompositeWorkbookCommandService(
+              validation: validationService,
+              authoring: authoringService,
+            ),
             initialSpreadsheetText: 'spreadsheet-id',
           ),
         );
@@ -4224,7 +4250,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
     );
@@ -4285,7 +4311,7 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          validationService: service,
+          workbookCommands: service,
           initialSpreadsheetText: 'spreadsheet-id',
         ),
       );
@@ -4344,7 +4370,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
@@ -4378,7 +4404,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
@@ -4430,7 +4456,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         appStateStore: store,
         spreadsheetPicker: _FakeSpreadsheetPicker(),
@@ -4471,7 +4497,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         initialSpreadsheetText: 'spreadsheet-id',
       ),
@@ -4504,7 +4530,7 @@ void main() {
 
     await tester.pumpWidget(
       WorkoutTrackerApp(
-        validationService: service,
+        workbookCommands: service,
         accountSession: accountSession,
         spreadsheetPicker: _FakeSpreadsheetPicker(),
       ),
@@ -4749,14 +4775,129 @@ class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
   }
 }
 
-class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
+class _CompositeWorkbookCommandService implements WorkbookCommandService {
+  const _CompositeWorkbookCommandService({
+    required this.validation,
+    required this.authoring,
+  });
+
+  final WorkbookCommandService validation;
+  final _AppendingExerciseAuthoringService authoring;
+
+  @override
+  Future<SpreadsheetValidationReport> validateSpreadsheet(
+    String spreadsheetId,
+  ) {
+    return validation.validateSpreadsheet(spreadsheetId);
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ActiveSheetWritePlan plan,
+  }) {
+    return validation.applyActiveSheetWritePlan(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      plan: plan,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> createCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExerciseDefinition exercise,
+  }) {
+    return authoring.createCanonicalExercise(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      exercise: exercise,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise selectedExercise,
+    required CanonicalExerciseDefinition exercise,
+  }) {
+    return authoring.updateCanonicalExercise(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      selectedExercise: selectedExercise,
+      exercise: exercise,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required CanonicalExercise exercise,
+    required WorkoutPlacementMetadata metadata,
+    required ExercisePlacementTarget placement,
+  }) {
+    return authoring.addExistingExerciseToWorkout(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      exercise: exercise,
+      metadata: metadata,
+      placement: placement,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required ReorderIntent intent,
+  }) {
+    return authoring.reorderCanonicalExercises(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      intent: intent,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required String workout,
+    required ReorderIntent intent,
+  }) {
+    return authoring.reorderWorkoutExercises(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      workout: workout,
+      intent: intent,
+    );
+  }
+
+  @override
+  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int primarySheetRowNumber,
+  }) {
+    return authoring.deleteWorkoutExercise(
+      spreadsheetId: spreadsheetId,
+      activeSheet: activeSheet,
+      primarySheetRowNumber: primarySheetRowNumber,
+    );
+  }
+}
+
+class _AppendingExerciseAuthoringService {
   _AppendingExerciseAuthoringService(List<List<String>> exercises)
     : _exercises = exercises.map((row) => row.toList()).toList();
 
   final List<List<String>> _exercises;
   final createdExercises = <CanonicalExerciseDefinition>[];
 
-  @override
   Future<SpreadsheetValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -4800,7 +4941,6 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
     );
   }
 
-  @override
   Future<SpreadsheetValidationReport> updateCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -4810,7 +4950,6 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  @override
   Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -4821,7 +4960,6 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  @override
   Future<SpreadsheetValidationReport> reorderCanonicalExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -4830,7 +4968,6 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  @override
   Future<SpreadsheetValidationReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -4840,7 +4977,6 @@ class _AppendingExerciseAuthoringService implements ExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  @override
   Future<SpreadsheetValidationReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
@@ -5089,8 +5225,7 @@ class _RecordingSpreadsheetOpener implements SpreadsheetOpener {
   }
 }
 
-class _RevalidatingSpreadsheetValidationService
-    implements SpreadsheetValidationService {
+class _RevalidatingSpreadsheetValidationService extends WorkbookCommandService {
   _RevalidatingSpreadsheetValidationService({required this.reports});
 
   final List<ParsedActiveSheet> reports;
@@ -5231,8 +5366,7 @@ List<String> _exerciseRow(
   ];
 }
 
-class _CompletingWriteValidationService
-    implements SpreadsheetValidationService {
+class _CompletingWriteValidationService extends WorkbookCommandService {
   _CompletingWriteValidationService(this.validSheet);
 
   final ParsedActiveSheet validSheet;
@@ -5260,7 +5394,7 @@ class _CompletingWriteValidationService
   }
 }
 
-class _FailingWriteValidationService implements SpreadsheetValidationService {
+class _FailingWriteValidationService extends WorkbookCommandService {
   _FailingWriteValidationService(this.validSheet);
 
   final ParsedActiveSheet validSheet;
@@ -5287,8 +5421,7 @@ class _FailingWriteValidationService implements SpreadsheetValidationService {
   }
 }
 
-class _RecoverableConfirmationFailureService
-    implements SpreadsheetValidationService {
+class _RecoverableConfirmationFailureService extends WorkbookCommandService {
   _RecoverableConfirmationFailureService()
     : initialSheet = _twoSetLoggingSheet(s2Value: ''),
       conflictingSheet = _twoSetLoggingSheet(s2Value: '95x10@7'),
@@ -5331,8 +5464,7 @@ class _RecoverableConfirmationFailureService
   }
 }
 
-class _DamageAfterSaveValidationService
-    implements SpreadsheetValidationService {
+class _DamageAfterSaveValidationService extends WorkbookCommandService {
   _DamageAfterSaveValidationService({
     required this.validSheet,
     required this.damagedSheet,
@@ -5366,7 +5498,7 @@ class _DamageAfterSaveValidationService
   }
 }
 
-class _FormulaRepairValidationService implements SpreadsheetValidationService {
+class _FormulaRepairValidationService extends WorkbookCommandService {
   _FormulaRepairValidationService({
     required this.initialSheet,
     required this.repairedSheet,
