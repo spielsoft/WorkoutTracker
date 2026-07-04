@@ -17,7 +17,7 @@ slice is complete. Preserve unrelated worktree changes.
 - [x] Slice 3: Centralize Scoped Google Client Lifecycle
 - [x] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
 - [x] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
-- [ ] Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
+- [x] Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
 - [ ] Slice 7: Clean Up Refactor And Feature Tests
 
 ## Slice 1: Create A Generic Sheets Workbook Operation Port
@@ -251,23 +251,23 @@ the exercise manager or add canonical exercise deletion.
 
 ### Acceptance criteria
 
-- [ ] The primary exercise action menu shows Add backup exercise and Delete
+- [x] The primary exercise action menu shows Add backup exercise and Delete
       exercise.
-- [ ] The menu remains reachable from the visible overflow button.
-- [ ] The menu remains reachable from right-click on desktop.
-- [ ] The menu remains reachable from long-press on touch.
-- [ ] Selecting Delete exercise opens a confirmation dialog before any delete
+- [x] The menu remains reachable from the visible overflow button.
+- [x] The menu remains reachable from right-click on desktop.
+- [x] The menu remains reachable from long-press on touch.
+- [x] Selecting Delete exercise opens a confirmation dialog before any delete
       operation runs.
-- [ ] The confirmation dialog names the exercise and warns that associated
+- [x] The confirmation dialog names the exercise and warns that associated
       backups and logged history will be deleted.
-- [ ] Cancelling the dialog does not call the delete path and leaves the
+- [x] Cancelling the dialog does not call the delete path and leaves the
       visible overview unchanged.
-- [ ] Confirming the dialog calls the delete path and removes the primary plus
+- [x] Confirming the dialog calls the delete path and removes the primary plus
       attached backups after refresh.
-- [ ] A failed or rejected delete leaves a visible error and does not hide the
+- [x] A failed or rejected delete leaves a visible error and does not hide the
       target row from the last confirmed report.
-- [ ] Focused widget tests cover menu contents, cancel, and confirm behavior.
-- [ ] Relevant targeted Flutter tests pass.
+- [x] Focused widget tests cover menu contents, cancel, and confirm behavior.
+- [x] Relevant targeted Flutter tests pass.
 
 ### Blocked by
 

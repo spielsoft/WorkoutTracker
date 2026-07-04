@@ -417,11 +417,19 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to delete exercise',
       action: () async {
-        _report = await exerciseAuthoringService.deleteWorkoutExercise(
-          spreadsheetId: report.spreadsheetId,
-          activeSheet: report.activeSheet,
-          primarySheetRowNumber: primarySheetRowNumber,
-        );
+        final deleteReport = await exerciseAuthoringService
+            .deleteWorkoutExercise(
+              spreadsheetId: report.spreadsheetId,
+              activeSheet: report.activeSheet,
+              primarySheetRowNumber: primarySheetRowNumber,
+            );
+        if (deleteReport.writeRejections.isNotEmpty) {
+          _error =
+              'Unable to delete exercise: '
+              '${deleteReport.writeRejections.map((rejection) => rejection.message).join(' ')}';
+          return;
+        }
+        _report = deleteReport;
         _error = null;
         _prunePendingWorkouts(_report!.activeSheet);
         _selectedWorkout = _preservedWorkout(

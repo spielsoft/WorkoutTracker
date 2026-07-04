@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1531,6 +1532,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add backup exercise'), findsOneWidget);
+    expect(find.text('Delete exercise'), findsOneWidget);
 
     await tester.tap(find.text('Add backup exercise'));
     await tester.pumpAndSettle();
@@ -1542,6 +1544,231 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('requires confirmation before deleting a workout exercise', (
+    tester,
+  ) async {
+    final rows = [
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
+      [
+        'Lat Pulldown',
+        '3',
+        '10',
+        '8',
+        '90s',
+        '',
+        '',
+        '',
+        'Upper',
+        'TRUE',
+        '100x10@8',
+      ],
+      ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
+    ];
+    final service = TestSpreadsheetValidationService.fromRows(rows);
+    final authoringService = _DeletingWorkoutExerciseAuthoringService(rows);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Upper - Week 1'), findsOneWidget);
+    expect(find.text('Pull Up'), findsOneWidget);
+    expect(find.text('Lat Pulldown'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete exercise'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete Pull Up?'), findsOneWidget);
+    expect(
+      find.text(
+        'This removes Pull Up from the workout, including associated '
+        'backups and logged history for those rows.',
+      ),
+      findsOneWidget,
+    );
+    expect(authoringService.deletedRows, isEmpty);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(authoringService.deletedRows, isEmpty);
+    expect(find.text('Pull Up'), findsOneWidget);
+    expect(find.text('Lat Pulldown'), findsOneWidget);
+  });
+
+  testWidgets('confirmed delete removes the primary exercise and backups', (
+    tester,
+  ) async {
+    final rows = [
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
+      [
+        'Lat Pulldown',
+        '3',
+        '10',
+        '8',
+        '90s',
+        '',
+        '',
+        '',
+        'Upper',
+        'TRUE',
+        '100x10@8',
+      ],
+      ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
+    ];
+    final service = TestSpreadsheetValidationService.fromRows(rows);
+    final authoringService = _DeletingWorkoutExerciseAuthoringService(rows);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete exercise'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete exercise'));
+    await tester.pumpAndSettle();
+
+    expect(authoringService.deletedRows, [3]);
+    expect(find.text('Pull Up'), findsNothing);
+    expect(find.text('Lat Pulldown'), findsNothing);
+    expect(find.text('Row'), findsOneWidget);
+    expect(find.textContaining('Unable to delete exercise'), findsNothing);
+  });
+
+  testWidgets('rejected delete leaves the last confirmed overview visible', (
+    tester,
+  ) async {
+    final rows = [
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
+      [
+        'Lat Pulldown',
+        '3',
+        '10',
+        '8',
+        '90s',
+        '',
+        '',
+        '',
+        'Upper',
+        'TRUE',
+        '100x10@8',
+      ],
+      ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
+    ];
+    final service = TestSpreadsheetValidationService.fromRows(rows);
+    final authoringService = _DeletingWorkoutExerciseAuthoringService(
+      rows,
+      rejectDelete: true,
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        validationService: service,
+        exerciseAuthoringService: authoringService,
+        initialSpreadsheetText: 'spreadsheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete exercise'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete exercise'));
+    await tester.pumpAndSettle();
+
+    expect(authoringService.deletedRows, [3]);
+    expect(find.text('Pull Up'), findsOneWidget);
+    expect(find.text('Lat Pulldown'), findsOneWidget);
+    expect(find.text('Row'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Unable to delete exercise: Row 3 no longer matches Pull Up.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'primary exercise menu remains reachable by right-click and long-press',
+    (tester) async {
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
+      ]);
+      final authoringService = _DeletingWorkoutExerciseAuthoringService([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          exerciseAuthoringService: authoringService,
+          initialSpreadsheetText: 'spreadsheet-id',
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
+      await tester.pumpAndSettle();
+
+      final tileCenter = tester.getCenter(find.text('Pull Up').first);
+      await tester.tapAt(tileCenter, buttons: kSecondaryMouseButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add backup exercise'), findsOneWidget);
+      expect(find.text('Delete exercise'), findsOneWidget);
+
+      await tester.tapAt(const Offset(1, 1));
+      await tester.pumpAndSettle();
+      await tester.longPress(find.text('Pull Up').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add backup exercise'), findsOneWidget);
+      expect(find.text('Delete exercise'), findsOneWidget);
+    },
+  );
 
   testWidgets('summarizes backups without crowding primary overview rows', (
     tester,
@@ -4657,6 +4884,51 @@ class _ReorderingWorkoutExerciseAuthoringService
     final plan = activeSheet.planWorkoutExerciseReorder(
       workout: workout,
       intent: intent,
+    );
+    final previewRows = plan.previewRowsAfterApplying(_rows);
+    _rows
+      ..clear()
+      ..addAll(previewRows.map((row) => row.toList()));
+    return SpreadsheetValidationReport(
+      spreadsheetId: spreadsheetId,
+      activeSheet: parseActiveSheet(ActiveSheetInput(rows: _rows)),
+    );
+  }
+}
+
+class _DeletingWorkoutExerciseAuthoringService
+    extends _AppendingExerciseAuthoringService {
+  _DeletingWorkoutExerciseAuthoringService(
+    List<List<String>> rows, {
+    this.rejectDelete = false,
+  }) : _rows = rows.map((row) => row.toList()).toList(),
+       super(const []);
+
+  final List<List<String>> _rows;
+  final bool rejectDelete;
+  final deletedRows = <int>[];
+
+  @override
+  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+    required String spreadsheetId,
+    required ParsedActiveSheet activeSheet,
+    required int primarySheetRowNumber,
+  }) async {
+    deletedRows.add(primarySheetRowNumber);
+    if (rejectDelete) {
+      return SpreadsheetValidationReport(
+        spreadsheetId: spreadsheetId,
+        activeSheet: activeSheet,
+        writeRejections: [
+          ActiveSheetWriteRejection(
+            'Row $primarySheetRowNumber no longer matches Pull Up.',
+          ),
+        ],
+      );
+    }
+
+    final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      primarySheetRowNumber: primarySheetRowNumber,
     );
     final previewRows = plan.previewRowsAfterApplying(_rows);
     _rows

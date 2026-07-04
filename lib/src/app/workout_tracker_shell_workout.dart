@@ -96,6 +96,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onOpenExercise,
     required this.onAddPrimaryExercise,
     required this.onAddBackupExercise,
+    required this.onDeleteWorkoutExercise,
     required this.exerciseAddReturnScreen,
     required this.addExercisePlacementIntent,
     required this.onCloseExerciseAdd,
@@ -130,6 +131,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
+  final ValueChanged<WorkoutOverviewSlot>? onDeleteWorkoutExercise;
   final _WorkoutTrackerScreen exerciseAddReturnScreen;
   final _AddExercisePlacementIntent? addExercisePlacementIntent;
   final VoidCallback onCloseExerciseAdd;
@@ -249,6 +251,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                 overview: overview,
                 onOpenExercise: onOpenExercise,
                 onAddBackupExercise: onAddBackupExercise,
+                onDeleteWorkoutExercise: onDeleteWorkoutExercise,
                 onReorderExercises: onReorderWorkoutExercises,
                 showTitle: false,
               ),
@@ -325,6 +328,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
                   ? null
                   : () => onAddPrimaryExercise(selectedWorkout),
               onAddBackupExercise: onAddBackupExercise,
+              onDeleteWorkoutExercise: onDeleteWorkoutExercise,
               onReorderExercises: onReorderWorkoutExercises,
               compact: true,
             ),
@@ -520,6 +524,7 @@ class _WorkoutOverviewList extends StatelessWidget {
     required this.onOpenExercise,
     this.onAddPrimaryExercise,
     this.onAddBackupExercise,
+    this.onDeleteWorkoutExercise,
     this.onReorderExercises,
     this.compact = false,
     this.showTitle = true,
@@ -529,6 +534,7 @@ class _WorkoutOverviewList extends StatelessWidget {
   final ValueChanged<int> onOpenExercise;
   final VoidCallback? onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot>? onAddBackupExercise;
+  final ValueChanged<WorkoutOverviewSlot>? onDeleteWorkoutExercise;
   final Future<bool> Function(ReorderIntent intent)? onReorderExercises;
   final bool compact;
   final bool showTitle;
@@ -583,6 +589,7 @@ class _WorkoutOverviewList extends StatelessWidget {
                     slot: slot,
                     onOpenExercise: onOpenExercise,
                     onAddBackupExercise: onAddBackupExercise,
+                    onDeleteWorkoutExercise: onDeleteWorkoutExercise,
                     canReorder: onReorderExercises != null,
                     compact: compact,
                   ),
@@ -601,6 +608,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
     required this.slot,
     required this.onOpenExercise,
     required this.onAddBackupExercise,
+    required this.onDeleteWorkoutExercise,
     required this.canReorder,
     required this.compact,
   });
@@ -609,6 +617,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
   final WorkoutOverviewSlot slot;
   final ValueChanged<int> onOpenExercise;
   final ValueChanged<WorkoutOverviewSlot>? onAddBackupExercise;
+  final ValueChanged<WorkoutOverviewSlot>? onDeleteWorkoutExercise;
   final bool canReorder;
   final bool compact;
 
@@ -630,7 +639,14 @@ class _WorkoutOverviewTile extends StatelessWidget {
               itemBuilder: (context) => [
                 PopupMenuItem(
                   value: _PrimaryExerciseAction.addBackup,
-                  child: _PrimaryExerciseActionMenuItem(
+                  child: _PrimaryExerciseAddBackupMenuItem(
+                    exercise: slot.exercise,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: _PrimaryExerciseAction.delete,
+                  enabled: onDeleteWorkoutExercise != null,
+                  child: _PrimaryExerciseDeleteMenuItem(
                     exercise: slot.exercise,
                   ),
                 ),
@@ -817,8 +833,11 @@ class _WorkoutOverviewTile extends StatelessWidget {
   }
 
   void _handlePrimaryExerciseAction(_PrimaryExerciseAction action) {
-    if (action == _PrimaryExerciseAction.addBackup) {
-      onAddBackupExercise?.call(slot);
+    switch (action) {
+      case _PrimaryExerciseAction.addBackup:
+        onAddBackupExercise?.call(slot);
+      case _PrimaryExerciseAction.delete:
+        onDeleteWorkoutExercise?.call(slot);
     }
   }
 
@@ -840,12 +859,21 @@ class _WorkoutOverviewTile extends StatelessWidget {
       items: [
         PopupMenuItem(
           value: _PrimaryExerciseAction.addBackup,
-          child: _PrimaryExerciseActionMenuItem(exercise: slot.exercise),
+          child: _PrimaryExerciseAddBackupMenuItem(exercise: slot.exercise),
+        ),
+        PopupMenuItem(
+          value: _PrimaryExerciseAction.delete,
+          enabled: onDeleteWorkoutExercise != null,
+          child: _PrimaryExerciseDeleteMenuItem(exercise: slot.exercise),
         ),
       ],
     );
-    if (selected == _PrimaryExerciseAction.addBackup) {
-      onAddBackupExercise(slot);
+    switch (selected) {
+      case _PrimaryExerciseAction.addBackup:
+        onAddBackupExercise(slot);
+      case _PrimaryExerciseAction.delete:
+        onDeleteWorkoutExercise?.call(slot);
+      case null:
     }
   }
 }
@@ -878,10 +906,10 @@ class _WorkoutReorderHandle extends StatelessWidget {
   }
 }
 
-enum _PrimaryExerciseAction { addBackup }
+enum _PrimaryExerciseAction { addBackup, delete }
 
-class _PrimaryExerciseActionMenuItem extends StatelessWidget {
-  const _PrimaryExerciseActionMenuItem({required this.exercise});
+class _PrimaryExerciseAddBackupMenuItem extends StatelessWidget {
+  const _PrimaryExerciseAddBackupMenuItem({required this.exercise});
 
   final String exercise;
 
@@ -902,6 +930,39 @@ class _PrimaryExerciseActionMenuItem extends StatelessWidget {
                 semanticsLabel: 'Add backup exercise for $exercise',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryExerciseDeleteMenuItem extends StatelessWidget {
+  const _PrimaryExerciseDeleteMenuItem({required this.exercise});
+
+  final String exercise;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: 'Delete exercise $exercise',
+      child: SizedBox(
+        width: 220,
+        child: Row(
+          children: [
+            Icon(Icons.delete_outline, color: colorScheme.error),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Delete exercise',
+                semanticsLabel: 'Delete exercise $exercise',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: colorScheme.error),
               ),
             ),
           ],

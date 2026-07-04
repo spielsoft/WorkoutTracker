@@ -945,6 +945,38 @@ class _SpreadsheetValidationShellState
     });
   }
 
+  Future<void> _confirmDeleteWorkoutExercise(
+    WorkoutOverviewSlot primarySlot,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete ${primarySlot.exercise}?'),
+        content: Text(
+          'This removes ${primarySlot.exercise} from the workout, including '
+          'associated backups and logged history for those rows.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete exercise'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+    await _controller.deleteWorkoutExercise(
+      primarySheetRowNumber: primarySlot.sheetRowNumber,
+    );
+  }
+
   void _openCanonicalExerciseCreation() {
     _controller.closeExercise();
     _canonicalExerciseBeingEdited = null;
@@ -1257,6 +1289,11 @@ class _SpreadsheetValidationShellState
                             onOpenExercise: _openExercise,
                             onAddPrimaryExercise: _openPrimaryExerciseAdd,
                             onAddBackupExercise: _openBackupExerciseAdd,
+                            onDeleteWorkoutExercise:
+                                isBusy ||
+                                    widget.exerciseAuthoringService == null
+                                ? null
+                                : _confirmDeleteWorkoutExercise,
                             exerciseAddReturnScreen: _exerciseAddReturnScreen,
                             addExercisePlacementIntent:
                                 _addExercisePlacementIntent,
