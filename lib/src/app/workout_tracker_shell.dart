@@ -8,6 +8,7 @@ import 'package:workout_tracker/sheet_contract.dart';
 
 import 'app_state_store.dart';
 import 'exercise_logging_flow.dart';
+import 'google_workspace.dart';
 import 'spreadsheet_validation.dart';
 import 'spreadsheet_selection.dart';
 import 'workout_tracker_controller.dart';
@@ -448,6 +449,7 @@ class _SpreadsheetValidationShellState
   CanonicalExercise? _canonicalExerciseBeingEdited;
   int? _highlightedCanonicalExerciseSheetRowNumber;
   GoogleWorkspaceAccessStateOwner? _accessStateController;
+  late final GoogleWorkspaceLifecycleController _workspaceLifecycle;
   bool _isPickingSpreadsheet = false;
   bool _isClearingSession = false;
 
@@ -470,6 +472,13 @@ class _SpreadsheetValidationShellState
         appStateStore,
       );
     }
+    _workspaceLifecycle = GoogleWorkspaceLifecycleController(
+      accessStateOwner: _accessStateController,
+      accountSession: widget.accountSession,
+      spreadsheetPicker: widget.spreadsheetPicker,
+      initialSpreadsheetText: widget.initialSpreadsheetText,
+      initialSelectedSpreadsheet: widget.initialSelectedSpreadsheet,
+    );
     _spreadsheetController.addListener(_persistSpreadsheetText);
     unawaited(_restoreStartupState());
   }
@@ -482,35 +491,23 @@ class _SpreadsheetValidationShellState
     super.dispose();
   }
 
-  Future<void> _restoreAccount() async {
-    try {
-      await widget.accountSession?.restoreAccount();
-    } on Object {
-      // Silent restore is best-effort; explicit account actions still report.
-    }
-  }
-
   Future<void> _restoreStartupState() async {
-    await _restoreAccount();
-    await _restoreSpreadsheetSelection();
-  }
-
-  Future<void> _restoreSpreadsheetSelection() async {
-    GoogleWorkspaceAccessState accessState;
+    GoogleWorkspaceState workspaceState;
     try {
-      accessState =
-          await _accessStateController?.restore() ??
-          const GoogleWorkspaceAccessState();
+      workspaceState = await _workspaceLifecycle.restore();
     } on Object {
       return;
     }
+    await _restoreSpreadsheetSelection(workspaceState);
+  }
+
+  Future<void> _restoreSpreadsheetSelection(
+    GoogleWorkspaceState workspaceState,
+  ) async {
     if (!mounted) {
       return;
     }
-    if (_accessStateController != null) {
-      _restoreGooglePickerAuthorization(accessState.googleAuthorization);
-    }
-    var savedSelection = accessState.selectedSpreadsheet;
+    var savedSelection = workspaceState.selectedSpreadsheet;
     if (savedSelection != null) {
       savedSelection = await _resolveSelectedSpreadsheet(savedSelection);
       setState(() {
@@ -518,10 +515,10 @@ class _SpreadsheetValidationShellState
         _spreadsheetController.text = savedSelection!.spreadsheetId;
       });
       await _validateSelectedSpreadsheet();
-      _restoreWorkoutSelection(accessState.workoutSelection);
+      _restoreWorkoutSelection(_accessStateController?.value.workoutSelection);
       return;
     }
-    final savedText = accessState.spreadsheetText;
+    final savedText = workspaceState.pastedSpreadsheetText;
     if (savedText != null && savedText != _spreadsheetController.text) {
       _spreadsheetController.text = savedText;
     }
@@ -570,14 +567,6 @@ class _SpreadsheetValidationShellState
         // Text fallback persistence is best-effort.
       }
     }());
-  }
-
-  void _restoreGooglePickerAuthorization(
-    GooglePickerAuthorizationSnapshot? authorization,
-  ) {
-    if (widget.accountSession case final GooglePickerAuthorizationStore store) {
-      store.restoreGooglePickerAuthorization(authorization);
-    }
   }
 
   GooglePickerAuthorizationSnapshot? _currentGooglePickerAuthorization() {
