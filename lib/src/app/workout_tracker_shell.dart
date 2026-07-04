@@ -486,6 +486,7 @@ class _SpreadsheetValidationShellState
   @override
   void dispose() {
     _controller.dispose();
+    _workspaceLifecycle.dispose();
     _spreadsheetController.removeListener(_persistSpreadsheetText);
     _spreadsheetController.dispose();
     super.dispose();
@@ -515,7 +516,11 @@ class _SpreadsheetValidationShellState
         _spreadsheetController.text = savedSelection!.spreadsheetId;
       });
       await _validateSelectedSpreadsheet();
-      _restoreWorkoutSelection(_accessStateController?.value.workoutSelection);
+      _restoreWorkoutSelection(
+        _workspaceLifecycle.workoutSelectionFor(
+          _controller.report?.spreadsheetId ?? savedSelection.spreadsheetId,
+        ),
+      );
       return;
     }
     final savedText = workspaceState.pastedSpreadsheetText;
@@ -527,54 +532,22 @@ class _SpreadsheetValidationShellState
   Future<SelectedSpreadsheet> _resolveSelectedSpreadsheet(
     SelectedSpreadsheet selected,
   ) async {
-    final picker = widget.spreadsheetPicker;
-    if (picker == null) {
-      return selected;
-    }
-    try {
-      final resolved = await picker.resolveSelectedSpreadsheet(selected);
-      final accessStateController = _accessStateController;
-      if (accessStateController != null) {
-        await accessStateController.update(
-          (accessState) => accessState.copyWith(
-            spreadsheetText: resolved.spreadsheetId,
-            selectedSpreadsheet: resolved,
-          ),
-        );
-      }
-      return resolved;
-    } on Object {
-      return selected;
-    }
+    return _workspaceLifecycle.resolveSelectedSpreadsheet(selected);
   }
 
   void _persistSpreadsheetText() {
     if (_isClearingSession) {
       return;
     }
-    final accessStateController = _accessStateController;
-    if (accessStateController == null) {
-      return;
-    }
     unawaited(() async {
       try {
-        await accessStateController.update(
-          (accessState) => accessState.copyWith(
-            spreadsheetText: _spreadsheetController.text,
-          ),
+        await _workspaceLifecycle.persistPastedSpreadsheetText(
+          _spreadsheetController.text,
         );
       } on Object {
         // Text fallback persistence is best-effort.
       }
     }());
-  }
-
-  GooglePickerAuthorizationSnapshot? _currentGooglePickerAuthorization() {
-    final accountSession = widget.accountSession;
-    if (accountSession case final GooglePickerAuthorizationStore store) {
-      return store.currentAuthorization;
-    }
-    return null;
   }
 
   Future<void> _validateSelectedSpreadsheet() async {
@@ -671,16 +644,7 @@ class _SpreadsheetValidationShellState
         _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
       });
       try {
-        final accessStateController = _accessStateController;
-        if (accessStateController != null) {
-          await accessStateController.update(
-            (accessState) => accessState.copyWith(
-              spreadsheetText: selectedSpreadsheet.spreadsheetId,
-              selectedSpreadsheet: selectedSpreadsheet,
-              googleAuthorization: _currentGooglePickerAuthorization(),
-            ),
-          );
-        }
+        await _workspaceLifecycle.adoptSelectedSpreadsheet(selectedSpreadsheet);
       } on Object {
         // Selection still works for this session if persistence fails.
       }
@@ -1127,10 +1091,9 @@ class _SpreadsheetValidationShellState
   }
 
   void _persistWorkoutSelection() {
-    final accessStateController = _accessStateController;
     final report = _controller.report;
     final setup = _controller.workoutSetup;
-    if (accessStateController == null || report == null || setup == null) {
+    if (report == null || setup == null) {
       return;
     }
     final selection = WorkoutSelectionState(
@@ -1140,9 +1103,7 @@ class _SpreadsheetValidationShellState
     );
     unawaited(() async {
       try {
-        await accessStateController.update(
-          (accessState) => accessState.copyWith(workoutSelection: selection),
-        );
+        await _workspaceLifecycle.persistWorkoutSelection(selection);
       } on Object {
         // Workout-selection persistence is best-effort.
       }

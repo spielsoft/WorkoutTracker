@@ -1018,6 +1018,70 @@ void main() {
   });
 
   testWidgets(
+    'restores saved workout and history for a selected sheet visibly',
+    (tester) async {
+      final store =
+          _MemoryAppStateStore(
+              null,
+              selectedSpreadsheet: const SelectedSpreadsheet(
+                spreadsheetId: 'selected-spreadsheet-id',
+                name: '2026 Workouts',
+                accountEmail: 'saved@example.com',
+              ),
+            )
+            ..workoutSelection = const WorkoutSelectionState(
+              spreadsheetId: 'selected-spreadsheet-id',
+              workout: 'Upper',
+              historyBlock: 'Week 1',
+            );
+      final service = TestSpreadsheetValidationService.fromRows([
+        [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
+        [
+          'Bench Press',
+          '4',
+          '6',
+          '8',
+          '3 min',
+          '',
+          '',
+          '',
+          'Upper',
+          '',
+          '',
+          '',
+        ],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(
+          validationService: service,
+          appStateStore: store,
+          spreadsheetPicker: _FakeSpreadsheetPicker(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.spreadsheetIds, ['selected-spreadsheet-id']);
+      expect(
+        find.byKey(const ValueKey('select-workout-setup')),
+        findsOneWidget,
+      );
+      final selectors = find.byType(DropdownButtonFormField<String>);
+      expect(
+        tester.state<FormFieldState<String>>(selectors.first).value,
+        'Upper',
+      );
+      expect(
+        tester.state<FormFieldState<String>>(selectors.last).value,
+        'Week 1',
+      );
+    },
+  );
+
+  testWidgets(
     'picker sheet selection persists account profile for the avatar',
     (tester) async {
       final store = _MemoryAppStateStore(null);

@@ -164,7 +164,7 @@ and committing each completed slice separately.
 ### Checklist
 
 - [x] Slice 1: Introduce Google workspace lifecycle state
-- [ ] Slice 2: Move selected-sheet restore and persistence behind workspace
+- [x] Slice 2: Move selected-sheet restore and persistence behind workspace
 - [ ] Slice 3: Route choose/create/logout through workspace commands
 - [ ] Slice 4: Fold scoped Google validation forwarding into workbook access
 - [ ] Slice 5: Consolidate app-facing workbook commands
