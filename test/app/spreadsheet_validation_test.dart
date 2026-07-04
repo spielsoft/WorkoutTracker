@@ -8,62 +8,75 @@ import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
   test(
-    'Google authorization gateway interface is asked for writable Sheets scope before validation',
+    'Google-backed validation requests writable Sheets scope and keeps the client open while reading',
     () async {
       final gateway = _RecordingGoogleSignInAuthorizationGateway();
-      final activeSheet = _minimalParsedActiveSheet();
-      bool? requestedWriteAccess;
+      final rows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ];
       final authClient = _CloseTrackingAuthClient();
       final service = GoogleSignInSpreadsheetValidationService(
         authorizationGateway: gateway,
         authorizationClientFactory: (_) => authClient,
-        serviceFactory: (sheets.SheetsApi api, {required bool canWrite}) {
-          requestedWriteAccess = canWrite;
-          return _DelayedValidationService(
-            client: authClient,
-            activeSheet: activeSheet,
-          );
-        },
+        workbookClientFactory: (_) =>
+            _CloseTrackingWorkbookClient(authClient, [_snapshot(rows)]),
       );
 
-      await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSpreadsheet('spreadsheet-id');
 
       expect(authClient.closedDuringAction, isFalse);
       expect(authClient.closed, isTrue);
       expect(gateway.requestedScopes.single, [
         sheets.SheetsApi.spreadsheetsScope,
       ]);
-      expect(requestedWriteAccess, isTrue);
+      expect(report.activeSheet.primarySlots.single.exercise, 'Squat');
     },
   );
 
   test(
-    'Google authorization gateway interface is asked for writable Sheets scope before writes',
+    'Google-backed writes refresh validation before closing the authorized client',
     () async {
       final gateway = _RecordingGoogleSignInAuthorizationGateway();
-      final activeSheet = _minimalParsedActiveSheet();
-      bool? requestedWriteAccess;
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ];
+      final refreshedRows = [
+        [...activeSheetFixedColumns, 'Week 1', 'Week 2'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
+      ];
+      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: activeRows));
+      final authClient = _CloseTrackingAuthClient();
+      final workbookClient = _CloseTrackingWorkbookClient(authClient, [
+        _snapshot(activeRows),
+        _snapshot(refreshedRows),
+      ]);
       final service = GoogleSignInSpreadsheetValidationService(
         authorizationGateway: gateway,
-        serviceFactory: (sheets.SheetsApi api, {required bool canWrite}) {
-          requestedWriteAccess = canWrite;
-          return _DelayedValidationService(
-            client: _CloseTrackingAuthClient(),
-            activeSheet: activeSheet,
-          );
-        },
+        authorizationClientFactory: (_) => authClient,
+        workbookClientFactory: (_) => workbookClient,
       );
 
-      await service.applyActiveSheetWritePlan(
+      final report = await service.applyActiveSheetWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: activeSheet,
         plan: activeSheet.planNewHistoryBlock(label: 'Week 2'),
       );
 
+      expect(authClient.closedDuringAction, isFalse);
+      expect(authClient.closed, isTrue);
       expect(gateway.requestedScopes.single, [
         sheets.SheetsApi.spreadsheetsScope,
       ]);
-      expect(requestedWriteAccess, isTrue);
+      expect(workbookClient.operations, isNotEmpty);
+      expect(report.activeSheet.historyBlocks.map((block) => block.label), [
+        'Week 1',
+        'Week 2',
+      ]);
     },
   );
 
@@ -1086,18 +1099,6 @@ List<String> _exerciseRow(String exercise, {String description = ''}) {
   ];
 }
 
-ParsedActiveSheet _minimalParsedActiveSheet() {
-  return parseActiveSheet(
-    ActiveSheetInput(
-      rows: [
-        [...activeSheetFixedColumns, 'Week 1'],
-        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
-      ],
-    ),
-  );
-}
-
 SheetsWorkbookSnapshot _snapshot(List<List<String>> rows) {
   return SheetsWorkbookSnapshot(
     sheets: [
@@ -1193,34 +1194,44 @@ class _RecordingWriteClient implements SheetsWorkbookClient {
   }
 }
 
-class _DelayedValidationService implements SpreadsheetValidationService {
-  _DelayedValidationService({required this.client, required this.activeSheet});
+class _CloseTrackingWorkbookClient implements SheetsWorkbookClient {
+  _CloseTrackingWorkbookClient(this.client, this.snapshots);
 
   final _CloseTrackingAuthClient client;
-  final ParsedActiveSheet activeSheet;
+  final List<SheetsWorkbookSnapshot> snapshots;
+  final operations = <SheetsWorkbookOperation>[];
+  var _nextSnapshot = 0;
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
+  Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
     await _expectClientStillOpen();
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
+    final snapshot = _nextSnapshot < snapshots.length
+        ? snapshots[_nextSnapshot]
+        : snapshots.last;
+    return SheetsWorkbookMetadata(
+      sheets: snapshot.sheets.map((sheet) => sheet.sheet),
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<SheetsWorkbookSnapshot> readGrids({
     required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
+    required Iterable<SheetsGridRead> reads,
   }) async {
     await _expectClientStillOpen();
-    return SpreadsheetValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: this.activeSheet,
-    );
+    if (_nextSnapshot >= snapshots.length) {
+      return snapshots.last;
+    }
+    return snapshots[_nextSnapshot++];
+  }
+
+  @override
+  Future<void> applyOperations({
+    required String spreadsheetId,
+    required Iterable<SheetsWorkbookOperation> operations,
+  }) async {
+    await _expectClientStillOpen();
+    this.operations.addAll(operations);
   }
 
   Future<void> _expectClientStillOpen() async {

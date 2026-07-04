@@ -166,7 +166,7 @@ and committing each completed slice separately.
 - [x] Slice 1: Introduce Google workspace lifecycle state
 - [x] Slice 2: Move selected-sheet restore and persistence behind workspace
 - [x] Slice 3: Route choose/create/logout through workspace commands
-- [ ] Slice 4: Fold scoped Google validation forwarding into workbook access
+- [x] Slice 4: Fold scoped Google validation forwarding into workbook access
 - [ ] Slice 5: Consolidate app-facing workbook commands
 - [ ] Slice 6: Move shell workspace orchestration out of widget state
 - [ ] Slice 7: Deepen write-planning internals without changing the facade
