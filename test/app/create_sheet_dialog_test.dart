@@ -89,8 +89,20 @@ class _RecordingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    return true;
+  }
+
+  @override
   Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     createNames.add(name);
     return null;
+  }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    return selected;
   }
 }

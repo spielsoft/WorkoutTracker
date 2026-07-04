@@ -32,20 +32,6 @@ class GoogleWorkspaceAccessState {
     );
   }
 
-  GoogleWorkspaceAccessState migrateLegacy({
-    String? spreadsheetText,
-    SelectedSpreadsheet? selectedSpreadsheet,
-    GooglePickerAuthorizationSnapshot? googleAuthorization,
-    WorkoutSelectionState? workoutSelection,
-  }) {
-    return GoogleWorkspaceAccessState(
-      spreadsheetText: this.spreadsheetText ?? spreadsheetText,
-      selectedSpreadsheet: this.selectedSpreadsheet ?? selectedSpreadsheet,
-      googleAuthorization: this.googleAuthorization ?? googleAuthorization,
-      workoutSelection: this.workoutSelection ?? workoutSelection,
-    );
-  }
-
   Map<String, Object?> toJson() {
     return {
       if (spreadsheetText != null) 'spreadsheetText': spreadsheetText,
@@ -182,37 +168,18 @@ class GoogleWorkspaceAccessStateController
 }
 
 class FileAppStateStore implements AppStateStore {
-  const FileAppStateStore({
-    Directory? stateDirectory,
-    List<Directory> legacyStateDirectories = const [],
-  }) : _stateDirectoryOverride = stateDirectory,
-       _legacyStateDirectoryOverrides = legacyStateDirectories;
+  const FileAppStateStore({Directory? stateDirectory})
+    : _stateDirectoryOverride = stateDirectory;
 
   final Directory? _stateDirectoryOverride;
-  final List<Directory> _legacyStateDirectoryOverrides;
 
   static const _googleWorkspaceAccessKey = 'googleWorkspaceAccess';
-  static const _spreadsheetTextKey = 'spreadsheetText';
-  static const _selectedSpreadsheetKey = 'selectedSpreadsheet';
-  static const _googleAuthorizationKey = 'googleAuthorization';
-  static const _workoutSelectionKey = 'workoutSelection';
 
   @override
   Future<GoogleWorkspaceAccessState> readGoogleWorkspaceAccessState() async {
     final decoded = await _readState();
     return GoogleWorkspaceAccessState.fromJson(
       decoded[_googleWorkspaceAccessKey],
-    ).migrateLegacy(
-      spreadsheetText: decoded[_spreadsheetTextKey] as String?,
-      selectedSpreadsheet: SelectedSpreadsheet.fromJson(
-        decoded[_selectedSpreadsheetKey],
-      ),
-      googleAuthorization: GooglePickerAuthorizationSnapshot.fromJson(
-        decoded[_googleAuthorizationKey],
-      ),
-      workoutSelection: WorkoutSelectionState.fromJson(
-        decoded[_workoutSelectionKey],
-      ),
     );
   }
 
@@ -222,10 +189,6 @@ class FileAppStateStore implements AppStateStore {
   ) async {
     final state = await _readState();
     state[_googleWorkspaceAccessKey] = value.toJson();
-    state.remove(_spreadsheetTextKey);
-    state.remove(_selectedSpreadsheetKey);
-    state.remove(_googleAuthorizationKey);
-    state.remove(_workoutSelectionKey);
     await _writeState(state);
   }
 
@@ -233,21 +196,11 @@ class FileAppStateStore implements AppStateStore {
   Future<void> clearGoogleWorkspaceAccessState() async {
     final state = await _readState();
     state.remove(_googleWorkspaceAccessKey);
-    state.remove(_spreadsheetTextKey);
-    state.remove(_selectedSpreadsheetKey);
-    state.remove(_googleAuthorizationKey);
-    state.remove(_workoutSelectionKey);
     await _writeState(state);
   }
 
   Future<Map<String, Object?>> _readState() async {
-    for (final file in await _stateFiles()) {
-      final decoded = await _readStateFile(file);
-      if (decoded != null) {
-        return decoded;
-      }
-    }
-    return <String, Object?>{};
+    return await _readStateFile(await _stateFile()) ?? <String, Object?>{};
   }
 
   Future<Map<String, Object?>?> _readStateFile(File file) async {
@@ -282,20 +235,6 @@ class FileAppStateStore implements AppStateStore {
     return File('${directory.path}${Platform.pathSeparator}state.json');
   }
 
-  Future<List<File>> _stateFiles() async {
-    final primary = await _stateFile();
-    final files = <File>[primary];
-    for (final directory in _legacyStateDirectories()) {
-      final legacy = File(
-        '${directory.path}${Platform.pathSeparator}state.json',
-      );
-      if (legacy.path != primary.path) {
-        files.add(legacy);
-      }
-    }
-    return files;
-  }
-
   Directory _stateDirectory() {
     return _stateDirectoryOverride ??
         defaultStateDirectory(
@@ -304,19 +243,6 @@ class FileAppStateStore implements AppStateStore {
           environment: Platform.environment,
           systemTemp: Directory.systemTemp,
         );
-  }
-
-  List<Directory> _legacyStateDirectories() {
-    if (_legacyStateDirectoryOverrides.isNotEmpty) {
-      return _legacyStateDirectoryOverrides;
-    }
-    if (_stateDirectoryOverride != null) {
-      return const [];
-    }
-    return defaultLegacyStateDirectories(
-      isMacOS: Platform.isMacOS,
-      environment: Platform.environment,
-    );
   }
 
   static Directory defaultStateDirectory({
@@ -347,34 +273,6 @@ class FileAppStateStore implements AppStateStore {
     return Directory(
       '${systemTemp.path}${Platform.pathSeparator}workout_tracker',
     );
-  }
-
-  static List<Directory> defaultLegacyStateDirectories({
-    required bool isMacOS,
-    required Map<String, String> environment,
-  }) {
-    final home = environment['HOME'];
-    if (home == null || home.trim().isEmpty) {
-      return const [];
-    }
-    final dotDirectory = Directory(
-      '$home${Platform.pathSeparator}.workout_tracker',
-    );
-    if (!isMacOS) {
-      return [dotDirectory];
-    }
-    return [
-      dotDirectory,
-      Directory(
-        '$home${Platform.pathSeparator}Library'
-        '${Platform.pathSeparator}Containers'
-        '${Platform.pathSeparator}com.spielman.workouttracker'
-        '${Platform.pathSeparator}Data'
-        '${Platform.pathSeparator}Library'
-        '${Platform.pathSeparator}Application Support'
-        '${Platform.pathSeparator}WorkoutTracker',
-      ),
-    ];
   }
 }
 

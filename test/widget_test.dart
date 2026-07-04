@@ -971,7 +971,7 @@ void main() {
 
   testWidgets('restores a selected Google Drive sheet label', (tester) async {
     final store = _MemoryAppStateStore(
-      'legacy-spreadsheet-id',
+      'saved-spreadsheet-id',
       selectedSpreadsheet: const SelectedSpreadsheet(
         spreadsheetId: 'selected-spreadsheet-id',
         name: '2026 Workouts',
@@ -4586,8 +4586,20 @@ class _FakeSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    return true;
+  }
+
+  @override
   Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     return null;
+  }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    return selected;
   }
 }
 
@@ -4618,8 +4630,20 @@ class _AuthorizingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    return true;
+  }
+
+  @override
   Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     return null;
+  }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    return selected;
   }
 }
 
@@ -4642,10 +4666,22 @@ class _CompletingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    return true;
+  }
+
+  @override
   Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) {
     createCount += 1;
     createNames.add(name);
     return createCompleter.future;
+  }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    return selected;
   }
 }
 
@@ -4941,8 +4977,7 @@ class _DeletingWorkoutExerciseAuthoringService
   }
 }
 
-class _CountingSpreadsheetPicker
-    implements SpreadsheetPicker, SpreadsheetCreationAuthorizer {
+class _CountingSpreadsheetPicker implements SpreadsheetPicker {
   int chooseCount = 0;
   int createCount = 0;
   int creationAuthorizationCount = 0;
@@ -4971,6 +5006,13 @@ class _CountingSpreadsheetPicker
   Future<bool> authorizeSpreadsheetCreation() async {
     creationAuthorizationCount += 1;
     return creationAuthorization ?? true;
+  }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    return selected;
   }
 }
 

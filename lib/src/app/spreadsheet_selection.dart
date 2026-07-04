@@ -165,18 +165,10 @@ abstract interface class SpreadsheetPicker {
 
   Future<SelectedSpreadsheet?> chooseSpreadsheet();
 
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name});
-}
-
-abstract interface class SpreadsheetCreationAuthorizer {
   Future<bool> authorizeSpreadsheetCreation();
-}
 
-abstract interface class GoogleSpreadsheetCreator {
-  Future<SelectedSpreadsheet> createWorkoutSpreadsheet({String? name});
-}
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name});
 
-abstract interface class SelectedSpreadsheetResolver {
   Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
     SelectedSpreadsheet selected,
   );
@@ -230,16 +222,24 @@ class DisabledSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    throw StateError(reason);
+  }
+
+  @override
   Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
     throw StateError(reason);
   }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    return selected;
+  }
 }
 
-class MobileGoogleDriveSpreadsheetPicker
-    implements
-        SpreadsheetPicker,
-        SpreadsheetCreationAuthorizer,
-        SelectedSpreadsheetResolver {
+class MobileGoogleDriveSpreadsheetPicker implements SpreadsheetPicker {
   const MobileGoogleDriveSpreadsheetPicker({
     required this.callbackReceiverFactory,
     required this.config,
@@ -254,7 +254,7 @@ class MobileGoogleDriveSpreadsheetPicker
   final GoogleSignInAuthorizationGateway? authorizationGateway;
   final GoogleAuthorizationClientFactory? authorizationClientFactory;
   final ScopedGoogleApiAccess? googleAccess;
-  final GoogleSpreadsheetCreator? spreadsheetCreator;
+  final GoogleSheetsSpreadsheetCreator? spreadsheetCreator;
 
   @override
   SpreadsheetPickerAvailability get availability {
@@ -497,7 +497,7 @@ class MobileGoogleDriveSpreadsheetPicker
   }
 }
 
-class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
+class GoogleSheetsSpreadsheetCreator {
   GoogleSheetsSpreadsheetCreator({
     required this.authorizationGateway,
     GoogleAuthorizationClientFactory? authorizationClientFactory,
@@ -520,7 +520,6 @@ class GoogleSheetsSpreadsheetCreator implements GoogleSpreadsheetCreator {
   final WorkoutTrackerWorkbookInitializerFactory workbookInitializerFactory;
   final String Function() titleFactory;
 
-  @override
   Future<SelectedSpreadsheet> createWorkoutSpreadsheet({String? name}) async {
     final requestedTitle = (name ?? titleFactory()).trim();
     final title = requestedTitle.isEmpty

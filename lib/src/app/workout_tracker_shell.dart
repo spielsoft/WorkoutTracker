@@ -531,12 +531,11 @@ class _SpreadsheetValidationShellState
     SelectedSpreadsheet selected,
   ) async {
     final picker = widget.spreadsheetPicker;
-    if (picker == null || picker is! SelectedSpreadsheetResolver) {
+    if (picker == null) {
       return selected;
     }
-    final resolver = picker as SelectedSpreadsheetResolver;
     try {
-      final resolved = await resolver.resolveSelectedSpreadsheet(selected);
+      final resolved = await picker.resolveSelectedSpreadsheet(selected);
       final accessStateController = _accessStateController;
       if (accessStateController != null) {
         await accessStateController.update(
@@ -618,10 +617,9 @@ class _SpreadsheetValidationShellState
       return true;
     }
 
-    final picker = widget.spreadsheetPicker;
-    if (picker case final SpreadsheetCreationAuthorizer authorizer) {
+    if (widget.spreadsheetPicker case final picker?) {
       try {
-        return await authorizer.authorizeSpreadsheetCreation();
+        return await picker.authorizeSpreadsheetCreation();
       } on Object catch (error) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
