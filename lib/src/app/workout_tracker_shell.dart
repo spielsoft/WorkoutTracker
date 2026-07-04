@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 import 'app_state_store.dart';
@@ -450,7 +449,6 @@ class _SpreadsheetValidationShellState
   int? _highlightedCanonicalExerciseSheetRowNumber;
   GoogleWorkspaceAccessStateOwner? _accessStateController;
   late final GoogleWorkspaceLifecycleController _workspaceLifecycle;
-  bool _isPickingSpreadsheet = false;
   bool _isClearingSession = false;
 
   @override
@@ -569,50 +567,21 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _chooseSpreadsheet() async {
-    await _pickSpreadsheet((picker) => picker.chooseSpreadsheet());
-  }
-
-  Future<bool> _ensureGoogleSheetsAccount() async {
-    final accountSession = widget.accountSession;
-    if (accountSession is! GooglePickerAuthorizationStore &&
-        (accountSession == null || accountSession.currentAccount != null)) {
-      return true;
-    }
-
-    if (widget.spreadsheetPicker case final picker?) {
-      try {
-        return await picker.authorizeSpreadsheetCreation();
-      } on Object catch (error) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Unable to connect Google Sheets: $error')),
-          );
-        }
-        return false;
-      }
-    }
-
-    final nativeAccountSession = accountSession;
-    if (nativeAccountSession == null) {
-      return true;
+    if (_controller.isBusy) {
+      return;
     }
     try {
-      await nativeAccountSession.switchAccount(
-        scopes: GoogleApisSheetsWorkbookClient.writeScopes,
+      final workspaceState = await _workspaceLifecycle.chooseSpreadsheet();
+      await _adoptWorkspaceSelectedSpreadsheet(
+        workspaceState.selectedSpreadsheet,
       );
     } on Object catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to connect Google Sheets: $error')),
-        );
-      }
-      return false;
+      _controller.reportSpreadsheetSelectionFailure(error);
     }
-    return nativeAccountSession.currentAccount != null;
   }
 
   Future<void> _createSpreadsheet() async {
-    final hasGoogleAccount = await _ensureGoogleSheetsAccount();
+    final hasGoogleAccount = await _authorizeSpreadsheetCreation();
     if (!mounted || !hasGoogleAccount) {
       return;
     }
@@ -621,43 +590,42 @@ class _SpreadsheetValidationShellState
     if (!mounted || name == null) {
       return;
     }
-    await _pickSpreadsheet((picker) => picker.createSpreadsheet(name: name));
+    try {
+      final workspaceState = await _workspaceLifecycle.createSpreadsheet(
+        name: name,
+      );
+      await _adoptWorkspaceSelectedSpreadsheet(
+        workspaceState.selectedSpreadsheet,
+      );
+    } on Object catch (error) {
+      _controller.reportSpreadsheetSelectionFailure(error);
+    }
   }
 
-  Future<void> _pickSpreadsheet(
-    Future<SelectedSpreadsheet?> Function(SpreadsheetPicker picker) action,
+  Future<bool> _authorizeSpreadsheetCreation() async {
+    try {
+      return await _workspaceLifecycle.authorizeSpreadsheetCreation();
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to connect Google Sheets: $error')),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<void> _adoptWorkspaceSelectedSpreadsheet(
+    SelectedSpreadsheet? selectedSpreadsheet,
   ) async {
-    final picker = widget.spreadsheetPicker;
-    if (picker == null || _controller.isBusy || _isPickingSpreadsheet) {
+    if (!mounted || selectedSpreadsheet == null) {
       return;
     }
     setState(() {
-      _isPickingSpreadsheet = true;
+      _selectedSpreadsheet = selectedSpreadsheet;
+      _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
     });
-    try {
-      final selectedSpreadsheet = await action(picker);
-      if (!mounted || selectedSpreadsheet == null) {
-        return;
-      }
-      setState(() {
-        _selectedSpreadsheet = selectedSpreadsheet;
-        _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
-      });
-      try {
-        await _workspaceLifecycle.adoptSelectedSpreadsheet(selectedSpreadsheet);
-      } on Object {
-        // Selection still works for this session if persistence fails.
-      }
-      await _validateSelectedSpreadsheet();
-    } on Object catch (error) {
-      _controller.reportSpreadsheetSelectionFailure(error);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isPickingSpreadsheet = false;
-        });
-      }
-    }
+    await _validateSelectedSpreadsheet();
   }
 
   void _usePastedSpreadsheetText() {
@@ -669,6 +637,7 @@ class _SpreadsheetValidationShellState
   Future<void> _handleSignedOut() async {
     _isClearingSession = true;
     try {
+      await _workspaceLifecycle.signOut();
       _controller.clearSpreadsheetSelection();
       setState(() {
         _selectedSpreadsheet = null;
@@ -678,7 +647,6 @@ class _SpreadsheetValidationShellState
         _addExercisePlacementIntent = null;
         _canonicalExerciseBeingEdited = null;
       });
-      await _accessStateController?.clear();
     } finally {
       _isClearingSession = false;
     }
@@ -1117,26 +1085,26 @@ class _SpreadsheetValidationShellState
         label: 'WorkoutTracker',
         child: SafeArea(
           child: ListenableBuilder(
-            listenable: _controller,
+            listenable: Listenable.merge([_controller, _workspaceLifecycle]),
             builder: (context, _) {
               final report = _controller.report;
               final error = _controller.error;
-              final isBusy = _controller.isBusy || _isPickingSpreadsheet;
+              final workspaceState = _workspaceLifecycle.state;
+              final isBusy =
+                  _controller.isBusy || workspaceState.isCommandInFlight;
               final spreadsheetPicker = widget.spreadsheetPicker;
-              final pickerAvailability = spreadsheetPicker?.availability;
+              final pickerAvailability = workspaceState.pickerAvailability;
               final hasLoadedWorkout =
                   report != null && !report.hasBlockingIssues;
               final showPickerAvailability =
-                  _selectedSpreadsheet == null && pickerAvailability != null;
+                  _selectedSpreadsheet == null && spreadsheetPicker != null;
               final showSheetSelection =
                   _screen == _WorkoutTrackerScreen.sheetSelection ||
                   report == null ||
                   report.hasBlockingIssues;
               final showSpreadsheetTextFallback =
                   spreadsheetPicker == null ||
-                  (_selectedSpreadsheet == null &&
-                      pickerAvailability != null &&
-                      !pickerAvailability.canChoose);
+                  workspaceState.pastedSheetFallbackAvailable;
               return ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
@@ -1149,7 +1117,7 @@ class _SpreadsheetValidationShellState
                           if (spreadsheetPicker != null) ...[
                             _SelectedSpreadsheetChooser(
                               selectedSpreadsheet: _selectedSpreadsheet,
-                              availability: pickerAvailability!,
+                              availability: pickerAvailability,
                               showAvailabilitySummary: showPickerAvailability,
                               isBusy: isBusy,
                               accountSession: widget.accountSession,

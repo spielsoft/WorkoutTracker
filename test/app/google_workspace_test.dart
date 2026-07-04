@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/workout_tracker_app.dart';
 
@@ -144,6 +147,157 @@ void main() {
       expect(accessState.value.workoutSelection?.historyBlock, 'Week 1');
     },
   );
+
+  test(
+    'chooses and adopts a spreadsheet through the workspace command',
+    () async {
+      final accessState = _MemoryGoogleWorkspaceAccessStateOwner(
+        const GoogleWorkspaceAccessState(spreadsheetText: 'previous-id'),
+      );
+      final accountSession = GooglePickerAuthorizationGateway();
+      accountSession.updateGooglePickerAuthorization(
+        const GooglePickerAuthorizationSnapshot(
+          accessToken: 'picker-token',
+          accountEmail: 'athlete@example.com',
+        ),
+      );
+      final picker = _CommandSpreadsheetPicker(
+        chooseResult: const SelectedSpreadsheet(
+          spreadsheetId: 'chosen-spreadsheet-id',
+          name: 'Chosen Workouts',
+          accountEmail: 'athlete@example.com',
+        ),
+      );
+      final workspace = GoogleWorkspaceLifecycleController(
+        accessStateOwner: accessState,
+        accountSession: accountSession,
+        spreadsheetPicker: picker,
+      );
+
+      final state = await workspace.chooseSpreadsheet();
+
+      expect(picker.chooseCount, 1);
+      expect(state.selectedSpreadsheet?.spreadsheetId, 'chosen-spreadsheet-id');
+      expect(accessState.value.spreadsheetText, 'chosen-spreadsheet-id');
+      expect(
+        accessState.value.selectedSpreadsheet?.displayLabel,
+        'Chosen Workouts',
+      );
+      expect(
+        accessState.value.googleAuthorization?.accessToken,
+        'picker-token',
+      );
+      expect(workspace.state.isCommandInFlight, isFalse);
+    },
+  );
+
+  test('authorizes creation and adopts a created spreadsheet', () async {
+    final accessState = _MemoryGoogleWorkspaceAccessStateOwner(
+      const GoogleWorkspaceAccessState(),
+    );
+    final picker = _CommandSpreadsheetPicker(
+      creationAuthorizationResult: true,
+      createResult: const SelectedSpreadsheet(
+        spreadsheetId: 'created-spreadsheet-id',
+        name: 'Custom Training Log',
+        accountEmail: 'athlete@example.com',
+      ),
+    );
+    final workspace = GoogleWorkspaceLifecycleController(
+      accessStateOwner: accessState,
+      spreadsheetPicker: picker,
+    );
+
+    final authorized = await workspace.authorizeSpreadsheetCreation();
+    final state = await workspace.createSpreadsheet(
+      name: 'Custom Training Log',
+    );
+
+    expect(authorized, isTrue);
+    expect(picker.creationAuthorizationCount, 1);
+    expect(picker.createCount, 1);
+    expect(picker.createNames, ['Custom Training Log']);
+    expect(state.selectedSpreadsheet?.spreadsheetId, 'created-spreadsheet-id');
+    expect(accessState.value.spreadsheetText, 'created-spreadsheet-id');
+    expect(
+      accessState.value.selectedSpreadsheet?.displayLabel,
+      'Custom Training Log',
+    );
+  });
+
+  test('blocks duplicate picker commands while one is in flight', () async {
+    final picker = _CommandSpreadsheetPicker(
+      chooseResult: const SelectedSpreadsheet(
+        spreadsheetId: 'chosen-spreadsheet-id',
+        name: 'Chosen Workouts',
+      ),
+    );
+    final chooseCompleter = Completer<SelectedSpreadsheet?>();
+    picker.chooseFuture = chooseCompleter.future;
+    final workspace = GoogleWorkspaceLifecycleController(
+      spreadsheetPicker: picker,
+    );
+
+    final first = workspace.chooseSpreadsheet();
+    final second = workspace.chooseSpreadsheet();
+
+    expect(picker.chooseCount, 1);
+    expect(workspace.state.isCommandInFlight, isTrue);
+
+    chooseCompleter.complete(picker.chooseResult);
+    await first;
+    final duplicateState = await second;
+
+    expect(duplicateState.selectedSpreadsheet, isNull);
+    expect(
+      workspace.state.selectedSpreadsheet?.spreadsheetId,
+      'chosen-spreadsheet-id',
+    );
+    expect(workspace.state.isCommandInFlight, isFalse);
+  });
+
+  test('logs out through workspace cleanup', () async {
+    final accessState = _MemoryGoogleWorkspaceAccessStateOwner(
+      const GoogleWorkspaceAccessState(
+        spreadsheetText: 'selected-spreadsheet-id',
+        selectedSpreadsheet: SelectedSpreadsheet(
+          spreadsheetId: 'selected-spreadsheet-id',
+          name: 'Selected Workouts',
+        ),
+        googleAuthorization: GooglePickerAuthorizationSnapshot(
+          accessToken: 'picker-token',
+          accountEmail: 'athlete@example.com',
+        ),
+        workoutSelection: WorkoutSelectionState(
+          spreadsheetId: 'selected-spreadsheet-id',
+          workout: 'Legs',
+          historyBlock: 'Week 1',
+        ),
+      ),
+    );
+    final accountSession = _RecordingGoogleAccountSession(
+      const GoogleAccountProfile(email: 'athlete@example.com'),
+    );
+    final workspace = GoogleWorkspaceLifecycleController(
+      accessStateOwner: accessState,
+      accountSession: accountSession,
+      spreadsheetPicker: _CommandSpreadsheetPicker(),
+    );
+    await workspace.restore();
+
+    final state = await workspace.signOut();
+
+    expect(accountSession.signOutCount, 1);
+    expect(accessState.value.selectedSpreadsheet, isNull);
+    expect(accessState.value.spreadsheetText, isNull);
+    expect(accessState.value.googleAuthorization, isNull);
+    expect(accessState.value.workoutSelection, isNull);
+    expect(state.selectedSpreadsheet, isNull);
+    expect(state.pastedSpreadsheetText, isNull);
+    expect(state.accountProfile, isNull);
+    expect(state.pickerAuthorization, isNull);
+    expect(state.workoutSelection, isNull);
+  });
 }
 
 class _MemoryGoogleWorkspaceAccessStateOwner
@@ -203,5 +357,77 @@ class _ResolvingSpreadsheetPicker implements SpreadsheetPicker {
     SelectedSpreadsheet selected,
   ) async {
     return resolved;
+  }
+}
+
+class _CommandSpreadsheetPicker implements SpreadsheetPicker {
+  _CommandSpreadsheetPicker({
+    this.chooseResult,
+    this.creationAuthorizationResult = true,
+    this.createResult,
+  });
+
+  final SelectedSpreadsheet? chooseResult;
+  final bool creationAuthorizationResult;
+  final SelectedSpreadsheet? createResult;
+  Future<SelectedSpreadsheet?>? chooseFuture;
+  int chooseCount = 0;
+  int creationAuthorizationCount = 0;
+  int createCount = 0;
+  final createNames = <String?>[];
+
+  @override
+  SpreadsheetPickerAvailability get availability {
+    return const SpreadsheetPickerAvailability.available();
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> chooseSpreadsheet() {
+    chooseCount += 1;
+    return chooseFuture ?? Future.value(chooseResult);
+  }
+
+  @override
+  Future<bool> authorizeSpreadsheetCreation() async {
+    creationAuthorizationCount += 1;
+    return creationAuthorizationResult;
+  }
+
+  @override
+  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+    createCount += 1;
+    createNames.add(name);
+    return createResult;
+  }
+
+  @override
+  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+    SelectedSpreadsheet selected,
+  ) async {
+    return selected;
+  }
+}
+
+class _RecordingGoogleAccountSession extends ChangeNotifier
+    implements GoogleAccountSession {
+  _RecordingGoogleAccountSession(this._currentAccount);
+
+  GoogleAccountProfile? _currentAccount;
+  int signOutCount = 0;
+
+  @override
+  GoogleAccountProfile? get currentAccount => _currentAccount;
+
+  @override
+  Future<void> restoreAccount() async {}
+
+  @override
+  Future<void> switchAccount({List<String> scopes = const []}) async {}
+
+  @override
+  Future<void> signOut() async {
+    signOutCount += 1;
+    _currentAccount = null;
+    notifyListeners();
   }
 }

@@ -21,7 +21,6 @@ class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
       _isBusy = true;
     });
     try {
-      await widget.accountSession.signOut();
       await widget.onSignedOut();
     } on Object catch (error) {
       if (mounted) {
