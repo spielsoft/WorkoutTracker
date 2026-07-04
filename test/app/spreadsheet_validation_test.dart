@@ -108,7 +108,7 @@ void main() {
         rejected.manualRepairItems.single.problem,
         contains('Row 3 no longer matches Squat'),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -179,7 +179,7 @@ void main() {
         rejected.manualRepairItems.single.problem,
         contains('Cell row 3 column 12 no longer matches'),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -224,7 +224,7 @@ void main() {
         rejected.manualRepairItems.map((item) => item.problem),
         contains(contains('Row 3 no longer matches Squat')),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -281,7 +281,7 @@ void main() {
         rejected.manualRepairItems.map((item) => item.problem),
         contains(contains('Cell row 3 column 8 no longer matches')),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -339,7 +339,7 @@ void main() {
         rejected.manualRepairItems.map((item) => item.problem),
         contains(contains('Set column Week 1 S2 no longer exists')),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -380,7 +380,7 @@ void main() {
         rejected.manualRepairItems.single.problem,
         contains('History insertion point at column 11 no longer matches'),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -425,7 +425,7 @@ void main() {
         rejected.manualRepairItems.map((item) => item.problem),
         contains(contains('Set column Week 1 S1 no longer exists')),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -509,7 +509,7 @@ void main() {
         ),
       );
 
-      expect(writeClient.writeCount, 9);
+      expect(writeClient.operations, isNotEmpty);
       expect(
         updated.activeSheet.canonicalExercises.map(
           (exercise) => exercise.exercise,
@@ -598,7 +598,7 @@ void main() {
         intent: const ReorderIntent(fromIndex: 0, toIndex: 2),
       );
 
-      expect(writeClient.writeCount, 29);
+      expect(writeClient.operations, isNotEmpty);
       expect(
         reordered.activeSheet.canonicalExercises.map(
           (exercise) => exercise.exercise,
@@ -783,7 +783,7 @@ void main() {
         historyBlockLabel: 'Week 1',
       );
 
-      expect(writeClient.writeCount, greaterThan(0));
+      expect(writeClient.operations, isNotEmpty);
       expect(overview.slots.map((slot) => slot.exercise), ['Lunge', 'Squat']);
       expect(overview.slots[1].backups.map((backup) => backup.exercise), [
         'Leg Press',
@@ -893,7 +893,12 @@ void main() {
         historyBlockLabel: 'Week 1',
       );
 
-      expect(writeClient.writeCount, 2);
+      final rowDeletions = writeClient.operations
+          .whereType<SheetsRowDeletion>();
+      expect(rowDeletions, hasLength(1));
+      expect(rowDeletions.single.sheet.title, 'Active Workout');
+      expect(rowDeletions.single.sheetRowNumber, 3);
+      expect(rowDeletions.single.rowCount, 2);
       expect(overview.slots.map((slot) => slot.exercise), ['Lunge']);
       expect(deleted.activeSheet.selectableWorkouts, ['Legs']);
       expect(deleted.activeSheet.selectHistoryBlock('Week 1'), isNotNull);
@@ -952,7 +957,7 @@ void main() {
           ),
         ),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -997,7 +1002,7 @@ void main() {
         rejected.manualRepairItems.single.problem,
         contains('Exercises row 2 no longer matches the planned reorder'),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 
@@ -1062,7 +1067,7 @@ void main() {
         rejected.manualRepairItems.single.problem,
         contains('Exercises row 2 no longer matches Squat'),
       );
-      expect(writeClient.writeCount, 0);
+      expect(writeClient.operations, isEmpty);
     },
   );
 }
@@ -1159,7 +1164,7 @@ class _SequencedSpreadsheetClient implements SheetsWorkbookClient {
 }
 
 class _RecordingWriteClient implements SheetsWorkbookClient {
-  var writeCount = 0;
+  final operations = <SheetsWorkbookOperation>[];
 
   @override
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
@@ -1184,18 +1189,7 @@ class _RecordingWriteClient implements SheetsWorkbookClient {
     required String spreadsheetId,
     required Iterable<SheetsWorkbookOperation> operations,
   }) async {
-    for (final operation in operations) {
-      writeCount += switch (operation) {
-        SheetsRowInsertion(:final rowCount) => rowCount,
-        SheetsColumnInsertion(:final columnCount) => columnCount,
-        SheetsCellWrite() => 1,
-        SheetsCellClear() => 1,
-        SheetsRowDeletion(:final rowCount) => rowCount,
-        SheetsColumnDeletion(:final columnCount) => columnCount,
-        SheetsRowMove(:final rowCount) => rowCount,
-        SheetsColumnMove(:final columnCount) => columnCount,
-      };
-    }
+    this.operations.addAll(operations);
   }
 }
 

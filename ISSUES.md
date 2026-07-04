@@ -18,7 +18,7 @@ slice is complete. Preserve unrelated worktree changes.
 - [x] Slice 4: Plan Primary Workout Exercise Deletion With Attached Backups
 - [x] Slice 5: Apply Workout Exercise Deletion Through Services And Sheets Row Deletes
 - [x] Slice 6: Add Delete Exercise To The Primary Exercise Menu With Confirmation
-- [ ] Slice 7: Clean Up Refactor And Feature Tests
+- [x] Slice 7: Clean Up Refactor And Feature Tests
 
 ## Slice 1: Create A Generic Sheets Workbook Operation Port
 
@@ -300,17 +300,17 @@ service/controller application, and delete confirmation UI.
 
 ### Acceptance criteria
 
-- [ ] Tests assert observable behavior through public sheet-contract, adapter,
+- [x] Tests assert observable behavior through public sheet-contract, adapter,
       service, controller, or widget interfaces.
-- [ ] Tests do not over-constrain private helper names, internal batching
+- [x] Tests do not over-constrain private helper names, internal batching
       order beyond externally meaningful ordering, or incidental widget tree
       shape.
-- [ ] Durable tests still cover row/column delete and move operations.
-- [ ] Durable tests still cover primary-plus-backups delete planning and stale
+- [x] Durable tests still cover row/column delete and move operations.
+- [x] Durable tests still cover primary-plus-backups delete planning and stale
       rejection.
-- [ ] Durable tests still cover confirmation-required UI behavior.
-- [ ] Relevant targeted Flutter tests pass.
-- [ ] Any architecture guard or review step requested by the active slice is
+- [x] Durable tests still cover confirmation-required UI behavior.
+- [x] Relevant targeted Flutter tests pass.
+- [x] Any architecture guard or review step requested by the active slice is
       run and findings are resolved or documented.
 
 ### Blocked by

@@ -980,9 +980,6 @@ void main() {
     expect(plan.rowDeletions, const [
       ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 1),
     ]);
-    expect(plan.rowInsertions, isEmpty);
-    expect(plan.columnInsertions, isEmpty);
-    expect(plan.cellUpdates, isEmpty);
     expect(plan.previewRowsAfterApplying(rows), [rows[0], rows[1], rows[3]]);
   });
 
@@ -1044,7 +1041,6 @@ void main() {
       expect(plan.rowDeletions, const [
         ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 2),
       ]);
-      expect(plan.cellUpdates, isEmpty);
       expect(plan.previewRowsAfterApplying(rows), [rows[0], rows[1], rows[4]]);
     },
   );
