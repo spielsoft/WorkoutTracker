@@ -9,4 +9,5 @@ part 'active_sheet/parsed_active_sheet.dart';
 part 'active_sheet/parser.dart';
 part 'active_sheet/read_models.dart';
 part 'active_sheet/workout_rows.dart';
+part 'active_sheet/write_plan_domain_planners.dart';
 part 'active_sheet/write_plans.dart';

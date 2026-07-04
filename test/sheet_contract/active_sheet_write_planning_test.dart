@@ -333,6 +333,34 @@ void main() {
     },
   );
 
+  test('rejects logging with history growth when insertion point is stale', () {
+    final rows = [
+      historyHeaderRow(['Session A']),
+      setLabelRow(['S1']),
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planSetLoggingWrite(
+      historyBlockLabel: 'Session A',
+      sheetRowNumber: 3,
+      fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
+    );
+
+    final changedRows = rows.map((row) => [...row]).toList();
+    changedRows[0].add('Session B');
+    changedRows[1].add('S1');
+    changedRows[2].add('');
+    final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
+
+    expect(plan.writeRejections(changedSheet), [
+      const ActiveSheetWriteRejection(
+        'History insertion point at column 12 no longer matches '
+        'the visible sheet.',
+      ),
+    ]);
+  });
+
   test('preserves raw unparseable existing data when logging a new set', () {
     final rows = [
       historyHeaderRow(['Session A', '']),
