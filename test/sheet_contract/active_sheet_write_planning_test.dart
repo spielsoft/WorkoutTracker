@@ -1045,6 +1045,85 @@ void main() {
     },
   );
 
+  test('plans deleting a primary and backup around ignored human rows', () {
+    final rows = [
+      historyHeaderRow(['Session A', '']),
+      setLabelRow(['S1', 'S2']),
+      [
+        'Squat',
+        '3',
+        '5',
+        '8',
+        '3 min',
+        '',
+        'primary notes',
+        defaultExerciseLogFormat,
+        'Legs',
+        '',
+        '225x5@8',
+        '',
+      ],
+      [
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        'Coach note between primary and backup',
+        '',
+        '',
+        '',
+        '',
+        '',
+      ],
+      [
+        'Leg Press',
+        '3',
+        '12',
+        '8',
+        '2 min',
+        '',
+        'backup notes',
+        '{Reps}[@]{RPE}',
+        'Legs',
+        'TRUE',
+        '12@8',
+        '',
+      ],
+      [
+        'Bench Press',
+        '4',
+        '6',
+        '8',
+        '3 min',
+        '',
+        'upper notes',
+        defaultExerciseLogFormat,
+        'Upper',
+        '',
+        '185x6@8',
+        '',
+      ],
+    ];
+    final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
+
+    final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      primarySheetRowNumber: 3,
+    );
+
+    expect(plan.rowDeletions, const [
+      ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 1),
+      ActiveSheetRowDeletion(sheetRowNumber: 5, rowCount: 1),
+    ]);
+    expect(plan.previewRowsAfterApplying(rows), [
+      rows[0],
+      rows[1],
+      rows[3],
+      rows[5],
+    ]);
+  });
+
   test('plans deleting a primary workout exercise with multiple backups', () {
     final rows = [
       historyHeaderRow(['Session A', '']),

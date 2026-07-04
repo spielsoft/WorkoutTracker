@@ -1421,12 +1421,10 @@ class _ActiveSheetWritePlanner {
       return ActiveSheetWritePlan();
     }
     return ActiveSheetWritePlan(
-      rowDeletions: [
-        ActiveSheetRowDeletion(
-          sheetRowNumber: primary.sheetRowNumber,
-          rowCount: 1 + primary.backups.length,
-        ),
-      ],
+      rowDeletions: _rowDeletionsForSheetRows([
+        primary.sheetRowNumber,
+        for (final backup in primary.backups) backup.sheetRowNumber,
+      ]),
       expectations: [
         _rowExpectation(primary),
         for (final backup in primary.backups) _rowExpectation(backup),
@@ -1931,6 +1929,42 @@ class _ActiveSheetWritePlanner {
       }
     }
     return null;
+  }
+
+  List<ActiveSheetRowDeletion> _rowDeletionsForSheetRows(
+    Iterable<int> sheetRowNumbers,
+  ) {
+    final sortedRows = sheetRowNumbers.toSet().toList()..sort();
+    if (sortedRows.isEmpty) {
+      return const [];
+    }
+
+    final deletions = <ActiveSheetRowDeletion>[];
+    var startRow = sortedRows.first;
+    var previousRow = startRow;
+
+    for (final row in sortedRows.skip(1)) {
+      if (row == previousRow + 1) {
+        previousRow = row;
+        continue;
+      }
+      deletions.add(
+        ActiveSheetRowDeletion(
+          sheetRowNumber: startRow,
+          rowCount: previousRow - startRow + 1,
+        ),
+      );
+      startRow = row;
+      previousRow = row;
+    }
+
+    deletions.add(
+      ActiveSheetRowDeletion(
+        sheetRowNumber: startRow,
+        rowCount: previousRow - startRow + 1,
+      ),
+    );
+    return deletions;
   }
 
   int _backupInsertionRowNumber(WorkoutSlot primary) {

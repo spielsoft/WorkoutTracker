@@ -1528,11 +1528,11 @@ void main() {
     expect(find.text('Upper exercises'), findsOneWidget);
     expect(find.text('Pull Up'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.tap(find.byTooltip('Exercise actions for Pull Up'));
     await tester.pumpAndSettle();
 
     expect(find.text('Add backup exercise'), findsOneWidget);
-    expect(find.text('Delete exercise'), findsOneWidget);
+    expect(find.text('Delete exercise'), findsNothing);
 
     await tester.tap(find.text('Add backup exercise'));
     await tester.pumpAndSettle();
@@ -1588,7 +1588,7 @@ void main() {
     expect(find.text('Pull Up'), findsOneWidget);
     expect(find.text('Lat Pulldown'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.tap(find.byTooltip('Exercise actions for Pull Up'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete exercise'));
     await tester.pumpAndSettle();
@@ -1650,7 +1650,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.tap(find.byTooltip('Exercise actions for Pull Up'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete exercise'));
     await tester.pumpAndSettle();
@@ -1706,7 +1706,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Backup actions for Pull Up'));
+    await tester.tap(find.byTooltip('Exercise actions for Pull Up'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete exercise'));
     await tester.pumpAndSettle();
@@ -2196,17 +2196,17 @@ void main() {
       );
       expect(find.text('Open log'), findsOneWidget);
       expect(
-        find.byTooltip('Backup actions for $primaryExercise'),
+        find.byTooltip('Exercise actions for $primaryExercise'),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel('Backup actions for $primaryExercise'),
+        find.bySemanticsLabel('Exercise actions for $primaryExercise'),
         findsOneWidget,
       );
       expect(find.bySemanticsLabel('Reorder $primaryExercise'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.byTooltip('Backup actions for $primaryExercise'));
+      await tester.tap(find.byTooltip('Exercise actions for $primaryExercise'));
       await tester.pumpAndSettle();
 
       expect(find.text('Add backup exercise'), findsOneWidget);

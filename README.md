@@ -160,8 +160,10 @@ Integration slices may write to this sheet, but they must include reset and clea
 
 ## Spreadsheet Selection
 
-Google Drive Picker is the shared path for account discovery, authorization,
-choosing an existing sheet, and choosing the target folder for a new sheet.
+Google Drive Picker is used as the shared path for account discovery,
+authorization, choosing an existing sheet, and choosing the target folder for a
+new sheet.
+Native Google Sign-In remains wired for runnable iOS and macOS apps.
 The Picker callback provides the access token and account profile that the app
 persists for later launches. Google-backed sheet creation opens the folder
 picker first, then asks for the sheet name, creates a new spreadsheet,

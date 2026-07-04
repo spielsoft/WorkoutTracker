@@ -627,29 +627,32 @@ class _WorkoutOverviewTile extends StatelessWidget {
     final backupSummaryLabel = slot.backups.length == 1
         ? '1 backup'
         : '${slot.backups.length} backups';
-    final backupActionButton = onAddBackupExercise == null
+    final hasExerciseActions =
+        onAddBackupExercise != null || onDeleteWorkoutExercise != null;
+    final exerciseActionButton = !hasExerciseActions
         ? null
         : Semantics(
             button: true,
-            label: 'Backup actions for ${slot.exercise}',
+            label: 'Exercise actions for ${slot.exercise}',
             child: PopupMenuButton<_PrimaryExerciseAction>(
-              key: ValueKey('backup-actions-${slot.sheetRowNumber}'),
-              tooltip: 'Backup actions for ${slot.exercise}',
-              icon: const Icon(Icons.alt_route_outlined),
+              key: ValueKey('exercise-actions-${slot.sheetRowNumber}'),
+              tooltip: 'Exercise actions for ${slot.exercise}',
+              icon: const Icon(Icons.more_vert),
               itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: _PrimaryExerciseAction.addBackup,
-                  child: _PrimaryExerciseAddBackupMenuItem(
-                    exercise: slot.exercise,
+                if (onAddBackupExercise != null)
+                  PopupMenuItem(
+                    value: _PrimaryExerciseAction.addBackup,
+                    child: _PrimaryExerciseAddBackupMenuItem(
+                      exercise: slot.exercise,
+                    ),
                   ),
-                ),
-                PopupMenuItem(
-                  value: _PrimaryExerciseAction.delete,
-                  enabled: onDeleteWorkoutExercise != null,
-                  child: _PrimaryExerciseDeleteMenuItem(
-                    exercise: slot.exercise,
+                if (onDeleteWorkoutExercise != null)
+                  PopupMenuItem(
+                    value: _PrimaryExerciseAction.delete,
+                    child: _PrimaryExerciseDeleteMenuItem(
+                      exercise: slot.exercise,
+                    ),
                   ),
-                ),
               ],
               onSelected: _handlePrimaryExerciseAction,
             ),
@@ -668,11 +671,11 @@ class _WorkoutOverviewTile extends StatelessWidget {
     );
     return GestureDetector(
       excludeFromSemantics: true,
-      onSecondaryTapDown: onAddBackupExercise == null
+      onSecondaryTapDown: !hasExerciseActions
           ? null
           : (details) =>
                 _showPrimaryExerciseMenu(context, details.globalPosition),
-      onLongPressStart: onAddBackupExercise == null
+      onLongPressStart: !hasExerciseActions
           ? null
           : (details) =>
                 _showPrimaryExerciseMenu(context, details.globalPosition),
@@ -720,9 +723,9 @@ class _WorkoutOverviewTile extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Text(setLabel),
-                            if (backupActionButton != null) ...[
+                            if (exerciseActionButton != null) ...[
                               const SizedBox(width: 4),
-                              backupActionButton,
+                              exerciseActionButton,
                             ],
                             if (canReorder) ...[
                               const SizedBox(width: 4),
@@ -769,9 +772,9 @@ class _WorkoutOverviewTile extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Text(setLabel),
-                            if (backupActionButton != null) ...[
+                            if (exerciseActionButton != null) ...[
                               const SizedBox(width: 4),
-                              backupActionButton,
+                              exerciseActionButton,
                             ],
                             if (canReorder) ...[
                               const SizedBox(width: 4),
@@ -846,7 +849,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
     Offset globalPosition,
   ) async {
     final onAddBackupExercise = this.onAddBackupExercise;
-    if (onAddBackupExercise == null) {
+    final onDeleteWorkoutExercise = this.onDeleteWorkoutExercise;
+    if (onAddBackupExercise == null && onDeleteWorkoutExercise == null) {
       return;
     }
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -857,20 +861,21 @@ class _WorkoutOverviewTile extends StatelessWidget {
         Offset.zero & overlay.size,
       ),
       items: [
-        PopupMenuItem(
-          value: _PrimaryExerciseAction.addBackup,
-          child: _PrimaryExerciseAddBackupMenuItem(exercise: slot.exercise),
-        ),
-        PopupMenuItem(
-          value: _PrimaryExerciseAction.delete,
-          enabled: onDeleteWorkoutExercise != null,
-          child: _PrimaryExerciseDeleteMenuItem(exercise: slot.exercise),
-        ),
+        if (onAddBackupExercise != null)
+          PopupMenuItem(
+            value: _PrimaryExerciseAction.addBackup,
+            child: _PrimaryExerciseAddBackupMenuItem(exercise: slot.exercise),
+          ),
+        if (onDeleteWorkoutExercise != null)
+          PopupMenuItem(
+            value: _PrimaryExerciseAction.delete,
+            child: _PrimaryExerciseDeleteMenuItem(exercise: slot.exercise),
+          ),
       ],
     );
     switch (selected) {
       case _PrimaryExerciseAction.addBackup:
-        onAddBackupExercise(slot);
+        onAddBackupExercise?.call(slot);
       case _PrimaryExerciseAction.delete:
         onDeleteWorkoutExercise?.call(slot);
       case null:
