@@ -7,8 +7,8 @@ Future<void> main() async {
   final appLinks = AppLinks();
   final googlePickerConfig = await loadGooglePickerAppConfig();
   final googleSignInGateway = GooglePickerAuthorizationGateway();
-  final googleSpreadsheetService = GoogleSignInSpreadsheetValidationService(
-    authorizationGateway: googleSignInGateway,
+  final googleSpreadsheetService = GoogleSpreadsheetWorkbookAccess(
+    GoogleScopedApiAccess(authorizationGateway: googleSignInGateway),
   );
   runApp(
     WorkoutTrackerApp(

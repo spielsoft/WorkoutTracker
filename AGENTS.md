@@ -170,7 +170,7 @@ and committing each completed slice separately.
 - [x] Slice 5: Consolidate app-facing workbook commands
 - [x] Slice 6: Move shell workspace orchestration out of widget state
 - [x] Slice 7: Deepen write-planning internals without changing the facade
-- [ ] Slice 8: Run architecture and test cleanup
+- [x] Slice 8: Run architecture and test cleanup
 
 ## Slice 1: Introduce Google Workspace Lifecycle State
 

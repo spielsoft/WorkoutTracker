@@ -17,9 +17,11 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ];
       final authClient = _CloseTrackingAuthClient();
-      final service = GoogleSignInSpreadsheetValidationService(
-        authorizationGateway: gateway,
-        authorizationClientFactory: (_) => authClient,
+      final service = GoogleSpreadsheetWorkbookAccess(
+        GoogleScopedApiAccess(
+          authorizationGateway: gateway,
+          authorizationClientFactory: (_) => authClient,
+        ),
         workbookClientFactory: (_) =>
             _CloseTrackingWorkbookClient(authClient, [_snapshot(rows)]),
       );
@@ -55,9 +57,11 @@ void main() {
         _snapshot(activeRows),
         _snapshot(refreshedRows),
       ]);
-      final service = GoogleSignInSpreadsheetValidationService(
-        authorizationGateway: gateway,
-        authorizationClientFactory: (_) => authClient,
+      final service = GoogleSpreadsheetWorkbookAccess(
+        GoogleScopedApiAccess(
+          authorizationGateway: gateway,
+          authorizationClientFactory: (_) => authClient,
+        ),
         workbookClientFactory: (_) => workbookClient,
       );
 

@@ -47,8 +47,8 @@ void main() {
     readAdapter = GoogleSheetsReadAdapter(
       client: GoogleApisSheetsWorkbookClient(api),
     );
-    workbookCommands = GoogleSignInSpreadsheetValidationService(
-      authorizationGateway: authorizationGateway,
+    workbookCommands = GoogleSpreadsheetWorkbookAccess(
+      GoogleScopedApiAccess(authorizationGateway: authorizationGateway),
     );
   });
 
