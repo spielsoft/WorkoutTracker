@@ -148,6 +148,79 @@ void main() {
     },
   );
 
+  test('switches to pasted sheet text through a workspace command', () async {
+    final accessState = _MemoryGoogleWorkspaceAccessStateOwner(
+      const GoogleWorkspaceAccessState(
+        spreadsheetText: 'selected-spreadsheet-id',
+        selectedSpreadsheet: SelectedSpreadsheet(
+          spreadsheetId: 'selected-spreadsheet-id',
+          name: 'Selected Workouts',
+        ),
+        googleAuthorization: GooglePickerAuthorizationSnapshot(
+          accessToken: 'picker-token',
+          accountEmail: 'athlete@example.com',
+        ),
+        workoutSelection: WorkoutSelectionState(
+          spreadsheetId: 'selected-spreadsheet-id',
+          workout: 'Legs',
+          historyBlock: 'Week 1',
+        ),
+      ),
+    );
+    final workspace = GoogleWorkspaceLifecycleController(
+      accessStateOwner: accessState,
+    );
+    await workspace.restore();
+
+    final state = await workspace.usePastedSpreadsheetText(
+      ' pasted-spreadsheet-id ',
+    );
+
+    expect(state.selectedSpreadsheet, isNull);
+    expect(state.pastedSpreadsheetText, 'pasted-spreadsheet-id');
+    expect(state.workoutSelection, isNull);
+    expect(accessState.value.selectedSpreadsheet, isNull);
+    expect(accessState.value.spreadsheetText, 'pasted-spreadsheet-id');
+    expect(accessState.value.googleAuthorization?.accessToken, 'picker-token');
+    expect(accessState.value.workoutSelection, isNull);
+  });
+
+  test(
+    'restores and resolves a saved selected sheet in one workspace command',
+    () async {
+      final accessState = _MemoryGoogleWorkspaceAccessStateOwner(
+        const GoogleWorkspaceAccessState(
+          selectedSpreadsheet: SelectedSpreadsheet(
+            spreadsheetId: 'saved-spreadsheet-id',
+            name: 'Saved Workouts',
+          ),
+        ),
+      );
+      final picker = _ResolvingSpreadsheetPicker(
+        const SelectedSpreadsheet(
+          spreadsheetId: 'resolved-spreadsheet-id',
+          name: 'Resolved Workouts',
+        ),
+      );
+      final workspace = GoogleWorkspaceLifecycleController(
+        accessStateOwner: accessState,
+        spreadsheetPicker: picker,
+      );
+
+      final state = await workspace.restoreResolvedSelection();
+
+      expect(
+        state.selectedSpreadsheet?.spreadsheetId,
+        'resolved-spreadsheet-id',
+      );
+      expect(accessState.value.spreadsheetText, 'resolved-spreadsheet-id');
+      expect(
+        accessState.value.selectedSpreadsheet?.displayLabel,
+        'Resolved Workouts',
+      );
+    },
+  );
+
   test(
     'chooses and adopts a spreadsheet through the workspace command',
     () async {

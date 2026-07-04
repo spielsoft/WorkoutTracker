@@ -435,7 +435,6 @@ class _SpreadsheetValidationShellState
     extends State<SpreadsheetValidationShell> {
   late final TextEditingController _spreadsheetController;
   late final WorkoutTrackerController _controller;
-  SelectedSpreadsheet? _selectedSpreadsheet;
   _WorkoutTrackerScreen _screen = _WorkoutTrackerScreen.sheetSelection;
   _WorkoutTrackerScreen _exerciseAddReturnScreen =
       _WorkoutTrackerScreen.exercisePicker;
@@ -444,7 +443,6 @@ class _SpreadsheetValidationShellState
   int? _highlightedCanonicalExerciseSheetRowNumber;
   GoogleWorkspaceAccessStateOwner? _accessStateController;
   late final GoogleWorkspaceLifecycleController _workspaceLifecycle;
-  bool _isClearingSession = false;
 
   @override
   void initState() {
@@ -452,7 +450,6 @@ class _SpreadsheetValidationShellState
     _controller = WorkoutTrackerController(
       workbookCommands: widget.workbookCommands,
     );
-    _selectedSpreadsheet = widget.initialSelectedSpreadsheet;
     _spreadsheetController = TextEditingController(
       text:
           widget.initialSelectedSpreadsheet?.spreadsheetId ??
@@ -471,7 +468,6 @@ class _SpreadsheetValidationShellState
       initialSpreadsheetText: widget.initialSpreadsheetText,
       initialSelectedSpreadsheet: widget.initialSelectedSpreadsheet,
     );
-    _spreadsheetController.addListener(_persistSpreadsheetText);
     unawaited(_restoreStartupState());
   }
 
@@ -479,7 +475,6 @@ class _SpreadsheetValidationShellState
   void dispose() {
     _controller.dispose();
     _workspaceLifecycle.dispose();
-    _spreadsheetController.removeListener(_persistSpreadsheetText);
     _spreadsheetController.dispose();
     super.dispose();
   }
@@ -487,7 +482,7 @@ class _SpreadsheetValidationShellState
   Future<void> _restoreStartupState() async {
     GoogleWorkspaceState workspaceState;
     try {
-      workspaceState = await _workspaceLifecycle.restore();
+      workspaceState = await _workspaceLifecycle.restoreResolvedSelection();
     } on Object {
       return;
     }
@@ -502,10 +497,8 @@ class _SpreadsheetValidationShellState
     }
     var savedSelection = workspaceState.selectedSpreadsheet;
     if (savedSelection != null) {
-      savedSelection = await _resolveSelectedSpreadsheet(savedSelection);
       setState(() {
-        _selectedSpreadsheet = savedSelection;
-        _spreadsheetController.text = savedSelection!.spreadsheetId;
+        _spreadsheetController.text = savedSelection.spreadsheetId;
       });
       await _validateSelectedSpreadsheet();
       _restoreWorkoutSelection(
@@ -521,19 +514,10 @@ class _SpreadsheetValidationShellState
     }
   }
 
-  Future<SelectedSpreadsheet> _resolveSelectedSpreadsheet(
-    SelectedSpreadsheet selected,
-  ) async {
-    return _workspaceLifecycle.resolveSelectedSpreadsheet(selected);
-  }
-
-  void _persistSpreadsheetText() {
-    if (_isClearingSession) {
-      return;
-    }
+  void _usePastedSpreadsheetText() {
     unawaited(() async {
       try {
-        await _workspaceLifecycle.persistPastedSpreadsheetText(
+        await _workspaceLifecycle.usePastedSpreadsheetText(
           _spreadsheetController.text,
         );
       } on Object {
@@ -543,7 +527,7 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _validateSelectedSpreadsheet() async {
-    final selectedSpreadsheet = _selectedSpreadsheet;
+    final selectedSpreadsheet = _workspaceLifecycle.state.selectedSpreadsheet;
     final selected = selectedSpreadsheet == null
         ? await _controller.validateSpreadsheetSelection(
             _spreadsheetController.text,
@@ -561,14 +545,9 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _chooseSpreadsheet() async {
-    if (_controller.isBusy) {
-      return;
-    }
     try {
       final workspaceState = await _workspaceLifecycle.chooseSpreadsheet();
-      await _adoptWorkspaceSelectedSpreadsheet(
-        workspaceState.selectedSpreadsheet,
-      );
+      await _validateWorkspaceSelectedSpreadsheet(workspaceState);
     } on Object catch (error) {
       _controller.reportSpreadsheetSelectionFailure(error);
     }
@@ -588,9 +567,7 @@ class _SpreadsheetValidationShellState
       final workspaceState = await _workspaceLifecycle.createSpreadsheet(
         name: name,
       );
-      await _adoptWorkspaceSelectedSpreadsheet(
-        workspaceState.selectedSpreadsheet,
-      );
+      await _validateWorkspaceSelectedSpreadsheet(workspaceState);
     } on Object catch (error) {
       _controller.reportSpreadsheetSelectionFailure(error);
     }
@@ -609,41 +586,29 @@ class _SpreadsheetValidationShellState
     }
   }
 
-  Future<void> _adoptWorkspaceSelectedSpreadsheet(
-    SelectedSpreadsheet? selectedSpreadsheet,
+  Future<void> _validateWorkspaceSelectedSpreadsheet(
+    GoogleWorkspaceState workspaceState,
   ) async {
+    final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
     if (!mounted || selectedSpreadsheet == null) {
       return;
     }
     setState(() {
-      _selectedSpreadsheet = selectedSpreadsheet;
       _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
     });
     await _validateSelectedSpreadsheet();
   }
 
-  void _usePastedSpreadsheetText() {
-    setState(() {
-      _selectedSpreadsheet = null;
-    });
-  }
-
   Future<void> _handleSignedOut() async {
-    _isClearingSession = true;
-    try {
-      await _workspaceLifecycle.signOut();
-      _controller.clearSpreadsheetSelection();
-      setState(() {
-        _selectedSpreadsheet = null;
-        _spreadsheetController.clear();
-        _screen = _WorkoutTrackerScreen.sheetSelection;
-        _exerciseAddReturnScreen = _WorkoutTrackerScreen.exercisePicker;
-        _addExercisePlacementIntent = null;
-        _canonicalExerciseBeingEdited = null;
-      });
-    } finally {
-      _isClearingSession = false;
-    }
+    await _workspaceLifecycle.signOut();
+    _controller.clearSpreadsheetSelection();
+    setState(() {
+      _spreadsheetController.clear();
+      _screen = _WorkoutTrackerScreen.sheetSelection;
+      _exerciseAddReturnScreen = _WorkoutTrackerScreen.exercisePicker;
+      _addExercisePlacementIntent = null;
+      _canonicalExerciseBeingEdited = null;
+    });
   }
 
   Future<String?> _promptForName({
@@ -1087,11 +1052,12 @@ class _SpreadsheetValidationShellState
               final isBusy =
                   _controller.isBusy || workspaceState.isCommandInFlight;
               final spreadsheetPicker = widget.spreadsheetPicker;
+              final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
               final pickerAvailability = workspaceState.pickerAvailability;
               final hasLoadedWorkout =
                   report != null && !report.hasBlockingIssues;
               final showPickerAvailability =
-                  _selectedSpreadsheet == null && spreadsheetPicker != null;
+                  selectedSpreadsheet == null && spreadsheetPicker != null;
               final showSheetSelection =
                   _screen == _WorkoutTrackerScreen.sheetSelection ||
                   report == null ||
@@ -1110,7 +1076,7 @@ class _SpreadsheetValidationShellState
                         if (showSheetSelection) ...[
                           if (spreadsheetPicker != null) ...[
                             _SelectedSpreadsheetChooser(
-                              selectedSpreadsheet: _selectedSpreadsheet,
+                              selectedSpreadsheet: selectedSpreadsheet,
                               availability: pickerAvailability,
                               showAvailabilitySummary: showPickerAvailability,
                               isBusy: isBusy,
@@ -1163,7 +1129,7 @@ class _SpreadsheetValidationShellState
                           _WorkoutAndHistorySelection(
                             setup: _controller.workoutSetup!,
                             sheetLabel:
-                                _selectedSpreadsheet?.displayLabel ??
+                                selectedSpreadsheet?.displayLabel ??
                                 report.spreadsheetId,
                             screen: _screen,
                             onBackToSheetSelection: _returnToSheetSelection,

@@ -37,7 +37,11 @@ abstract interface class GoogleWorkspaceLifecycle implements Listenable {
 
   Future<GoogleWorkspaceState> restore();
 
+  Future<GoogleWorkspaceState> restoreResolvedSelection();
+
   Future<GoogleWorkspaceState> persistPastedSpreadsheetText(String text);
+
+  Future<GoogleWorkspaceState> usePastedSpreadsheetText(String text);
 
   Future<GoogleWorkspaceState> adoptSelectedSpreadsheet(
     SelectedSpreadsheet selected,
@@ -122,6 +126,17 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
+  Future<GoogleWorkspaceState> restoreResolvedSelection() async {
+    final restored = await restore();
+    final selected = restored.selectedSpreadsheet;
+    if (selected == null) {
+      return restored;
+    }
+    await resolveSelectedSpreadsheet(selected);
+    return _state;
+  }
+
+  @override
   Future<GoogleWorkspaceState> persistPastedSpreadsheetText(String text) async {
     final persistedText = _trimmedOrNull(text);
     await _updateAccessStateBestEffort(
@@ -137,6 +152,30 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
         selectedSpreadsheet: _state.selectedSpreadsheet,
         pastedSpreadsheetText: persistedText,
         workoutSelection: _state.workoutSelection,
+      ),
+    );
+    return _state;
+  }
+
+  @override
+  Future<GoogleWorkspaceState> usePastedSpreadsheetText(String text) async {
+    final persistedText = _trimmedOrNull(text);
+    final updatedAccessState = await _updateAccessStateBestEffort(
+      (accessState) => GoogleWorkspaceAccessState(
+        spreadsheetText: persistedText,
+        selectedSpreadsheet: null,
+        googleAuthorization: accessState.googleAuthorization,
+        workoutSelection: null,
+      ),
+    );
+    _setState(
+      _stateWith(
+        selectedSpreadsheet: null,
+        pastedSpreadsheetText: persistedText,
+        pickerAuthorization:
+            updatedAccessState?.googleAuthorization ??
+            _state.pickerAuthorization,
+        workoutSelection: null,
       ),
     );
     return _state;
