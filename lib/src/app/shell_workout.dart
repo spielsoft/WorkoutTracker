@@ -79,32 +79,32 @@ class _WorkoutPane extends StatelessWidget {
     required this.setup,
     required this.sheetLabel,
     required this.screen,
-    required this.onBackToSheetSelection,
-    required this.onSelectWorkoutSetup,
-    required this.onBackToWorkoutSetup,
-    required this.onOpenExerciseManager,
+    required this.onBackToSheets,
+    required this.onOpenSetup,
+    required this.onBackToSetup,
+    required this.onOpenLibrary,
     required this.editingExercise,
     required this.onWorkoutChanged,
     required this.onHistoryBlockChanged,
     required this.onAddWorkout,
     required this.onAddHistoryBlock,
-    required this.onCreateCanonicalExercise,
-    required this.onEditCanonicalExercise,
+    required this.onCreateExercise,
+    required this.onEditExercise,
     required this.highlightedExerciseRow,
-    required this.onReorderCanonicalExercises,
-    required this.onReorderWorkoutExercises,
+    required this.onReorderExercises,
+    required this.onReorderWorkout,
     required this.onOpenExercise,
-    required this.onAddPrimaryExercise,
-    required this.onAddBackupExercise,
-    required this.onDeleteWorkoutExercise,
-    required this.exerciseAddReturnScreen,
-    required this.addExercisePlacementIntent,
+    required this.onAddPrimary,
+    required this.onAddBackup,
+    required this.onDeleteExercise,
+    required this.addReturnScreen,
+    required this.addIntent,
     required this.onCloseExerciseAdd,
-    required this.onSubmitCanonicalExercise,
-    required this.onSubmitCanonicalExerciseEdit,
+    required this.onSubmitExercise,
+    required this.onSubmitExerciseEdit,
     required this.onCloseExerciseEdit,
-    required this.onSubmitExercisePlacement,
-    required this.onSubmitPlacementAndAddAnother,
+    required this.onSubmitPlacement,
+    required this.onSubmitAndAddAnother,
     required this.onCloseExercise,
     required this.onLoggingRowChanged,
     required this.onApplyWritePlan,
@@ -113,34 +113,33 @@ class _WorkoutPane extends StatelessWidget {
   final WorkoutSetupReadModel setup;
   final String sheetLabel;
   final _AppScreen screen;
-  final VoidCallback onBackToSheetSelection;
-  final VoidCallback onSelectWorkoutSetup;
-  final VoidCallback onBackToWorkoutSetup;
-  final VoidCallback onOpenExerciseManager;
+  final VoidCallback onBackToSheets;
+  final VoidCallback onOpenSetup;
+  final VoidCallback onBackToSetup;
+  final VoidCallback onOpenLibrary;
   final CanonicalExercise? editingExercise;
   final ValueChanged<String?> onWorkoutChanged;
   final ValueChanged<String?> onHistoryBlockChanged;
   final VoidCallback? onAddWorkout;
   final VoidCallback? onAddHistoryBlock;
-  final VoidCallback? onCreateCanonicalExercise;
-  final ValueChanged<CanonicalExercise>? onEditCanonicalExercise;
+  final VoidCallback? onCreateExercise;
+  final ValueChanged<CanonicalExercise>? onEditExercise;
   final int? highlightedExerciseRow;
-  final Future<bool> Function(ReorderIntent intent)?
-  onReorderCanonicalExercises;
-  final Future<bool> Function(ReorderIntent intent)? onReorderWorkoutExercises;
+  final Future<bool> Function(ReorderIntent intent)? onReorderExercises;
+  final Future<bool> Function(ReorderIntent intent)? onReorderWorkout;
   final ValueChanged<int> onOpenExercise;
-  final ValueChanged<String> onAddPrimaryExercise;
-  final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
-  final ValueChanged<WorkoutOverviewSlot>? onDeleteWorkoutExercise;
-  final _AppScreen exerciseAddReturnScreen;
-  final _PlaceIntent? addExercisePlacementIntent;
+  final ValueChanged<String> onAddPrimary;
+  final ValueChanged<WorkoutOverviewSlot> onAddBackup;
+  final ValueChanged<WorkoutOverviewSlot>? onDeleteExercise;
+  final _AppScreen addReturnScreen;
+  final _PlaceIntent? addIntent;
   final VoidCallback onCloseExerciseAdd;
-  final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExercise;
-  final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExerciseEdit;
+  final ValueChanged<CanonicalExerciseDraft> onSubmitExercise;
+  final ValueChanged<CanonicalExerciseDraft> onSubmitExerciseEdit;
   final VoidCallback onCloseExerciseEdit;
-  final ValueChanged<_ExercisePlacementDraft> onSubmitExercisePlacement;
+  final ValueChanged<_ExercisePlacementDraft> onSubmitPlacement;
   final Future<bool> Function(_ExercisePlacementDraft draft)
-  onSubmitPlacementAndAddAnother;
+  onSubmitAndAddAnother;
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
@@ -169,9 +168,9 @@ class _WorkoutPane extends StatelessWidget {
     }
 
     if (screen == _AppScreen.addExercise) {
-      final intent = addExercisePlacementIntent;
+      final intent = addIntent;
       if (intent != null) {
-        final backTooltip = exerciseAddReturnScreen == _AppScreen.workoutSetup
+        final backTooltip = addReturnScreen == _AppScreen.workoutSetup
             ? 'Back to workout setup'
             : 'Back to exercises';
         return _PlaceExerciseScreen(
@@ -180,17 +179,17 @@ class _WorkoutPane extends StatelessWidget {
           exercises: activeSheet.canonicalExercises,
           backTooltip: backTooltip,
           onBack: onCloseExerciseAdd,
-          onSubmit: onSubmitExercisePlacement,
-          onSubmitAndAddAnother: onSubmitPlacementAndAddAnother,
+          onSubmit: onSubmitPlacement,
+          onSubmitAndAddAnother: onSubmitAndAddAnother,
         );
       }
       return _CreateExerciseScreen(
         sheetLabel: sheetLabel,
-        backTooltip: exerciseAddReturnScreen == _AppScreen.exerciseManager
+        backTooltip: addReturnScreen == _AppScreen.exerciseManager
             ? 'Back to edit exercises'
             : 'Back to workout setup',
         onBack: onCloseExerciseAdd,
-        onSubmit: onSubmitCanonicalExercise,
+        onSubmit: onSubmitExercise,
       );
     }
 
@@ -199,7 +198,7 @@ class _WorkoutPane extends StatelessWidget {
         sheetLabel: sheetLabel,
         exercise: editingExercise!,
         onBack: onCloseExerciseEdit,
-        onSubmit: onSubmitCanonicalExerciseEdit,
+        onSubmit: onSubmitExerciseEdit,
       );
     }
 
@@ -207,10 +206,10 @@ class _WorkoutPane extends StatelessWidget {
       return _ExerciseLibrary(
         sheetLabel: sheetLabel,
         exercises: activeSheet.canonicalExercises,
-        onBack: onBackToWorkoutSetup,
-        onAddExercise: onCreateCanonicalExercise,
-        onEditExercise: onEditCanonicalExercise,
-        onReorderExercises: onReorderCanonicalExercises,
+        onBack: onBackToSetup,
+        onAddExercise: onCreateExercise,
+        onEditExercise: onEditExercise,
+        onReorderExercises: onReorderExercises,
         highlightedRow: highlightedExerciseRow,
       );
     }
@@ -229,13 +228,13 @@ class _WorkoutPane extends StatelessWidget {
               subtitle: title,
               compactTitle: true,
               backTooltip: 'Back to workout setup',
-              onBack: onBackToWorkoutSetup,
+              onBack: onBackToSetup,
               trailing: selectedWorkout == null
                   ? null
                   : IconButton.filled(
                       key: const ValueKey('add-primary-exercise'),
                       tooltip: 'Add to workout',
-                      onPressed: () => onAddPrimaryExercise(selectedWorkout),
+                      onPressed: () => onAddPrimary(selectedWorkout),
                       icon: const Icon(Icons.add_outlined),
                     ),
             ),
@@ -245,9 +244,9 @@ class _WorkoutPane extends StatelessWidget {
                 key: const ValueKey('full-workout-overview'),
                 overview: overview,
                 onOpenExercise: onOpenExercise,
-                onAddBackupExercise: onAddBackupExercise,
-                onDeleteWorkoutExercise: onDeleteWorkoutExercise,
-                onReorderExercises: onReorderWorkoutExercises,
+                onAddBackup: onAddBackup,
+                onDeleteExercise: onDeleteExercise,
+                onReorderExercises: onReorderWorkout,
                 showTitle: false,
               ),
           ],
@@ -264,11 +263,11 @@ class _WorkoutPane extends StatelessWidget {
             title: sheetLabel,
             compactTitle: true,
             backTooltip: 'Back to sheet selection',
-            onBack: onBackToSheetSelection,
+            onBack: onBackToSheets,
             trailing: IconButton.filledTonal(
               key: const ValueKey('open-exercise-manager'),
               tooltip: 'Edit exercise library',
-              onPressed: onOpenExerciseManager,
+              onPressed: onOpenLibrary,
               icon: const Icon(Icons.fitness_center_outlined),
             ),
           ),
@@ -309,7 +308,7 @@ class _WorkoutPane extends StatelessWidget {
           const SizedBox(height: 24),
           FilledButton.icon(
             key: const ValueKey('select-workout-setup'),
-            onPressed: overview == null ? null : onSelectWorkoutSetup,
+            onPressed: overview == null ? null : onOpenSetup,
             icon: const Icon(Icons.check_circle_outline),
             label: const Text('Select'),
           ),
@@ -319,12 +318,12 @@ class _WorkoutPane extends StatelessWidget {
               key: const ValueKey('compact-workout-overview'),
               overview: overview,
               onOpenExercise: onOpenExercise,
-              onAddPrimaryExercise: selectedWorkout == null
+              onAddPrimary: selectedWorkout == null
                   ? null
-                  : () => onAddPrimaryExercise(selectedWorkout),
-              onAddBackupExercise: onAddBackupExercise,
-              onDeleteWorkoutExercise: onDeleteWorkoutExercise,
-              onReorderExercises: onReorderWorkoutExercises,
+                  : () => onAddPrimary(selectedWorkout),
+              onAddBackup: onAddBackup,
+              onDeleteExercise: onDeleteExercise,
+              onReorderExercises: onReorderWorkout,
               compact: true,
             ),
         ],
@@ -515,9 +514,9 @@ class _WorkoutOverviewList extends StatelessWidget {
     super.key,
     required this.overview,
     required this.onOpenExercise,
-    this.onAddPrimaryExercise,
-    this.onAddBackupExercise,
-    this.onDeleteWorkoutExercise,
+    this.onAddPrimary,
+    this.onAddBackup,
+    this.onDeleteExercise,
     this.onReorderExercises,
     this.compact = false,
     this.showTitle = true,
@@ -525,9 +524,9 @@ class _WorkoutOverviewList extends StatelessWidget {
 
   final WorkoutOverview overview;
   final ValueChanged<int> onOpenExercise;
-  final VoidCallback? onAddPrimaryExercise;
-  final ValueChanged<WorkoutOverviewSlot>? onAddBackupExercise;
-  final ValueChanged<WorkoutOverviewSlot>? onDeleteWorkoutExercise;
+  final VoidCallback? onAddPrimary;
+  final ValueChanged<WorkoutOverviewSlot>? onAddBackup;
+  final ValueChanged<WorkoutOverviewSlot>? onDeleteExercise;
   final Future<bool> Function(ReorderIntent intent)? onReorderExercises;
   final bool compact;
   final bool showTitle;
@@ -548,11 +547,11 @@ class _WorkoutOverviewList extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-                if (onAddPrimaryExercise != null)
+                if (onAddPrimary != null)
                   IconButton.filled(
                     key: const ValueKey('add-primary-exercise-from-setup'),
                     tooltip: 'Add to workout',
-                    onPressed: onAddPrimaryExercise,
+                    onPressed: onAddPrimary,
                     icon: const Icon(Icons.add_outlined),
                   ),
               ],
@@ -581,8 +580,8 @@ class _WorkoutOverviewList extends StatelessWidget {
                     index: index,
                     slot: slot,
                     onOpenExercise: onOpenExercise,
-                    onAddBackupExercise: onAddBackupExercise,
-                    onDeleteWorkoutExercise: onDeleteWorkoutExercise,
+                    onAddBackup: onAddBackup,
+                    onDeleteExercise: onDeleteExercise,
                     canReorder: onReorderExercises != null,
                     compact: compact,
                   ),
@@ -600,8 +599,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
     required this.index,
     required this.slot,
     required this.onOpenExercise,
-    required this.onAddBackupExercise,
-    required this.onDeleteWorkoutExercise,
+    required this.onAddBackup,
+    required this.onDeleteExercise,
     required this.canReorder,
     required this.compact,
   });
@@ -609,8 +608,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
   final int index;
   final WorkoutOverviewSlot slot;
   final ValueChanged<int> onOpenExercise;
-  final ValueChanged<WorkoutOverviewSlot>? onAddBackupExercise;
-  final ValueChanged<WorkoutOverviewSlot>? onDeleteWorkoutExercise;
+  final ValueChanged<WorkoutOverviewSlot>? onAddBackup;
+  final ValueChanged<WorkoutOverviewSlot>? onDeleteExercise;
   final bool canReorder;
   final bool compact;
 
@@ -620,8 +619,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
     final backupSummaryLabel = slot.backups.length == 1
         ? '1 backup'
         : '${slot.backups.length} backups';
-    final hasExerciseActions =
-        onAddBackupExercise != null || onDeleteWorkoutExercise != null;
+    final hasExerciseActions = onAddBackup != null || onDeleteExercise != null;
     final exerciseActionButton = !hasExerciseActions
         ? null
         : Semantics(
@@ -632,12 +630,12 @@ class _WorkoutOverviewTile extends StatelessWidget {
               tooltip: 'Exercise actions for ${slot.exercise}',
               icon: const Icon(Icons.more_vert),
               itemBuilder: (context) => [
-                if (onAddBackupExercise != null)
+                if (onAddBackup != null)
                   PopupMenuItem(
                     value: _PrimaryExerciseAction.addBackup,
                     child: _AddBackupMenuItem(exercise: slot.exercise),
                   ),
-                if (onDeleteWorkoutExercise != null)
+                if (onDeleteExercise != null)
                   PopupMenuItem(
                     value: _PrimaryExerciseAction.delete,
                     child: _DeleteExerciseMenuItem(exercise: slot.exercise),
@@ -827,9 +825,9 @@ class _WorkoutOverviewTile extends StatelessWidget {
   void _handlePrimaryExerciseAction(_PrimaryExerciseAction action) {
     switch (action) {
       case _PrimaryExerciseAction.addBackup:
-        onAddBackupExercise?.call(slot);
+        onAddBackup?.call(slot);
       case _PrimaryExerciseAction.delete:
-        onDeleteWorkoutExercise?.call(slot);
+        onDeleteExercise?.call(slot);
     }
   }
 
@@ -837,9 +835,9 @@ class _WorkoutOverviewTile extends StatelessWidget {
     BuildContext context,
     Offset globalPosition,
   ) async {
-    final onAddBackupExercise = this.onAddBackupExercise;
-    final onDeleteWorkoutExercise = this.onDeleteWorkoutExercise;
-    if (onAddBackupExercise == null && onDeleteWorkoutExercise == null) {
+    final onAddBackup = this.onAddBackup;
+    final onDeleteExercise = this.onDeleteExercise;
+    if (onAddBackup == null && onDeleteExercise == null) {
       return;
     }
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -850,12 +848,12 @@ class _WorkoutOverviewTile extends StatelessWidget {
         Offset.zero & overlay.size,
       ),
       items: [
-        if (onAddBackupExercise != null)
+        if (onAddBackup != null)
           PopupMenuItem(
             value: _PrimaryExerciseAction.addBackup,
             child: _AddBackupMenuItem(exercise: slot.exercise),
           ),
-        if (onDeleteWorkoutExercise != null)
+        if (onDeleteExercise != null)
           PopupMenuItem(
             value: _PrimaryExerciseAction.delete,
             child: _DeleteExerciseMenuItem(exercise: slot.exercise),
@@ -864,9 +862,9 @@ class _WorkoutOverviewTile extends StatelessWidget {
     );
     switch (selected) {
       case _PrimaryExerciseAction.addBackup:
-        onAddBackupExercise?.call(slot);
+        onAddBackup?.call(slot);
       case _PrimaryExerciseAction.delete:
-        onDeleteWorkoutExercise?.call(slot);
+        onDeleteExercise?.call(slot);
       case null:
     }
   }

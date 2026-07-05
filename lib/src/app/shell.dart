@@ -807,9 +807,7 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  Future<void> _confirmDeleteWorkoutExercise(
-    WorkoutOverviewSlot primarySlot,
-  ) async {
+  Future<void> _confirmDeleteExercise(WorkoutOverviewSlot primarySlot) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1101,42 +1099,40 @@ class _AppShellState extends State<AppShell> {
                                 selectedSpreadsheet?.displayLabel ??
                                 report.spreadsheetId,
                             screen: _screen,
-                            onBackToSheetSelection: _returnToSheetSelection,
-                            onSelectWorkoutSetup: _selectWorkoutSetup,
-                            onBackToWorkoutSetup: _returnToWorkoutSetup,
-                            onOpenExerciseManager: _openExerciseManager,
+                            onBackToSheets: _returnToSheetSelection,
+                            onOpenSetup: _selectWorkoutSetup,
+                            onBackToSetup: _returnToWorkoutSetup,
+                            onOpenLibrary: _openExerciseManager,
                             editingExercise: _editingExercise,
                             onWorkoutChanged: _selectWorkout,
                             onHistoryBlockChanged: _selectHistoryBlock,
                             onAddWorkout: isBusy ? null : _promptForNewWorkout,
                             onAddHistoryBlock: isBusy ? null : _promptNewBlock,
-                            onCreateCanonicalExercise: isBusy
+                            onCreateExercise: isBusy
                                 ? null
                                 : _openExerciseCreate,
-                            onEditCanonicalExercise: isBusy
-                                ? null
-                                : _openExerciseEdit,
+                            onEditExercise: isBusy ? null : _openExerciseEdit,
                             highlightedExerciseRow: _highlightedExerciseRow,
-                            onReorderCanonicalExercises: isBusy
+                            onReorderExercises: isBusy
                                 ? null
                                 : _controller.reorderExercises,
-                            onReorderWorkoutExercises: isBusy
+                            onReorderWorkout: isBusy
                                 ? null
                                 : _controller.reorderWorkoutExercises,
                             onOpenExercise: _openExercise,
-                            onAddPrimaryExercise: _openPrimaryAdd,
-                            onAddBackupExercise: _openBackupAdd,
-                            onDeleteWorkoutExercise: isBusy
+                            onAddPrimary: _openPrimaryAdd,
+                            onAddBackup: _openBackupAdd,
+                            onDeleteExercise: isBusy
                                 ? null
-                                : _confirmDeleteWorkoutExercise,
-                            exerciseAddReturnScreen: _addReturnScreen,
-                            addExercisePlacementIntent: placementIntent,
+                                : _confirmDeleteExercise,
+                            addReturnScreen: _addReturnScreen,
+                            addIntent: placementIntent,
                             onCloseExerciseAdd: _closeExerciseAdd,
-                            onSubmitCanonicalExercise: _saveExerciseDraft,
-                            onSubmitCanonicalExerciseEdit: _saveExerciseEdit,
+                            onSubmitExercise: _saveExerciseDraft,
+                            onSubmitExerciseEdit: _saveExerciseEdit,
                             onCloseExerciseEdit: _closeExerciseEdit,
-                            onSubmitExercisePlacement: _placeExercise,
-                            onSubmitPlacementAndAddAnother: _placeAndKeepAdding,
+                            onSubmitPlacement: _placeExercise,
+                            onSubmitAndAddAnother: _placeAndKeepAdding,
                             onCloseExercise: _closeExercise,
                             onLoggingRowChanged: _controller.selectLoggingRow,
                             onApplyWritePlan: _controller.applyWritePlan,

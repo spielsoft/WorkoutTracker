@@ -561,3 +561,35 @@ Status: public API and exercise-definition pass.
 - `test/sheet_contract/active_sheet_write_planning_test.dart`
 - `test/support/widget_test_support.dart`
 - `test/widget_test.dart`
+
+## Slice 14
+
+Status: workout-pane callback vocabulary pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `onBackToSheetSelection` | `onBackToSheets` |
+| `onSelectWorkoutSetup` | `onOpenSetup` |
+| `onBackToWorkoutSetup` | `onBackToSetup` |
+| `onOpenExerciseManager` | `onOpenLibrary` |
+| `onCreateCanonicalExercise` | `onCreateExercise` |
+| `onEditCanonicalExercise` | `onEditExercise` |
+| `onReorderCanonicalExercises` | `onReorderExercises` |
+| `onReorderWorkoutExercises` | `onReorderWorkout` |
+| `onAddPrimaryExercise` | `onAddPrimary` |
+| `onAddBackupExercise` | `onAddBackup` |
+| `onDeleteWorkoutExercise` | `onDeleteExercise` |
+| `exerciseAddReturnScreen` | `addReturnScreen` |
+| `addExercisePlacementIntent` | `addIntent` |
+| `onSubmitCanonicalExercise` | `onSubmitExercise` |
+| `onSubmitCanonicalExerciseEdit` | `onSubmitExerciseEdit` |
+| `onSubmitExercisePlacement` | `onSubmitPlacement` |
+| `onSubmitPlacementAndAddAnother` | `onSubmitAndAddAnother` |
+| `_confirmDeleteWorkoutExercise` | `_confirmDeleteExercise` |
+
+### Files simplified in slice 14
+
+- `lib/src/app/shell.dart`
+- `lib/src/app/shell_workout.dart`
