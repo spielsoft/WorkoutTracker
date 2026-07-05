@@ -516,3 +516,48 @@ Status: active-sheet write expectation pass.
 - `test/sheet_contract/active_sheet_formula_healing_test.dart`
 - `test/sheet_contract/active_sheet_write_planning_test.dart`
 - `test/support/widget_test_support.dart`
+
+## Slice 13
+
+Status: public API and exercise-definition pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `CanonicalExerciseDefinition` | `ExerciseDef` |
+| `applyActiveSheetWritePlan` | `applyWritePlan` |
+| `createCanonicalExercise` | `createExercise` |
+| `updateCanonicalExercise` | `updateExercise` |
+| `reorderCanonicalExercises` | `reorderExercises` |
+| `planUnambiguousFormulaHealing` | `planFormulaRepair` |
+| `repairUnambiguousFormulas` | `repairFormulas` |
+| `hasBlockingSchemaViolations` | `hasSchemaDamage` |
+| `defaultWorkoutSpreadsheetTitle` | `defaultSheetTitle` |
+| `showSpreadsheetTextFallback` | `showTextFallback` |
+| `_repairUnambiguousFormulas` | `_repairFormulas` |
+
+### Files simplified in slice 13
+
+- `lib/src/app/shell.dart`
+- `lib/src/app/shell_exercise_authoring.dart`
+- `lib/src/app/shell_validation.dart`
+- `lib/src/app/spreadsheet_selection.dart`
+- `lib/src/app/spreadsheet_validation_core.dart`
+- `lib/src/app/spreadsheet_validation_service.dart`
+- `lib/src/app/spreadsheet_validation_wiring.dart`
+- `lib/src/app/workout_tracker_controller.dart`
+- `lib/src/google_sheets/workbook_template.dart`
+- `lib/src/google_sheets/write_adapter.dart`
+- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
+- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
+- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
+- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `test/app/spreadsheet_validation_test.dart`
+- `test/app/test_spreadsheet_validation_service.dart`
+- `test/app/test_spreadsheet_validation_service_test.dart`
+- `test/app/workout_tracker_controller_test.dart`
+- `test/google_sheets/google_sheets_write_adapter_test.dart`
+- `test/sheet_contract/active_sheet_write_planning_test.dart`
+- `test/support/widget_test_support.dart`
+- `test/widget_test.dart`

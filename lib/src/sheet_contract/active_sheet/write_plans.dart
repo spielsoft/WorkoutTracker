@@ -770,8 +770,8 @@ class SetPosition {
   }
 }
 
-class CanonicalExerciseDefinition {
-  const CanonicalExerciseDefinition({
+class ExerciseDef {
+  const ExerciseDef({
     required this.exercise,
     this.description = '',
     this.defaultSets = '',
@@ -800,7 +800,7 @@ class CanonicalExerciseDefinition {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is CanonicalExerciseDefinition &&
+        other is ExerciseDef &&
             exercise == other.exercise &&
             description == other.description &&
             defaultSets == other.defaultSets &&
@@ -829,7 +829,7 @@ class CanonicalExerciseDefinition {
 
   @override
   String toString() {
-    return 'CanonicalExerciseDefinition('
+    return 'ExerciseDef('
         'exercise: $exercise, '
         'description: $description, '
         'defaultSets: $defaultSets, '
@@ -1207,13 +1207,13 @@ class _WritePlanner {
     );
   }
 
-  ExercisesWritePlan planCanonicalAppend(CanonicalExerciseDefinition exercise) {
+  ExercisesWritePlan planCanonicalAppend(ExerciseDef exercise) {
     return _canonicalExercises.planCanonicalAppend(exercise);
   }
 
   ExercisesWritePlan planCanonicalUpdate({
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     return _canonicalExercises.planCanonicalUpdate(
       selectedExercise: selectedExercise,

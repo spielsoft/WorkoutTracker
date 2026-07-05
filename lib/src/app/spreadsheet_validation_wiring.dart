@@ -27,13 +27,13 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) {
     return _runWritableWorkbook(
-      (service) => service.applyActiveSheetWritePlan(
+      (service) => service.applyWritePlan(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
         plan: plan,
@@ -42,13 +42,13 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     return _runWritableWorkbook(
-      (service) => service.createCanonicalExercise(
+      (service) => service.createExercise(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
         exercise: exercise,
@@ -57,14 +57,14 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     return _runWritableWorkbook(
-      (service) => service.updateCanonicalExercise(
+      (service) => service.updateExercise(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
         selectedExercise: selectedExercise,
@@ -93,13 +93,13 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
   }) {
     return _runWritableWorkbook(
-      (service) => service.reorderCanonicalExercises(
+      (service) => service.reorderExercises(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
         intent: intent,

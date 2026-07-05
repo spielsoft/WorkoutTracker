@@ -505,7 +505,7 @@ class _CanonicalExerciseWritePlanner {
 
   final _WritePlanningContext context;
 
-  ExercisesWritePlan planCanonicalAppend(CanonicalExerciseDefinition exercise) {
+  ExercisesWritePlan planCanonicalAppend(ExerciseDef exercise) {
     final append = ExercisesRowAppend(
       sheetRowNumber: 2,
       values: _canonicalExerciseRowValues(exercise),
@@ -515,7 +515,7 @@ class _CanonicalExerciseWritePlanner {
 
   ExercisesWritePlan planCanonicalUpdate({
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     final sheetRowNumber = selectedExercise.sheetRowNumber;
     if (sheetRowNumber < 2 ||
@@ -576,9 +576,7 @@ class _CanonicalExerciseWritePlanner {
     );
   }
 
-  List<String> _canonicalExerciseRowValues(
-    CanonicalExerciseDefinition exercise,
-  ) {
+  List<String> _canonicalExerciseRowValues(ExerciseDef exercise) {
     final header = context.sheet._exercisesRows.isEmpty
         ? exercisesSheetColumns
         : context.sheet._exercisesRows.first;

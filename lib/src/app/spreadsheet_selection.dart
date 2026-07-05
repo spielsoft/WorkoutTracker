@@ -491,7 +491,7 @@ class SpreadsheetCreator {
            googleAccess ??
            ScopedApiAccess(auth: auth, authClientFactory: authClientFactory),
        initFactory = initFactory ?? ((api) => GoogleApisWorkbookInit(api)),
-       titleFactory = titleFactory ?? defaultWorkoutSpreadsheetTitle;
+       titleFactory = titleFactory ?? defaultSheetTitle;
 
   final SignInAuthGateway auth;
   final ApiAccess googleAccess;
@@ -500,9 +500,7 @@ class SpreadsheetCreator {
 
   Future<SelectedSpreadsheet> createSheet({String? name}) async {
     final requestedTitle = (name ?? titleFactory()).trim();
-    final title = requestedTitle.isEmpty
-        ? defaultWorkoutSpreadsheetTitle()
-        : requestedTitle;
+    final title = requestedTitle.isEmpty ? defaultSheetTitle() : requestedTitle;
     return googleAccess.run(
       scopes: GoogleApisWorkbookInit.writeScopes,
       action: (resources) async {
@@ -533,7 +531,7 @@ class SpreadsheetCreator {
   }
 }
 
-String defaultWorkoutSpreadsheetTitle() {
+String defaultSheetTitle() {
   final now = DateTime.now();
   final month = now.month.toString().padLeft(2, '0');
   final day = now.day.toString().padLeft(2, '0');

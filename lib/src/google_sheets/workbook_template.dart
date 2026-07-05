@@ -44,7 +44,7 @@ Future<Workbook> loadWorkbookTemplate({
   return workbookTemplate(exerciseDefaults: defaults);
 }
 
-Future<List<CanonicalExerciseDefinition>> loadExerciseDefaults({
+Future<List<ExerciseDef>> loadExerciseDefaults({
   AssetBundle? bundle,
   String assetPath = defaultExerciseDefaultsAsset,
 }) async {
@@ -53,14 +53,10 @@ Future<List<CanonicalExerciseDefinition>> loadExerciseDefaults({
   if (decoded is! List<Object?>) {
     throw const FormatException('Exercise defaults JSON must be a list.');
   }
-  return List<CanonicalExerciseDefinition>.unmodifiable(
-    decoded.map(_exerciseDefaultFromJson),
-  );
+  return List<ExerciseDef>.unmodifiable(decoded.map(_exerciseDefaultFromJson));
 }
 
-Workbook workbookTemplate({
-  required Iterable<CanonicalExerciseDefinition> exerciseDefaults,
-}) {
+Workbook workbookTemplate({required Iterable<ExerciseDef> exerciseDefaults}) {
   final sortedExerciseDefaults = [...exerciseDefaults]
     ..sort(_compareExerciseDefaults);
   final exercisesSheet = WorkbookTab(
@@ -79,18 +75,15 @@ Workbook workbookTemplate({
   );
 }
 
-int _compareExerciseDefaults(
-  CanonicalExerciseDefinition left,
-  CanonicalExerciseDefinition right,
-) {
+int _compareExerciseDefaults(ExerciseDef left, ExerciseDef right) {
   return left.exercise.toLowerCase().compareTo(right.exercise.toLowerCase());
 }
 
-CanonicalExerciseDefinition _exerciseDefaultFromJson(Object? value) {
+ExerciseDef _exerciseDefaultFromJson(Object? value) {
   if (value is! Map<String, Object?>) {
     throw const FormatException('Each exercise default must be an object.');
   }
-  return CanonicalExerciseDefinition(
+  return ExerciseDef(
     exercise: _requiredString(value, 'exercise'),
     description: _optionalString(value, 'description'),
     defaultSets: _optionalString(value, 'defaultSets'),
@@ -122,7 +115,7 @@ String _optionalString(Map<String, Object?> json, String key) {
   throw FormatException('Exercise default "$key" must be a string.');
 }
 
-List<String> _exerciseRow(CanonicalExerciseDefinition exercise) {
+List<String> _exerciseRow(ExerciseDef exercise) {
   return [
     exercise.exercise,
     exercise.description,

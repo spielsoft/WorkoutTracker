@@ -199,7 +199,7 @@ class _HealingPlanner {
     );
   }
 
-  ActiveSheetWritePlan planUnambiguousFormulaHealing() {
+  ActiveSheetWritePlan planFormulaRepair() {
     final updates = <CellUpdate>[];
     final expectations = <WriteExpectation>[];
     for (final issue in sheet.formulaHealingIssues) {

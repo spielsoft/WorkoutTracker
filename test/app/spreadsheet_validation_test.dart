@@ -59,7 +59,7 @@ void main() {
         workbookClientFactory: (_) => workbookClient,
       );
 
-      final report = await service.applyActiveSheetWritePlan(
+      final report = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: activeSheet,
         plan: activeSheet.planNewHistoryBlock(label: 'Week 2'),
@@ -108,7 +108,7 @@ void main() {
         fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
 
-      final rejected = await service.applyActiveSheetWritePlan(
+      final rejected = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         plan: plan,
@@ -179,7 +179,7 @@ void main() {
         fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
       );
 
-      final rejected = await service.applyActiveSheetWritePlan(
+      final rejected = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         plan: plan,
@@ -224,7 +224,7 @@ void main() {
         fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
 
-      final rejected = await service.applyActiveSheetWritePlan(
+      final rejected = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         plan: plan,
@@ -281,7 +281,7 @@ void main() {
         fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
 
-      final rejected = await service.applyActiveSheetWritePlan(
+      final rejected = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         plan: plan,
@@ -339,7 +339,7 @@ void main() {
         setNumber: 2,
       );
 
-      final rejected = await service.applyActiveSheetWritePlan(
+      final rejected = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         plan: plan,
@@ -380,7 +380,7 @@ void main() {
       final report = await service.validateSpreadsheet('spreadsheet-id');
       final plan = report.activeSheet.planNewHistoryBlock(label: 'Week 2');
 
-      final rejected = await service.applyActiveSheetWritePlan(
+      final rejected = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         plan: plan,
@@ -425,7 +425,7 @@ void main() {
         fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
       );
 
-      final rejected = await service.applyActiveSheetWritePlan(
+      final rejected = await service.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         plan: plan,
@@ -505,11 +505,11 @@ void main() {
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
-      final updated = await service.updateCanonicalExercise(
+      final updated = await service.updateExercise(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         selectedExercise: report.activeSheet.canonicalExercises.first,
-        exercise: const CanonicalExerciseDefinition(
+        exercise: const ExerciseDef(
           exercise: 'High Bar Squat',
           description: 'High bar back squat',
           defaultSets: '3',
@@ -603,7 +603,7 @@ void main() {
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
-      final reordered = await service.reorderCanonicalExercises(
+      final reordered = await service.reorderExercises(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         intent: const ReorderIntent(fromIndex: 0, toIndex: 2),
@@ -1002,7 +1002,7 @@ void main() {
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
-      final rejected = await service.reorderCanonicalExercises(
+      final rejected = await service.reorderExercises(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         intent: const ReorderIntent(fromIndex: 0, toIndex: 2),

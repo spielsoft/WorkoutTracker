@@ -247,12 +247,12 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) {
-    return validation.applyActiveSheetWritePlan(
+    return validation.applyWritePlan(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
       plan: plan,
@@ -260,12 +260,12 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
-    return authoring.createCanonicalExercise(
+    return authoring.createExercise(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
       exercise: exercise,
@@ -273,13 +273,13 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
-    return authoring.updateCanonicalExercise(
+    return authoring.updateExercise(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
       selectedExercise: selectedExercise,
@@ -305,12 +305,12 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
   }) {
-    return authoring.reorderCanonicalExercises(
+    return authoring.reorderExercises(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
       intent: intent,
@@ -351,12 +351,12 @@ class AppendingExerciseAuthoringService {
     : _exercises = exercises.map((row) => row.toList()).toList();
 
   final List<List<String>> _exercises;
-  final createdExercises = <CanonicalExerciseDefinition>[];
+  final createdExercises = <ExerciseDef>[];
 
-  Future<ValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) async {
     createdExercises.add(exercise);
     _exercises.insert(0, [
@@ -396,11 +396,11 @@ class AppendingExerciseAuthoringService {
     );
   }
 
-  Future<ValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     throw UnimplementedError();
   }
@@ -415,7 +415,7 @@ class AppendingExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  Future<ValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -445,17 +445,16 @@ class EditingExerciseAuthoringService
     extends AppendingExerciseAuthoringService {
   EditingExerciseAuthoringService(super.exercises);
 
-  final updatedExercises =
-      <({int row, CanonicalExerciseDefinition exercise})>[];
+  final updatedExercises = <({int row, ExerciseDef exercise})>[];
 
   int get exerciseCount => _exercises.length;
 
   @override
-  Future<ValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) async {
     updatedExercises.add((
       row: selectedExercise.sheetRowNumber,
@@ -513,7 +512,7 @@ class ReorderingExerciseAuthoringService
   final reorderIntents = <ReorderIntent>[];
 
   @override
-  Future<ValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -697,7 +696,7 @@ class RevalidatingSpreadsheetValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -835,7 +834,7 @@ class CompletingWriteValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -860,7 +859,7 @@ class FailingWriteValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -895,7 +894,7 @@ class RecoverableConfirmationFailureService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -930,7 +929,7 @@ class DamageAfterSaveValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -962,7 +961,7 @@ class FormulaRepairValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,

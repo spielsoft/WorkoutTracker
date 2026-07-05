@@ -25,7 +25,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -44,20 +44,20 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     throw UnimplementedError();
   }
 
   @override
-  Future<ValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     throw UnimplementedError();
   }
@@ -74,7 +74,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -98,7 +98,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
     required ParsedActiveSheet activeSheet,
     required int primarySheetRowNumber,
   }) {
-    return applyActiveSheetWritePlan(
+    return applyWritePlan(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
       plan: activeSheet.planPrimaryExerciseDeletion(

@@ -2345,7 +2345,7 @@ void main() {
       await tester.pump();
 
       expect(authoringService.createdExercises, [
-        const CanonicalExerciseDefinition(
+        const ExerciseDef(
           exercise: 'Romanian Deadlift',
           defaultSets: '3',
           defaultReps: '10',
@@ -2601,7 +2601,7 @@ void main() {
       expect(authoringService.updatedExercises, [
         (
           row: 2,
-          exercise: const CanonicalExerciseDefinition(
+          exercise: const ExerciseDef(
             exercise: 'High Bar Squat',
             description: 'High bar back squat',
             defaultSets: '3',
@@ -4066,7 +4066,7 @@ void main() {
         await tester.pump();
 
         expect(authoringService.createdExercises, [
-          const CanonicalExerciseDefinition(
+          const ExerciseDef(
             exercise: 'Romanian Deadlift',
             description: 'Hip hinge',
             defaultSets: '4',

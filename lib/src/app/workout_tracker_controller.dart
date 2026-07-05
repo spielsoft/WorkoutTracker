@@ -140,7 +140,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create history block',
       action: () async {
-        final updatedReport = await svc.applyActiveSheetWritePlan(
+        final updatedReport = await svc.applyWritePlan(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           plan: report.activeSheet.planNewHistoryBlock(label: trimmedLabel),
@@ -182,7 +182,7 @@ class AppController extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> repairUnambiguousFormulas() async {
+  Future<bool> repairFormulas() async {
     final report = _report;
     if (report == null) {
       return false;
@@ -192,10 +192,10 @@ class AppController extends ChangeNotifier {
       failurePrefix: 'Unable to repair formulas',
       action: () async {
         _adoptReport(
-          await svc.applyActiveSheetWritePlan(
+          await svc.applyWritePlan(
             spreadsheetId: report.spreadsheetId,
             activeSheet: report.activeSheet,
-            plan: report.activeSheet.planUnambiguousFormulaHealing(),
+            plan: report.activeSheet.planFormulaRepair(),
           ),
         );
       },
@@ -215,7 +215,7 @@ class AppController extends ChangeNotifier {
       failurePrefix: 'Unable to repair formula',
       action: () async {
         _adoptReport(
-          await svc.applyActiveSheetWritePlan(
+          await svc.applyWritePlan(
             spreadsheetId: report.spreadsheetId,
             activeSheet: report.activeSheet,
             plan: report.activeSheet.planFormulaHealing(
@@ -228,7 +228,7 @@ class AppController extends ChangeNotifier {
     );
   }
 
-  Future<bool> applyActiveSheetWritePlan(ActiveSheetWritePlan plan) async {
+  Future<bool> applyWritePlan(ActiveSheetWritePlan plan) async {
     final report = _report;
     if (report == null) {
       return false;
@@ -237,7 +237,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to save set',
       action: () async {
-        final updatedReport = await svc.applyActiveSheetWritePlan(
+        final updatedReport = await svc.applyWritePlan(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           plan: plan,
@@ -248,9 +248,7 @@ class AppController extends ChangeNotifier {
     );
   }
 
-  Future<bool> createCanonicalExercise({
-    required CanonicalExerciseDefinition exercise,
-  }) async {
+  Future<bool> createExercise({required ExerciseDef exercise}) async {
     final report = _report;
     if (report == null) {
       _error = 'Validate a spreadsheet before creating exercises.';
@@ -261,7 +259,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create exercise',
       action: () async {
-        _report = await svc.createCanonicalExercise(
+        _report = await svc.createExercise(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           exercise: exercise,
@@ -272,9 +270,9 @@ class AppController extends ChangeNotifier {
     );
   }
 
-  Future<bool> updateCanonicalExercise({
+  Future<bool> updateExercise({
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) async {
     final report = _report;
     if (report == null) {
@@ -286,7 +284,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to update exercise',
       action: () async {
-        _report = await svc.updateCanonicalExercise(
+        _report = await svc.updateExercise(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           selectedExercise: selectedExercise,
@@ -339,7 +337,7 @@ class AppController extends ChangeNotifier {
     );
   }
 
-  Future<bool> reorderCanonicalExercises(ReorderIntent intent) async {
+  Future<bool> reorderExercises(ReorderIntent intent) async {
     final report = _report;
     if (report == null) {
       _error = 'Validate a spreadsheet before reordering exercises.';
@@ -350,7 +348,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to reorder exercises',
       action: () async {
-        _report = await svc.reorderCanonicalExercises(
+        _report = await svc.reorderExercises(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           intent: intent,

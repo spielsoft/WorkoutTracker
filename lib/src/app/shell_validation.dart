@@ -26,7 +26,7 @@ class _ValidationSummary extends StatelessWidget {
       (issue) => issue.needsChoice,
     );
     final panels = <Widget>[
-      if (report.hasBlockingSchemaViolations)
+      if (report.hasSchemaDamage)
         _IssuePanel(
           icon: Icons.report_problem_outlined,
           title: 'Fix the active sheet structure',
@@ -46,8 +46,7 @@ class _ValidationSummary extends StatelessWidget {
           ),
           tone: _IssueTone.error,
         ),
-      if (!report.hasBlockingSchemaViolations &&
-          report.formulaHealingIssues.isNotEmpty)
+      if (!report.hasSchemaDamage && report.formulaHealingIssues.isNotEmpty)
         _IssuePanel(
           icon: Icons.build_outlined,
           title: 'Reconnect exercises to logging rows',

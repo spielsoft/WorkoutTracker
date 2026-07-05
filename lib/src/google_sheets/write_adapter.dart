@@ -7,7 +7,7 @@ class SheetsWriteAdapter {
 
   final SheetsWorkbookClient client;
 
-  Future<void> applyActiveSheetWritePlan({
+  Future<void> applyWritePlan({
     required String spreadsheetId,
     required ActiveSheetWritePlan plan,
   }) async {

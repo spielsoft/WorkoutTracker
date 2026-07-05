@@ -68,9 +68,9 @@ class CanonicalExerciseDraft {
     );
   }
 
-  CanonicalExerciseDefinition toDefinition() {
+  ExerciseDef toDefinition() {
     final draft = normalized();
-    return CanonicalExerciseDefinition(
+    return ExerciseDef(
       exercise: draft.exerciseName,
       description: draft.description,
       defaultSets: draft.defaultSets,

@@ -166,13 +166,13 @@ class ParsedActiveSheet {
     );
   }
 
-  ExercisesWritePlan planCanonicalAppend(CanonicalExerciseDefinition exercise) {
+  ExercisesWritePlan planCanonicalAppend(ExerciseDef exercise) {
     return _WritePlanner(this).planCanonicalAppend(exercise);
   }
 
   ExercisesWritePlan planCanonicalUpdate({
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     return _WritePlanner(this).planCanonicalUpdate(
       selectedExercise: selectedExercise,
@@ -236,8 +236,8 @@ class ParsedActiveSheet {
   }
 
   /// Plans formula repairs for every issue with exactly one Exercises match.
-  ActiveSheetWritePlan planUnambiguousFormulaHealing() {
-    return _HealingPlanner(this).planUnambiguousFormulaHealing();
+  ActiveSheetWritePlan planFormulaRepair() {
+    return _HealingPlanner(this).planFormulaRepair();
   }
 
   List<String> _sheetRow(int sheetRowNumber) {

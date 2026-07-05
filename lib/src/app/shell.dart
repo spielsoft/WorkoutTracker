@@ -546,7 +546,7 @@ class _AppShellState extends State<AppShell> {
     if (!mounted || !hasGoogleAccount) {
       return;
     }
-    final defaultName = defaultWorkoutSpreadsheetTitle();
+    final defaultName = defaultSheetTitle();
     final name = await _promptForSheetName(defaultName);
     if (!mounted || name == null) {
       return;
@@ -668,8 +668,8 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  Future<void> _repairUnambiguousFormulas() async {
-    final repaired = await _controller.repairUnambiguousFormulas();
+  Future<void> _repairFormulas() async {
+    final repaired = await _controller.repairFormulas();
     final report = _controller.report;
     if (!mounted || !repaired) {
       return;
@@ -877,7 +877,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _saveExerciseDraft(CanonicalExerciseDraft draft) async {
-    final created = await _controller.createCanonicalExercise(
+    final created = await _controller.createExercise(
       exercise: draft.toDefinition(),
     );
     if (!mounted || !created) {
@@ -897,7 +897,7 @@ class _AppShellState extends State<AppShell> {
     if (selectedExercise == null) {
       return;
     }
-    final updated = await _controller.updateCanonicalExercise(
+    final updated = await _controller.updateExercise(
       selectedExercise: selectedExercise,
       exercise: draft.toDefinition(),
     );
@@ -1037,7 +1037,7 @@ class _AppShellState extends State<AppShell> {
                   _screen == _AppScreen.sheetSelection ||
                   report == null ||
                   report.hasBlockingIssues;
-              final showSpreadsheetTextFallback =
+              final showTextFallback =
                   picker == null || workspaceState.fallbackAvailable;
               return ListView(
                 padding: const EdgeInsets.all(24),
@@ -1062,10 +1062,9 @@ class _AppShellState extends State<AppShell> {
                               onChooseSpreadsheet: _chooseSpreadsheet,
                               onCreateSpreadsheet: _createSpreadsheet,
                             ),
-                            if (showSpreadsheetTextFallback)
-                              const SizedBox(height: 12),
+                            if (showTextFallback) const SizedBox(height: 12),
                           ],
-                          if (showSpreadsheetTextFallback)
+                          if (showTextFallback)
                             _SheetTextFallback(
                               controller: _spreadsheetController,
                               isBusy: isBusy,
@@ -1089,9 +1088,7 @@ class _AppShellState extends State<AppShell> {
                         if (showSheetSelection && report != null)
                           _ValidationSummary(
                             report: report,
-                            onRepairFormulas: isBusy
-                                ? null
-                                : _repairUnambiguousFormulas,
+                            onRepairFormulas: isBusy ? null : _repairFormulas,
                             onRepairFormulaIssue: isBusy
                                 ? null
                                 : _repairFormulaIssue,
@@ -1122,7 +1119,7 @@ class _AppShellState extends State<AppShell> {
                             highlightedExerciseRow: _highlightedExerciseRow,
                             onReorderCanonicalExercises: isBusy
                                 ? null
-                                : _controller.reorderCanonicalExercises,
+                                : _controller.reorderExercises,
                             onReorderWorkoutExercises: isBusy
                                 ? null
                                 : _controller.reorderWorkoutExercises,
@@ -1142,8 +1139,7 @@ class _AppShellState extends State<AppShell> {
                             onSubmitPlacementAndAddAnother: _placeAndKeepAdding,
                             onCloseExercise: _closeExercise,
                             onLoggingRowChanged: _controller.selectLoggingRow,
-                            onApplyWritePlan:
-                                _controller.applyActiveSheetWritePlan,
+                            onApplyWritePlan: _controller.applyWritePlan,
                           ),
                       ],
                     ),

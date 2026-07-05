@@ -17,25 +17,25 @@ abstract class WorkbookService {
   /// same [activeSheet] they pass here. The sheet contract Module owns row and
   /// history-block validity; callers should pass row numbers obtained from the
   /// parsed read models rather than inventing them.
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   });
 
-  Future<ValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     throw UnsupportedError('Exercise authoring is not supported.');
   }
 
-  Future<ValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) {
     throw UnsupportedError('Exercise authoring is not supported.');
   }
@@ -50,7 +50,7 @@ abstract class WorkbookService {
     throw UnsupportedError('Exercise placement is not supported.');
   }
 
-  Future<ValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -148,7 +148,7 @@ class ValidationReport {
     return activeSheet.formulaHealingIssues;
   }
 
-  bool get hasBlockingSchemaViolations {
+  bool get hasSchemaDamage {
     return schemaViolations.isNotEmpty || writeRejections.isNotEmpty;
   }
 

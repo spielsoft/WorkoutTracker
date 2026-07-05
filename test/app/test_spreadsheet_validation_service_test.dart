@@ -24,7 +24,7 @@ void main() {
         fieldValues: {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
 
-      final updatedReport = await service.applyActiveSheetWritePlan(
+      final updatedReport = await service.applyWritePlan(
         spreadsheetId: firstReport.spreadsheetId,
         activeSheet: firstReport.activeSheet,
         plan: plan,

@@ -582,7 +582,7 @@ void main() {
 
     final plan = activeSheet.planCanonicalUpdate(
       selectedExercise: activeSheet.canonicalExercises.first,
-      exercise: const CanonicalExerciseDefinition(
+      exercise: const ExerciseDef(
         exercise: 'High Bar Squat',
         description: 'High bar back squat',
         defaultSets: '3',

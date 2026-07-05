@@ -18,7 +18,7 @@ class ValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -38,18 +38,15 @@ class ValidationService implements WorkbookService {
         writeRejections: writeRejections,
       );
     }
-    await writeAdapter.applyActiveSheetWritePlan(
-      spreadsheetId: spreadsheetId,
-      plan: plan,
-    );
+    await writeAdapter.applyWritePlan(spreadsheetId: spreadsheetId, plan: plan);
     return validateSpreadsheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) async {
     final writeAdapter = this.writeAdapter;
     if (writeAdapter == null) {
@@ -73,11 +70,11 @@ class ValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
-    required CanonicalExerciseDefinition exercise,
+    required ExerciseDef exercise,
   }) async {
     final writeAdapter = this.writeAdapter;
     if (writeAdapter == null) {
@@ -161,7 +158,7 @@ class ValidationService implements WorkbookService {
       );
     }
 
-    await writeAdapter.applyActiveSheetWritePlan(
+    await writeAdapter.applyWritePlan(
       spreadsheetId: spreadsheetId,
       plan: activePlan,
     );
@@ -169,7 +166,7 @@ class ValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -242,7 +239,7 @@ class ValidationService implements WorkbookService {
       );
     }
 
-    await writeAdapter.applyActiveSheetWritePlan(
+    await writeAdapter.applyWritePlan(
       spreadsheetId: spreadsheetId,
       plan: activePlan,
     );
@@ -287,7 +284,7 @@ class ValidationService implements WorkbookService {
       );
     }
 
-    await writeAdapter.applyActiveSheetWritePlan(
+    await writeAdapter.applyWritePlan(
       spreadsheetId: spreadsheetId,
       plan: activePlan,
     );

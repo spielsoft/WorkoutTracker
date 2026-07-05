@@ -11,7 +11,7 @@ void main() {
       );
       final adapter = SheetsWriteAdapter(client: client);
 
-      await adapter.applyActiveSheetWritePlan(
+      await adapter.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         plan: ActiveSheetWritePlan(
           columnInsertions: [
@@ -215,7 +215,7 @@ void main() {
         setNumber: 2,
       );
 
-      await adapter.applyActiveSheetWritePlan(
+      await adapter.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         plan: ActiveSheetWritePlan(
           columnInsertions: newHistoryBlockPlan.columnInsertions,
@@ -304,7 +304,7 @@ void main() {
       final adapter = SheetsWriteAdapter(client: client);
 
       await expectLater(
-        adapter.applyActiveSheetWritePlan(
+        adapter.applyWritePlan(
           spreadsheetId: 'spreadsheet-id',
           plan: ActiveSheetWritePlan(
             columnInsertions: [
@@ -379,7 +379,7 @@ void main() {
       );
       final adapter = SheetsWriteAdapter(client: client);
 
-      await adapter.applyActiveSheetWritePlan(
+      await adapter.applyWritePlan(
         spreadsheetId: 'spreadsheet-id',
         plan: ActiveSheetWritePlan(
           rowDeletions: const [RowDeletion(sheetRowNumber: 3, rowCount: 2)],

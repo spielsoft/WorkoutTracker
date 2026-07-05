@@ -339,7 +339,7 @@ void main() {
       fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
     );
 
-    final saved = await controller.applyActiveSheetWritePlan(plan);
+    final saved = await controller.applyWritePlan(plan);
 
     expect(saved, isTrue);
     expect(controller.report?.hasBlockingIssues, isTrue);
@@ -383,7 +383,7 @@ void main() {
         fieldValues: const {'Weight': '105', 'Reps': '9', 'RPE': '9'},
       );
 
-      final saved = await controller.applyActiveSheetWritePlan(plan);
+      final saved = await controller.applyWritePlan(plan);
       final context = controller.report!.activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 3,
@@ -456,7 +456,7 @@ void main() {
         fieldValues: const {'Weight': '105', 'Reps': '9', 'RPE': '9'},
       );
 
-      final saved = await controller.applyActiveSheetWritePlan(plan);
+      final saved = await controller.applyWritePlan(plan);
       final context = controller.report!.activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 3,
@@ -533,7 +533,7 @@ void main() {
         fieldValues: const {'Weight': '105', 'Reps': '9', 'RPE': '9'},
       );
 
-      final saved = await controller.applyActiveSheetWritePlan(plan);
+      final saved = await controller.applyWritePlan(plan);
       final context = controller.report!.activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 3,
@@ -610,7 +610,7 @@ void main() {
 
       await controller.validateSelection('spreadsheet-id');
 
-      final repaired = await controller.repairUnambiguousFormulas();
+      final repaired = await controller.repairFormulas();
 
       expect(repaired, isTrue);
       expect(service.appliedPlans.single.cellUpdates, const [
@@ -800,7 +800,7 @@ class _RejectingWriteValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -836,7 +836,7 @@ class _StaleWriteValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -882,7 +882,7 @@ class _StaleThenFreshWriteValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -906,7 +906,7 @@ class _FailingSpreadsheetValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -933,7 +933,7 @@ class _PendingCreateHistoryBlockService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -961,7 +961,7 @@ class _FormulaRepairValidationService extends WorkbookService {
   }
 
   @override
-  Future<ValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
