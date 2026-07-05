@@ -13,14 +13,14 @@ import 'google_account_session.dart';
 import 'google_authorization_client.dart';
 
 typedef WorkbookInitFactory = WorkbookInit Function(sheets.SheetsApi api);
-typedef PickerCallbackReceiverFactory =
+typedef CallbackReceiverFactory =
     Future<PickerCallbackReceiver> Function({
       required String state,
       required Duration timeout,
     });
 
-const defaultPickerAppConfigAsset = 'assets/google_picker/app_config.json';
-const _pickerCallbackStateBytes = 16;
+const defaultPickerConfigAsset = 'assets/google_picker/app_config.json';
+const _callbackStateBytes = 16;
 final _sheetIdPattern = RegExp(r'^[A-Za-z0-9_-]+$');
 
 class PickerAppConfig {
@@ -49,7 +49,7 @@ class PickerAppConfig {
     return PickerAppConfig(
       clientId: _requiredConfigString(value, 'clientId'),
       callbackTimeout: Duration(
-        seconds: _requiredConfigPositiveInt(value, 'callbackTimeoutSeconds'),
+        seconds: _requiredInt(value, 'callbackTimeoutSeconds'),
       ),
       nativeCallbackScheme: _requiredConfigString(
         value,
@@ -59,7 +59,7 @@ class PickerAppConfig {
       hostedCallbackUri: Uri.parse(
         _requiredConfigString(value, 'hostedCallbackUri'),
       ),
-      pickedIdQueryParameters: _requiredConfigStringList(
+      pickedIdQueryParameters: _requiredStrings(
         value,
         'pickedIdQueryParameters',
       ),
@@ -75,7 +75,7 @@ String _requiredConfigString(Map<String, Object?> json, String key) {
   throw FormatException('Google Picker config "$key" must be a string.');
 }
 
-int _requiredConfigPositiveInt(Map<String, Object?> json, String key) {
+int _requiredInt(Map<String, Object?> json, String key) {
   final value = json[key];
   if (value is int && value > 0) {
     return value;
@@ -83,7 +83,7 @@ int _requiredConfigPositiveInt(Map<String, Object?> json, String key) {
   throw FormatException('Google Picker config "$key" must be a positive int.');
 }
 
-List<String> _requiredConfigStringList(Map<String, Object?> json, String key) {
+List<String> _requiredStrings(Map<String, Object?> json, String key) {
   final value = json[key];
   if (value is List<Object?>) {
     final strings = [
@@ -101,7 +101,7 @@ List<String> _requiredConfigStringList(Map<String, Object?> json, String key) {
 
 Future<PickerAppConfig> loadPickerAppConfig({
   AssetBundle? bundle,
-  String assetPath = defaultPickerAppConfigAsset,
+  String assetPath = defaultPickerConfigAsset,
 }) async {
   final rawJson = await (bundle ?? rootBundle).loadString(assetPath);
   return PickerAppConfig.fromJson(jsonDecode(rawJson));
@@ -243,7 +243,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
   });
 
   final PickerAppConfig config;
-  final PickerCallbackReceiverFactory callbackFactory;
+  final CallbackReceiverFactory callbackFactory;
   final SignInAuthGateway? auth;
   final AuthClientFactory? authClientFactory;
   final ApiAccess? googleAccess;
@@ -545,7 +545,7 @@ String googleSheetsUrl(String spreadsheetId) {
 String _newPickerCallbackState() {
   final random = Random.secure();
   final bytes = List<int>.generate(
-    _pickerCallbackStateBytes,
+    _callbackStateBytes,
     (_) => random.nextInt(256),
     growable: false,
   );
@@ -560,8 +560,8 @@ abstract interface class PickerCallbackReceiver {
   Future<void> close();
 }
 
-final class NativePickerCallbackReceiver implements PickerCallbackReceiver {
-  NativePickerCallbackReceiver({
+final class NativeCallbackReceiver implements PickerCallbackReceiver {
+  NativeCallbackReceiver({
     required this.state,
     required this.config,
     required Duration timeout,

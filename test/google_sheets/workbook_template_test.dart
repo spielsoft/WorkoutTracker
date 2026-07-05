@@ -8,7 +8,7 @@ void main() {
   test(
     'seeds app-created workbooks from editable default exercises JSON',
     () async {
-      expect(defaultExerciseDefaultsAsset, endsWith('default_exercises.json'));
+      expect(defaultExerciseAsset, endsWith('default_exercises.json'));
 
       final defaults = await loadExerciseDefaults();
       expect(defaults, isNotEmpty);

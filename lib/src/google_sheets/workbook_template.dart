@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
-const defaultExerciseDefaultsAsset =
-    'assets/exercise_defaults/default_exercises.json';
+const defaultExerciseAsset = 'assets/exercise_defaults/default_exercises.json';
 
 class Workbook {
   Workbook({required this.activeSheet, required this.exercisesSheet});
@@ -35,7 +34,7 @@ class WorkbookTab {
 
 Future<Workbook> loadWorkbookTemplate({
   AssetBundle? bundle,
-  String exerciseDefaultsAsset = defaultExerciseDefaultsAsset,
+  String exerciseDefaultsAsset = defaultExerciseAsset,
 }) async {
   final defaults = await loadExerciseDefaults(
     bundle: bundle,
@@ -46,7 +45,7 @@ Future<Workbook> loadWorkbookTemplate({
 
 Future<List<ExerciseDef>> loadExerciseDefaults({
   AssetBundle? bundle,
-  String assetPath = defaultExerciseDefaultsAsset,
+  String assetPath = defaultExerciseAsset,
 }) async {
   final rawJson = await (bundle ?? rootBundle).loadString(assetPath);
   final decoded = jsonDecode(rawJson);

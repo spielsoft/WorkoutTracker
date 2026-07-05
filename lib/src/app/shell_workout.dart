@@ -1,7 +1,7 @@
 part of 'shell.dart';
 
 const _addWorkoutMenuValue = '__workout_tracker_add_workout__';
-const _addHistoryBlockMenuValue = '__workout_tracker_add_history_block__';
+const _addBlockMenuValue = '__workout_tracker_add_history_block__';
 
 class _ScreenHeader extends StatelessWidget {
   const _ScreenHeader({
@@ -403,7 +403,7 @@ class _HistoryFieldState extends State<_HistoryField> {
       emptyPrompt: 'Add history block...',
       prefixIcon: Icons.history_outlined,
       selectedValue: widget.selectedHistoryBlock,
-      addValue: _addHistoryBlockMenuValue,
+      addValue: _addBlockMenuValue,
       onAdd: widget.onAddHistoryBlock,
       onChanged: widget.onHistoryBlockChanged,
       items: [
@@ -641,7 +641,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
                     child: _DeleteExerciseMenuItem(exercise: slot.exercise),
                   ),
               ],
-              onSelected: _handlePrimaryExerciseAction,
+              onSelected: _handleExerciseAction,
             ),
           );
     final openLogButton = Semantics(
@@ -822,7 +822,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
     );
   }
 
-  void _handlePrimaryExerciseAction(_PrimaryExerciseAction action) {
+  void _handleExerciseAction(_PrimaryExerciseAction action) {
     switch (action) {
       case _PrimaryExerciseAction.addBackup:
         onAddBackup?.call(slot);

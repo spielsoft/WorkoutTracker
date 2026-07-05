@@ -93,8 +93,8 @@ abstract interface class SpreadsheetOpener {
   Future<void> openSpreadsheet(String url);
 }
 
-class UrlLauncherSpreadsheetOpener implements SpreadsheetOpener {
-  const UrlLauncherSpreadsheetOpener();
+class UrlSpreadsheetOpener implements SpreadsheetOpener {
+  const UrlSpreadsheetOpener();
 
   @override
   Future<void> openSpreadsheet(String url) async {

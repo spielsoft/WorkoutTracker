@@ -600,8 +600,8 @@ class SetColumnExpectation extends WriteExpectation {
   }
 }
 
-class InsertionPointExpectation extends WriteExpectation {
-  const InsertionPointExpectation({
+class InsertExpectation extends WriteExpectation {
+  const InsertExpectation({
     required this.sheetColumnNumber,
     required this.expectedHeaderValue,
     required this.expectedSetLabel,
@@ -637,7 +637,7 @@ class InsertionPointExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is InsertionPointExpectation &&
+        other is InsertExpectation &&
             sheetColumnNumber == other.sheetColumnNumber &&
             expectedHeaderValue == other.expectedHeaderValue &&
             expectedSetLabel == other.expectedSetLabel;
@@ -654,7 +654,7 @@ class InsertionPointExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'InsertionPointExpectation('
+    return 'InsertExpectation('
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedHeaderValue: $expectedHeaderValue, '
         'expectedSetLabel: $expectedSetLabel'

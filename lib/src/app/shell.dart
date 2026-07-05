@@ -61,7 +61,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     this.initialText = '',
     this.initialSelection,
     this.picker,
-    this.spreadsheetOpener = const UrlLauncherSpreadsheetOpener(),
+    this.spreadsheetOpener = const UrlSpreadsheetOpener(),
     super.key,
   });
 

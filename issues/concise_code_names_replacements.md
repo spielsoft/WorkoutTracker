@@ -639,3 +639,36 @@ Status: sheet-contract and validation internal-name pass.
 - `test/google_sheets/google_sheets_write_adapter_test.dart`
 - `test/sheet_contract/active_sheet_write_planning_test.dart`
 - `test/support/widget_test_support.dart`
+
+## Slice 16
+
+Status: selection/bootstrap helper pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `InsertionPointExpectation` | `InsertExpectation` |
+| `_canonicalExerciseRowValues` | `_exerciseValues` |
+| `defaultExerciseDefaultsAsset` | `defaultExerciseAsset` |
+| `UrlLauncherSpreadsheetOpener` | `UrlSpreadsheetOpener` |
+| `defaultPickerAppConfigAsset` | `defaultPickerConfigAsset` |
+| `_requiredConfigStringList` | `_requiredStrings` |
+| `_requiredConfigPositiveInt` | `_requiredInt` |
+| `PickerCallbackReceiverFactory` | `CallbackReceiverFactory` |
+| `NativePickerCallbackReceiver` | `NativeCallbackReceiver` |
+| `_handlePrimaryExerciseAction` | `_handleExerciseAction` |
+| `_addHistoryBlockMenuValue` | `_addBlockMenuValue` |
+| `_pickerCallbackStateBytes` | `_callbackStateBytes` |
+
+### Files simplified in slice 16
+
+- `lib/main.dart`
+- `lib/src/app/shell.dart`
+- `lib/src/app/shell_workout.dart`
+- `lib/src/app/spreadsheet_selection.dart`
+- `lib/src/app/spreadsheet_validation_core.dart`
+- `lib/src/google_sheets/workbook_template.dart`
+- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
+- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `test/google_sheets/workbook_template_test.dart`

@@ -19,7 +19,7 @@ Future<void> main() async {
         config: googlePickerConfig,
         auth: googleSignInGateway,
         callbackFactory: ({required state, required timeout}) async {
-          return NativePickerCallbackReceiver(
+          return NativeCallbackReceiver(
             state: state,
             config: googlePickerConfig,
             timeout: timeout,

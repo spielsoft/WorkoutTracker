@@ -126,8 +126,8 @@ class _WritePlanningContext {
     );
   }
 
-  InsertionPointExpectation insertExpectation(int sheetColumnNumber) {
-    return InsertionPointExpectation(
+  InsertExpectation insertExpectation(int sheetColumnNumber) {
+    return InsertExpectation(
       sheetColumnNumber: sheetColumnNumber,
       expectedHeaderValue: _cell(sheet._sheetRow(1), sheetColumnNumber - 1),
       expectedSetLabel: _cell(sheet._sheetRow(2), sheetColumnNumber - 1),
@@ -505,7 +505,7 @@ class _ExerciseWritePlanner {
   ExercisesWritePlan planCanonicalAppend(ExerciseDef exercise) {
     final append = ExercisesRowAppend(
       sheetRowNumber: 2,
-      values: _canonicalExerciseRowValues(exercise),
+      values: _exerciseValues(exercise),
     );
     return ExercisesWritePlan(rowAppends: [append]);
   }
@@ -523,7 +523,7 @@ class _ExerciseWritePlanner {
       rowUpdates: [
         ExercisesRowUpdate(
           sheetRowNumber: sheetRowNumber,
-          values: _canonicalExerciseRowValues(exercise),
+          values: _exerciseValues(exercise),
         ),
       ],
     );
@@ -571,7 +571,7 @@ class _ExerciseWritePlanner {
     );
   }
 
-  List<String> _canonicalExerciseRowValues(ExerciseDef exercise) {
+  List<String> _exerciseValues(ExerciseDef exercise) {
     final header = context.sheet._exercisesRows.isEmpty
         ? exercisesSheetColumns
         : context.sheet._exercisesRows.first;
