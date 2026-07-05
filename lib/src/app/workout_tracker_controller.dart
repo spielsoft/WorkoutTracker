@@ -204,7 +204,7 @@ class AppController extends ChangeNotifier {
 
   Future<bool> repairFormulaIssue({
     required int activeSheetRowNumber,
-    required int selectedExerciseSheetRowNumber,
+    required int selectedRow,
   }) async {
     final report = _report;
     if (report == null) {
@@ -220,7 +220,7 @@ class AppController extends ChangeNotifier {
             activeSheet: report.activeSheet,
             plan: report.activeSheet.planFormulaHealing(
               activeSheetRowNumber: activeSheetRowNumber,
-              selectedExerciseSheetRowNumber: selectedExerciseSheetRowNumber,
+              selectedRow: selectedRow,
             ),
           ),
         );

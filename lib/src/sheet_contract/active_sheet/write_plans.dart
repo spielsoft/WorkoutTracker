@@ -391,8 +391,8 @@ class ActiveSheetBackupGroupExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class FormulaRepairRowExpectation extends ActiveSheetWriteExpectation {
-  FormulaRepairRowExpectation({
+class RepairRowExpectation extends ActiveSheetWriteExpectation {
+  RepairRowExpectation({
     required this.sheetRowNumber,
     required Iterable<String> expectedValues,
   }) : expectedValues = List<String>.unmodifiable(expectedValues);
@@ -419,7 +419,7 @@ class FormulaRepairRowExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is FormulaRepairRowExpectation &&
+        other is RepairRowExpectation &&
             sheetRowNumber == other.sheetRowNumber &&
             _listEquals(expectedValues, other.expectedValues);
   }
@@ -431,7 +431,7 @@ class FormulaRepairRowExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'FormulaRepairRowExpectation('
+    return 'RepairRowExpectation('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedValues: $expectedValues'
         ')';

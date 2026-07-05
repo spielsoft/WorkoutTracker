@@ -174,18 +174,18 @@ void main() {
     );
     expect(activeSheet.schemaViolations, isEmpty);
     expect(activeSheet.formulaHealingIssues.single.cells, [
-      FormulaHealingCellIssue(
+      HealingCellIssue(
         sheetRowNumber: 3,
         sheetColumnNumber: 1,
         columnName: 'Exercise',
-        reason: FormulaHealingIssueReason.missingFormula,
+        reason: HealingIssueReason.missingFormula,
         currentFormula: '',
       ),
-      FormulaHealingCellIssue(
+      HealingCellIssue(
         sheetRowNumber: 3,
         sheetColumnNumber: 8,
         columnName: 'Log Format',
-        reason: FormulaHealingIssueReason.brokenFormula,
+        reason: HealingIssueReason.brokenFormula,
         currentFormula: '=Exercises!I99',
       ),
     ]);
@@ -201,9 +201,9 @@ void main() {
       equals(loadAmbiguousFormulaRepairDamageFixture().toSnapshot()),
     );
     expect(issue.displayedExerciseName, 'Squat');
-    expect(issue.requiresUserSelection, isTrue);
-    expect(issue.preselectedExerciseSheetRowNumber, isNull);
-    expect(issue.candidateExerciseSheetRowNumbers, [2, 3]);
+    expect(issue.needsChoice, isTrue);
+    expect(issue.preselectedRow, isNull);
+    expect(issue.candidateRows, [2, 3]);
   });
 
   test('no-exact-match formula repair fixture requires user selection', () {
@@ -216,9 +216,9 @@ void main() {
       equals(loadNoExactMatchFormulaRepairDamageFixture().toSnapshot()),
     );
     expect(issue.displayedExerciseName, 'Front Squat');
-    expect(issue.requiresUserSelection, isTrue);
-    expect(issue.preselectedExerciseSheetRowNumber, isNull);
-    expect(issue.candidateExerciseSheetRowNumbers, isEmpty);
+    expect(issue.needsChoice, isTrue);
+    expect(issue.preselectedRow, isNull);
+    expect(issue.candidateRows, isEmpty);
   });
 }
 

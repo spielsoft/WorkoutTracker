@@ -91,7 +91,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     historyBlocks: historyBlocks,
     primarySlots: primarySlotBuilders.map((builder) => builder.toSlot()),
     schemaViolations: schemaViolations,
-    formulaHealingIssues: _formulaHealingIssues(sheet, columns),
+    formulaHealingIssues: _healingIssues(sheet, columns),
     formulaExerciseColumnNumbers: sheet.exercisesRows.isEmpty
         ? const {}
         : {

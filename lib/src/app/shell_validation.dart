@@ -20,10 +20,10 @@ class _ValidationSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unambiguousFormulaIssues = report.formulaHealingIssues
-        .where((issue) => !issue.requiresUserSelection)
+        .where((issue) => !issue.needsChoice)
         .toList();
     final choiceFormulaIssues = report.formulaHealingIssues.where(
-      (issue) => issue.requiresUserSelection,
+      (issue) => issue.needsChoice,
     );
     final panels = <Widget>[
       if (report.hasBlockingSchemaViolations)
@@ -219,7 +219,7 @@ Iterable<String> _issueLines(FormulaHealingIssue issue) sync* {
       'Exercises entry.';
   yield '${issue.displayedExerciseName} can be reconnected automatically.';
   yield 'Spreadsheet details';
-  final selectedRow = issue.preselectedExerciseSheetRowNumber;
+  final selectedRow = issue.preselectedRow;
   if (selectedRow == null) {
     yield 'Active sheet row ${issue.activeSheetRowNumber}; '
         'needs an Exercises row selection.';
@@ -232,11 +232,11 @@ Iterable<String> _issueLines(FormulaHealingIssue issue) sync* {
   }
 }
 
-String _formulaReasonLabel(FormulaHealingIssueReason reason) {
+String _formulaReasonLabel(HealingIssueReason reason) {
   switch (reason) {
-    case FormulaHealingIssueReason.missingFormula:
+    case HealingIssueReason.missingFormula:
       return 'missing formula';
-    case FormulaHealingIssueReason.brokenFormula:
+    case HealingIssueReason.brokenFormula:
       return 'broken formula';
   }
 }

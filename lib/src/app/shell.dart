@@ -687,7 +687,7 @@ class _AppShellState extends State<AppShell> {
   }) async {
     final repaired = await _controller.repairFormulaIssue(
       activeSheetRowNumber: activeSheetRowNumber,
-      selectedExerciseSheetRowNumber: selectedRow,
+      selectedRow: selectedRow,
     );
     final report = _controller.report;
     if (!mounted || !repaired) {

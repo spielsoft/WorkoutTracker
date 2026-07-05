@@ -1,31 +1,27 @@
 part of '../active_sheet.dart';
 
-enum FormulaHealingIssueReason { missingFormula, brokenFormula }
+enum HealingIssueReason { missingFormula, brokenFormula }
 
 class FormulaHealingIssue {
   FormulaHealingIssue({
     required this.activeSheetRowNumber,
     required this.displayedExerciseName,
-    required this.requiresUserSelection,
-    required Iterable<int> candidateExerciseSheetRowNumbers,
-    Iterable<FormulaHealingExerciseChoice> exerciseChoices = const [],
-    this.preselectedExerciseSheetRowNumber,
-    Iterable<FormulaHealingCellIssue> cells = const [],
-  }) : candidateExerciseSheetRowNumbers = List<int>.unmodifiable(
-         candidateExerciseSheetRowNumbers,
-       ),
-       exerciseChoices = List<FormulaHealingExerciseChoice>.unmodifiable(
-         exerciseChoices,
-       ),
-       cells = List<FormulaHealingCellIssue>.unmodifiable(cells);
+    required this.needsChoice,
+    required Iterable<int> candidateRows,
+    Iterable<HealingChoice> exerciseChoices = const [],
+    this.preselectedRow,
+    Iterable<HealingCellIssue> cells = const [],
+  }) : candidateRows = List<int>.unmodifiable(candidateRows),
+       exerciseChoices = List<HealingChoice>.unmodifiable(exerciseChoices),
+       cells = List<HealingCellIssue>.unmodifiable(cells);
 
   final int activeSheetRowNumber;
   final String displayedExerciseName;
-  final int? preselectedExerciseSheetRowNumber;
-  final bool requiresUserSelection;
-  final List<int> candidateExerciseSheetRowNumbers;
-  final List<FormulaHealingExerciseChoice> exerciseChoices;
-  final List<FormulaHealingCellIssue> cells;
+  final int? preselectedRow;
+  final bool needsChoice;
+  final List<int> candidateRows;
+  final List<HealingChoice> exerciseChoices;
+  final List<HealingCellIssue> cells;
 
   @override
   bool operator ==(Object other) {
@@ -33,13 +29,9 @@ class FormulaHealingIssue {
         other is FormulaHealingIssue &&
             activeSheetRowNumber == other.activeSheetRowNumber &&
             displayedExerciseName == other.displayedExerciseName &&
-            preselectedExerciseSheetRowNumber ==
-                other.preselectedExerciseSheetRowNumber &&
-            requiresUserSelection == other.requiresUserSelection &&
-            _listEquals(
-              candidateExerciseSheetRowNumbers,
-              other.candidateExerciseSheetRowNumbers,
-            ) &&
+            preselectedRow == other.preselectedRow &&
+            needsChoice == other.needsChoice &&
+            _listEquals(candidateRows, other.candidateRows) &&
             _listEquals(exerciseChoices, other.exerciseChoices) &&
             _listEquals(cells, other.cells);
   }
@@ -48,9 +40,9 @@ class FormulaHealingIssue {
   int get hashCode => Object.hash(
     activeSheetRowNumber,
     displayedExerciseName,
-    preselectedExerciseSheetRowNumber,
-    requiresUserSelection,
-    Object.hashAll(candidateExerciseSheetRowNumbers),
+    preselectedRow,
+    needsChoice,
+    Object.hashAll(candidateRows),
     Object.hashAll(exerciseChoices),
     Object.hashAll(cells),
   );
@@ -60,17 +52,17 @@ class FormulaHealingIssue {
     return 'FormulaHealingIssue('
         'activeSheetRowNumber: $activeSheetRowNumber, '
         'displayedExerciseName: $displayedExerciseName, '
-        'preselectedExerciseSheetRowNumber: $preselectedExerciseSheetRowNumber, '
-        'requiresUserSelection: $requiresUserSelection, '
-        'candidateExerciseSheetRowNumbers: $candidateExerciseSheetRowNumbers, '
+        'preselectedRow: $preselectedRow, '
+        'needsChoice: $needsChoice, '
+        'candidateRows: $candidateRows, '
         'exerciseChoices: $exerciseChoices, '
         'cells: $cells'
         ')';
   }
 }
 
-class FormulaHealingExerciseChoice {
-  const FormulaHealingExerciseChoice({
+class HealingChoice {
+  const HealingChoice({
     required this.sheetRowNumber,
     required this.exerciseName,
     required this.description,
@@ -91,7 +83,7 @@ class FormulaHealingExerciseChoice {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is FormulaHealingExerciseChoice &&
+        other is HealingChoice &&
             sheetRowNumber == other.sheetRowNumber &&
             exerciseName == other.exerciseName &&
             description == other.description;
@@ -102,7 +94,7 @@ class FormulaHealingExerciseChoice {
 
   @override
   String toString() {
-    return 'FormulaHealingExerciseChoice('
+    return 'HealingChoice('
         'sheetRowNumber: $sheetRowNumber, '
         'exerciseName: $exerciseName, '
         'description: $description'
@@ -110,8 +102,8 @@ class FormulaHealingExerciseChoice {
   }
 }
 
-class FormulaHealingCellIssue {
-  const FormulaHealingCellIssue({
+class HealingCellIssue {
+  const HealingCellIssue({
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.columnName,
@@ -122,13 +114,13 @@ class FormulaHealingCellIssue {
   final int sheetRowNumber;
   final int sheetColumnNumber;
   final String columnName;
-  final FormulaHealingIssueReason reason;
+  final HealingIssueReason reason;
   final String currentFormula;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is FormulaHealingCellIssue &&
+        other is HealingCellIssue &&
             sheetRowNumber == other.sheetRowNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
             columnName == other.columnName &&
@@ -147,7 +139,7 @@ class FormulaHealingCellIssue {
 
   @override
   String toString() {
-    return 'FormulaHealingCellIssue('
+    return 'HealingCellIssue('
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
         'columnName: $columnName, '
@@ -157,14 +149,14 @@ class FormulaHealingCellIssue {
   }
 }
 
-class _FormulaHealingPlanner {
-  _FormulaHealingPlanner(this.sheet);
+class _HealingPlanner {
+  _HealingPlanner(this.sheet);
 
   final ParsedActiveSheet sheet;
 
   ActiveSheetWritePlan planFormulaHealing({
     required int activeSheetRowNumber,
-    int? selectedExerciseSheetRowNumber,
+    int? selectedRow,
   }) {
     FormulaHealingIssue? issue;
     for (final candidate in sheet.formulaHealingIssues) {
@@ -177,9 +169,7 @@ class _FormulaHealingPlanner {
       return ActiveSheetWritePlan();
     }
 
-    final exerciseSheetRowNumber =
-        selectedExerciseSheetRowNumber ??
-        issue.preselectedExerciseSheetRowNumber;
+    final exerciseSheetRowNumber = selectedRow ?? issue.preselectedRow;
     if (exerciseSheetRowNumber == null) {
       return ActiveSheetWritePlan();
     }
@@ -201,7 +191,7 @@ class _FormulaHealingPlanner {
       ],
       expectations: [
         if (slot != null)
-          FormulaRepairRowExpectation(
+          RepairRowExpectation(
             sheetRowNumber: activeSheetRowNumber,
             expectedValues: sheet._sheetRow(activeSheetRowNumber),
           ),
@@ -213,7 +203,7 @@ class _FormulaHealingPlanner {
     final updates = <CellUpdate>[];
     final expectations = <ActiveSheetWriteExpectation>[];
     for (final issue in sheet.formulaHealingIssues) {
-      if (issue.requiresUserSelection) {
+      if (issue.needsChoice) {
         continue;
       }
       final plan = planFormulaHealing(
@@ -229,7 +219,7 @@ class _FormulaHealingPlanner {
   }
 }
 
-List<FormulaHealingIssue> _formulaHealingIssues(
+List<FormulaHealingIssue> _healingIssues(
   ActiveSheetInput sheet,
   _FixedColumnIndexes columns,
 ) {
@@ -263,12 +253,12 @@ List<FormulaHealingIssue> _formulaHealingIssues(
       continue;
     }
 
-    final candidates = _matchingExerciseRows(
+    final candidates = _matchingRows(
       sheet.exercisesRows,
       exerciseColumns.exercise,
       displayedExerciseName,
     );
-    final cells = <FormulaHealingCellIssue>[];
+    final cells = <HealingCellIssue>[];
     for (final formulaColumn in _formulaDrivenColumns(
       columns,
       exerciseColumns,
@@ -278,15 +268,15 @@ List<FormulaHealingIssue> _formulaHealingIssues(
           formulas[_CellAddress(sheetRowNumber, sheetColumnNumber)] ?? '';
       if (currentFormula.trim().isEmpty) {
         cells.add(
-          FormulaHealingCellIssue(
+          HealingCellIssue(
             sheetRowNumber: sheetRowNumber,
             sheetColumnNumber: sheetColumnNumber,
             columnName: formulaColumn.activeColumnName,
-            reason: FormulaHealingIssueReason.missingFormula,
+            reason: HealingIssueReason.missingFormula,
             currentFormula: '',
           ),
         );
-      } else if (!_formulaMatchesAnyDirectReference(
+      } else if (!_matchesAnyDirectRef(
         currentFormula,
         exercisesSheetColumnNumber: formulaColumn.exercisesSheetColumnIndex + 1,
         exercisesSheetRowNumbers: candidates.isEmpty
@@ -294,11 +284,11 @@ List<FormulaHealingIssue> _formulaHealingIssues(
             : candidates,
       )) {
         cells.add(
-          FormulaHealingCellIssue(
+          HealingCellIssue(
             sheetRowNumber: sheetRowNumber,
             sheetColumnNumber: sheetColumnNumber,
             columnName: formulaColumn.activeColumnName,
-            reason: FormulaHealingIssueReason.brokenFormula,
+            reason: HealingIssueReason.brokenFormula,
             currentFormula: currentFormula,
           ),
         );
@@ -313,11 +303,9 @@ List<FormulaHealingIssue> _formulaHealingIssues(
       FormulaHealingIssue(
         activeSheetRowNumber: sheetRowNumber,
         displayedExerciseName: displayedExerciseName,
-        preselectedExerciseSheetRowNumber: candidates.length == 1
-            ? candidates.single
-            : null,
-        requiresUserSelection: candidates.length != 1,
-        candidateExerciseSheetRowNumbers: candidates,
+        preselectedRow: candidates.length == 1 ? candidates.single : null,
+        needsChoice: candidates.length != 1,
+        candidateRows: candidates,
         exerciseChoices: exerciseChoices,
         cells: cells,
       ),
@@ -327,11 +315,11 @@ List<FormulaHealingIssue> _formulaHealingIssues(
   return issues;
 }
 
-List<FormulaHealingExerciseChoice> _exerciseChoices(
+List<HealingChoice> _exerciseChoices(
   List<List<String>> exercisesRows,
   int exerciseColumnIndex,
 ) {
-  final choices = <FormulaHealingExerciseChoice>[];
+  final choices = <HealingChoice>[];
   for (var rowIndex = 1; rowIndex < exercisesRows.length; rowIndex += 1) {
     final exerciseName = _cell(
       exercisesRows[rowIndex],
@@ -341,17 +329,17 @@ List<FormulaHealingExerciseChoice> _exerciseChoices(
       continue;
     }
     choices.add(
-      FormulaHealingExerciseChoice(
+      HealingChoice(
         sheetRowNumber: rowIndex + 1,
         exerciseName: exerciseName,
         description: _cell(exercisesRows[rowIndex], 1).trim(),
       ),
     );
   }
-  return List<FormulaHealingExerciseChoice>.unmodifiable(choices);
+  return List<HealingChoice>.unmodifiable(choices);
 }
 
-List<int> _matchingExerciseRows(
+List<int> _matchingRows(
   List<List<String>> exercisesRows,
   int exerciseColumnIndex,
   String displayedExerciseName,
@@ -366,7 +354,7 @@ List<int> _matchingExerciseRows(
   return matches;
 }
 
-bool _formulaMatchesDirectReference(
+bool _matchesDirectRef(
   String formula, {
   required int exercisesSheetColumnNumber,
   required int exercisesSheetRowNumber,
@@ -382,13 +370,13 @@ bool _formulaMatchesDirectReference(
   return normalized == expected || normalized == quotedExpected;
 }
 
-bool _formulaMatchesAnyDirectReference(
+bool _matchesAnyDirectRef(
   String formula, {
   required int exercisesSheetColumnNumber,
   required Iterable<int> exercisesSheetRowNumbers,
 }) {
   for (final rowNumber in exercisesSheetRowNumbers) {
-    if (_formulaMatchesDirectReference(
+    if (_matchesDirectRef(
       formula,
       exercisesSheetColumnNumber: exercisesSheetColumnNumber,
       exercisesSheetRowNumber: rowNumber,

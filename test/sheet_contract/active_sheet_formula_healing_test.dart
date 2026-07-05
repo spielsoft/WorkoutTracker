@@ -19,16 +19,16 @@ void main() {
         FormulaHealingIssue(
           activeSheetRowNumber: 3,
           displayedExerciseName: 'Squat',
-          preselectedExerciseSheetRowNumber: 2,
-          requiresUserSelection: false,
-          candidateExerciseSheetRowNumbers: const [2],
+          preselectedRow: 2,
+          needsChoice: false,
+          candidateRows: const [2],
           exerciseChoices: _squatExerciseChoices,
           cells: const [
-            FormulaHealingCellIssue(
+            HealingCellIssue(
               sheetRowNumber: 3,
               sheetColumnNumber: 1,
               columnName: 'Exercise',
-              reason: FormulaHealingIssueReason.missingFormula,
+              reason: HealingIssueReason.missingFormula,
               currentFormula: '',
             ),
           ],
@@ -47,11 +47,11 @@ void main() {
     );
 
     expect(activeSheet.formulaHealingIssues.single.cells, const [
-      FormulaHealingCellIssue(
+      HealingCellIssue(
         sheetRowNumber: 3,
         sheetColumnNumber: 8,
         columnName: 'Log Format',
-        reason: FormulaHealingIssueReason.brokenFormula,
+        reason: HealingIssueReason.brokenFormula,
         currentFormula: '=Exercises!I99',
       ),
     ]);
@@ -70,16 +70,16 @@ void main() {
       FormulaHealingIssue(
         activeSheetRowNumber: 3,
         displayedExerciseName: 'Squat',
-        preselectedExerciseSheetRowNumber: 2,
-        requiresUserSelection: false,
-        candidateExerciseSheetRowNumbers: const [2],
+        preselectedRow: 2,
+        needsChoice: false,
+        candidateRows: const [2],
         exerciseChoices: _squatExerciseChoices,
         cells: const [
-          FormulaHealingCellIssue(
+          HealingCellIssue(
             sheetRowNumber: 3,
             sheetColumnNumber: 8,
             columnName: 'Log Format',
-            reason: FormulaHealingIssueReason.missingFormula,
+            reason: HealingIssueReason.missingFormula,
             currentFormula: '',
           ),
         ],
@@ -134,7 +134,7 @@ void main() {
       );
 
       final issue = activeSheet.formulaHealingIssues.single;
-      expect(issue.requiresUserSelection, isTrue);
+      expect(issue.needsChoice, isTrue);
       expect(issue.cells.single.columnName, 'Log Format');
       expect(
         activeSheet.planFormulaHealing(activeSheetRowNumber: 3).cellUpdates,
@@ -143,7 +143,7 @@ void main() {
 
       final plan = activeSheet.planFormulaHealing(
         activeSheetRowNumber: 3,
-        selectedExerciseSheetRowNumber: 3,
+        selectedRow: 3,
       );
 
       expect(plan.cellUpdates, const [
@@ -191,9 +191,9 @@ void main() {
 
     final issue = activeSheet.formulaHealingIssues.single;
     expect(issue.displayedExerciseName, 'Squat');
-    expect(issue.requiresUserSelection, isTrue);
-    expect(issue.preselectedExerciseSheetRowNumber, isNull);
-    expect(issue.candidateExerciseSheetRowNumbers, [2, 3]);
+    expect(issue.needsChoice, isTrue);
+    expect(issue.preselectedRow, isNull);
+    expect(issue.candidateRows, [2, 3]);
   });
 
   test('reports broken formulas for ambiguous displayed-name matches', () {
@@ -230,13 +230,13 @@ void main() {
     );
 
     final issue = activeSheet.formulaHealingIssues.single;
-    expect(issue.requiresUserSelection, isTrue);
+    expect(issue.needsChoice, isTrue);
     expect(issue.cells, const [
-      FormulaHealingCellIssue(
+      HealingCellIssue(
         sheetRowNumber: 3,
         sheetColumnNumber: 8,
         columnName: 'Log Format',
-        reason: FormulaHealingIssueReason.brokenFormula,
+        reason: HealingIssueReason.brokenFormula,
         currentFormula: '=Exercises!I99',
       ),
     ]);
@@ -268,9 +268,9 @@ void main() {
 
     final issue = activeSheet.formulaHealingIssues.single;
     expect(issue.displayedExerciseName, 'Front Squat');
-    expect(issue.requiresUserSelection, isTrue);
-    expect(issue.preselectedExerciseSheetRowNumber, isNull);
-    expect(issue.candidateExerciseSheetRowNumbers, isEmpty);
+    expect(issue.needsChoice, isTrue);
+    expect(issue.preselectedRow, isNull);
+    expect(issue.candidateRows, isEmpty);
   });
 
   test('reports broken formulas for missing displayed-name matches', () {
@@ -298,13 +298,13 @@ void main() {
     );
 
     final issue = activeSheet.formulaHealingIssues.single;
-    expect(issue.requiresUserSelection, isTrue);
+    expect(issue.needsChoice, isTrue);
     expect(issue.cells, const [
-      FormulaHealingCellIssue(
+      HealingCellIssue(
         sheetRowNumber: 3,
         sheetColumnNumber: 8,
         columnName: 'Log Format',
-        reason: FormulaHealingIssueReason.brokenFormula,
+        reason: HealingIssueReason.brokenFormula,
         currentFormula: '=Exercises!I99',
       ),
     ]);
@@ -373,7 +373,7 @@ void main() {
 
       final plan = activeSheet.planFormulaHealing(
         activeSheetRowNumber: 3,
-        selectedExerciseSheetRowNumber: 3,
+        selectedRow: 3,
       );
 
       expect(plan.columnInsertions, isEmpty);
@@ -466,7 +466,7 @@ const _squatExerciseRows = [
 ];
 
 const _squatExerciseChoices = [
-  FormulaHealingExerciseChoice(
+  HealingChoice(
     sheetRowNumber: 2,
     exerciseName: 'Squat',
     description: 'Back squat',

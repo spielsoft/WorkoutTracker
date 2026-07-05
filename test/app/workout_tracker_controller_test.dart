@@ -649,7 +649,7 @@ void main() {
 
       final repaired = await controller.repairFormulaIssue(
         activeSheetRowNumber: 3,
-        selectedExerciseSheetRowNumber: 3,
+        selectedRow: 3,
       );
 
       expect(repaired, isTrue);
@@ -681,7 +681,7 @@ void main() {
 
       final repaired = await controller.repairFormulaIssue(
         activeSheetRowNumber: 3,
-        selectedExerciseSheetRowNumber: 2,
+        selectedRow: 2,
       );
 
       expect(repaired, isTrue);

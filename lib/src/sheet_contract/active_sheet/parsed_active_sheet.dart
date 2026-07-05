@@ -227,17 +227,17 @@ class ParsedActiveSheet {
 
   ActiveSheetWritePlan planFormulaHealing({
     required int activeSheetRowNumber,
-    int? selectedExerciseSheetRowNumber,
+    int? selectedRow,
   }) {
-    return _FormulaHealingPlanner(this).planFormulaHealing(
+    return _HealingPlanner(this).planFormulaHealing(
       activeSheetRowNumber: activeSheetRowNumber,
-      selectedExerciseSheetRowNumber: selectedExerciseSheetRowNumber,
+      selectedRow: selectedRow,
     );
   }
 
   /// Plans formula repairs for every issue with exactly one Exercises match.
   ActiveSheetWritePlan planUnambiguousFormulaHealing() {
-    return _FormulaHealingPlanner(this).planUnambiguousFormulaHealing();
+    return _HealingPlanner(this).planUnambiguousFormulaHealing();
   }
 
   List<String> _sheetRow(int sheetRowNumber) {

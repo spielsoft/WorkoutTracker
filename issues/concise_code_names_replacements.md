@@ -444,3 +444,38 @@ Status: auth and workbook-service type pass.
 - `test/app/test_spreadsheet_validation_service.dart`
 - `test/app/workout_tracker_controller_test.dart`
 - `test/support/widget_test_support.dart`
+
+## Slice 11
+
+Status: formula-healing vocabulary pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `FormulaHealingIssueReason` | `HealingIssueReason` |
+| `FormulaHealingCellIssue` | `HealingCellIssue` |
+| `FormulaHealingExerciseChoice` | `HealingChoice` |
+| `FormulaRepairRowExpectation` | `RepairRowExpectation` |
+| `_FormulaHealingPlanner` | `_HealingPlanner` |
+| `requiresUserSelection` | `needsChoice` |
+| `preselectedExerciseSheetRowNumber` | `preselectedRow` |
+| `candidateExerciseSheetRowNumbers` | `candidateRows` |
+| `selectedExerciseSheetRowNumber` | `selectedRow` |
+| `_formulaHealingIssues` | `_healingIssues` |
+| `_formulaMatchesAnyDirectReference` | `_matchesAnyDirectRef` |
+| `_formulaMatchesDirectReference` | `_matchesDirectRef` |
+| `_matchingExerciseRows` | `_matchingRows` |
+
+### Files simplified in slice 11
+
+- `lib/src/app/shell.dart`
+- `lib/src/app/shell_validation.dart`
+- `lib/src/app/workout_tracker_controller.dart`
+- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
+- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
+- `lib/src/sheet_contract/active_sheet/parser.dart`
+- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `test/app/workout_tracker_controller_test.dart`
+- `test/fixtures/workout_sheet_fixtures_test.dart`
+- `test/sheet_contract/active_sheet_formula_healing_test.dart`
