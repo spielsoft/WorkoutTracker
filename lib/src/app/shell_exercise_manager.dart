@@ -1,10 +1,10 @@
 part of 'shell.dart';
 
-class _ExerciseManagerInventory extends StatelessWidget {
-  const _ExerciseManagerInventory({
+class _ExerciseLibrary extends StatelessWidget {
+  const _ExerciseLibrary({
     required this.sheetLabel,
     required this.exercises,
-    required this.highlightedExerciseSheetRowNumber,
+    required this.highlightedRow,
     required this.onBack,
     required this.onAddExercise,
     required this.onEditExercise,
@@ -13,7 +13,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
 
   final String sheetLabel;
   final List<CanonicalExercise> exercises;
-  final int? highlightedExerciseSheetRowNumber;
+  final int? highlightedRow;
   final VoidCallback onBack;
   final VoidCallback? onAddExercise;
   final ValueChanged<CanonicalExercise>? onEditExercise;
@@ -21,9 +21,8 @@ class _ExerciseManagerInventory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final highlightedExerciseSheetRowNumber =
-        this.highlightedExerciseSheetRowNumber;
-    if (highlightedExerciseSheetRowNumber != null) {
+    final highlightedRow = this.highlightedRow;
+    if (highlightedRow != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final highlightedContext = _highlightedExerciseKey.currentContext;
         if (highlightedContext != null) {
@@ -80,9 +79,7 @@ class _ExerciseManagerInventory extends StatelessWidget {
                     },
               itemBuilder: (context, index) {
                 final exercise = exercises[index];
-                final isHighlighted =
-                    exercise.sheetRowNumber ==
-                    highlightedExerciseSheetRowNumber;
+                final isHighlighted = exercise.sheetRowNumber == highlightedRow;
                 return Padding(
                   key: isHighlighted
                       ? _highlightedExerciseKey

@@ -3,16 +3,16 @@ part of 'shell.dart';
 class _ValidationSummary extends StatelessWidget {
   const _ValidationSummary({
     required this.report,
-    this.onRepairUnambiguousFormulaIssues,
+    this.onRepairFormulas,
     this.onRepairFormulaIssue,
     this.onOpenSpreadsheet,
   });
 
   final ValidationReport report;
-  final Future<void> Function()? onRepairUnambiguousFormulaIssues;
+  final Future<void> Function()? onRepairFormulas;
   final Future<void> Function({
     required int activeSheetRowNumber,
-    required int selectedExerciseSheetRowNumber,
+    required int selectedRow,
   })?
   onRepairFormulaIssue;
   final Future<void> Function()? onOpenSpreadsheet;
@@ -51,22 +51,20 @@ class _ValidationSummary extends StatelessWidget {
         _IssuePanel(
           icon: Icons.build_outlined,
           title: 'Reconnect exercises to logging rows',
-          lines: unambiguousFormulaIssues
-              .expand(_formulaHealingIssueLines)
-              .toList(),
+          lines: unambiguousFormulaIssues.expand(_issueLines).toList(),
           action: unambiguousFormulaIssues.isEmpty
               ? null
               : FilledButton.icon(
                   key: const ValueKey('repair-unambiguous-formulas'),
-                  onPressed: onRepairUnambiguousFormulaIssues == null
+                  onPressed: onRepairFormulas == null
                       ? null
-                      : () => unawaited(onRepairUnambiguousFormulaIssues!()),
+                      : () => unawaited(onRepairFormulas!()),
                   icon: const Icon(Icons.build_circle_outlined),
                   label: const Text('Repair unambiguous formulas'),
                 ),
           extraContent: [
             for (final issue in choiceFormulaIssues)
-              _FormulaChoiceRepairItem(
+              _RepairChoiceItem(
                 key: ValueKey(
                   'formula-repair-item-${issue.activeSheetRowNumber}',
                 ),
@@ -98,8 +96,8 @@ String _manualRepairItemLine(ManualRepairItem item) {
   return 'Active sheet row ${item.sheetRowNumber}: ${item.problem}';
 }
 
-class _FormulaChoiceRepairItem extends StatefulWidget {
-  const _FormulaChoiceRepairItem({
+class _RepairChoiceItem extends StatefulWidget {
+  const _RepairChoiceItem({
     super.key,
     required this.issue,
     this.onRepairFormulaIssue,
@@ -108,18 +106,18 @@ class _FormulaChoiceRepairItem extends StatefulWidget {
   final FormulaHealingIssue issue;
   final Future<void> Function({
     required int activeSheetRowNumber,
-    required int selectedExerciseSheetRowNumber,
+    required int selectedRow,
   })?
   onRepairFormulaIssue;
 
   @override
-  State<_FormulaChoiceRepairItem> createState() {
-    return _FormulaChoiceRepairItemState();
+  State<_RepairChoiceItem> createState() {
+    return _RepairChoiceItemState();
   }
 }
 
-class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
-  int? _selectedExerciseSheetRowNumber;
+class _RepairChoiceItemState extends State<_RepairChoiceItem> {
+  int? _selectedRow;
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +185,7 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
                 ],
                 onSelected: (value) {
                   setState(() {
-                    _selectedExerciseSheetRowNumber = value;
+                    _selectedRow = value;
                   });
                 },
               ),
@@ -197,14 +195,12 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
                   'repair-formula-row-${issue.activeSheetRowNumber}',
                 ),
                 onPressed:
-                    _selectedExerciseSheetRowNumber == null ||
-                        widget.onRepairFormulaIssue == null
+                    _selectedRow == null || widget.onRepairFormulaIssue == null
                     ? null
                     : () => unawaited(
                         widget.onRepairFormulaIssue!(
                           activeSheetRowNumber: issue.activeSheetRowNumber,
-                          selectedExerciseSheetRowNumber:
-                              _selectedExerciseSheetRowNumber!,
+                          selectedRow: _selectedRow!,
                         ),
                       ),
                 icon: const Icon(Icons.build_circle_outlined),
@@ -218,7 +214,7 @@ class _FormulaChoiceRepairItemState extends State<_FormulaChoiceRepairItem> {
   }
 }
 
-Iterable<String> _formulaHealingIssueLines(FormulaHealingIssue issue) sync* {
+Iterable<String> _issueLines(FormulaHealingIssue issue) sync* {
   yield 'Repair formula cells so each workout row points to the correct '
       'Exercises entry.';
   yield '${issue.displayedExerciseName} can be reconnected automatically.';

@@ -204,14 +204,14 @@ class _WorkoutPane extends StatelessWidget {
     }
 
     if (screen == _AppScreen.exerciseManager) {
-      return _ExerciseManagerInventory(
+      return _ExerciseLibrary(
         sheetLabel: sheetLabel,
         exercises: activeSheet.canonicalExercises,
         onBack: onBackToWorkoutSetup,
         onAddExercise: onCreateCanonicalExercise,
         onEditExercise: onEditCanonicalExercise,
         onReorderExercises: onReorderCanonicalExercises,
-        highlightedExerciseSheetRowNumber: highlightedExerciseRow,
+        highlightedRow: highlightedExerciseRow,
       );
     }
 

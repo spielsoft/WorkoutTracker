@@ -685,11 +685,11 @@ class _AppShellState extends State<AppShell> {
 
   Future<void> _repairFormulaIssue({
     required int activeSheetRowNumber,
-    required int selectedExerciseSheetRowNumber,
+    required int selectedRow,
   }) async {
     final repaired = await _controller.repairFormulaIssue(
       activeSheetRowNumber: activeSheetRowNumber,
-      selectedExerciseSheetRowNumber: selectedExerciseSheetRowNumber,
+      selectedExerciseSheetRowNumber: selectedRow,
     );
     final report = _controller.report;
     if (!mounted || !repaired) {
@@ -1098,7 +1098,7 @@ class _AppShellState extends State<AppShell> {
                         if (showSheetSelection && report != null)
                           _ValidationSummary(
                             report: report,
-                            onRepairUnambiguousFormulaIssues: isBusy
+                            onRepairFormulas: isBusy
                                 ? null
                                 : _repairUnambiguousFormulas,
                             onRepairFormulaIssue: isBusy

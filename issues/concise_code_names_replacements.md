@@ -288,3 +288,27 @@ Status: logging flow and logging-screen pass.
 - `lib/src/app/exercise_logging_flow.dart`
 - `lib/src/app/shell_logging.dart`
 - `lib/src/app/shell_workout.dart`
+
+## Slice 6
+
+Status: validation-panel and exercise-manager pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `onRepairUnambiguousFormulaIssues` | `onRepairFormulas` |
+| `_FormulaChoiceRepairItem` | `_RepairChoiceItem` |
+| `_FormulaChoiceRepairItemState` | `_RepairChoiceItemState` |
+| `_selectedExerciseSheetRowNumber` | `_selectedRow` |
+| `_formulaHealingIssueLines` | `_issueLines` |
+| `_ExerciseManagerInventory` | `_ExerciseLibrary` |
+| `highlightedExerciseSheetRowNumber` | `highlightedRow` |
+| `_repairFormulaIssue.selectedExerciseSheetRowNumber` | `_repairFormulaIssue.selectedRow` |
+
+### Files simplified in slice 6
+
+- `lib/src/app/shell.dart`
+- `lib/src/app/shell_exercise_manager.dart`
+- `lib/src/app/shell_validation.dart`
+- `lib/src/app/shell_workout.dart`
