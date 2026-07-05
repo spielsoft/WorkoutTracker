@@ -174,7 +174,7 @@ class _WorkoutPane extends StatelessWidget {
         final backTooltip = exerciseAddReturnScreen == _AppScreen.workoutSetup
             ? 'Back to workout setup'
             : 'Back to exercises';
-        return _AddExercisePlacementScreen(
+        return _PlaceExerciseScreen(
           sheetLabel: sheetLabel,
           intent: intent,
           exercises: activeSheet.canonicalExercises,
@@ -184,7 +184,7 @@ class _WorkoutPane extends StatelessWidget {
           onSubmitAndAddAnother: onSubmitPlacementAndAddAnother,
         );
       }
-      return _CanonicalExerciseCreationScreen(
+      return _CreateExerciseScreen(
         sheetLabel: sheetLabel,
         backTooltip: exerciseAddReturnScreen == _AppScreen.exerciseManager
             ? 'Back to edit exercises'
@@ -195,7 +195,7 @@ class _WorkoutPane extends StatelessWidget {
     }
 
     if (screen == _AppScreen.editExercise && editingExercise != null) {
-      return _CanonicalExerciseEditScreen(
+      return _EditExerciseScreen(
         sheetLabel: sheetLabel,
         exercise: editingExercise!,
         onBack: onCloseExerciseEdit,
@@ -285,7 +285,7 @@ class _WorkoutPane extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: fieldWidth,
-                    child: _WorkoutSelectorField(
+                    child: _WorkoutField(
                       workouts: workouts,
                       selectedWorkout: selectedWorkout,
                       progressByWorkout: setup.progressByWorkout,
@@ -295,7 +295,7 @@ class _WorkoutPane extends StatelessWidget {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _HistoryBlockSelectorField(
+                    child: _HistoryField(
                       historyBlocks: historyBlocks,
                       selectedHistoryBlock: selectedHistoryBlock,
                       onHistoryBlockChanged: onHistoryBlockChanged,
@@ -333,8 +333,8 @@ class _WorkoutPane extends StatelessWidget {
   }
 }
 
-class _WorkoutSelectorField extends StatefulWidget {
-  const _WorkoutSelectorField({
+class _WorkoutField extends StatefulWidget {
+  const _WorkoutField({
     required this.workouts,
     required this.selectedWorkout,
     required this.progressByWorkout,
@@ -349,10 +349,10 @@ class _WorkoutSelectorField extends StatefulWidget {
   final VoidCallback? onAddWorkout;
 
   @override
-  State<_WorkoutSelectorField> createState() => _WorkoutSelectorFieldState();
+  State<_WorkoutField> createState() => _WorkoutFieldState();
 }
 
-class _WorkoutSelectorFieldState extends State<_WorkoutSelectorField> {
+class _WorkoutFieldState extends State<_WorkoutField> {
   @override
   Widget build(BuildContext context) {
     return _SetupSelectorField(
@@ -378,8 +378,8 @@ class _WorkoutSelectorFieldState extends State<_WorkoutSelectorField> {
   }
 }
 
-class _HistoryBlockSelectorField extends StatefulWidget {
-  const _HistoryBlockSelectorField({
+class _HistoryField extends StatefulWidget {
+  const _HistoryField({
     required this.historyBlocks,
     required this.selectedHistoryBlock,
     required this.onHistoryBlockChanged,
@@ -392,12 +392,10 @@ class _HistoryBlockSelectorField extends StatefulWidget {
   final VoidCallback? onAddHistoryBlock;
 
   @override
-  State<_HistoryBlockSelectorField> createState() =>
-      _HistoryBlockSelectorFieldState();
+  State<_HistoryField> createState() => _HistoryFieldState();
 }
 
-class _HistoryBlockSelectorFieldState
-    extends State<_HistoryBlockSelectorField> {
+class _HistoryFieldState extends State<_HistoryField> {
   @override
   Widget build(BuildContext context) {
     return _SetupSelectorField(
@@ -450,7 +448,7 @@ class _SetupSelectorField extends StatefulWidget {
 class _SetupSelectorFieldState extends State<_SetupSelectorField> {
   int _resetEpoch = 0;
 
-  void _openAddAfterDropdownCloses() {
+  void _openAddAfterClose() {
     setState(() {
       _resetEpoch += 1;
     });
@@ -502,7 +500,7 @@ class _SetupSelectorFieldState extends State<_SetupSelectorField> {
         ],
         onChanged: (value) {
           if (value == widget.addValue) {
-            _openAddAfterDropdownCloses();
+            _openAddAfterClose();
             return;
           }
           widget.onChanged(value);
@@ -637,16 +635,12 @@ class _WorkoutOverviewTile extends StatelessWidget {
                 if (onAddBackupExercise != null)
                   PopupMenuItem(
                     value: _PrimaryExerciseAction.addBackup,
-                    child: _PrimaryExerciseAddBackupMenuItem(
-                      exercise: slot.exercise,
-                    ),
+                    child: _AddBackupMenuItem(exercise: slot.exercise),
                   ),
                 if (onDeleteWorkoutExercise != null)
                   PopupMenuItem(
                     value: _PrimaryExerciseAction.delete,
-                    child: _PrimaryExerciseDeleteMenuItem(
-                      exercise: slot.exercise,
-                    ),
+                    child: _DeleteExerciseMenuItem(exercise: slot.exercise),
                   ),
               ],
               onSelected: _handlePrimaryExerciseAction,
@@ -859,12 +853,12 @@ class _WorkoutOverviewTile extends StatelessWidget {
         if (onAddBackupExercise != null)
           PopupMenuItem(
             value: _PrimaryExerciseAction.addBackup,
-            child: _PrimaryExerciseAddBackupMenuItem(exercise: slot.exercise),
+            child: _AddBackupMenuItem(exercise: slot.exercise),
           ),
         if (onDeleteWorkoutExercise != null)
           PopupMenuItem(
             value: _PrimaryExerciseAction.delete,
-            child: _PrimaryExerciseDeleteMenuItem(exercise: slot.exercise),
+            child: _DeleteExerciseMenuItem(exercise: slot.exercise),
           ),
       ],
     );
@@ -908,8 +902,8 @@ class _WorkoutReorderHandle extends StatelessWidget {
 
 enum _PrimaryExerciseAction { addBackup, delete }
 
-class _PrimaryExerciseAddBackupMenuItem extends StatelessWidget {
-  const _PrimaryExerciseAddBackupMenuItem({required this.exercise});
+class _AddBackupMenuItem extends StatelessWidget {
+  const _AddBackupMenuItem({required this.exercise});
 
   final String exercise;
 
@@ -939,8 +933,8 @@ class _PrimaryExerciseAddBackupMenuItem extends StatelessWidget {
   }
 }
 
-class _PrimaryExerciseDeleteMenuItem extends StatelessWidget {
-  const _PrimaryExerciseDeleteMenuItem({required this.exercise});
+class _DeleteExerciseMenuItem extends StatelessWidget {
+  const _DeleteExerciseMenuItem({required this.exercise});
 
   final String exercise;
 
@@ -972,8 +966,8 @@ class _PrimaryExerciseDeleteMenuItem extends StatelessWidget {
   }
 }
 
-class _AddExercisePlacementScreen extends StatelessWidget {
-  const _AddExercisePlacementScreen({
+class _PlaceExerciseScreen extends StatelessWidget {
+  const _PlaceExerciseScreen({
     required this.sheetLabel,
     required this.intent,
     required this.exercises,
@@ -1008,7 +1002,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
             onBack: onBack,
           ),
           const SizedBox(height: 16),
-          _ExercisePlacementForm(
+          _PlaceForm(
             exercises: exercises,
             initialExercise: null,
             onSubmit: onSubmit,
@@ -1020,8 +1014,8 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   }
 }
 
-class _ExercisePlacementForm extends StatefulWidget {
-  const _ExercisePlacementForm({
+class _PlaceForm extends StatefulWidget {
+  const _PlaceForm({
     required this.exercises,
     required this.initialExercise,
     required this.onSubmit,
@@ -1035,85 +1029,85 @@ class _ExercisePlacementForm extends StatefulWidget {
   onSubmitAndAddAnother;
 
   @override
-  State<_ExercisePlacementForm> createState() => _ExercisePlacementFormState();
+  State<_PlaceForm> createState() => _PlaceFormState();
 }
 
-class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
+class _PlaceFormState extends State<_PlaceForm> {
   CanonicalExercise? _selectedExercise;
-  late final TextEditingController _exerciseSearchController;
-  late final TextEditingController _setsController;
-  late final TextEditingController _repsController;
-  late final TextEditingController _rpeController;
-  late final TextEditingController _restController;
-  late final TextEditingController _tempoController;
-  late final TextEditingController _notesController;
+  late final TextEditingController _searchCtrl;
+  late final TextEditingController _setsCtrl;
+  late final TextEditingController _repsCtrl;
+  late final TextEditingController _rpeCtrl;
+  late final TextEditingController _restCtrl;
+  late final TextEditingController _tempoCtrl;
+  late final TextEditingController _notesCtrl;
 
   @override
   void initState() {
     super.initState();
-    _exerciseSearchController = TextEditingController();
-    _exerciseSearchController.addListener(_handleExerciseSearchChanged);
-    _setsController = TextEditingController();
-    _repsController = TextEditingController();
-    _rpeController = TextEditingController();
-    _restController = TextEditingController();
-    _tempoController = TextEditingController();
-    _notesController = TextEditingController();
+    _searchCtrl = TextEditingController();
+    _searchCtrl.addListener(_handleSearch);
+    _setsCtrl = TextEditingController();
+    _repsCtrl = TextEditingController();
+    _rpeCtrl = TextEditingController();
+    _restCtrl = TextEditingController();
+    _tempoCtrl = TextEditingController();
+    _notesCtrl = TextEditingController();
     _selectedExercise = widget.initialExercise;
-    _loadExerciseDefaults(_selectedExercise);
+    _loadDefaults(_selectedExercise);
   }
 
   @override
-  void didUpdateWidget(_ExercisePlacementForm oldWidget) {
+  void didUpdateWidget(_PlaceForm oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!widget.exercises.contains(_selectedExercise)) {
       _selectedExercise = widget.initialExercise;
-      _loadExerciseDefaults(_selectedExercise);
+      _loadDefaults(_selectedExercise);
     }
   }
 
   @override
   void dispose() {
-    _exerciseSearchController.removeListener(_handleExerciseSearchChanged);
-    _exerciseSearchController.dispose();
-    _setsController.dispose();
-    _repsController.dispose();
-    _rpeController.dispose();
-    _restController.dispose();
-    _tempoController.dispose();
-    _notesController.dispose();
+    _searchCtrl.removeListener(_handleSearch);
+    _searchCtrl.dispose();
+    _setsCtrl.dispose();
+    _repsCtrl.dispose();
+    _rpeCtrl.dispose();
+    _restCtrl.dispose();
+    _tempoCtrl.dispose();
+    _notesCtrl.dispose();
     super.dispose();
   }
 
-  void _handleExerciseSearchChanged() {
+  void _handleSearch() {
     setState(() {});
   }
 
-  void _loadExerciseDefaults(CanonicalExercise? exercise) {
-    _setsController.text = exercise?.defaultSets ?? '';
-    _repsController.text = exercise?.defaultReps ?? '';
-    _rpeController.text = exercise?.defaultRpe ?? '';
-    _restController.text = exercise?.defaultRest ?? '';
-    _tempoController.text = exercise?.defaultTempo ?? '';
-    _notesController.text = exercise?.notes ?? '';
+  void _loadDefaults(CanonicalExercise? exercise) {
+    _setsCtrl.text = exercise?.defaultSets ?? '';
+    _repsCtrl.text = exercise?.defaultReps ?? '';
+    _rpeCtrl.text = exercise?.defaultRpe ?? '';
+    _restCtrl.text = exercise?.defaultRest ?? '';
+    _tempoCtrl.text = exercise?.defaultTempo ?? '';
+    _notesCtrl.text = exercise?.notes ?? '';
   }
 
-  void _clearSelectionForAnother() {
+  void _clearForNext() {
     setState(() {
       _selectedExercise = null;
-      _exerciseSearchController.clear();
-      _loadExerciseDefaults(null);
+      _searchCtrl.clear();
+      _loadDefaults(null);
     });
   }
 
-  WorkoutPlacementMetadata _metadataFromControllers() {
+  WorkoutPlacementMetadata _metadata() {
     return WorkoutPlacementMetadata(
-      sets: _setsController.text.trim(),
-      reps: _repsController.text.trim(),
-      rpe: _rpeController.text.trim(),
-      rest: _restController.text.trim(),
-      tempo: _tempoController.text.trim(),
-      notes: _notesController.text.trim(),
+      sets: _setsCtrl.text.trim(),
+      reps: _repsCtrl.text.trim(),
+      rpe: _rpeCtrl.text.trim(),
+      rest: _restCtrl.text.trim(),
+      tempo: _tempoCtrl.text.trim(),
+      notes: _notesCtrl.text.trim(),
     );
   }
 
@@ -1121,7 +1115,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
   Widget build(BuildContext context) {
     final exercises = widget.exercises;
     final selectedExercise = _selectedExercise;
-    final exerciseQuery = _exerciseSearchController.text.trim().toLowerCase();
+    final exerciseQuery = _searchCtrl.text.trim().toLowerCase();
     final matchingExercises = exerciseQuery.isEmpty
         ? exercises
         : exercises.where((exercise) {
@@ -1138,10 +1132,10 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
       children: [
         _A11yTextField(
           label: 'Search exercises',
-          valueListenable: _exerciseSearchController,
+          valueListenable: _searchCtrl,
           child: TextField(
             key: const ValueKey('exercise-picker-search'),
-            controller: _exerciseSearchController,
+            controller: _searchCtrl,
             decoration: InputDecoration(
               labelText: 'Search exercises',
               border: const OutlineInputBorder(),
@@ -1150,7 +1144,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
                   ? null
                   : IconButton(
                       tooltip: 'Clear exercise search',
-                      onPressed: _exerciseSearchController.clear,
+                      onPressed: _searchCtrl.clear,
                       icon: const Icon(Icons.clear_outlined),
                     ),
             ),
@@ -1191,7 +1185,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
                 : (exercise) {
                     setState(() {
                       _selectedExercise = exercise;
-                      _loadExerciseDefaults(exercise);
+                      _loadDefaults(exercise);
                     });
                   },
           ),
@@ -1210,45 +1204,39 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
                 children: [
                   SizedBox(
                     width: fieldWidth,
-                    child: _PlacementMetadataField(
-                      controller: _setsController,
+                    child: _MetaField(
+                      controller: _setsCtrl,
                       labelText: 'Sets',
                       keyboardType: TextInputType.number,
                     ),
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _PlacementMetadataField(
-                      controller: _repsController,
-                      labelText: 'Reps',
-                    ),
+                    child: _MetaField(controller: _repsCtrl, labelText: 'Reps'),
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _PlacementMetadataField(
-                      controller: _rpeController,
+                    child: _MetaField(
+                      controller: _rpeCtrl,
                       labelText: 'RPE',
                       keyboardType: TextInputType.number,
                     ),
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _PlacementMetadataField(
-                      controller: _restController,
-                      labelText: 'Rest',
-                    ),
+                    child: _MetaField(controller: _restCtrl, labelText: 'Rest'),
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _PlacementMetadataField(
-                      controller: _tempoController,
+                    child: _MetaField(
+                      controller: _tempoCtrl,
                       labelText: 'Tempo',
                     ),
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _PlacementMetadataField(
-                      controller: _notesController,
+                    child: _MetaField(
+                      controller: _notesCtrl,
                       labelText: 'Notes',
                     ),
                   ),
@@ -1269,7 +1257,7 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
                   : () => widget.onSubmit(
                       _ExercisePlacementDraft(
                         exercise: selectedExercise,
-                        metadata: _metadataFromControllers(),
+                        metadata: _metadata(),
                       ),
                     ),
               icon: const Icon(Icons.playlist_add_outlined),
@@ -1283,11 +1271,11 @@ class _ExercisePlacementFormState extends State<_ExercisePlacementForm> {
                       final added = await widget.onSubmitAndAddAnother(
                         _ExercisePlacementDraft(
                           exercise: selectedExercise,
-                          metadata: _metadataFromControllers(),
+                          metadata: _metadata(),
                         ),
                       );
                       if (added) {
-                        _clearSelectionForAnother();
+                        _clearForNext();
                       }
                     },
               icon: const Icon(Icons.add_outlined),
@@ -1310,8 +1298,8 @@ class _ExercisePlacementDraft {
   final WorkoutPlacementMetadata metadata;
 }
 
-class _PlacementMetadataField extends StatelessWidget {
-  const _PlacementMetadataField({
+class _MetaField extends StatelessWidget {
+  const _MetaField({
     required this.controller,
     required this.labelText,
     this.keyboardType,
@@ -1339,8 +1327,8 @@ class _PlacementMetadataField extends StatelessWidget {
   }
 }
 
-class _CanonicalExerciseCreationScreen extends StatelessWidget {
-  const _CanonicalExerciseCreationScreen({
+class _CreateExerciseScreen extends StatelessWidget {
+  const _CreateExerciseScreen({
     required this.sheetLabel,
     required this.backTooltip,
     required this.onBack,
@@ -1378,8 +1366,8 @@ class _CanonicalExerciseCreationScreen extends StatelessWidget {
   }
 }
 
-class _CanonicalExerciseEditScreen extends StatelessWidget {
-  const _CanonicalExerciseEditScreen({
+class _EditExerciseScreen extends StatelessWidget {
+  const _EditExerciseScreen({
     required this.sheetLabel,
     required this.exercise,
     required this.onBack,

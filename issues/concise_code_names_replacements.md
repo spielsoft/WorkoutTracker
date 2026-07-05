@@ -343,3 +343,40 @@ Status: exercise-authoring form pass.
 
 - `lib/src/app/shell.dart`
 - `lib/src/app/shell_exercise_authoring.dart`
+
+## Slice 8
+
+Status: workout-pane private UI pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `_WorkoutSelectorField` | `_WorkoutField` |
+| `_WorkoutSelectorFieldState` | `_WorkoutFieldState` |
+| `_HistoryBlockSelectorField` | `_HistoryField` |
+| `_HistoryBlockSelectorFieldState` | `_HistoryFieldState` |
+| `_openAddAfterDropdownCloses` | `_openAddAfterClose` |
+| `_PrimaryExerciseAddBackupMenuItem` | `_AddBackupMenuItem` |
+| `_PrimaryExerciseDeleteMenuItem` | `_DeleteExerciseMenuItem` |
+| `_AddExercisePlacementScreen` | `_PlaceExerciseScreen` |
+| `_ExercisePlacementForm` | `_PlaceForm` |
+| `_ExercisePlacementFormState` | `_PlaceFormState` |
+| `_PlacementMetadataField` | `_MetaField` |
+| `_CanonicalExerciseCreationScreen` | `_CreateExerciseScreen` |
+| `_CanonicalExerciseEditScreen` | `_EditExerciseScreen` |
+| `_handleExerciseSearchChanged` | `_handleSearch` |
+| `_exerciseSearchController` | `_searchCtrl` |
+| `_loadExerciseDefaults` | `_loadDefaults` |
+| `_clearSelectionForAnother` | `_clearForNext` |
+| `_metadataFromControllers` | `_metadata` |
+| `_setsController` | `_setsCtrl` |
+| `_repsController` | `_repsCtrl` |
+| `_rpeController` | `_rpeCtrl` |
+| `_restController` | `_restCtrl` |
+| `_tempoController` | `_tempoCtrl` |
+| `_notesController` | `_notesCtrl` |
+
+### Files simplified in slice 8
+
+- `lib/src/app/shell_workout.dart`
