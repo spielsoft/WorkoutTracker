@@ -4,13 +4,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:workout_tracker/sheet_contract.dart';
-import 'package:workout_tracker/workout_tracker_app.dart';
+import 'package:workout_tracker/contract.dart';
+import 'package:workout_tracker/app.dart';
 
-import 'app/test_spreadsheet_validation_service.dart';
-import 'fixtures/workout_sheet_fixtures.dart';
+import 'app/service_fake.dart';
+import 'fixtures/workbook.dart';
 
-import 'support/widget_test_support.dart';
+import 'support/widget.dart';
 
 void main() {
   testWidgets('meets Flutter accessibility guidelines across core GUI states', (

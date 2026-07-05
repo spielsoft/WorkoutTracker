@@ -3,23 +3,23 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:workout_tracker/sheet_contract.dart';
+import 'package:workout_tracker/contract.dart';
 
-import 'app_state_store.dart';
-import 'exercise_logging_flow.dart';
-import 'google_workspace.dart';
-import 'spreadsheet_validation.dart';
-import 'spreadsheet_selection.dart';
-import 'workout_tracker_controller.dart';
+import 'state_store.dart';
+import 'logging_flow.dart';
+import 'workspace.dart';
+import 'validation.dart';
+import 'selection.dart';
+import 'controller.dart';
 
-part 'shell_account.dart';
-part 'shell_workout.dart';
-part 'shell_exercise_authoring.dart';
-part 'shell_exercise_manager.dart';
-part 'shell_visual_states.dart';
-part 'shell_logging.dart';
-part 'shell_validation.dart';
-part 'shell_accessibility.dart';
+part 'account.dart';
+part 'workout.dart';
+part 'exercise_form.dart';
+part 'exercise_library.dart';
+part 'states.dart';
+part 'logging.dart';
+part 'repair.dart';
+part 'a11y.dart';
 
 const _compactSegmentedButtonRadius = 8.0;
 

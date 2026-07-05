@@ -1,6 +1,6 @@
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
-import 'package:workout_tracker/workout_tracker_app.dart';
+import 'package:workout_tracker/app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -10,21 +10,21 @@ Status: committed after the initial hotspot pass.
 
 | Old file | New file |
 | --- | --- |
-| `lib/src/google_sheets/workout_tracker_workbook_initialization_plan.dart` | `lib/src/google_sheets/workbook_init_plan.dart` |
-| `lib/src/google_sheets/workout_tracker_workbook_initializer.dart` | `lib/src/google_sheets/workbook_init.dart` |
-| `lib/src/google_sheets/workout_tracker_workbook_template.dart` | `lib/src/google_sheets/workbook_template.dart` |
-| `lib/src/app/google_spreadsheet_validation_service.dart` | `lib/src/app/spreadsheet_validation_service.dart` |
-| `lib/src/app/google_spreadsheet_validation_wiring.dart` | `lib/src/app/spreadsheet_validation_wiring.dart` |
+| `lib/src/sheets/workout_tracker_workbook_initialization_plan.dart` | `lib/src/sheets/init_plan.dart` |
+| `lib/src/sheets/workout_tracker_workbook_initializer.dart` | `lib/src/sheets/init.dart` |
+| `lib/src/sheets/workout_tracker_template.dart` | `lib/src/sheets/template.dart` |
+| `lib/src/app/google_validation_service.dart` | `lib/src/app/validation_service.dart` |
+| `lib/src/app/google_access.dart` | `lib/src/app/access.dart` |
 | `lib/src/app/workout_tracker_shell.dart` | `lib/src/app/shell.dart` |
-| `lib/src/app/workout_tracker_shell_account.dart` | `lib/src/app/shell_account.dart` |
-| `lib/src/app/workout_tracker_shell_workout.dart` | `lib/src/app/shell_workout.dart` |
-| `lib/src/app/workout_tracker_shell_validation.dart` | `lib/src/app/shell_validation.dart` |
-| `lib/src/app/workout_tracker_shell_exercise_authoring.dart` | `lib/src/app/shell_exercise_authoring.dart` |
-| `lib/src/app/workout_tracker_shell_exercise_manager.dart` | `lib/src/app/shell_exercise_manager.dart` |
-| `lib/src/app/workout_tracker_shell_visual_states.dart` | `lib/src/app/shell_visual_states.dart` |
-| `lib/src/app/workout_tracker_shell_logging.dart` | `lib/src/app/shell_logging.dart` |
-| `lib/src/app/workout_tracker_shell_accessibility.dart` | `lib/src/app/shell_accessibility.dart` |
-| `test/google_sheets/workout_tracker_workbook_template_test.dart` | `test/google_sheets/workbook_template_test.dart` |
+| `lib/src/app/workout_tracker_account.dart` | `lib/src/app/account.dart` |
+| `lib/src/app/workout_tracker_workout.dart` | `lib/src/app/workout.dart` |
+| `lib/src/app/workout_tracker_repair.dart` | `lib/src/app/repair.dart` |
+| `lib/src/app/workout_tracker_exercise_form.dart` | `lib/src/app/exercise_form.dart` |
+| `lib/src/app/workout_tracker_exercise_library.dart` | `lib/src/app/exercise_library.dart` |
+| `lib/src/app/workout_tracker_states.dart` | `lib/src/app/states.dart` |
+| `lib/src/app/workout_tracker_logging.dart` | `lib/src/app/logging.dart` |
+| `lib/src/app/workout_tracker_a11y.dart` | `lib/src/app/a11y.dart` |
+| `test/sheets/workout_tracker_workbook_template_test.dart` | `test/sheets/template_test.dart` |
 
 ### Symbol replacements
 
@@ -102,34 +102,34 @@ Status: committed after the initial hotspot pass.
 ### Files simplified in slice 1
 
 - `lib/main.dart`
-- `lib/google_sheets.dart`
-- `lib/workout_tracker_app.dart`
-- `lib/src/app/app_state_store.dart`
-- `lib/src/app/google_account_session.dart`
-- `lib/src/app/google_authorization_client.dart`
-- `lib/src/app/google_workspace.dart`
-- `lib/src/app/spreadsheet_selection.dart`
-- `lib/src/app/spreadsheet_validation.dart`
-- `lib/src/app/spreadsheet_validation_core.dart`
-- `lib/src/app/spreadsheet_validation_service.dart`
-- `lib/src/app/spreadsheet_validation_wiring.dart`
-- `lib/src/app/workout_tracker_controller.dart`
+- `lib/sheets.dart`
+- `lib/app.dart`
+- `lib/src/app/state_store.dart`
+- `lib/src/app/account_session.dart`
+- `lib/src/app/auth_client.dart`
+- `lib/src/app/workspace.dart`
+- `lib/src/app/selection.dart`
+- `lib/src/app/validation.dart`
+- `lib/src/app/validation_core.dart`
+- `lib/src/app/validation_service.dart`
+- `lib/src/app/access.dart`
+- `lib/src/app/controller.dart`
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_account.dart`
-- `lib/src/app/shell_workout.dart`
-- `lib/src/app/shell_validation.dart`
-- `lib/src/app/shell_exercise_authoring.dart`
-- `lib/src/app/shell_exercise_manager.dart`
-- `lib/src/app/shell_visual_states.dart`
-- `lib/src/app/shell_logging.dart`
-- `lib/src/app/shell_accessibility.dart`
-- `lib/src/google_sheets/workbook_init_plan.dart`
-- `lib/src/google_sheets/workbook_init.dart`
-- `lib/src/google_sheets/workbook_template.dart`
-- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
-- `lib/src/sheet_contract/active_sheet/read_models.dart`
-- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `lib/src/app/account.dart`
+- `lib/src/app/workout.dart`
+- `lib/src/app/repair.dart`
+- `lib/src/app/exercise_form.dart`
+- `lib/src/app/exercise_library.dart`
+- `lib/src/app/states.dart`
+- `lib/src/app/logging.dart`
+- `lib/src/app/a11y.dart`
+- `lib/src/sheets/init_plan.dart`
+- `lib/src/sheets/init.dart`
+- `lib/src/sheets/template.dart`
+- `lib/src/contract/active/parsed.dart`
+- `lib/src/contract/active/models.dart`
+- `lib/src/contract/active/planners.dart`
+- `lib/src/contract/active/plans.dart`
 
 ## Remaining work
 
@@ -155,10 +155,10 @@ Status: controller and shell follow-up pass.
 
 ### Files simplified in slice 2
 
-- `lib/src/app/workout_tracker_controller.dart`
+- `lib/src/app/controller.dart`
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_workout.dart`
-- `test/app/workout_tracker_controller_test.dart`
+- `lib/src/app/workout.dart`
+- `test/app/controller_test.dart`
 - `test/widget_test.dart`
 
 ## Slice 3
@@ -198,15 +198,15 @@ Status: workspace and spreadsheet-selection follow-up pass.
 ### Files simplified in slice 3
 
 - `lib/main.dart`
-- `lib/src/app/google_workspace.dart`
-- `lib/src/app/spreadsheet_selection.dart`
+- `lib/src/app/workspace.dart`
+- `lib/src/app/selection.dart`
 - `lib/src/app/shell.dart`
-- `test/app/create_sheet_dialog_test.dart`
-- `test/app/google_authorization_client_test.dart`
-- `test/app/google_workspace_test.dart`
-- `test/app/logging_progress_behavior_test.dart`
-- `test/app/spreadsheet_selection_test.dart`
-- `test/app/spreadsheet_validation_test.dart`
+- `test/app/create_dialog_test.dart`
+- `test/app/auth_client_test.dart`
+- `test/app/workspace_test.dart`
+- `test/app/progress_test.dart`
+- `test/app/selection_test.dart`
+- `test/app/validation_test.dart`
 - `test/widget_test.dart`
 
 ## Slice 4
@@ -238,24 +238,24 @@ Status: google-sheets infrastructure and default-name pass.
 
 ### Files simplified in slice 4
 
-- `lib/src/app/google_workspace.dart`
-- `lib/src/app/spreadsheet_selection.dart`
-- `lib/src/app/spreadsheet_validation_service.dart`
-- `lib/src/app/spreadsheet_validation_wiring.dart`
-- `lib/src/google_sheets/read_adapter.dart`
-- `lib/src/google_sheets/workbook_client.dart`
-- `lib/src/google_sheets/workbook_init.dart`
-- `lib/src/google_sheets/workbook_init_plan.dart`
-- `lib/src/google_sheets/write_adapter.dart`
-- `lib/src/log_format/log_format.dart`
-- `lib/src/sheet_contract/active_sheet/input.dart`
-- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
-- `lib/src/workout_tracker_defaults.dart`
-- `test/app/google_account_session_test.dart`
-- `test/app/spreadsheet_validation_test.dart`
-- `test/google_sheets/google_sheets_read_adapter_test.dart`
-- `test/google_sheets/google_sheets_workbook_client_test.dart`
-- `test/google_sheets/google_sheets_write_adapter_test.dart`
+- `lib/src/app/workspace.dart`
+- `lib/src/app/selection.dart`
+- `lib/src/app/validation_service.dart`
+- `lib/src/app/access.dart`
+- `lib/src/sheets/read_adapter.dart`
+- `lib/src/sheets/client.dart`
+- `lib/src/sheets/init.dart`
+- `lib/src/sheets/init_plan.dart`
+- `lib/src/sheets/write_adapter.dart`
+- `lib/src/log_format/format.dart`
+- `lib/src/contract/active/input.dart`
+- `lib/src/contract/active/planners.dart`
+- `lib/src/defaults.dart`
+- `test/app/account_session_test.dart`
+- `test/app/validation_test.dart`
+- `test/sheets/read_adapter_test.dart`
+- `test/sheets/client_test.dart`
+- `test/sheets/write_adapter_test.dart`
 
 ## Slice 5
 
@@ -285,9 +285,9 @@ Status: logging flow and logging-screen pass.
 
 ### Files simplified in slice 5
 
-- `lib/src/app/exercise_logging_flow.dart`
-- `lib/src/app/shell_logging.dart`
-- `lib/src/app/shell_workout.dart`
+- `lib/src/app/logging_flow.dart`
+- `lib/src/app/logging.dart`
+- `lib/src/app/workout.dart`
 
 ## Slice 6
 
@@ -309,9 +309,9 @@ Status: validation-panel and exercise-manager pass.
 ### Files simplified in slice 6
 
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_exercise_manager.dart`
-- `lib/src/app/shell_validation.dart`
-- `lib/src/app/shell_workout.dart`
+- `lib/src/app/exercise_library.dart`
+- `lib/src/app/repair.dart`
+- `lib/src/app/workout.dart`
 
 ## Slice 7
 
@@ -342,7 +342,7 @@ Status: exercise-authoring form pass.
 ### Files simplified in slice 7
 
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_exercise_authoring.dart`
+- `lib/src/app/exercise_form.dart`
 
 ## Slice 8
 
@@ -379,7 +379,7 @@ Status: workout-pane private UI pass.
 
 ### Files simplified in slice 8
 
-- `lib/src/app/shell_workout.dart`
+- `lib/src/app/workout.dart`
 
 ## Slice 9
 
@@ -431,19 +431,19 @@ Status: auth and workbook-service type pass.
 ### Files simplified in slice 10
 
 - `lib/main.dart`
-- `lib/src/app/google_authorization_client.dart`
+- `lib/src/app/auth_client.dart`
 - `lib/src/app/shell.dart`
-- `lib/src/app/spreadsheet_selection.dart`
-- `lib/src/app/spreadsheet_validation_core.dart`
-- `lib/src/app/spreadsheet_validation_service.dart`
-- `lib/src/app/spreadsheet_validation_wiring.dart`
-- `lib/src/app/workout_tracker_controller.dart`
-- `test/app/google_authorization_client_test.dart`
-- `test/app/spreadsheet_selection_test.dart`
-- `test/app/spreadsheet_validation_test.dart`
-- `test/app/test_spreadsheet_validation_service.dart`
-- `test/app/workout_tracker_controller_test.dart`
-- `test/support/widget_test_support.dart`
+- `lib/src/app/selection.dart`
+- `lib/src/app/validation_core.dart`
+- `lib/src/app/validation_service.dart`
+- `lib/src/app/access.dart`
+- `lib/src/app/controller.dart`
+- `test/app/auth_client_test.dart`
+- `test/app/selection_test.dart`
+- `test/app/validation_test.dart`
+- `test/app/service_fake.dart`
+- `test/app/controller_test.dart`
+- `test/support/widget.dart`
 
 ## Slice 11
 
@@ -470,15 +470,15 @@ Status: formula-healing vocabulary pass.
 ### Files simplified in slice 11
 
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_validation.dart`
-- `lib/src/app/workout_tracker_controller.dart`
-- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
-- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
-- `lib/src/sheet_contract/active_sheet/parser.dart`
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
-- `test/app/workout_tracker_controller_test.dart`
-- `test/fixtures/workout_sheet_fixtures_test.dart`
-- `test/sheet_contract/active_sheet_formula_healing_test.dart`
+- `lib/src/app/repair.dart`
+- `lib/src/app/controller.dart`
+- `lib/src/contract/active/healing.dart`
+- `lib/src/contract/active/parsed.dart`
+- `lib/src/contract/active/parser.dart`
+- `lib/src/contract/active/plans.dart`
+- `test/app/controller_test.dart`
+- `test/fixtures/workbook_test.dart`
+- `test/contract/active/healing_test.dart`
 
 ## Slice 12
 
@@ -504,18 +504,18 @@ Status: active-sheet write expectation pass.
 
 ### Files simplified in slice 12
 
-- `lib/src/app/spreadsheet_validation_core.dart`
-- `lib/src/app/spreadsheet_validation_service.dart`
-- `lib/src/google_sheets/write_adapter.dart`
-- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
-- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
-- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
-- `test/app/workout_tracker_controller_test.dart`
-- `test/google_sheets/google_sheets_write_adapter_test.dart`
-- `test/sheet_contract/active_sheet_formula_healing_test.dart`
-- `test/sheet_contract/active_sheet_write_planning_test.dart`
-- `test/support/widget_test_support.dart`
+- `lib/src/app/validation_core.dart`
+- `lib/src/app/validation_service.dart`
+- `lib/src/sheets/write_adapter.dart`
+- `lib/src/contract/active/healing.dart`
+- `lib/src/contract/active/parsed.dart`
+- `lib/src/contract/active/planners.dart`
+- `lib/src/contract/active/plans.dart`
+- `test/app/controller_test.dart`
+- `test/sheets/write_adapter_test.dart`
+- `test/contract/active/healing_test.dart`
+- `test/contract/active/plans_test.dart`
+- `test/support/widget.dart`
 
 ## Slice 13
 
@@ -540,26 +540,26 @@ Status: public API and exercise-definition pass.
 ### Files simplified in slice 13
 
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_exercise_authoring.dart`
-- `lib/src/app/shell_validation.dart`
-- `lib/src/app/spreadsheet_selection.dart`
-- `lib/src/app/spreadsheet_validation_core.dart`
-- `lib/src/app/spreadsheet_validation_service.dart`
-- `lib/src/app/spreadsheet_validation_wiring.dart`
-- `lib/src/app/workout_tracker_controller.dart`
-- `lib/src/google_sheets/workbook_template.dart`
-- `lib/src/google_sheets/write_adapter.dart`
-- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
-- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
-- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
-- `test/app/spreadsheet_validation_test.dart`
-- `test/app/test_spreadsheet_validation_service.dart`
-- `test/app/test_spreadsheet_validation_service_test.dart`
-- `test/app/workout_tracker_controller_test.dart`
-- `test/google_sheets/google_sheets_write_adapter_test.dart`
-- `test/sheet_contract/active_sheet_write_planning_test.dart`
-- `test/support/widget_test_support.dart`
+- `lib/src/app/exercise_form.dart`
+- `lib/src/app/repair.dart`
+- `lib/src/app/selection.dart`
+- `lib/src/app/validation_core.dart`
+- `lib/src/app/validation_service.dart`
+- `lib/src/app/access.dart`
+- `lib/src/app/controller.dart`
+- `lib/src/sheets/template.dart`
+- `lib/src/sheets/write_adapter.dart`
+- `lib/src/contract/active/healing.dart`
+- `lib/src/contract/active/parsed.dart`
+- `lib/src/contract/active/planners.dart`
+- `lib/src/contract/active/plans.dart`
+- `test/app/validation_test.dart`
+- `test/app/service_fake.dart`
+- `test/app/service_test.dart`
+- `test/app/controller_test.dart`
+- `test/sheets/write_adapter_test.dart`
+- `test/contract/active/plans_test.dart`
+- `test/support/widget.dart`
 - `test/widget_test.dart`
 
 ## Slice 14
@@ -592,7 +592,7 @@ Status: workout-pane callback vocabulary pass.
 ### Files simplified in slice 14
 
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_workout.dart`
+- `lib/src/app/workout.dart`
 
 ## Slice 15
 
@@ -627,18 +627,18 @@ Status: sheet-contract and validation internal-name pass.
 
 ### Files simplified in slice 15
 
-- `lib/src/app/google_workspace.dart`
-- `lib/src/app/spreadsheet_validation_service.dart`
-- `lib/src/google_sheets/write_adapter.dart`
-- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
-- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
-- `lib/src/sheet_contract/active_sheet/parser.dart`
-- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
-- `test/app/test_spreadsheet_validation_service.dart`
-- `test/google_sheets/google_sheets_write_adapter_test.dart`
-- `test/sheet_contract/active_sheet_write_planning_test.dart`
-- `test/support/widget_test_support.dart`
+- `lib/src/app/workspace.dart`
+- `lib/src/app/validation_service.dart`
+- `lib/src/sheets/write_adapter.dart`
+- `lib/src/contract/active/healing.dart`
+- `lib/src/contract/active/parsed.dart`
+- `lib/src/contract/active/parser.dart`
+- `lib/src/contract/active/planners.dart`
+- `lib/src/contract/active/plans.dart`
+- `test/app/service_fake.dart`
+- `test/sheets/write_adapter_test.dart`
+- `test/contract/active/plans_test.dart`
+- `test/support/widget.dart`
 
 ## Slice 16
 
@@ -665,10 +665,85 @@ Status: selection/bootstrap helper pass.
 
 - `lib/main.dart`
 - `lib/src/app/shell.dart`
-- `lib/src/app/shell_workout.dart`
-- `lib/src/app/spreadsheet_selection.dart`
-- `lib/src/app/spreadsheet_validation_core.dart`
-- `lib/src/google_sheets/workbook_template.dart`
-- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
-- `lib/src/sheet_contract/active_sheet/write_plans.dart`
-- `test/google_sheets/workbook_template_test.dart`
+- `lib/src/app/workout.dart`
+- `lib/src/app/selection.dart`
+- `lib/src/app/validation_core.dart`
+- `lib/src/sheets/template.dart`
+- `lib/src/contract/active/planners.dart`
+- `lib/src/contract/active/plans.dart`
+- `test/sheets/template_test.dart`
+
+## Filename changes
+
+Final filename and path renames for this pass.
+
+| Old file | New file |
+| --- | --- |
+| `lib/google_sheets.dart` | `lib/sheets.dart` |
+| `lib/log_format.dart` | `lib/format.dart` |
+| `lib/sheet_contract.dart` | `lib/contract.dart` |
+| `lib/workout_tracker_app.dart` | `lib/app.dart` |
+| `lib/src/app/app_state_store.dart` | `lib/src/app/state_store.dart` |
+| `lib/src/app/exercise_logging_flow.dart` | `lib/src/app/logging_flow.dart` |
+| `lib/src/app/google_account_session.dart` | `lib/src/app/account_session.dart` |
+| `lib/src/app/google_authorization_client.dart` | `lib/src/app/auth_client.dart` |
+| `lib/src/app/google_workspace.dart` | `lib/src/app/workspace.dart` |
+| `lib/src/app/shell_accessibility.dart` | `lib/src/app/a11y.dart` |
+| `lib/src/app/shell_account.dart` | `lib/src/app/account.dart` |
+| `lib/src/app/shell_exercise_authoring.dart` | `lib/src/app/exercise_form.dart` |
+| `lib/src/app/shell_exercise_manager.dart` | `lib/src/app/exercise_library.dart` |
+| `lib/src/app/shell_logging.dart` | `lib/src/app/logging.dart` |
+| `lib/src/app/shell_validation.dart` | `lib/src/app/repair.dart` |
+| `lib/src/app/shell_visual_states.dart` | `lib/src/app/states.dart` |
+| `lib/src/app/shell_workout.dart` | `lib/src/app/workout.dart` |
+| `lib/src/app/spreadsheet_selection.dart` | `lib/src/app/selection.dart` |
+| `lib/src/app/spreadsheet_validation.dart` | `lib/src/app/validation.dart` |
+| `lib/src/app/spreadsheet_validation_core.dart` | `lib/src/app/validation_core.dart` |
+| `lib/src/app/spreadsheet_validation_service.dart` | `lib/src/app/validation_service.dart` |
+| `lib/src/app/spreadsheet_validation_wiring.dart` | `lib/src/app/access.dart` |
+| `lib/src/app/workout_tracker_controller.dart` | `lib/src/app/controller.dart` |
+| `lib/src/google_sheets/read_adapter.dart` | `lib/src/sheets/read_adapter.dart` |
+| `lib/src/google_sheets/workbook_client.dart` | `lib/src/sheets/client.dart` |
+| `lib/src/google_sheets/workbook_init.dart` | `lib/src/sheets/init.dart` |
+| `lib/src/google_sheets/workbook_init_plan.dart` | `lib/src/sheets/init_plan.dart` |
+| `lib/src/google_sheets/workbook_template.dart` | `lib/src/sheets/template.dart` |
+| `lib/src/log_format/log_format.dart` | `lib/src/log_format/format.dart` |
+| `lib/src/sheet_contract/active_sheet.dart` | `lib/src/contract/active.dart` |
+| `lib/src/sheet_contract/active_sheet/formula_healing.dart` | `lib/src/contract/active/healing.dart` |
+| `lib/src/sheet_contract/active_sheet/helpers.dart` | `lib/src/contract/active/helpers.dart` |
+| `lib/src/sheet_contract/active_sheet/history_blocks.dart` | `lib/src/contract/active/history.dart` |
+| `lib/src/sheet_contract/active_sheet/input.dart` | `lib/src/contract/active/input.dart` |
+| `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart` | `lib/src/contract/active/parsed.dart` |
+| `lib/src/sheet_contract/active_sheet/parser.dart` | `lib/src/contract/active/parser.dart` |
+| `lib/src/sheet_contract/active_sheet/read_models.dart` | `lib/src/contract/active/models.dart` |
+| `lib/src/sheet_contract/active_sheet/workout_rows.dart` | `lib/src/contract/active/rows.dart` |
+| `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart` | `lib/src/contract/active/planners.dart` |
+| `lib/src/sheet_contract/active_sheet/write_plans.dart` | `lib/src/contract/active/plans.dart` |
+| `lib/src/workout_tracker_defaults.dart` | `lib/src/defaults.dart` |
+| `test/app/app_state_store_test.dart` | `test/app/store_test.dart` |
+| `test/app/create_sheet_dialog_test.dart` | `test/app/create_dialog_test.dart` |
+| `test/app/google_account_session_test.dart` | `test/app/account_session_test.dart` |
+| `test/app/google_authorization_client_test.dart` | `test/app/auth_client_test.dart` |
+| `test/app/google_workspace_test.dart` | `test/app/workspace_test.dart` |
+| `test/app/logging_progress_behavior_test.dart` | `test/app/progress_test.dart` |
+| `test/app/spreadsheet_selection_test.dart` | `test/app/selection_test.dart` |
+| `test/app/spreadsheet_validation_test.dart` | `test/app/validation_test.dart` |
+| `test/app/test_spreadsheet_validation_service.dart` | `test/app/service_fake.dart` |
+| `test/app/test_spreadsheet_validation_service_test.dart` | `test/app/service_test.dart` |
+| `test/app/workout_tracker_controller_test.dart` | `test/app/controller_test.dart` |
+| `test/fixtures/workout_sheet_fixtures.dart` | `test/fixtures/workbook.dart` |
+| `test/fixtures/workout_sheet_fixtures_test.dart` | `test/fixtures/workbook_test.dart` |
+| `test/google_sheets/development_sheet_reset_harness_test.dart` | `test/sheets/reset_harness_test.dart` |
+| `test/google_sheets/google_sheets_read_adapter_test.dart` | `test/sheets/read_adapter_test.dart` |
+| `test/google_sheets/google_sheets_workbook_client_test.dart` | `test/sheets/client_test.dart` |
+| `test/google_sheets/google_sheets_write_adapter_test.dart` | `test/sheets/write_adapter_test.dart` |
+| `test/google_sheets/workbook_template_test.dart` | `test/sheets/template_test.dart` |
+| `test/log_format/log_format_test.dart` | `test/log_format/format_test.dart` |
+| `test/sheet_contract/active_sheet_formula_healing_test.dart` | `test/contract/active/healing_test.dart` |
+| `test/sheet_contract/active_sheet_history_planning_test.dart` | `test/contract/active/history_test.dart` |
+| `test/sheet_contract/active_sheet_parser_test.dart` | `test/contract/active/parser_test.dart` |
+| `test/sheet_contract/active_sheet_read_models_test.dart` | `test/contract/active/models_test.dart` |
+| `test/sheet_contract/active_sheet_test_helpers.dart` | `test/contract/active/helpers.dart` |
+| `test/sheet_contract/active_sheet_write_planning_test.dart` | `test/contract/active/plans_test.dart` |
+| `test/support/development_sheet_reset.dart` | `test/support/reset.dart` |
+| `test/support/widget_test_support.dart` | `test/support/widget.dart` |
