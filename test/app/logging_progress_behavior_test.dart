@@ -16,10 +16,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));

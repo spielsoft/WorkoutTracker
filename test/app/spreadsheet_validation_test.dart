@@ -19,8 +19,8 @@ void main() {
       final authClient = _CloseTrackingAuthClient();
       final service = SpreadsheetAccess(
         GoogleScopedApiAccess(
-          authorizationGateway: gateway,
-          authorizationClientFactory: (_) => authClient,
+          auth: gateway,
+          authClientFactory: (_) => authClient,
         ),
         workbookClientFactory: (_) =>
             _CloseTrackingWorkbookClient(authClient, [_snapshot(rows)]),
@@ -59,8 +59,8 @@ void main() {
       ]);
       final service = SpreadsheetAccess(
         GoogleScopedApiAccess(
-          authorizationGateway: gateway,
-          authorizationClientFactory: (_) => authClient,
+          auth: gateway,
+          authClientFactory: (_) => authClient,
         ),
         workbookClientFactory: (_) => workbookClient,
       );

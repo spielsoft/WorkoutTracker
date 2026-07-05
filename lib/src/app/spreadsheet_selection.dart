@@ -159,7 +159,7 @@ class SelectedSpreadsheet {
 }
 
 abstract interface class SpreadsheetPicker {
-  SpreadsheetPickerAvailability get availability;
+  PickerAvailability get availability;
 
   Future<SelectedSpreadsheet?> chooseSpreadsheet();
 
@@ -170,34 +170,31 @@ abstract interface class SpreadsheetPicker {
   Future<SelectedSpreadsheet> resolveSelection(SelectedSpreadsheet selected);
 }
 
-class SpreadsheetPickerAvailability {
-  const SpreadsheetPickerAvailability.available()
-    : chooseUnavailableReason = null,
-      createUnavailableReason = null;
+class PickerAvailability {
+  const PickerAvailability.available()
+    : chooseReason = null,
+      createReason = null;
 
-  const SpreadsheetPickerAvailability.unavailable({
-    this.chooseUnavailableReason,
-    this.createUnavailableReason,
-  });
+  const PickerAvailability.unavailable({this.chooseReason, this.createReason});
 
-  final String? chooseUnavailableReason;
-  final String? createUnavailableReason;
+  final String? chooseReason;
+  final String? createReason;
 
-  bool get canChoose => chooseUnavailableReason == null;
+  bool get canChoose => chooseReason == null;
 
-  bool get canCreate => createUnavailableReason == null;
+  bool get canCreate => createReason == null;
 
   String? get summary {
     final reasons = {
-      if (chooseUnavailableReason case final String reason) reason,
-      if (createUnavailableReason case final String reason) reason,
+      if (chooseReason case final String reason) reason,
+      if (createReason case final String reason) reason,
     };
     return reasons.isEmpty ? null : reasons.join(' ');
   }
 }
 
-class DisabledSpreadsheetPicker implements SpreadsheetPicker {
-  const DisabledSpreadsheetPicker({
+class DisabledPicker implements SpreadsheetPicker {
+  const DisabledPicker({
     this.reason =
         'Google Drive sheet selection is temporarily disabled for this build.',
   });
@@ -205,10 +202,10 @@ class DisabledSpreadsheetPicker implements SpreadsheetPicker {
   final String reason;
 
   @override
-  SpreadsheetPickerAvailability get availability {
-    return SpreadsheetPickerAvailability.unavailable(
-      chooseUnavailableReason: reason,
-      createUnavailableReason: reason,
+  PickerAvailability get availability {
+    return PickerAvailability.unavailable(
+      chooseReason: reason,
+      createReason: reason,
     );
   }
 
@@ -237,29 +234,29 @@ class DisabledSpreadsheetPicker implements SpreadsheetPicker {
 
 class MobileSpreadsheetPicker implements SpreadsheetPicker {
   const MobileSpreadsheetPicker({
-    required this.callbackReceiverFactory,
+    required this.callbackFactory,
     required this.config,
-    this.authorizationGateway,
-    this.authorizationClientFactory,
+    this.auth,
+    this.authClientFactory,
     this.googleAccess,
     this.spreadsheetCreator,
   });
 
   final PickerAppConfig config;
-  final PickerCallbackReceiverFactory callbackReceiverFactory;
-  final SignInAuthGateway? authorizationGateway;
-  final GoogleAuthorizationClientFactory? authorizationClientFactory;
+  final PickerCallbackReceiverFactory callbackFactory;
+  final SignInAuthGateway? auth;
+  final GoogleAuthorizationClientFactory? authClientFactory;
   final ScopedGoogleApiAccess? googleAccess;
   final SpreadsheetCreator? spreadsheetCreator;
 
   @override
-  SpreadsheetPickerAvailability get availability {
+  PickerAvailability get availability {
     final trimmedClientId = config.clientId.trim();
-    return SpreadsheetPickerAvailability.unavailable(
-      chooseUnavailableReason: trimmedClientId.isEmpty
+    return PickerAvailability.unavailable(
+      chooseReason: trimmedClientId.isEmpty
           ? 'Google Drive Picker is missing an OAuth client ID.'
           : null,
-      createUnavailableReason: spreadsheetCreator == null
+      createReason: spreadsheetCreator == null
           ? 'Google Drive sheet creation is not connected yet.'
           : null,
     );
@@ -273,7 +270,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
     }
 
     final callbackState = _newPickerCallbackState();
-    final callbackReceiver = await callbackReceiverFactory(
+    final callbackReceiver = await callbackFactory(
       state: callbackState,
       timeout: config.callbackTimeout,
     );
@@ -282,7 +279,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
         clientId: trimmedClientId,
         redirectUri: callbackReceiver.redirectUri,
         state: callbackState,
-        loginHint: authorizationGateway?.currentAccount?.email,
+        loginHint: auth?.currentAccount?.email,
       );
       final launched = await launchUrl(
         authorizationUrl,
@@ -300,7 +297,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
       if (spreadsheetId == null) {
         return null;
       }
-      return _selectedSpreadsheetForPickedId(spreadsheetId);
+      return _pickedSheet(spreadsheetId);
     } finally {
       await callbackReceiver.close();
     }
@@ -312,7 +309,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
     if (creator == null) {
       throw StateError('Google Drive sheet creation is not connected yet.');
     }
-    return creator.createWorkoutSpreadsheet(name: name);
+    return creator.createSheet(name: name);
   }
 
   @override
@@ -323,7 +320,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
     }
 
     final callbackState = _newPickerCallbackState();
-    final callbackReceiver = await callbackReceiverFactory(
+    final callbackReceiver = await callbackFactory(
       state: callbackState,
       timeout: config.callbackTimeout,
     );
@@ -332,7 +329,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
         clientId: trimmedClientId,
         redirectUri: callbackReceiver.redirectUri,
         state: callbackState,
-        loginHint: authorizationGateway?.currentAccount?.email,
+        loginHint: auth?.currentAccount?.email,
         mimetypes: 'application/vnd.google-apps.folder',
         allowFolderSelection: true,
       );
@@ -360,7 +357,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
 
   @override
   Future<SelectedSpreadsheet> resolveSelection(SelectedSpreadsheet selected) {
-    return _selectedSpreadsheetForPickedId(selected.spreadsheetId);
+    return _pickedSheet(selected.spreadsheetId);
   }
 
   @visibleForTesting
@@ -397,11 +394,9 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
     );
   }
 
-  Future<SelectedSpreadsheet> _selectedSpreadsheetForPickedId(
-    String spreadsheetId,
-  ) async {
-    final authorizationGateway = this.authorizationGateway;
-    if (authorizationGateway == null) {
+  Future<SelectedSpreadsheet> _pickedSheet(String spreadsheetId) async {
+    final auth = this.auth;
+    if (auth == null) {
       return SelectedSpreadsheet(
         spreadsheetId: spreadsheetId,
         name: spreadsheetId,
@@ -411,17 +406,11 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
 
     final access =
         googleAccess ??
-        GoogleScopedApiAccess(
-          authorizationGateway: authorizationGateway,
-          authorizationClientFactory: authorizationClientFactory,
-        );
+        GoogleScopedApiAccess(auth: auth, authClientFactory: authClientFactory);
     return access.run(
       scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       action: (resources) async {
-        await _restoreAccountProfileFromDrive(
-          authorizationGateway: authorizationGateway,
-          driveApi: resources.driveApi,
-        );
+        await _restoreProfile(auth: auth, driveApi: resources.driveApi);
         final spreadsheet = await resources.sheetsApi.spreadsheets.get(
           spreadsheetId,
           includeGridData: false,
@@ -433,15 +422,15 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
           name: title == null || title.isEmpty ? spreadsheetId : title,
           webViewLink:
               spreadsheet.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
-          accountEmail: authorizationGateway.currentAccount?.email,
+          accountEmail: auth.currentAccount?.email,
         );
       },
     );
   }
 
   void _updatePickerAuth(PickerCallbackResult result) {
-    final authorizationGateway = this.authorizationGateway;
-    if (authorizationGateway case final PickerAuthStore store) {
+    final auth = this.auth;
+    if (auth case final PickerAuthStore store) {
       final accessToken = result.accessToken?.trim();
       if (accessToken == null || accessToken.isEmpty) {
         return;
@@ -457,11 +446,11 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
     }
   }
 
-  Future<void> _restoreAccountProfileFromDrive({
-    required SignInAuthGateway authorizationGateway,
+  Future<void> _restoreProfile({
+    required SignInAuthGateway auth,
     required drive.DriveApi driveApi,
   }) async {
-    if (authorizationGateway case final PickerAuthStore store) {
+    if (auth case final PickerAuthStore store) {
       final current = store.currentAuthorization;
       if (current == null || current.accountEmail?.trim().isNotEmpty == true) {
         return;
@@ -493,27 +482,26 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
 
 class SpreadsheetCreator {
   SpreadsheetCreator({
-    required this.authorizationGateway,
-    GoogleAuthorizationClientFactory? authorizationClientFactory,
+    required this.auth,
+    GoogleAuthorizationClientFactory? authClientFactory,
     ScopedGoogleApiAccess? googleAccess,
-    WorkbookInitFactory? workbookInitializerFactory,
+    WorkbookInitFactory? initFactory,
     String Function()? titleFactory,
   }) : googleAccess =
            googleAccess ??
            GoogleScopedApiAccess(
-             authorizationGateway: authorizationGateway,
-             authorizationClientFactory: authorizationClientFactory,
+             auth: auth,
+             authClientFactory: authClientFactory,
            ),
-       workbookInitializerFactory =
-           workbookInitializerFactory ?? ((api) => GoogleApisWorkbookInit(api)),
+       initFactory = initFactory ?? ((api) => GoogleApisWorkbookInit(api)),
        titleFactory = titleFactory ?? defaultWorkoutSpreadsheetTitle;
 
-  final SignInAuthGateway authorizationGateway;
+  final SignInAuthGateway auth;
   final ScopedGoogleApiAccess googleAccess;
-  final WorkbookInitFactory workbookInitializerFactory;
+  final WorkbookInitFactory initFactory;
   final String Function() titleFactory;
 
-  Future<SelectedSpreadsheet> createWorkoutSpreadsheet({String? name}) async {
+  Future<SelectedSpreadsheet> createSheet({String? name}) async {
     final requestedTitle = (name ?? titleFactory()).trim();
     final title = requestedTitle.isEmpty
         ? defaultWorkoutSpreadsheetTitle()
@@ -533,7 +521,7 @@ class SpreadsheetCreator {
         }
 
         final workbook = await loadWorkbookTemplate();
-        await workbookInitializerFactory(
+        await initFactory(
           resources.sheetsApi,
         ).initializeWorkbook(spreadsheetId: spreadsheetId, workbook: workbook);
 
@@ -541,7 +529,7 @@ class SpreadsheetCreator {
           spreadsheetId: spreadsheetId,
           name: created.properties?.title ?? title,
           webViewLink: created.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
-          accountEmail: authorizationGateway.currentAccount?.email,
+          accountEmail: auth.currentAccount?.email,
         );
       },
     );

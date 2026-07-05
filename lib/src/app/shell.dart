@@ -58,9 +58,9 @@ class WorkoutTrackerApp extends StatelessWidget {
     required this.svc,
     this.accountSession,
     this.appStateStore,
-    this.initialSpreadsheetText = '',
-    this.initialSelectedSpreadsheet,
-    this.spreadsheetPicker,
+    this.initialText = '',
+    this.initialSelection,
+    this.picker,
     this.spreadsheetOpener = const UrlLauncherSpreadsheetOpener(),
     super.key,
   });
@@ -68,9 +68,9 @@ class WorkoutTrackerApp extends StatelessWidget {
   final WorkbookCommandService svc;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
-  final String initialSpreadsheetText;
-  final SelectedSpreadsheet? initialSelectedSpreadsheet;
-  final SpreadsheetPicker? spreadsheetPicker;
+  final String initialText;
+  final SelectedSpreadsheet? initialSelection;
+  final SpreadsheetPicker? picker;
   final SpreadsheetOpener spreadsheetOpener;
 
   @override
@@ -86,9 +86,9 @@ class WorkoutTrackerApp extends StatelessWidget {
         svc: svc,
         accountSession: accountSession,
         appStateStore: appStateStore,
-        initialSpreadsheetText: initialSpreadsheetText,
-        initialSelectedSpreadsheet: initialSelectedSpreadsheet,
-        spreadsheetPicker: spreadsheetPicker,
+        initialText: initialText,
+        initialSelection: initialSelection,
+        picker: picker,
         spreadsheetOpener: spreadsheetOpener,
       ),
     );
@@ -124,7 +124,7 @@ class _SheetPick extends StatelessWidget {
   });
 
   final SelectedSpreadsheet? selectedSpreadsheet;
-  final SpreadsheetPickerAvailability availability;
+  final PickerAvailability availability;
   final bool showAvailabilitySummary;
   final bool isBusy;
   final GoogleAccountSession? accountSession;
@@ -410,9 +410,9 @@ class AppShell extends StatefulWidget {
     required this.svc,
     this.accountSession,
     this.appStateStore,
-    required this.initialSpreadsheetText,
-    this.initialSelectedSpreadsheet,
-    this.spreadsheetPicker,
+    required this.initialText,
+    this.initialSelection,
+    this.picker,
     required this.spreadsheetOpener,
     super.key,
   });
@@ -420,9 +420,9 @@ class AppShell extends StatefulWidget {
   final WorkbookCommandService svc;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
-  final String initialSpreadsheetText;
-  final SelectedSpreadsheet? initialSelectedSpreadsheet;
-  final SpreadsheetPicker? spreadsheetPicker;
+  final String initialText;
+  final SelectedSpreadsheet? initialSelection;
+  final SpreadsheetPicker? picker;
   final SpreadsheetOpener spreadsheetOpener;
 
   @override
@@ -447,9 +447,7 @@ class _AppShellState extends State<AppShell> {
     super.initState();
     _controller = AppController(svc: widget.svc);
     _spreadsheetController = TextEditingController(
-      text:
-          widget.initialSelectedSpreadsheet?.spreadsheetId ??
-          widget.initialSpreadsheetText,
+      text: widget.initialSelection?.spreadsheetId ?? widget.initialText,
     );
     final appStateStore = widget.appStateStore;
     if (appStateStore != null) {
@@ -458,9 +456,9 @@ class _AppShellState extends State<AppShell> {
     _workspaceLifecycle = WorkspaceController(
       accessStateOwner: _accessStateController,
       accountSession: widget.accountSession,
-      spreadsheetPicker: widget.spreadsheetPicker,
-      initialSpreadsheetText: widget.initialSpreadsheetText,
-      initialSelectedSpreadsheet: widget.initialSelectedSpreadsheet,
+      picker: widget.picker,
+      initialText: widget.initialText,
+      initialSelection: widget.initialSelection,
     );
     unawaited(_restoreStartupState());
   }
@@ -476,7 +474,7 @@ class _AppShellState extends State<AppShell> {
   Future<void> _restoreStartupState() async {
     WorkspaceUiState workspaceState;
     try {
-      workspaceState = await _workspaceLifecycle.restoreResolvedSelection();
+      workspaceState = await _workspaceLifecycle.restoreResolved();
     } on Object {
       return;
     }
@@ -500,7 +498,7 @@ class _AppShellState extends State<AppShell> {
       );
       return;
     }
-    final savedText = workspaceState.pastedSpreadsheetText;
+    final savedText = workspaceState.pastedText;
     if (savedText != null && savedText != _spreadsheetController.text) {
       _spreadsheetController.text = savedText;
     }
@@ -1037,20 +1035,19 @@ class _AppShellState extends State<AppShell> {
               final workspaceState = _workspaceLifecycle.state;
               final isBusy =
                   _controller.isBusy || workspaceState.isCommandInFlight;
-              final spreadsheetPicker = widget.spreadsheetPicker;
+              final picker = widget.picker;
               final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
               final pickerAvailability = workspaceState.pickerAvailability;
               final hasLoadedWorkout =
                   report != null && !report.hasBlockingIssues;
               final showPickerAvailability =
-                  selectedSpreadsheet == null && spreadsheetPicker != null;
+                  selectedSpreadsheet == null && picker != null;
               final showSheetSelection =
                   _screen == _AppScreen.sheetSelection ||
                   report == null ||
                   report.hasBlockingIssues;
               final showSpreadsheetTextFallback =
-                  spreadsheetPicker == null ||
-                  workspaceState.pastedSheetFallbackAvailable;
+                  picker == null || workspaceState.fallbackAvailable;
               return ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
@@ -1060,7 +1057,7 @@ class _AppShellState extends State<AppShell> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (showSheetSelection) ...[
-                          if (spreadsheetPicker != null) ...[
+                          if (picker != null) ...[
                             _SheetPick(
                               selectedSpreadsheet: selectedSpreadsheet,
                               availability: pickerAvailability,

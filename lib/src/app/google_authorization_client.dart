@@ -16,22 +16,22 @@ abstract interface class ScopedGoogleApiAccess {
 
 class GoogleScopedApiAccess implements ScopedGoogleApiAccess {
   GoogleScopedApiAccess({
-    required this.authorizationGateway,
-    GoogleAuthorizationClientFactory? authorizationClientFactory,
-  }) : authorizationClientFactory =
-           authorizationClientFactory ??
+    required this.auth,
+    GoogleAuthorizationClientFactory? authClientFactory,
+  }) : authClientFactory =
+           authClientFactory ??
            ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
 
-  final SignInAuthGateway authorizationGateway;
-  final GoogleAuthorizationClientFactory authorizationClientFactory;
+  final SignInAuthGateway auth;
+  final GoogleAuthorizationClientFactory authClientFactory;
 
   @override
   Future<T> run<T>({
     required List<String> scopes,
     required Future<T> Function(GoogleScopedApiResources resources) action,
   }) async {
-    final headers = await authorizationGateway.authorizationHeaders(scopes);
-    final client = authorizationClientFactory(headers);
+    final headers = await auth.authorizationHeaders(scopes);
+    final client = authClientFactory(headers);
     try {
       return await action(GoogleScopedApiResources(client));
     } finally {

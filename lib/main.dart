@@ -8,17 +8,17 @@ Future<void> main() async {
   final googlePickerConfig = await loadPickerAppConfig();
   final googleSignInGateway = PickerAuthGateway();
   final googleSpreadsheetService = SpreadsheetAccess(
-    GoogleScopedApiAccess(authorizationGateway: googleSignInGateway),
+    GoogleScopedApiAccess(auth: googleSignInGateway),
   );
   runApp(
     WorkoutTrackerApp(
       svc: googleSpreadsheetService,
       accountSession: googleSignInGateway,
       appStateStore: const FileAppStateStore(),
-      spreadsheetPicker: MobileSpreadsheetPicker(
+      picker: MobileSpreadsheetPicker(
         config: googlePickerConfig,
-        authorizationGateway: googleSignInGateway,
-        callbackReceiverFactory: ({required state, required timeout}) async {
+        auth: googleSignInGateway,
+        callbackFactory: ({required state, required timeout}) async {
           return NativePickerCallbackReceiver(
             state: state,
             config: googlePickerConfig,
@@ -26,9 +26,7 @@ Future<void> main() async {
             uriLinkStream: appLinks.uriLinkStream,
           );
         },
-        spreadsheetCreator: SpreadsheetCreator(
-          authorizationGateway: googleSignInGateway,
-        ),
+        spreadsheetCreator: SpreadsheetCreator(auth: googleSignInGateway),
       ),
     ),
   );

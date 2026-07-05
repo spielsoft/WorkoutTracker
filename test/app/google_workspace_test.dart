@@ -28,9 +28,7 @@ void main() {
       final workspace = WorkspaceController(
         accessStateOwner: accessState,
         accountSession: accountSession,
-        spreadsheetPicker: const DisabledSpreadsheetPicker(
-          reason: 'Picker is unavailable.',
-        ),
+        picker: const DisabledPicker(reason: 'Picker is unavailable.'),
       );
 
       final restored = await workspace.restore();
@@ -43,13 +41,13 @@ void main() {
         restored.selectedSpreadsheet?.displayLabel,
         'My Drive / Workouts / 2026 Workouts',
       );
-      expect(restored.pastedSpreadsheetText, 'pasted-spreadsheet-id');
+      expect(restored.pastedText, 'pasted-spreadsheet-id');
       expect(restored.accountProfile?.email, 'athlete@example.com');
       expect(restored.accountProfile?.displayName, 'Athlete Name');
       expect(restored.pickerAuthorization?.accessToken, 'picker-access-token');
       expect(restored.workoutSelection?.workout, isNull);
       expect(restored.pickerAvailability.canChoose, isFalse);
-      expect(restored.pastedSheetFallbackAvailable, isFalse);
+      expect(restored.fallbackAvailable, isFalse);
       expect(workspace.state, same(restored));
     },
   );
@@ -61,17 +59,15 @@ void main() {
         accessStateOwner: _MemoryWorkspaceStateOwner(
           const WorkspaceAccessState(spreadsheetText: 'pasted-spreadsheet-id'),
         ),
-        spreadsheetPicker: const DisabledSpreadsheetPicker(
-          reason: 'Picker is unavailable.',
-        ),
+        picker: const DisabledPicker(reason: 'Picker is unavailable.'),
       );
 
       final restored = await workspace.restore();
 
       expect(restored.selectedSpreadsheet, isNull);
-      expect(restored.pastedSpreadsheetText, 'pasted-spreadsheet-id');
+      expect(restored.pastedText, 'pasted-spreadsheet-id');
       expect(restored.pickerAvailability.canChoose, isFalse);
-      expect(restored.pastedSheetFallbackAvailable, isTrue);
+      expect(restored.fallbackAvailable, isTrue);
     },
   );
 
@@ -93,10 +89,10 @@ void main() {
       final workspace = WorkspaceController(
         accessStateOwner: accessState,
         accountSession: accountSession,
-        spreadsheetPicker: picker,
+        picker: picker,
       );
 
-      await workspace.persistPastedSpreadsheetText(
+      await workspace.persistPastedText(
         ' https://docs.google.com/spreadsheets/d/pasted-id/edit ',
       );
 
@@ -170,7 +166,7 @@ void main() {
     );
 
     expect(state.selectedSpreadsheet, isNull);
-    expect(state.pastedSpreadsheetText, 'pasted-spreadsheet-id');
+    expect(state.pastedText, 'pasted-spreadsheet-id');
     expect(state.workoutSelection, isNull);
     expect(accessState.value.selectedSpreadsheet, isNull);
     expect(accessState.value.spreadsheetText, 'pasted-spreadsheet-id');
@@ -197,10 +193,10 @@ void main() {
       );
       final workspace = WorkspaceController(
         accessStateOwner: accessState,
-        spreadsheetPicker: picker,
+        picker: picker,
       );
 
-      final state = await workspace.restoreResolvedSelection();
+      final state = await workspace.restoreResolved();
 
       expect(
         state.selectedSpreadsheet?.spreadsheetId,
@@ -237,7 +233,7 @@ void main() {
       final workspace = WorkspaceController(
         accessStateOwner: accessState,
         accountSession: accountSession,
-        spreadsheetPicker: picker,
+        picker: picker,
       );
 
       final state = await workspace.chooseSpreadsheet();
@@ -268,7 +264,7 @@ void main() {
     );
     final workspace = WorkspaceController(
       accessStateOwner: accessState,
-      spreadsheetPicker: picker,
+      picker: picker,
     );
 
     final authorized = await workspace.authorizeSheetCreation();
@@ -297,7 +293,7 @@ void main() {
     );
     final chooseCompleter = Completer<SelectedSpreadsheet?>();
     picker.chooseFuture = chooseCompleter.future;
-    final workspace = WorkspaceController(spreadsheetPicker: picker);
+    final workspace = WorkspaceController(picker: picker);
 
     final first = workspace.chooseSpreadsheet();
     final second = workspace.chooseSpreadsheet();
@@ -342,7 +338,7 @@ void main() {
     final workspace = WorkspaceController(
       accessStateOwner: accessState,
       accountSession: accountSession,
-      spreadsheetPicker: _CommandSpreadsheetPicker(),
+      picker: _CommandSpreadsheetPicker(),
     );
     await workspace.restore();
 
@@ -354,7 +350,7 @@ void main() {
     expect(accessState.value.pickerAuth, isNull);
     expect(accessState.value.workoutSelection, isNull);
     expect(state.selectedSpreadsheet, isNull);
-    expect(state.pastedSpreadsheetText, isNull);
+    expect(state.pastedText, isNull);
     expect(state.accountProfile, isNull);
     expect(state.pickerAuthorization, isNull);
     expect(state.workoutSelection, isNull);
@@ -392,8 +388,8 @@ class _ResolvingSpreadsheetPicker implements SpreadsheetPicker {
   final SelectedSpreadsheet resolved;
 
   @override
-  SpreadsheetPickerAvailability get availability {
-    return const SpreadsheetPickerAvailability.available();
+  PickerAvailability get availability {
+    return const PickerAvailability.available();
   }
 
   @override
@@ -436,8 +432,8 @@ class _CommandSpreadsheetPicker implements SpreadsheetPicker {
   final createNames = <String?>[];
 
   @override
-  SpreadsheetPickerAvailability get availability {
-    return const SpreadsheetPickerAvailability.available();
+  PickerAvailability get availability {
+    return const PickerAvailability.available();
   }
 
   @override

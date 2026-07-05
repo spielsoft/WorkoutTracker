@@ -16,9 +16,7 @@ void main() {
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
     ]);
 
-    await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, spreadsheetPicker: picker),
-    );
+    await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
     await tester.pump();
 
     await tester.tap(find.text('Create sheet'));
@@ -79,8 +77,8 @@ class _RecordingSpreadsheetPicker implements SpreadsheetPicker {
   final createNames = <String?>[];
 
   @override
-  SpreadsheetPickerAvailability get availability {
-    return const SpreadsheetPickerAvailability.available();
+  PickerAvailability get availability {
+    return const PickerAvailability.available();
   }
 
   @override

@@ -27,7 +27,7 @@ void main() {
   test(
     'disabled spreadsheet picker reports both actions unavailable',
     () async {
-      const picker = DisabledSpreadsheetPicker(reason: 'Selection disabled.');
+      const picker = DisabledPicker(reason: 'Selection disabled.');
 
       expect(picker.availability.canChoose, isFalse);
       expect(picker.availability.canCreate, isFalse);
@@ -44,7 +44,7 @@ void main() {
     expect(
       MobileSpreadsheetPicker(
         config: config,
-        callbackReceiverFactory: _unusedCallbackReceiverFactory,
+        callbackFactory: _unusedCallbackReceiverFactory,
       ).availability.canChoose,
       isTrue,
     );
@@ -275,13 +275,13 @@ void main() {
       final access = _RecordingScopedGoogleApiAccess(client);
       final initializer = _RecordingWorkbookInitializer(client);
       final creator = SpreadsheetCreator(
-        authorizationGateway: _UnusedSignInAuthGateway(),
+        auth: _UnusedSignInAuthGateway(),
         googleAccess: access,
-        workbookInitializerFactory: (_) => initializer,
+        initFactory: (_) => initializer,
         titleFactory: () => 'Workout Log',
       );
 
-      final selected = await creator.createWorkoutSpreadsheet();
+      final selected = await creator.createSheet();
 
       expect(access.requestedScopes.single, [
         sheets.SheetsApi.spreadsheetsScope,

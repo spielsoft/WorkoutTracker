@@ -57,7 +57,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
     await expectFlutterAccessibilityGuidelines(tester);
 
@@ -90,7 +90,7 @@ void main() {
       WorkoutTrackerApp(
         key: const ValueKey('inventory-accessibility-app'),
         svc: inventoryService,
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -129,7 +129,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     expect(find.text('WorkoutTracker'), findsNothing);
@@ -200,7 +200,7 @@ void main() {
     final service = CompletingWriteValidationService(minimalValidParsedSheet());
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -228,7 +228,7 @@ void main() {
     final service = CompletingWriteValidationService(loggedSetParsedSheet());
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -262,7 +262,7 @@ void main() {
     final service = CompletingWriteValidationService(loggedSetParsedSheet());
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -293,7 +293,7 @@ void main() {
     final service = FailingWriteValidationService(minimalValidParsedSheet());
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -323,10 +323,7 @@ void main() {
       final service = RecoverableConfirmationFailureService();
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -393,7 +390,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     expect(find.text('Spreadsheet validation'), findsNothing);
@@ -411,7 +408,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -469,7 +466,7 @@ void main() {
         WorkoutTrackerApp(
           key: ValueKey(entry.key),
           svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -491,7 +488,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -536,7 +533,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -589,10 +586,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -638,7 +632,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -693,7 +687,7 @@ void main() {
           key: ValueKey(entry.expectedText),
           svc: service,
           spreadsheetOpener: opener,
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -750,7 +744,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -805,10 +799,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -869,7 +860,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         appStateStore: store,
-        initialSpreadsheetText: 'initial-spreadsheet-id',
+        initialText: 'initial-spreadsheet-id',
       ),
     );
     await tester.pump();
@@ -959,7 +950,7 @@ void main() {
         svc: service,
         accountSession: accountSession,
         appStateStore: store,
-        spreadsheetPicker: const DisabledSpreadsheetPicker(
+        picker: const DisabledPicker(
           reason: 'Google Drive Picker is missing an OAuth client ID.',
         ),
       ),
@@ -1022,7 +1013,7 @@ void main() {
         WorkoutTrackerApp(
           svc: service,
           appStateStore: store,
-          spreadsheetPicker: FakeSpreadsheetPicker(),
+          picker: FakeSpreadsheetPicker(),
         ),
       );
       await tester.pump();
@@ -1062,7 +1053,7 @@ void main() {
           svc: service,
           accountSession: accountSession,
           appStateStore: store,
-          spreadsheetPicker: picker,
+          picker: picker,
         ),
       );
       await tester.pump();
@@ -1103,9 +1094,7 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
 
-      await tester.pumpWidget(
-        WorkoutTrackerApp(svc: service, spreadsheetPicker: picker),
-      );
+      await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
       await tester.pump();
 
       expect(find.text('Choose workout sheet'), findsOneWidget);
@@ -1144,7 +1133,7 @@ void main() {
         WorkoutTrackerApp(
           svc: service,
           accountSession: accountSession,
-          spreadsheetPicker: picker,
+          picker: picker,
         ),
       );
       await tester.pump();
@@ -1201,7 +1190,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        spreadsheetPicker: picker,
+        picker: picker,
       ),
     );
     await tester.pump();
@@ -1246,7 +1235,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         appStateStore: store,
-        spreadsheetPicker: FakeSpreadsheetPicker(),
+        picker: FakeSpreadsheetPicker(),
       ),
     );
     await tester.pump();
@@ -1272,7 +1261,7 @@ void main() {
   testWidgets(
     'exposes pasted sheet validation when picker choosing is unavailable',
     (tester) async {
-      const picker = DisabledSpreadsheetPicker(
+      const picker = DisabledPicker(
         reason: 'Google Drive Picker is missing an OAuth client ID.',
       );
       final service = TestSpreadsheetValidationService.fromRows([
@@ -1281,9 +1270,7 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
 
-      await tester.pumpWidget(
-        WorkoutTrackerApp(svc: service, spreadsheetPicker: picker),
-      );
+      await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
       await tester.pump();
 
       expect(find.text('Choose workout sheet'), findsOneWidget);
@@ -1343,9 +1330,7 @@ void main() {
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
     ]);
 
-    await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, spreadsheetPicker: picker),
-    );
+    await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
     await tester.pump();
 
     await tester.tap(find.text('Choose workout sheet'));
@@ -1364,9 +1349,7 @@ void main() {
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
     ]);
 
-    await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, spreadsheetPicker: picker),
-    );
+    await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
     await tester.pump();
 
     await tester.tap(find.text('Create sheet'));
@@ -1408,7 +1391,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
     await tester.pump();
@@ -1456,10 +1439,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -1537,7 +1517,7 @@ void main() {
     final service = TestSpreadsheetValidationService(activeSheet);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -1595,7 +1575,7 @@ void main() {
           validation: service,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -1663,7 +1643,7 @@ void main() {
           validation: service,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -1721,7 +1701,7 @@ void main() {
           validation: service,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -1770,7 +1750,7 @@ void main() {
             validation: service,
             authoring: authoringService,
           ),
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -1854,7 +1834,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -1890,10 +1870,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -1955,7 +1932,7 @@ void main() {
     final service = TestSpreadsheetValidationService(activeSheet);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -2097,7 +2074,7 @@ void main() {
             authoring: authoringService,
           ),
           appStateStore: store,
-          spreadsheetPicker: FakeSpreadsheetPicker(),
+          picker: FakeSpreadsheetPicker(),
         ),
       );
       await tester.pump();
@@ -2200,7 +2177,7 @@ void main() {
             validation: service,
             authoring: authoringService,
           ),
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -2258,7 +2235,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -2298,7 +2275,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -2331,7 +2308,7 @@ void main() {
             validation: validationService,
             authoring: authoringService,
           ),
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -2412,7 +2389,7 @@ void main() {
           validation: validationService,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -2479,7 +2456,7 @@ void main() {
           validation: validationService,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -2535,7 +2512,7 @@ void main() {
             validation: validationService,
             authoring: authoringService,
           ),
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -2584,7 +2561,7 @@ void main() {
             validation: validationService,
             authoring: authoringService,
           ),
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -2664,7 +2641,7 @@ void main() {
           validation: validationService,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -2704,7 +2681,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -2748,7 +2725,7 @@ void main() {
           validation: validationService,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -2839,7 +2816,7 @@ void main() {
           validation: validationService,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -2894,7 +2871,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -2969,10 +2946,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3043,7 +3017,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3093,7 +3067,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3148,7 +3122,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3192,7 +3166,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3217,10 +3191,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3303,10 +3274,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3358,10 +3326,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3470,7 +3435,7 @@ void main() {
     final service = TestSpreadsheetValidationService(activeSheet);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3560,7 +3525,7 @@ void main() {
     final service = TestSpreadsheetValidationService(activeSheet);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3662,7 +3627,7 @@ void main() {
           validation: service,
           authoring: authoringService,
         ),
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -3776,7 +3741,7 @@ void main() {
     final service = TestSpreadsheetValidationService(activeSheet);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3855,7 +3820,7 @@ void main() {
     final service = TestSpreadsheetValidationService(activeSheet);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3915,10 +3880,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -3987,7 +3949,7 @@ void main() {
       await tester.pumpWidget(
         WorkoutTrackerApp(
           svc: validationService,
-          initialSpreadsheetText: 'spreadsheet-id',
+          initialText: 'spreadsheet-id',
         ),
       );
 
@@ -4037,7 +3999,7 @@ void main() {
               validation: validationService,
               authoring: authoringService,
             ),
-            initialSpreadsheetText: 'spreadsheet-id',
+            initialText: 'spreadsheet-id',
           ),
         );
 
@@ -4166,7 +4128,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialSpreadsheetText: 'spreadsheet-id'),
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
     );
 
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -4224,10 +4186,7 @@ void main() {
       ]);
 
       await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          initialSpreadsheetText: 'spreadsheet-id',
-        ),
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
@@ -4286,7 +4245,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -4320,7 +4279,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -4373,7 +4332,7 @@ void main() {
         svc: service,
         accountSession: accountSession,
         appStateStore: store,
-        spreadsheetPicker: FakeSpreadsheetPicker(),
+        picker: FakeSpreadsheetPicker(),
       ),
     );
     await tester.pump();
@@ -4413,7 +4372,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        initialSpreadsheetText: 'spreadsheet-id',
+        initialText: 'spreadsheet-id',
       ),
     );
 
@@ -4446,7 +4405,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        spreadsheetPicker: FakeSpreadsheetPicker(),
+        picker: FakeSpreadsheetPicker(),
       ),
     );
     await tester.pump();

@@ -160,3 +160,51 @@ Status: controller and shell follow-up pass.
 - `lib/src/app/shell_workout.dart`
 - `test/app/workout_tracker_controller_test.dart`
 - `test/widget_test.dart`
+
+## Slice 3
+
+Status: workspace and spreadsheet-selection follow-up pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `SpreadsheetPickerAvailability` | `PickerAvailability` |
+| `DisabledSpreadsheetPicker` | `DisabledPicker` |
+| `chooseUnavailableReason` | `chooseReason` |
+| `createUnavailableReason` | `createReason` |
+| `authorizationGateway` | `auth` |
+| `authorizationClientFactory` | `authClientFactory` |
+| `callbackReceiverFactory` | `callbackFactory` |
+| `workbookInitializerFactory` | `initFactory` |
+| `_selectedSpreadsheetForPickedId` | `_pickedSheet` |
+| `_restoreAccountProfileFromDrive` | `_restoreProfile` |
+| `createWorkoutSpreadsheet` | `createSheet` |
+| `_spreadsheetPicker` | `_picker` |
+| `spreadsheetPicker` | `picker` |
+| `_initialSelectedSpreadsheet` | `_initialSelection` |
+| `initialSelectedSpreadsheet` | `initialSelection` |
+| `_initialSpreadsheetText` | `_initialText` |
+| `initialSpreadsheetText` | `initialText` |
+| `pastedSpreadsheetText` | `pastedText` |
+| `pastedSheetFallbackAvailable` | `fallbackAvailable` |
+| `persistPastedSpreadsheetText` | `persistPastedText` |
+| `restoreResolvedSelection` | `restoreResolved` |
+| `adoptSelectedSpreadsheet` | `adoptSelection` |
+| `_currentPickerAuthorization` | `_currentAuth` |
+| `_restorePickerAuthorization` | `_restoreAuth` |
+| `_updateAccessStateBestEffort` | `_updateState` |
+
+### Files simplified in slice 3
+
+- `lib/main.dart`
+- `lib/src/app/google_workspace.dart`
+- `lib/src/app/spreadsheet_selection.dart`
+- `lib/src/app/shell.dart`
+- `test/app/create_sheet_dialog_test.dart`
+- `test/app/google_authorization_client_test.dart`
+- `test/app/google_workspace_test.dart`
+- `test/app/logging_progress_behavior_test.dart`
+- `test/app/spreadsheet_selection_test.dart`
+- `test/app/spreadsheet_validation_test.dart`
+- `test/widget_test.dart`

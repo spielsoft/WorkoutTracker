@@ -123,8 +123,8 @@ class MemoryAppStateStore implements AppStateStore {
 
 class FakeSpreadsheetPicker implements SpreadsheetPicker {
   @override
-  SpreadsheetPickerAvailability get availability {
-    return const SpreadsheetPickerAvailability.available();
+  PickerAvailability get availability {
+    return const PickerAvailability.available();
   }
 
   @override
@@ -156,8 +156,8 @@ class AuthorizingSpreadsheetPicker implements SpreadsheetPicker {
   final PickerAuthStore authorizationStore;
 
   @override
-  SpreadsheetPickerAvailability get availability {
-    return const SpreadsheetPickerAvailability.available();
+  PickerAvailability get availability {
+    return const PickerAvailability.available();
   }
 
   @override
@@ -202,8 +202,8 @@ class CompletingSpreadsheetPicker implements SpreadsheetPicker {
   final createNames = <String?>[];
 
   @override
-  SpreadsheetPickerAvailability get availability {
-    return const SpreadsheetPickerAvailability.available();
+  PickerAvailability get availability {
+    return const PickerAvailability.available();
   }
 
   @override
@@ -640,8 +640,8 @@ class CountingSpreadsheetPicker implements SpreadsheetPicker {
   Future<bool>? creationAuthorization;
 
   @override
-  SpreadsheetPickerAvailability get availability {
-    return const SpreadsheetPickerAvailability.available();
+  PickerAvailability get availability {
+    return const PickerAvailability.available();
   }
 
   @override

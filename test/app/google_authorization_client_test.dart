@@ -33,8 +33,8 @@ void main() {
       final gateway = _RecordingSignInAuthGateway();
       final authClient = _CloseTrackingAuthClient();
       final access = GoogleScopedApiAccess(
-        authorizationGateway: gateway,
-        authorizationClientFactory: (_) => authClient,
+        auth: gateway,
+        authClientFactory: (_) => authClient,
       );
 
       final result = await access.run(
