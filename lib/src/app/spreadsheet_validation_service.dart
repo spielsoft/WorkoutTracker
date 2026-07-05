@@ -279,7 +279,7 @@ class ValidationService implements WorkbookService {
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: [
-          ActiveSheetWriteRejection(
+          WriteRejection(
             'Row $primarySheetRowNumber is no longer a primary workout '
             'exercise.',
           ),
@@ -295,7 +295,7 @@ class ValidationService implements WorkbookService {
   }
 }
 
-ActiveSheetWriteRejection? _canonicalExerciseRowRejection({
+WriteRejection? _canonicalExerciseRowRejection({
   required ParsedActiveSheet currentSheet,
   required CanonicalExercise selectedExercise,
 }) {
@@ -309,7 +309,7 @@ ActiveSheetWriteRejection? _canonicalExerciseRowRejection({
 
   final exercisesSheetRowNumber = selectedExercise.sheetRowNumber;
   final label = selectedExercise.displayName;
-  return ActiveSheetWriteRejection(
+  return WriteRejection(
     'Exercises row $exercisesSheetRowNumber no longer matches $label.',
   );
 }

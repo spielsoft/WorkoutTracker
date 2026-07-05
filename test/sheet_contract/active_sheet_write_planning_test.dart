@@ -253,7 +253,7 @@ void main() {
     final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'Cell row 3 column 8 no longer matches the visible value.',
       ),
     ]);
@@ -292,7 +292,7 @@ void main() {
     final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'Cell row 3 column 8 no longer matches the visible value.',
       ),
     ]);
@@ -354,7 +354,7 @@ void main() {
     final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'History insertion point at column 12 no longer matches '
         'the visible sheet.',
       ),
@@ -512,7 +512,7 @@ void main() {
     final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'Cell row 3 column 8 no longer matches the visible value.',
       ),
     ]);
@@ -791,7 +791,7 @@ void main() {
     final changedSheet = parseActiveSheet(ActiveSheetInput(rows: changedRows));
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'Active sheet row 3 no longer matches the planned reorder.',
       ),
     ]);
@@ -962,7 +962,7 @@ void main() {
     );
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'Formula row 3 column 1 no longer matches the planned reorder.',
       ),
     ]);
@@ -1006,7 +1006,7 @@ void main() {
     );
 
     expect(plan.rowDeletions, const [
-      ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 1),
+      RowDeletion(sheetRowNumber: 3, rowCount: 1),
     ]);
     expect(plan.previewRowsAfterApplying(rows), [rows[0], rows[1], rows[3]]);
   });
@@ -1067,7 +1067,7 @@ void main() {
       );
 
       expect(plan.rowDeletions, const [
-        ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 2),
+        RowDeletion(sheetRowNumber: 3, rowCount: 2),
       ]);
       expect(plan.previewRowsAfterApplying(rows), [rows[0], rows[1], rows[4]]);
     },
@@ -1141,8 +1141,8 @@ void main() {
     );
 
     expect(plan.rowDeletions, const [
-      ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 1),
-      ActiveSheetRowDeletion(sheetRowNumber: 5, rowCount: 1),
+      RowDeletion(sheetRowNumber: 3, rowCount: 1),
+      RowDeletion(sheetRowNumber: 5, rowCount: 1),
     ]);
     expect(plan.previewRowsAfterApplying(rows), [
       rows[0],
@@ -1236,7 +1236,7 @@ void main() {
     final previewSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
 
     expect(plan.rowDeletions, const [
-      ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 3),
+      RowDeletion(sheetRowNumber: 3, rowCount: 3),
     ]);
     expect(previewRows, [rows[0], rows[1], rows[5], rows[6]]);
     expect(previewSheet.primarySlots.map((slot) => slot.exercise), [
@@ -1317,7 +1317,7 @@ void main() {
       );
 
       expect(plan.writeRejections(changedSheet), [
-        const ActiveSheetWriteRejection(
+        const WriteRejection(
           'Backup group for row 3 no longer matches the planned delete.',
         ),
       ]);
@@ -1361,7 +1361,7 @@ void main() {
         );
 
         expect(plan.writeRejections(changedSheet), [
-          const ActiveSheetWriteRejection(
+          const WriteRejection(
             'Row 3 no longer matches Squat in workout Legs.',
           ),
         ]);
@@ -1628,7 +1628,7 @@ void main() {
     );
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'Exercises row 2 no longer matches the planned reorder.',
       ),
     ]);
@@ -1704,7 +1704,7 @@ void main() {
     );
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'Formula row 3 column 1 no longer matches the planned reorder.',
       ),
     ]);

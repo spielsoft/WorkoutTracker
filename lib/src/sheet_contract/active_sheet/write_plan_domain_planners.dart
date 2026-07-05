@@ -73,14 +73,14 @@ class _WritePlanningContext {
     );
   }
 
-  List<ActiveSheetWriteExpectation> exerciseRowExpectations(WorkoutSlot? slot) {
+  List<WriteExpectation> exerciseRowExpectations(WorkoutSlot? slot) {
     if (slot == null) {
       return const [];
     }
     return [rowExpectation(slot), logFormatExpectation(slot)];
   }
 
-  List<ActiveSheetWriteExpectation> setCellExpectations({
+  List<WriteExpectation> setCellExpectations({
     required String historyBlockLabel,
     required int setNumber,
     required int sheetRowNumber,
@@ -88,13 +88,13 @@ class _WritePlanningContext {
   }) {
     return [
       ...exerciseRowExpectations(slotForRow(sheetRowNumber)),
-      ActiveSheetSetColumnExpectation(
+      SetColumnExpectation(
         historyBlockLabel: historyBlockLabel,
         setNumber: setNumber,
         sheetColumnNumber: column.sheetColumnNumber,
         setLabel: column.label,
       ),
-      ActiveSheetCellExpectation(
+      CellExpectation(
         sheetRowNumber: sheetRowNumber,
         sheetColumnNumber: column.sheetColumnNumber,
         expectedValue: _cell(
@@ -105,8 +105,8 @@ class _WritePlanningContext {
     ];
   }
 
-  ActiveSheetRowExpectation rowExpectation(WorkoutSlot slot) {
-    return ActiveSheetRowExpectation(
+  RowExpectation rowExpectation(WorkoutSlot slot) {
+    return RowExpectation(
       sheetRowNumber: slot.sheetRowNumber,
       exercise: slot.exercise,
       workout: slot.workout,
@@ -114,9 +114,9 @@ class _WritePlanningContext {
     );
   }
 
-  ActiveSheetCellExpectation logFormatExpectation(WorkoutSlot slot) {
+  CellExpectation logFormatExpectation(WorkoutSlot slot) {
     final sheetColumnNumber = activeSheetFixedColumns.indexOf('Log Format') + 1;
-    return ActiveSheetCellExpectation(
+    return CellExpectation(
       sheetRowNumber: slot.sheetRowNumber,
       sheetColumnNumber: sheetColumnNumber,
       expectedValue: _cell(
@@ -126,21 +126,17 @@ class _WritePlanningContext {
     );
   }
 
-  ActiveSheetInsertionPointExpectation insertionPointExpectation(
-    int sheetColumnNumber,
-  ) {
-    return ActiveSheetInsertionPointExpectation(
+  InsertionPointExpectation insertionPointExpectation(int sheetColumnNumber) {
+    return InsertionPointExpectation(
       sheetColumnNumber: sheetColumnNumber,
       expectedHeaderValue: _cell(sheet._sheetRow(1), sheetColumnNumber - 1),
       expectedSetLabel: _cell(sheet._sheetRow(2), sheetColumnNumber - 1),
     );
   }
 
-  ActiveSheetRowInsertionPointExpectation rowInsertionPointExpectation(
-    int sheetRowNumber,
-  ) {
+  RowInsertExpectation rowInsertionPointExpectation(int sheetRowNumber) {
     final rowIndex = sheetRowNumber - 1;
-    return ActiveSheetRowInsertionPointExpectation(
+    return RowInsertExpectation(
       sheetRowNumber: sheetRowNumber,
       expectedRowAtInsertionPoint:
           rowIndex >= 0 && rowIndex < sheet._rows.length
@@ -149,15 +145,13 @@ class _WritePlanningContext {
     );
   }
 
-  List<ActiveSheetRowDeletion> rowDeletionsForSheetRows(
-    Iterable<int> sheetRowNumbers,
-  ) {
+  List<RowDeletion> rowDeletionsForSheetRows(Iterable<int> sheetRowNumbers) {
     final sortedRows = sheetRowNumbers.toSet().toList()..sort();
     if (sortedRows.isEmpty) {
       return const [];
     }
 
-    final deletions = <ActiveSheetRowDeletion>[];
+    final deletions = <RowDeletion>[];
     var startRow = sortedRows.first;
     var previousRow = startRow;
 
@@ -167,7 +161,7 @@ class _WritePlanningContext {
         continue;
       }
       deletions.add(
-        ActiveSheetRowDeletion(
+        RowDeletion(
           sheetRowNumber: startRow,
           rowCount: previousRow - startRow + 1,
         ),
@@ -177,7 +171,7 @@ class _WritePlanningContext {
     }
 
     deletions.add(
-      ActiveSheetRowDeletion(
+      RowDeletion(
         sheetRowNumber: startRow,
         rowCount: previousRow - startRow + 1,
       ),
@@ -218,8 +212,7 @@ class _WritePlanningContext {
         sheetColumnNumber <= width;
         sheetColumnNumber += 1
       )
-        if (formulaForCell(fromRow, sheetColumnNumber)
-            case final formula?)
+        if (formulaForCell(fromRow, sheetColumnNumber) case final formula?)
           CellUpdate.formula(
             sheetRowNumber: targetSheetRowNumber,
             sheetColumnNumber: sheetColumnNumber,
@@ -261,7 +254,7 @@ class _WritePlanningContext {
     ];
   }
 
-  List<ActiveSheetFormulaExpectation> activeFormulaExpectationsForReorder(
+  List<FormulaExpectation> activeFormulaExpectationsForReorder(
     Map<int, int> oldToNewRows,
   ) {
     return [
@@ -269,7 +262,7 @@ class _WritePlanningContext {
         if (_directExercisesReference(formula.formula) case final reference?)
           if (oldToNewRows[reference.rowNumber] case final newRowNumber?)
             if (newRowNumber != reference.rowNumber)
-              ActiveSheetFormulaExpectation(
+              FormulaExpectation(
                 sheetRowNumber: formula.sheetRowNumber,
                 sheetColumnNumber: formula.sheetColumnNumber,
                 expectedFormula: formula.formula,
@@ -323,7 +316,7 @@ class _HistoryBlockWritePlanner {
         ),
       ],
       expectations: [
-        ActiveSheetSetColumnExpectation(
+        SetColumnExpectation(
           historyBlockLabel: label,
           setNumber: block.setColumns.length,
           sheetColumnNumber: block.setColumns.last.sheetColumnNumber,
@@ -678,13 +671,13 @@ class _WorkoutRowWritePlanner {
       ],
       expectations: [
         for (final rowNumber in targetRowNumbers)
-          ActiveSheetRowValuesExpectation(
+          RowValuesExpectation(
             sheetRowNumber: rowNumber,
             expectedValues: context.sheet._sheetRow(rowNumber),
           ),
         for (final formula in context.sheet._cellFormulas)
           if (targetRowNumbers.contains(formula.sheetRowNumber))
-            ActiveSheetFormulaExpectation(
+            FormulaExpectation(
               sheetRowNumber: formula.sheetRowNumber,
               sheetColumnNumber: formula.sheetColumnNumber,
               expectedFormula: formula.formula,
@@ -750,7 +743,7 @@ class _WorkoutRowWritePlanner {
       expectations: [
         context.rowExpectation(primary),
         for (final backup in primary.backups) context.rowExpectation(backup),
-        ActiveSheetBackupGroupExpectation(
+        BackupGroupExpectation(
           primarySheetRowNumber: primary.sheetRowNumber,
           expectedBackups: [
             for (final backup in primary.backups)
@@ -771,7 +764,7 @@ class _WorkoutRowWritePlanner {
   }) {
     return ActiveSheetWritePlan(
       rowInsertions: [
-        ActiveSheetRowInsertion(
+        RowInsertion(
           sheetRowNumber: sheetRowNumber,
           cellCount: context.activeSheetRowWidth,
         ),

@@ -382,9 +382,7 @@ void main() {
       await adapter.applyActiveSheetWritePlan(
         spreadsheetId: 'spreadsheet-id',
         plan: ActiveSheetWritePlan(
-          rowDeletions: const [
-            ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 2),
-          ],
+          rowDeletions: const [RowDeletion(sheetRowNumber: 3, rowCount: 2)],
         ),
       );
 

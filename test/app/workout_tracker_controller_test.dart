@@ -277,7 +277,7 @@ void main() {
 
       expect(deleted, isTrue);
       expect(service.appliedPlans.single.rowDeletions, const [
-        ActiveSheetRowDeletion(sheetRowNumber: 3, rowCount: 2),
+        RowDeletion(sheetRowNumber: 3, rowCount: 2),
       ]);
       expect(setup?.selectedWorkout, 'Legs');
       expect(setup?.selectedHistoryBlock, 'Week 1');

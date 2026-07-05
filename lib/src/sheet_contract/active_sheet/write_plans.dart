@@ -3,31 +3,27 @@ part of '../active_sheet.dart';
 class ActiveSheetWritePlan {
   ActiveSheetWritePlan({
     Iterable<HistoryColumnInsertion> columnInsertions = const [],
-    Iterable<ActiveSheetRowInsertion> rowInsertions = const [],
-    Iterable<ActiveSheetRowDeletion> rowDeletions = const [],
+    Iterable<RowInsertion> rowInsertions = const [],
+    Iterable<RowDeletion> rowDeletions = const [],
     Iterable<CellUpdate> cellUpdates = const [],
-    Iterable<ActiveSheetWriteExpectation> expectations = const [],
+    Iterable<WriteExpectation> expectations = const [],
     this.nextSetPosition,
   }) : columnInsertions = List<HistoryColumnInsertion>.unmodifiable(
          columnInsertions,
        ),
-       rowInsertions = List<ActiveSheetRowInsertion>.unmodifiable(
-         rowInsertions,
-       ),
-       rowDeletions = List<ActiveSheetRowDeletion>.unmodifiable(rowDeletions),
+       rowInsertions = List<RowInsertion>.unmodifiable(rowInsertions),
+       rowDeletions = List<RowDeletion>.unmodifiable(rowDeletions),
        cellUpdates = List<CellUpdate>.unmodifiable(cellUpdates),
-       expectations = List<ActiveSheetWriteExpectation>.unmodifiable(
-         expectations,
-       );
+       expectations = List<WriteExpectation>.unmodifiable(expectations);
 
   final List<HistoryColumnInsertion> columnInsertions;
-  final List<ActiveSheetRowInsertion> rowInsertions;
-  final List<ActiveSheetRowDeletion> rowDeletions;
+  final List<RowInsertion> rowInsertions;
+  final List<RowDeletion> rowDeletions;
   final List<CellUpdate> cellUpdates;
-  final List<ActiveSheetWriteExpectation> expectations;
+  final List<WriteExpectation> expectations;
   final SetPosition? nextSetPosition;
 
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     return [
       for (final expectation in expectations)
         ...expectation.writeRejections(sheet),
@@ -154,21 +150,21 @@ class ActiveSheetWritePlan {
   }
 }
 
-abstract class ActiveSheetWriteExpectation {
-  const ActiveSheetWriteExpectation();
+abstract class WriteExpectation {
+  const WriteExpectation();
 
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet);
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet);
 }
 
-class ActiveSheetWriteRejection {
-  const ActiveSheetWriteRejection(this.message);
+class WriteRejection {
+  const WriteRejection(this.message);
 
   final String message;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetWriteRejection && message == other.message;
+        other is WriteRejection && message == other.message;
   }
 
   @override
@@ -176,11 +172,11 @@ class ActiveSheetWriteRejection {
 
   @override
   String toString() {
-    return 'ActiveSheetWriteRejection(message: $message)';
+    return 'WriteRejection(message: $message)';
   }
 }
 
-class ExercisesRowExpectation extends ActiveSheetWriteExpectation {
+class ExercisesRowExpectation extends WriteExpectation {
   ExercisesRowExpectation({
     required this.sheetRowNumber,
     required Iterable<String> expectedValues,
@@ -190,7 +186,7 @@ class ExercisesRowExpectation extends ActiveSheetWriteExpectation {
   final List<String> expectedValues;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final rowIndex = sheetRowNumber - 1;
     if (rowIndex >= 0 &&
         rowIndex < sheet._exercisesRows.length &&
@@ -198,7 +194,7 @@ class ExercisesRowExpectation extends ActiveSheetWriteExpectation {
       return const [];
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'Exercises row $sheetRowNumber no longer matches the planned reorder.',
       ),
     ];
@@ -225,8 +221,8 @@ class ExercisesRowExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
-  const ActiveSheetRowExpectation({
+class RowExpectation extends WriteExpectation {
+  const RowExpectation({
     required this.sheetRowNumber,
     required this.exercise,
     required this.workout,
@@ -239,7 +235,7 @@ class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
   final bool isBackup;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final slot = _slotForRow(sheet, sheetRowNumber);
     if (slot != null &&
         slot.exercise == exercise &&
@@ -248,7 +244,7 @@ class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
       return const [];
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'Row $sheetRowNumber no longer matches $exercise '
         'in workout $workout.',
       ),
@@ -258,7 +254,7 @@ class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetRowExpectation &&
+        other is RowExpectation &&
             sheetRowNumber == other.sheetRowNumber &&
             exercise == other.exercise &&
             workout == other.workout &&
@@ -272,7 +268,7 @@ class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'ActiveSheetRowExpectation('
+    return 'RowExpectation('
         'sheetRowNumber: $sheetRowNumber, '
         'exercise: $exercise, '
         'workout: $workout, '
@@ -281,8 +277,8 @@ class ActiveSheetRowExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
-  ActiveSheetRowValuesExpectation({
+class RowValuesExpectation extends WriteExpectation {
+  RowValuesExpectation({
     required this.sheetRowNumber,
     required Iterable<String> expectedValues,
   }) : expectedValues = List<String>.unmodifiable(expectedValues);
@@ -291,7 +287,7 @@ class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
   final List<String> expectedValues;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final rowIndex = sheetRowNumber - 1;
     if (rowIndex >= 0 &&
         rowIndex < sheet._rows.length &&
@@ -299,7 +295,7 @@ class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
       return const [];
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'Active sheet row $sheetRowNumber no longer matches the planned '
         'reorder.',
       ),
@@ -309,7 +305,7 @@ class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetRowValuesExpectation &&
+        other is RowValuesExpectation &&
             sheetRowNumber == other.sheetRowNumber &&
             _listEquals(expectedValues, other.expectedValues);
   }
@@ -321,26 +317,24 @@ class ActiveSheetRowValuesExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'ActiveSheetRowValuesExpectation('
+    return 'RowValuesExpectation('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedValues: $expectedValues'
         ')';
   }
 }
 
-class ActiveSheetBackupGroupExpectation extends ActiveSheetWriteExpectation {
-  ActiveSheetBackupGroupExpectation({
+class BackupGroupExpectation extends WriteExpectation {
+  BackupGroupExpectation({
     required this.primarySheetRowNumber,
-    required Iterable<ActiveSheetRowExpectation> expectedBackups,
-  }) : expectedBackups = List<ActiveSheetRowExpectation>.unmodifiable(
-         expectedBackups,
-       );
+    required Iterable<RowExpectation> expectedBackups,
+  }) : expectedBackups = List<RowExpectation>.unmodifiable(expectedBackups);
 
   final int primarySheetRowNumber;
-  final List<ActiveSheetRowExpectation> expectedBackups;
+  final List<RowExpectation> expectedBackups;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     WorkoutSlot? primary;
     for (final slot in sheet.primarySlots) {
       if (slot.sheetRowNumber == primarySheetRowNumber) {
@@ -351,7 +345,7 @@ class ActiveSheetBackupGroupExpectation extends ActiveSheetWriteExpectation {
     final actualBackups = [
       if (primary != null)
         for (final backup in primary.backups)
-          ActiveSheetRowExpectation(
+          RowExpectation(
             sheetRowNumber: backup.sheetRowNumber,
             exercise: backup.exercise,
             workout: backup.workout,
@@ -362,7 +356,7 @@ class ActiveSheetBackupGroupExpectation extends ActiveSheetWriteExpectation {
       return const [];
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'Backup group for row $primarySheetRowNumber no longer matches '
         'the planned delete.',
       ),
@@ -372,7 +366,7 @@ class ActiveSheetBackupGroupExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetBackupGroupExpectation &&
+        other is BackupGroupExpectation &&
             primarySheetRowNumber == other.primarySheetRowNumber &&
             _listEquals(expectedBackups, other.expectedBackups);
   }
@@ -384,14 +378,14 @@ class ActiveSheetBackupGroupExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'ActiveSheetBackupGroupExpectation('
+    return 'BackupGroupExpectation('
         'primarySheetRowNumber: $primarySheetRowNumber, '
         'expectedBackups: $expectedBackups'
         ')';
   }
 }
 
-class RepairRowExpectation extends ActiveSheetWriteExpectation {
+class RepairRowExpectation extends WriteExpectation {
   RepairRowExpectation({
     required this.sheetRowNumber,
     required Iterable<String> expectedValues,
@@ -401,7 +395,7 @@ class RepairRowExpectation extends ActiveSheetWriteExpectation {
   final List<String> expectedValues;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final rowIndex = sheetRowNumber - 1;
     if (rowIndex >= 0 &&
         rowIndex < sheet._rows.length &&
@@ -409,7 +403,7 @@ class RepairRowExpectation extends ActiveSheetWriteExpectation {
       return const [];
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'The active sheet changed after validation. Revalidate before '
         'repairing formulas for row $sheetRowNumber.',
       ),
@@ -438,8 +432,8 @@ class RepairRowExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
-  const ActiveSheetCellExpectation({
+class CellExpectation extends WriteExpectation {
+  const CellExpectation({
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.expectedValue,
@@ -450,7 +444,7 @@ class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
   final String expectedValue;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final actualValue = _cell(
       sheet._sheetRow(sheetRowNumber),
       sheetColumnNumber - 1,
@@ -459,7 +453,7 @@ class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
       return const [];
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'Cell row $sheetRowNumber column $sheetColumnNumber no longer matches '
         'the visible value.',
       ),
@@ -469,7 +463,7 @@ class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetCellExpectation &&
+        other is CellExpectation &&
             sheetRowNumber == other.sheetRowNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
             expectedValue == other.expectedValue;
@@ -482,7 +476,7 @@ class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'ActiveSheetCellExpectation('
+    return 'CellExpectation('
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedValue: $expectedValue'
@@ -490,8 +484,8 @@ class ActiveSheetCellExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class ActiveSheetFormulaExpectation extends ActiveSheetWriteExpectation {
-  const ActiveSheetFormulaExpectation({
+class FormulaExpectation extends WriteExpectation {
+  const FormulaExpectation({
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.expectedFormula,
@@ -502,7 +496,7 @@ class ActiveSheetFormulaExpectation extends ActiveSheetWriteExpectation {
   final String expectedFormula;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     for (final formula in sheet._cellFormulas) {
       if (formula.sheetRowNumber == sheetRowNumber &&
           formula.sheetColumnNumber == sheetColumnNumber &&
@@ -511,7 +505,7 @@ class ActiveSheetFormulaExpectation extends ActiveSheetWriteExpectation {
       }
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'Formula row $sheetRowNumber column $sheetColumnNumber no longer '
         'matches the planned reorder.',
       ),
@@ -521,7 +515,7 @@ class ActiveSheetFormulaExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetFormulaExpectation &&
+        other is FormulaExpectation &&
             sheetRowNumber == other.sheetRowNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
             expectedFormula == other.expectedFormula;
@@ -534,7 +528,7 @@ class ActiveSheetFormulaExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'ActiveSheetFormulaExpectation('
+    return 'FormulaExpectation('
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedFormula: $expectedFormula'
@@ -542,8 +536,8 @@ class ActiveSheetFormulaExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class ActiveSheetSetColumnExpectation extends ActiveSheetWriteExpectation {
-  const ActiveSheetSetColumnExpectation({
+class SetColumnExpectation extends WriteExpectation {
+  const SetColumnExpectation({
     required this.historyBlockLabel,
     required this.setNumber,
     required this.sheetColumnNumber,
@@ -556,7 +550,7 @@ class ActiveSheetSetColumnExpectation extends ActiveSheetWriteExpectation {
   final String setLabel;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final block = sheet.selectHistoryBlock(historyBlockLabel);
     final column =
         block == null || setNumber < 1 || setNumber > block.setColumns.length
@@ -568,7 +562,7 @@ class ActiveSheetSetColumnExpectation extends ActiveSheetWriteExpectation {
       return const [];
     }
     return [
-      ActiveSheetWriteRejection(
+      WriteRejection(
         'Set column $historyBlockLabel S$setNumber no longer exists at '
         'column $sheetColumnNumber.',
       ),
@@ -578,7 +572,7 @@ class ActiveSheetSetColumnExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetSetColumnExpectation &&
+        other is SetColumnExpectation &&
             historyBlockLabel == other.historyBlockLabel &&
             setNumber == other.setNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
@@ -597,7 +591,7 @@ class ActiveSheetSetColumnExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'ActiveSheetSetColumnExpectation('
+    return 'SetColumnExpectation('
         'historyBlockLabel: $historyBlockLabel, '
         'setNumber: $setNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
@@ -606,8 +600,8 @@ class ActiveSheetSetColumnExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class ActiveSheetInsertionPointExpectation extends ActiveSheetWriteExpectation {
-  const ActiveSheetInsertionPointExpectation({
+class InsertionPointExpectation extends WriteExpectation {
+  const InsertionPointExpectation({
     required this.sheetColumnNumber,
     required this.expectedHeaderValue,
     required this.expectedSetLabel,
@@ -618,7 +612,7 @@ class ActiveSheetInsertionPointExpectation extends ActiveSheetWriteExpectation {
   final String expectedSetLabel;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final header = sheet._sheetRow(1);
     final setHeader = sheet._sheetRow(2);
     for (var index = 0; index < activeSheetFixedColumns.length; index += 1) {
@@ -633,8 +627,8 @@ class ActiveSheetInsertionPointExpectation extends ActiveSheetWriteExpectation {
     return [_rejection()];
   }
 
-  ActiveSheetWriteRejection _rejection() {
-    return ActiveSheetWriteRejection(
+  WriteRejection _rejection() {
+    return WriteRejection(
       'History insertion point at column $sheetColumnNumber no longer matches '
       'the visible sheet.',
     );
@@ -643,7 +637,7 @@ class ActiveSheetInsertionPointExpectation extends ActiveSheetWriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetInsertionPointExpectation &&
+        other is InsertionPointExpectation &&
             sheetColumnNumber == other.sheetColumnNumber &&
             expectedHeaderValue == other.expectedHeaderValue &&
             expectedSetLabel == other.expectedSetLabel;
@@ -660,7 +654,7 @@ class ActiveSheetInsertionPointExpectation extends ActiveSheetWriteExpectation {
 
   @override
   String toString() {
-    return 'ActiveSheetInsertionPointExpectation('
+    return 'InsertionPointExpectation('
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedHeaderValue: $expectedHeaderValue, '
         'expectedSetLabel: $expectedSetLabel'
@@ -668,9 +662,8 @@ class ActiveSheetInsertionPointExpectation extends ActiveSheetWriteExpectation {
   }
 }
 
-class ActiveSheetRowInsertionPointExpectation
-    extends ActiveSheetWriteExpectation {
-  ActiveSheetRowInsertionPointExpectation({
+class RowInsertExpectation extends WriteExpectation {
+  RowInsertExpectation({
     required this.sheetRowNumber,
     Iterable<String>? expectedRowAtInsertionPoint,
   }) : expectedRowAtInsertionPoint = expectedRowAtInsertionPoint == null
@@ -681,7 +674,7 @@ class ActiveSheetRowInsertionPointExpectation
   final List<String>? expectedRowAtInsertionPoint;
 
   @override
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final rowIndex = sheetRowNumber - 1;
     final expectedRow = expectedRowAtInsertionPoint;
     if (expectedRow == null) {
@@ -698,8 +691,8 @@ class ActiveSheetRowInsertionPointExpectation
     return [_rejection()];
   }
 
-  ActiveSheetWriteRejection _rejection() {
-    return ActiveSheetWriteRejection(
+  WriteRejection _rejection() {
+    return WriteRejection(
       'Row insertion point at row $sheetRowNumber no longer matches '
       'the visible sheet.',
     );
@@ -708,7 +701,7 @@ class ActiveSheetRowInsertionPointExpectation
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetRowInsertionPointExpectation &&
+        other is RowInsertExpectation &&
             sheetRowNumber == other.sheetRowNumber &&
             _nullableListEquals(
               expectedRowAtInsertionPoint,
@@ -728,7 +721,7 @@ class ActiveSheetRowInsertionPointExpectation
 
   @override
   String toString() {
-    return 'ActiveSheetRowInsertionPointExpectation('
+    return 'RowInsertExpectation('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedRowAtInsertionPoint: $expectedRowAtInsertionPoint'
         ')';
@@ -896,22 +889,20 @@ class ExercisesWritePlan {
     Iterable<ExercisesRowAppend> rowAppends = const [],
     Iterable<ExercisesRowUpdate> rowUpdates = const [],
     Iterable<CellUpdate> activeSheetFormulaUpdates = const [],
-    Iterable<ActiveSheetWriteExpectation> expectations = const [],
+    Iterable<WriteExpectation> expectations = const [],
   }) : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends),
        rowUpdates = List<ExercisesRowUpdate>.unmodifiable(rowUpdates),
        activeSheetFormulaUpdates = List<CellUpdate>.unmodifiable(
          activeSheetFormulaUpdates,
        ),
-       expectations = List<ActiveSheetWriteExpectation>.unmodifiable(
-         expectations,
-       );
+       expectations = List<WriteExpectation>.unmodifiable(expectations);
 
   final List<ExercisesRowAppend> rowAppends;
   final List<ExercisesRowUpdate> rowUpdates;
   final List<CellUpdate> activeSheetFormulaUpdates;
-  final List<ActiveSheetWriteExpectation> expectations;
+  final List<WriteExpectation> expectations;
 
-  List<ActiveSheetWriteRejection> writeRejections(ParsedActiveSheet sheet) {
+  List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     return [
       for (final expectation in expectations)
         ...expectation.writeRejections(sheet),
@@ -1030,8 +1021,8 @@ class ExercisesRowUpdate {
   }
 }
 
-class ActiveSheetRowInsertion {
-  const ActiveSheetRowInsertion({
+class RowInsertion {
+  const RowInsertion({
     required this.sheetRowNumber,
     this.rowCount = 1,
     this.cellCount = 0,
@@ -1044,7 +1035,7 @@ class ActiveSheetRowInsertion {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetRowInsertion &&
+        other is RowInsertion &&
             sheetRowNumber == other.sheetRowNumber &&
             rowCount == other.rowCount &&
             cellCount == other.cellCount;
@@ -1055,7 +1046,7 @@ class ActiveSheetRowInsertion {
 
   @override
   String toString() {
-    return 'ActiveSheetRowInsertion('
+    return 'RowInsertion('
         'sheetRowNumber: $sheetRowNumber, '
         'rowCount: $rowCount, '
         'cellCount: $cellCount'
@@ -1063,11 +1054,8 @@ class ActiveSheetRowInsertion {
   }
 }
 
-class ActiveSheetRowDeletion {
-  const ActiveSheetRowDeletion({
-    required this.sheetRowNumber,
-    this.rowCount = 1,
-  });
+class RowDeletion {
+  const RowDeletion({required this.sheetRowNumber, this.rowCount = 1});
 
   final int sheetRowNumber;
   final int rowCount;
@@ -1075,7 +1063,7 @@ class ActiveSheetRowDeletion {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ActiveSheetRowDeletion &&
+        other is RowDeletion &&
             sheetRowNumber == other.sheetRowNumber &&
             rowCount == other.rowCount;
   }
@@ -1085,7 +1073,7 @@ class ActiveSheetRowDeletion {
 
   @override
   String toString() {
-    return 'ActiveSheetRowDeletion('
+    return 'RowDeletion('
         'sheetRowNumber: $sheetRowNumber, '
         'rowCount: $rowCount'
         ')';
@@ -1187,8 +1175,8 @@ class HistoryColumnInsertion {
   }
 }
 
-class _ActiveSheetWritePlanner {
-  _ActiveSheetWritePlanner(ParsedActiveSheet sheet)
+class _WritePlanner {
+  _WritePlanner(ParsedActiveSheet sheet)
     : _context = _WritePlanningContext(sheet);
 
   final _WritePlanningContext _context;

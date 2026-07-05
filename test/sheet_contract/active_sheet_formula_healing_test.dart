@@ -410,7 +410,7 @@ void main() {
     );
 
     expect(plan.writeRejections(changedSheet), [
-      const ActiveSheetWriteRejection(
+      const WriteRejection(
         'The active sheet changed after validation. Revalidate before '
         'repairing formulas for row 3.',
       ),

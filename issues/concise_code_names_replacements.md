@@ -479,3 +479,40 @@ Status: formula-healing vocabulary pass.
 - `test/app/workout_tracker_controller_test.dart`
 - `test/fixtures/workout_sheet_fixtures_test.dart`
 - `test/sheet_contract/active_sheet_formula_healing_test.dart`
+
+## Slice 12
+
+Status: active-sheet write expectation pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `ActiveSheetWriteExpectation` | `WriteExpectation` |
+| `ActiveSheetWriteRejection` | `WriteRejection` |
+| `ActiveSheetRowExpectation` | `RowExpectation` |
+| `ActiveSheetRowValuesExpectation` | `RowValuesExpectation` |
+| `ActiveSheetBackupGroupExpectation` | `BackupGroupExpectation` |
+| `ActiveSheetCellExpectation` | `CellExpectation` |
+| `ActiveSheetFormulaExpectation` | `FormulaExpectation` |
+| `ActiveSheetSetColumnExpectation` | `SetColumnExpectation` |
+| `ActiveSheetInsertionPointExpectation` | `InsertionPointExpectation` |
+| `ActiveSheetRowInsertionPointExpectation` | `RowInsertExpectation` |
+| `ActiveSheetRowInsertion` | `RowInsertion` |
+| `ActiveSheetRowDeletion` | `RowDeletion` |
+| `_ActiveSheetWritePlanner` | `_WritePlanner` |
+
+### Files simplified in slice 12
+
+- `lib/src/app/spreadsheet_validation_core.dart`
+- `lib/src/app/spreadsheet_validation_service.dart`
+- `lib/src/google_sheets/write_adapter.dart`
+- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
+- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
+- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
+- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `test/app/workout_tracker_controller_test.dart`
+- `test/google_sheets/google_sheets_write_adapter_test.dart`
+- `test/sheet_contract/active_sheet_formula_healing_test.dart`
+- `test/sheet_contract/active_sheet_write_planning_test.dart`
+- `test/support/widget_test_support.dart`

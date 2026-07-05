@@ -112,14 +112,12 @@ class ValidationReport {
   ValidationReport({
     required this.spreadsheetId,
     required this.activeSheet,
-    Iterable<ActiveSheetWriteRejection> writeRejections = const [],
-  }) : writeRejections = List<ActiveSheetWriteRejection>.unmodifiable(
-         writeRejections,
-       );
+    Iterable<WriteRejection> writeRejections = const [],
+  }) : writeRejections = List<WriteRejection>.unmodifiable(writeRejections);
 
   final String spreadsheetId;
   final ParsedActiveSheet activeSheet;
-  final List<ActiveSheetWriteRejection> writeRejections;
+  final List<WriteRejection> writeRejections;
 
   String get spreadsheetUrl {
     return spreadsheetUrlForId(spreadsheetId);

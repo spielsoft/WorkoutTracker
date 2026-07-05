@@ -92,7 +92,7 @@ class ParsedActiveSheet {
 
   /// Plans a new visible history block inserted nearest the fixed metadata.
   ActiveSheetWritePlan planNewHistoryBlock({required String label}) {
-    return _ActiveSheetWritePlanner(this).planNewHistoryBlock(label: label);
+    return _WritePlanner(this).planNewHistoryBlock(label: label);
   }
 
   /// Plans set-column growth for an existing visible history block.
@@ -100,7 +100,7 @@ class ParsedActiveSheet {
     required String label,
     required int throughSetNumber,
   }) {
-    return _ActiveSheetWritePlanner(
+    return _WritePlanner(
       this,
     ).planHistoryBlockGrowth(label: label, throughSetNumber: throughSetNumber);
   }
@@ -116,7 +116,7 @@ class ParsedActiveSheet {
     required int sheetRowNumber,
     required Map<String, String> fieldValues,
   }) {
-    return _ActiveSheetWritePlanner(this).planSetLoggingWrite(
+    return _WritePlanner(this).planSetLoggingWrite(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       fieldValues: fieldValues,
@@ -130,7 +130,7 @@ class ParsedActiveSheet {
     required int setNumber,
     required Map<String, String> fieldValues,
   }) {
-    return _ActiveSheetWritePlanner(this).planSetEdit(
+    return _WritePlanner(this).planSetEdit(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
@@ -145,7 +145,7 @@ class ParsedActiveSheet {
     required int setNumber,
     required String rawText,
   }) {
-    return _ActiveSheetWritePlanner(this).planRawSetEdit(
+    return _WritePlanner(this).planRawSetEdit(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
@@ -159,7 +159,7 @@ class ParsedActiveSheet {
     required int sheetRowNumber,
     required int setNumber,
   }) {
-    return _ActiveSheetWritePlanner(this).planSetClear(
+    return _WritePlanner(this).planSetClear(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
@@ -167,28 +167,28 @@ class ParsedActiveSheet {
   }
 
   ExercisesWritePlan planCanonicalAppend(CanonicalExerciseDefinition exercise) {
-    return _ActiveSheetWritePlanner(this).planCanonicalAppend(exercise);
+    return _WritePlanner(this).planCanonicalAppend(exercise);
   }
 
   ExercisesWritePlan planCanonicalUpdate({
     required CanonicalExercise selectedExercise,
     required CanonicalExerciseDefinition exercise,
   }) {
-    return _ActiveSheetWritePlanner(this).planCanonicalUpdate(
+    return _WritePlanner(this).planCanonicalUpdate(
       selectedExercise: selectedExercise,
       exercise: exercise,
     );
   }
 
   ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
-    return _ActiveSheetWritePlanner(this).planCanonicalReorder(intent);
+    return _WritePlanner(this).planCanonicalReorder(intent);
   }
 
   ActiveSheetWritePlan planExerciseReorder({
     required String workout,
     required ReorderIntent intent,
   }) {
-    return _ActiveSheetWritePlanner(
+    return _WritePlanner(
       this,
     ).planExerciseReorder(workout: workout, intent: intent);
   }
@@ -198,7 +198,7 @@ class ParsedActiveSheet {
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    return _ActiveSheetWritePlanner(this).planPrimaryPlacement(
+    return _WritePlanner(this).planPrimaryPlacement(
       exercise: exercise,
       workout: workout,
       metadata: metadata,
@@ -210,7 +210,7 @@ class ParsedActiveSheet {
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    return _ActiveSheetWritePlanner(this).planBackupPlacement(
+    return _WritePlanner(this).planBackupPlacement(
       primarySheetRowNumber: primarySheetRowNumber,
       exercise: exercise,
       metadata: metadata,
@@ -220,7 +220,7 @@ class ParsedActiveSheet {
   ActiveSheetWritePlan planPrimaryExerciseDeletion({
     required int primarySheetRowNumber,
   }) {
-    return _ActiveSheetWritePlanner(
+    return _WritePlanner(
       this,
     ).planPrimaryExerciseDeletion(primarySheetRowNumber: primarySheetRowNumber);
   }

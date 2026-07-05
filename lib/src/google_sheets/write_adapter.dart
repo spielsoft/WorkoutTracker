@@ -179,17 +179,13 @@ class SheetsWriteAdapter {
   }
 }
 
-List<ActiveSheetRowInsertion> _sortedRowInsertions(
-  List<ActiveSheetRowInsertion> rowInsertions,
-) {
+List<RowInsertion> _sortedRowInsertions(List<RowInsertion> rowInsertions) {
   return [...rowInsertions]..sort(
     (first, second) => second.sheetRowNumber.compareTo(first.sheetRowNumber),
   );
 }
 
-List<ActiveSheetRowDeletion> _sortedRowDeletions(
-  List<ActiveSheetRowDeletion> rowDeletions,
-) {
+List<RowDeletion> _sortedRowDeletions(List<RowDeletion> rowDeletions) {
   return [...rowDeletions]..sort(
     (first, second) => second.sheetRowNumber.compareTo(first.sheetRowNumber),
   );

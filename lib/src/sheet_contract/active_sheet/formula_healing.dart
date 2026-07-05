@@ -201,7 +201,7 @@ class _HealingPlanner {
 
   ActiveSheetWritePlan planUnambiguousFormulaHealing() {
     final updates = <CellUpdate>[];
-    final expectations = <ActiveSheetWriteExpectation>[];
+    final expectations = <WriteExpectation>[];
     for (final issue in sheet.formulaHealingIssues) {
       if (issue.needsChoice) {
         continue;

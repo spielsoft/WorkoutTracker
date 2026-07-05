@@ -611,7 +611,7 @@ class DeletingWorkoutExerciseAuthoringService
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
         writeRejections: [
-          ActiveSheetWriteRejection(
+          WriteRejection(
             'Row $primarySheetRowNumber no longer matches Pull Up.',
           ),
         ],
