@@ -68,7 +68,7 @@ class CanonicalExerciseDraft {
     );
   }
 
-  CanonicalExerciseDefinition toCanonicalExerciseDefinition() {
+  CanonicalExerciseDefinition toDefinition() {
     final draft = normalized();
     return CanonicalExerciseDefinition(
       exercise: draft.exerciseName,
@@ -132,7 +132,7 @@ class ExerciseAuthoringScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = _exerciseAuthoringTitle(authoringContext);
+    final title = _authoringTitle(authoringContext);
     return Scaffold(
       appBar: AppBar(
         leading: onCancel == null
@@ -182,33 +182,33 @@ class ExerciseAuthoringForm extends StatefulWidget {
   final bool isBusy;
 
   @override
-  State<ExerciseAuthoringForm> createState() => _ExerciseAuthoringFormState();
+  State<ExerciseAuthoringForm> createState() => _AuthoringFormState();
 }
 
-class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
+class _AuthoringFormState extends State<ExerciseAuthoringForm> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _exerciseNameController;
-  late final TextEditingController _descriptionController;
-  late final TextEditingController _defaultSetsController;
-  late final TextEditingController _defaultRepsController;
-  late final TextEditingController _defaultRPEController;
-  late final TextEditingController _defaultRestController;
-  late final TextEditingController _defaultTempoController;
-  late final TextEditingController _notesController;
-  late final TextEditingController _logFormatController;
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _descCtrl;
+  late final TextEditingController _setsCtrl;
+  late final TextEditingController _repsCtrl;
+  late final TextEditingController _rpeCtrl;
+  late final TextEditingController _restCtrl;
+  late final TextEditingController _tempoCtrl;
+  late final TextEditingController _notesCtrl;
+  late final TextEditingController _formatCtrl;
 
   @override
   void initState() {
     super.initState();
-    _exerciseNameController = TextEditingController();
-    _descriptionController = TextEditingController();
-    _defaultSetsController = TextEditingController();
-    _defaultRepsController = TextEditingController();
-    _defaultRPEController = TextEditingController();
-    _defaultRestController = TextEditingController();
-    _defaultTempoController = TextEditingController();
-    _notesController = TextEditingController();
-    _logFormatController = TextEditingController();
+    _nameCtrl = TextEditingController();
+    _descCtrl = TextEditingController();
+    _setsCtrl = TextEditingController();
+    _repsCtrl = TextEditingController();
+    _rpeCtrl = TextEditingController();
+    _restCtrl = TextEditingController();
+    _tempoCtrl = TextEditingController();
+    _notesCtrl = TextEditingController();
+    _formatCtrl = TextEditingController();
     _loadDraft(widget.initialDraft);
   }
 
@@ -222,56 +222,56 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
 
   @override
   void dispose() {
-    _exerciseNameController.dispose();
-    _descriptionController.dispose();
-    _defaultSetsController.dispose();
-    _defaultRepsController.dispose();
-    _defaultRPEController.dispose();
-    _defaultRestController.dispose();
-    _defaultTempoController.dispose();
-    _notesController.dispose();
-    _logFormatController.dispose();
+    _nameCtrl.dispose();
+    _descCtrl.dispose();
+    _setsCtrl.dispose();
+    _repsCtrl.dispose();
+    _rpeCtrl.dispose();
+    _restCtrl.dispose();
+    _tempoCtrl.dispose();
+    _notesCtrl.dispose();
+    _formatCtrl.dispose();
     super.dispose();
   }
 
   void _loadDraft(CanonicalExerciseDraft draft) {
-    _exerciseNameController.text = draft.exerciseName;
-    _descriptionController.text = draft.description;
-    _defaultSetsController.text = draft.defaultSets;
-    _defaultRepsController.text = draft.defaultReps;
-    _defaultRPEController.text = draft.defaultRPE;
-    _defaultRestController.text = draft.defaultRest;
-    _defaultTempoController.text = draft.defaultTempo;
-    _notesController.text = draft.notes;
-    _logFormatController.text = draft.logFormat;
+    _nameCtrl.text = draft.exerciseName;
+    _descCtrl.text = draft.description;
+    _setsCtrl.text = draft.defaultSets;
+    _repsCtrl.text = draft.defaultReps;
+    _rpeCtrl.text = draft.defaultRPE;
+    _restCtrl.text = draft.defaultRest;
+    _tempoCtrl.text = draft.defaultTempo;
+    _notesCtrl.text = draft.notes;
+    _formatCtrl.text = draft.logFormat;
   }
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
-    widget.onSubmit(_draftFromControllers().normalized());
+    widget.onSubmit(_draft().normalized());
   }
 
-  CanonicalExerciseDraft _draftFromControllers() {
+  CanonicalExerciseDraft _draft() {
     return CanonicalExerciseDraft(
-      exerciseName: _exerciseNameController.text,
-      description: _descriptionController.text,
-      defaultSets: _defaultSetsController.text,
-      defaultReps: _defaultRepsController.text,
-      defaultRPE: _defaultRPEController.text,
-      defaultRest: _defaultRestController.text,
-      defaultTempo: _defaultTempoController.text,
-      notes: _notesController.text,
-      logFormat: _logFormatController.text,
+      exerciseName: _nameCtrl.text,
+      description: _descCtrl.text,
+      defaultSets: _setsCtrl.text,
+      defaultReps: _repsCtrl.text,
+      defaultRPE: _rpeCtrl.text,
+      defaultRest: _restCtrl.text,
+      defaultTempo: _tempoCtrl.text,
+      notes: _notesCtrl.text,
+      logFormat: _formatCtrl.text,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final title = _exerciseAuthoringTitle(widget.authoringContext);
-    final submitLabel = _exerciseAuthoringSubmitLabel(widget.authoringContext);
+    final title = _authoringTitle(widget.authoringContext);
+    final submitText = _submitLabelText(widget.authoringContext);
 
     return Form(
       key: _formKey,
@@ -281,7 +281,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
           Row(
             children: [
               Icon(
-                _exerciseAuthoringIcon(widget.authoringContext),
+                _authoringIcon(widget.authoringContext),
                 color: colorScheme.primary,
               ),
               const SizedBox(width: 8),
@@ -297,10 +297,10 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
           _A11yTextField(
             identifier: 'exercise-authoring-name',
             label: 'Exercise name',
-            valueListenable: _exerciseNameController,
+            valueListenable: _nameCtrl,
             child: TextFormField(
               key: const ValueKey('exercise-authoring-name'),
-              controller: _exerciseNameController,
+              controller: _nameCtrl,
               enabled: !widget.isBusy,
               decoration: const InputDecoration(
                 labelText: 'Exercise name',
@@ -320,10 +320,10 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
           _A11yTextField(
             identifier: 'exercise-authoring-description',
             label: 'Description',
-            valueListenable: _descriptionController,
+            valueListenable: _descCtrl,
             child: TextFormField(
               key: const ValueKey('exercise-authoring-description'),
-              controller: _descriptionController,
+              controller: _descCtrl,
               enabled: !widget.isBusy,
               decoration: const InputDecoration(
                 labelText: 'Description',
@@ -346,9 +346,9 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                 children: [
                   SizedBox(
                     width: fieldWidth,
-                    child: _ExerciseAuthoringTextField(
+                    child: _AuthoringField(
                       key: const ValueKey('exercise-authoring-default-sets'),
-                      controller: _defaultSetsController,
+                      controller: _setsCtrl,
                       enabled: !widget.isBusy,
                       semanticsIdentifier: 'exercise-authoring-default-sets',
                       labelText: 'Default sets',
@@ -359,9 +359,9 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _ExerciseAuthoringTextField(
+                    child: _AuthoringField(
                       key: const ValueKey('exercise-authoring-default-reps'),
-                      controller: _defaultRepsController,
+                      controller: _repsCtrl,
                       enabled: !widget.isBusy,
                       semanticsIdentifier: 'exercise-authoring-default-reps',
                       labelText: 'Default reps',
@@ -371,9 +371,9 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _ExerciseAuthoringTextField(
+                    child: _AuthoringField(
                       key: const ValueKey('exercise-authoring-default-rpe'),
-                      controller: _defaultRPEController,
+                      controller: _rpeCtrl,
                       enabled: !widget.isBusy,
                       semanticsIdentifier: 'exercise-authoring-default-rpe',
                       labelText: 'Default RPE',
@@ -384,9 +384,9 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _ExerciseAuthoringTextField(
+                    child: _AuthoringField(
                       key: const ValueKey('exercise-authoring-default-rest'),
-                      controller: _defaultRestController,
+                      controller: _restCtrl,
                       enabled: !widget.isBusy,
                       semanticsIdentifier: 'exercise-authoring-default-rest',
                       labelText: 'Default rest',
@@ -396,9 +396,9 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _ExerciseAuthoringTextField(
+                    child: _AuthoringField(
                       key: const ValueKey('exercise-authoring-default-tempo'),
-                      controller: _defaultTempoController,
+                      controller: _tempoCtrl,
                       enabled: !widget.isBusy,
                       semanticsIdentifier: 'exercise-authoring-default-tempo',
                       labelText: 'Default tempo',
@@ -408,9 +408,9 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _ExerciseAuthoringTextField(
+                    child: _AuthoringField(
                       key: const ValueKey('exercise-authoring-log-format'),
-                      controller: _logFormatController,
+                      controller: _formatCtrl,
                       enabled: !widget.isBusy,
                       semanticsIdentifier: 'exercise-authoring-log-format',
                       labelText: 'Log format',
@@ -426,10 +426,10 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
           _A11yTextField(
             identifier: 'exercise-authoring-notes',
             label: 'Notes',
-            valueListenable: _notesController,
+            valueListenable: _notesCtrl,
             child: TextFormField(
               key: const ValueKey('exercise-authoring-notes'),
-              controller: _notesController,
+              controller: _notesCtrl,
               enabled: !widget.isBusy,
               decoration: const InputDecoration(
                 labelText: 'Notes',
@@ -462,7 +462,7 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check_circle_outline),
-                label: Text(submitLabel),
+                label: Text(submitText),
               ),
             ],
           ),
@@ -472,8 +472,8 @@ class _ExerciseAuthoringFormState extends State<ExerciseAuthoringForm> {
   }
 }
 
-class _ExerciseAuthoringTextField extends StatefulWidget {
-  const _ExerciseAuthoringTextField({
+class _AuthoringField extends StatefulWidget {
+  const _AuthoringField({
     super.key,
     required this.controller,
     required this.enabled,
@@ -493,12 +493,10 @@ class _ExerciseAuthoringTextField extends StatefulWidget {
   final TextInputType? keyboardType;
 
   @override
-  State<_ExerciseAuthoringTextField> createState() =>
-      _ExerciseAuthoringTextFieldState();
+  State<_AuthoringField> createState() => _AuthoringFieldState();
 }
 
-class _ExerciseAuthoringTextFieldState
-    extends State<_ExerciseAuthoringTextField> {
+class _AuthoringFieldState extends State<_AuthoringField> {
   late final FocusNode _focusNode;
 
   @override
@@ -553,21 +551,21 @@ class _ExerciseAuthoringTextFieldState
   }
 }
 
-String _exerciseAuthoringTitle(ExerciseAuthoringContext context) {
+String _authoringTitle(ExerciseAuthoringContext context) {
   return switch (context) {
     ExerciseAuthoringContext.canonicalExercise => 'New exercise',
     ExerciseAuthoringContext.workoutPlacement => 'Add exercise to workout',
   };
 }
 
-String _exerciseAuthoringSubmitLabel(ExerciseAuthoringContext context) {
+String _submitLabelText(ExerciseAuthoringContext context) {
   return switch (context) {
     ExerciseAuthoringContext.canonicalExercise => 'Save exercise',
     ExerciseAuthoringContext.workoutPlacement => 'Continue',
   };
 }
 
-IconData _exerciseAuthoringIcon(ExerciseAuthoringContext context) {
+IconData _authoringIcon(ExerciseAuthoringContext context) {
   return switch (context) {
     ExerciseAuthoringContext.canonicalExercise => Icons.fitness_center_outlined,
     ExerciseAuthoringContext.workoutPlacement => Icons.playlist_add_outlined,

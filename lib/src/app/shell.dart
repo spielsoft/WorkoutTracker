@@ -882,7 +882,7 @@ class _AppShellState extends State<AppShell> {
     CanonicalExerciseDraft draft,
   ) async {
     final created = await _controller.createCanonicalExercise(
-      exercise: draft.toCanonicalExerciseDefinition(),
+      exercise: draft.toDefinition(),
     );
     if (!mounted || !created) {
       return;
@@ -906,7 +906,7 @@ class _AppShellState extends State<AppShell> {
     }
     final updated = await _controller.updateCanonicalExercise(
       selectedExercise: selectedExercise,
-      exercise: draft.toCanonicalExerciseDefinition(),
+      exercise: draft.toDefinition(),
     );
     if (!mounted || !updated) {
       return;

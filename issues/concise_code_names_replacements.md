@@ -312,3 +312,34 @@ Status: validation-panel and exercise-manager pass.
 - `lib/src/app/shell_exercise_manager.dart`
 - `lib/src/app/shell_validation.dart`
 - `lib/src/app/shell_workout.dart`
+
+## Slice 7
+
+Status: exercise-authoring form pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `toCanonicalExerciseDefinition` | `toDefinition` |
+| `_ExerciseAuthoringFormState` | `_AuthoringFormState` |
+| `_ExerciseAuthoringTextField` | `_AuthoringField` |
+| `_ExerciseAuthoringTextFieldState` | `_AuthoringFieldState` |
+| `_exerciseAuthoringTitle` | `_authoringTitle` |
+| `_exerciseAuthoringSubmitLabel` | `_submitLabelText` |
+| `_exerciseAuthoringIcon` | `_authoringIcon` |
+| `_draftFromControllers` | `_draft` |
+| `_exerciseNameController` | `_nameCtrl` |
+| `_descriptionController` | `_descCtrl` |
+| `_defaultSetsController` | `_setsCtrl` |
+| `_defaultRepsController` | `_repsCtrl` |
+| `_defaultRPEController` | `_rpeCtrl` |
+| `_defaultRestController` | `_restCtrl` |
+| `_defaultTempoController` | `_tempoCtrl` |
+| `_notesController` | `_notesCtrl` |
+| `_logFormatController` | `_formatCtrl` |
+
+### Files simplified in slice 7
+
+- `lib/src/app/shell.dart`
+- `lib/src/app/shell_exercise_authoring.dart`
