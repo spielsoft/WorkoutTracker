@@ -23,7 +23,7 @@ void main() {
           ],
         ),
       );
-      final adapter = GoogleSheetsReadAdapter(client: client);
+      final adapter = SheetsReadAdapter(client: client);
 
       await adapter.readActiveSheetInput('spreadsheet-id');
 
@@ -43,7 +43,7 @@ void main() {
   test(
     'reads the first tab and Exercises tab into the sheet-contract parser',
     () async {
-      final adapter = GoogleSheetsReadAdapter(
+      final adapter = SheetsReadAdapter(
         client: _FakeSheetsWorkbookClient(
           SheetsWorkbookSnapshot(
             sheets: [

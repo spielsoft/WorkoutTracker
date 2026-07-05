@@ -149,14 +149,14 @@ class SheetsRowDeletion extends SheetsWorkbookOperation {
 class SheetsRowMove extends SheetsWorkbookOperation {
   const SheetsRowMove({
     required super.sheet,
-    required this.sourceSheetRowNumber,
+    required this.fromRow,
     required this.rowCount,
-    required this.destinationSheetRowNumber,
+    required this.toRow,
   });
 
-  final int sourceSheetRowNumber;
+  final int fromRow;
   final int rowCount;
-  final int destinationSheetRowNumber;
+  final int toRow;
 }
 
 class SheetsColumnInsertion extends SheetsWorkbookOperation {
@@ -184,18 +184,18 @@ class SheetsColumnDeletion extends SheetsWorkbookOperation {
 class SheetsColumnMove extends SheetsWorkbookOperation {
   const SheetsColumnMove({
     required super.sheet,
-    required this.sourceSheetColumnNumber,
+    required this.fromColumn,
     required this.columnCount,
-    required this.destinationSheetColumnNumber,
+    required this.toColumn,
   });
 
-  final int sourceSheetColumnNumber;
+  final int fromColumn;
   final int columnCount;
-  final int destinationSheetColumnNumber;
+  final int toColumn;
 }
 
-class GoogleApisSheetsWorkbookClient implements SheetsWorkbookClient {
-  GoogleApisSheetsWorkbookClient(this._api);
+class GoogleApisWorkbookClient implements SheetsWorkbookClient {
+  GoogleApisWorkbookClient(this._api);
 
   final sheets.SheetsApi _api;
 
@@ -232,7 +232,7 @@ class GoogleApisSheetsWorkbookClient implements SheetsWorkbookClient {
     );
 
     return SheetsWorkbookSnapshot(
-      sheets: _sortedApiSheets(spreadsheet).map(_gridSnapshotFromApiSheet),
+      sheets: _sortedApiSheets(spreadsheet).map(_sheetSnapshot),
     );
   }
 
@@ -276,9 +276,9 @@ sheets.Request _requestForOperation(SheetsWorkbookOperation operation) {
     SheetsRowMove() => _moveDimensionRequest(
       sheet: operation.sheet,
       dimension: 'ROWS',
-      startNumber: operation.sourceSheetRowNumber,
+      startNumber: operation.fromRow,
       count: operation.rowCount,
-      destinationNumber: operation.destinationSheetRowNumber,
+      destinationNumber: operation.toRow,
     ),
     SheetsColumnInsertion() => _insertDimensionRequest(
       sheet: operation.sheet,
@@ -296,9 +296,9 @@ sheets.Request _requestForOperation(SheetsWorkbookOperation operation) {
     SheetsColumnMove() => _moveDimensionRequest(
       sheet: operation.sheet,
       dimension: 'COLUMNS',
-      startNumber: operation.sourceSheetColumnNumber,
+      startNumber: operation.fromColumn,
       count: operation.columnCount,
-      destinationNumber: operation.destinationSheetColumnNumber,
+      destinationNumber: operation.toColumn,
     ),
   };
 }
@@ -456,7 +456,7 @@ List<sheets.Sheet> _sortedApiSheets(sheets.Spreadsheet spreadsheet) {
   });
 }
 
-SheetsGridSnapshot _gridSnapshotFromApiSheet(sheets.Sheet apiSheet) {
+SheetsGridSnapshot _sheetSnapshot(sheets.Sheet apiSheet) {
   final sheet = SheetsSheetIdentity(
     sheetId: apiSheet.properties?.sheetId ?? 0,
     title: apiSheet.properties?.title ?? '',

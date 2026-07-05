@@ -9,7 +9,7 @@ class WorkbookTabPlan {
     required WorkbookTab tab,
     required int frozenRowCount,
   }) : operations = List<SheetsWorkbookOperation>.unmodifiable(
-         _operationsForWorkbookInitialization(
+         _initOps(
            SheetsSheetIdentity(sheetId: sheetId, title: tab.title),
            tab.rows,
          ),
@@ -25,7 +25,7 @@ class WorkbookTabPlan {
              properties: sheets.SheetProperties(
                sheetId: sheetId,
                gridProperties: sheets.GridProperties(
-                 rowCount: usableWorkbookRowCount(tab),
+                 rowCount: usableRowCount(tab),
                  columnCount: tab.columnCount,
                  frozenRowCount: frozenRowCount,
                ),
@@ -38,7 +38,7 @@ class WorkbookTabPlan {
              range: sheets.GridRange(
                sheetId: sheetId,
                startRowIndex: 0,
-               endRowIndex: usableWorkbookRowCount(tab),
+               endRowIndex: usableRowCount(tab),
                startColumnIndex: 0,
                endColumnIndex: tab.columnCount,
              ),
@@ -71,12 +71,12 @@ class WorkbookTabPlan {
   final List<SheetsWorkbookOperation> operations;
 }
 
-int usableWorkbookRowCount(WorkbookTab tab) {
+int usableRowCount(WorkbookTab tab) {
   final minimumRows = tab.title == 'Exercises' ? 25 : 50;
   return tab.rows.length > minimumRows ? tab.rows.length : minimumRows;
 }
 
-List<SheetsWorkbookOperation> _operationsForWorkbookInitialization(
+List<SheetsWorkbookOperation> _initOps(
   SheetsSheetIdentity sheet,
   List<List<String>> rows,
 ) {
@@ -93,14 +93,12 @@ List<SheetsWorkbookOperation> _operationsForWorkbookInitialization(
             sheetRowNumber: rowIndex + 1,
             sheetColumnNumber: columnIndex + 1,
             value: rows[rowIndex][columnIndex],
-            mode: _valueInputModeForWorkbookInitialization(
-              rows[rowIndex][columnIndex],
-            ),
+            mode: _initMode(rows[rowIndex][columnIndex]),
           ),
   ];
 }
 
-SheetsValueInputMode _valueInputModeForWorkbookInitialization(String value) {
+SheetsValueInputMode _initMode(String value) {
   if (value.startsWith('=')) {
     return SheetsValueInputMode.userEntered;
   }

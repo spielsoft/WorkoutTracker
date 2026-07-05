@@ -408,7 +408,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
         googleAccess ??
         GoogleScopedApiAccess(auth: auth, authClientFactory: authClientFactory);
     return access.run(
-      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
+      scopes: GoogleApisWorkbookClient.writeScopes,
       action: (resources) async {
         await _restoreProfile(auth: auth, driveApi: resources.driveApi);
         final spreadsheet = await resources.sheetsApi.spreadsheets.get(

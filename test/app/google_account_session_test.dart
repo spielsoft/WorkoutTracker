@@ -9,9 +9,7 @@ void main() {
       final gateway = PickerAuthGateway();
 
       await expectLater(
-        gateway.authorizationHeaders(
-          GoogleApisSheetsWorkbookClient.writeScopes,
-        ),
+        gateway.authorizationHeaders(GoogleApisWorkbookClient.writeScopes),
         throwsA(isA<StateError>()),
       );
 
@@ -29,7 +27,7 @@ void main() {
       expect(gateway.currentAccount?.photoUrl, 'https://example.com/user.png');
       expect(
         await gateway.authorizationHeaders(
-          GoogleApisSheetsWorkbookClient.writeScopes,
+          GoogleApisWorkbookClient.writeScopes,
         ),
         {'Authorization': 'Bearer picker-access-token'},
       );

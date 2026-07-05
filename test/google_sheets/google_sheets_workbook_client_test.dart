@@ -11,9 +11,7 @@ void main() {
     'converts one-based row and column deletes into Google dimension requests',
     () async {
       final httpClient = _RecordingHttpClient();
-      final workbook = GoogleApisSheetsWorkbookClient(
-        sheets.SheetsApi(httpClient),
-      );
+      final workbook = GoogleApisWorkbookClient(sheets.SheetsApi(httpClient));
       const activeSheet = SheetsSheetIdentity(sheetId: 42, title: 'Workout');
 
       await workbook.applyOperations(
@@ -61,25 +59,18 @@ void main() {
     'converts one-based row and column moves into Google dimension requests',
     () async {
       final httpClient = _RecordingHttpClient();
-      final workbook = GoogleApisSheetsWorkbookClient(
-        sheets.SheetsApi(httpClient),
-      );
+      final workbook = GoogleApisWorkbookClient(sheets.SheetsApi(httpClient));
       const activeSheet = SheetsSheetIdentity(sheetId: 42, title: 'Workout');
 
       await workbook.applyOperations(
         spreadsheetId: 'spreadsheet-id',
         operations: const [
-          SheetsRowMove(
-            sheet: activeSheet,
-            sourceSheetRowNumber: 5,
-            rowCount: 2,
-            destinationSheetRowNumber: 10,
-          ),
+          SheetsRowMove(sheet: activeSheet, fromRow: 5, rowCount: 2, toRow: 10),
           SheetsColumnMove(
             sheet: activeSheet,
-            sourceSheetColumnNumber: 3,
+            fromColumn: 3,
             columnCount: 4,
-            destinationSheetColumnNumber: 12,
+            toColumn: 12,
           ),
         ],
       );
@@ -116,9 +107,7 @@ void main() {
 
   test('does not call Google for empty operation batches', () async {
     final httpClient = _RecordingHttpClient();
-    final workbook = GoogleApisSheetsWorkbookClient(
-      sheets.SheetsApi(httpClient),
-    );
+    final workbook = GoogleApisWorkbookClient(sheets.SheetsApi(httpClient));
 
     await workbook.applyOperations(
       spreadsheetId: 'spreadsheet-id',

@@ -14,8 +14,7 @@ class SpreadsheetAccess implements WorkbookCommandService {
     this._googleAccess, {
     GoogleSheetsWorkbookClientFactory? workbookClientFactory,
   }) : _workbookClientFactory =
-           workbookClientFactory ??
-           ((api) => GoogleApisSheetsWorkbookClient(api));
+           workbookClientFactory ?? ((api) => GoogleApisWorkbookClient(api));
 
   final ScopedGoogleApiAccess _googleAccess;
   final GoogleSheetsWorkbookClientFactory _workbookClientFactory;
@@ -145,12 +144,12 @@ class SpreadsheetAccess implements WorkbookCommandService {
     action,
   ) {
     return _googleAccess.run(
-      scopes: GoogleApisSheetsWorkbookClient.writeScopes,
+      scopes: GoogleApisWorkbookClient.writeScopes,
       action: (resources) {
         final workbookClient = _workbookClientFactory(resources.sheetsApi);
         final service = SpreadsheetValidationService(
-          readAdapter: GoogleSheetsReadAdapter(client: workbookClient),
-          writeAdapter: GoogleSheetsWriteAdapter(client: workbookClient),
+          readAdapter: SheetsReadAdapter(client: workbookClient),
+          writeAdapter: SheetsWriteAdapter(client: workbookClient),
         );
         return action(service);
       },

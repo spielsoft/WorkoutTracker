@@ -9,8 +9,8 @@ class SpreadsheetValidationService implements WorkbookCommandService {
     this.writeAdapter,
   });
 
-  final GoogleSheetsReadAdapter readAdapter;
-  final GoogleSheetsWriteAdapter? writeAdapter;
+  final SheetsReadAdapter readAdapter;
+  final SheetsWriteAdapter? writeAdapter;
 
   @override
   Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
@@ -68,7 +68,7 @@ class SpreadsheetValidationService implements WorkbookCommandService {
       throw StateError('No exercise row was planned.');
     }
 
-    await writeAdapter.applyExercisesWritePlan(
+    await writeAdapter.applyExercisesPlan(
       spreadsheetId: spreadsheetId,
       plan: exercisesPlan,
     );
@@ -110,7 +110,7 @@ class SpreadsheetValidationService implements WorkbookCommandService {
       throw StateError('No exercise row update was planned.');
     }
 
-    await writeAdapter.applyExercisesWritePlan(
+    await writeAdapter.applyExercisesPlan(
       spreadsheetId: spreadsheetId,
       plan: exercisesPlan,
     );
@@ -202,7 +202,7 @@ class SpreadsheetValidationService implements WorkbookCommandService {
       );
     }
 
-    await writeAdapter.applyExercisesWritePlan(
+    await writeAdapter.applyExercisesPlan(
       spreadsheetId: spreadsheetId,
       plan: exercisesPlan,
     );

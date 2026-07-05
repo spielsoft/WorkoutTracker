@@ -228,7 +228,7 @@ class WorkspaceController extends ChangeNotifier implements WorkspaceLifecycle {
         return true;
       }
       await accountSession.switchAccount(
-        scopes: GoogleApisSheetsWorkbookClient.writeScopes,
+        scopes: GoogleApisWorkbookClient.writeScopes,
       );
       return accountSession.currentAccount != null;
     } finally {

@@ -200,9 +200,9 @@ class _WritePlanningContext {
 
   List<CellUpdate> rowReorderCellUpdates({
     required int targetSheetRowNumber,
-    required int sourceSheetRowNumber,
+    required int fromRow,
   }) {
-    final sourceRow = sheet._sheetRow(sourceSheetRowNumber);
+    final sourceRow = sheet._sheetRow(fromRow);
     final targetRow = sheet._sheetRow(targetSheetRowNumber);
     var width = activeSheetRowWidth;
     if (width < sourceRow.length) {
@@ -218,7 +218,7 @@ class _WritePlanningContext {
         sheetColumnNumber <= width;
         sheetColumnNumber += 1
       )
-        if (formulaForCell(sourceSheetRowNumber, sheetColumnNumber)
+        if (formulaForCell(fromRow, sheetColumnNumber)
             case final formula?)
           CellUpdate.formula(
             sheetRowNumber: targetSheetRowNumber,
@@ -673,7 +673,7 @@ class _WorkoutRowWritePlanner {
           if (targetRowNumbers[index] != sourceRowNumbers[index])
             ...context.rowReorderCellUpdates(
               targetSheetRowNumber: targetRowNumbers[index],
-              sourceSheetRowNumber: sourceRowNumbers[index],
+              fromRow: sourceRowNumbers[index],
             ),
       ],
       expectations: [

@@ -208,3 +208,51 @@ Status: workspace and spreadsheet-selection follow-up pass.
 - `test/app/spreadsheet_selection_test.dart`
 - `test/app/spreadsheet_validation_test.dart`
 - `test/widget_test.dart`
+
+## Slice 4
+
+Status: google-sheets infrastructure and default-name pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `GoogleSheetsReadAdapter` | `SheetsReadAdapter` |
+| `GoogleSheetsWriteAdapter` | `SheetsWriteAdapter` |
+| `GoogleApisSheetsWorkbookClient` | `GoogleApisWorkbookClient` |
+| `workoutTrackerDefaultLogFormat` | `defaultLogFormat` |
+| `usableWorkbookRowCount` | `usableRowCount` |
+| `_operationsForWorkbookInitialization` | `_initOps` |
+| `_valueInputModeForWorkbookInitialization` | `_initMode` |
+| `_ensureInitializationTargets` | `_ensureTargets` |
+| `_InitializationTargets` | `_InitTargets` |
+| `_gridSnapshotFromApiSheet` | `_sheetSnapshot` |
+| `sourceSheetRowNumber` | `fromRow` |
+| `destinationSheetRowNumber` | `toRow` |
+| `sourceSheetColumnNumber` | `fromColumn` |
+| `destinationSheetColumnNumber` | `toColumn` |
+| `applyExercisesWritePlan` | `applyExercisesPlan` |
+| `_headerWritesForInsertion` | `_headerWrites` |
+| `_exerciseRowUpdateWrites` | `_rowUpdateWrites` |
+| `_exerciseRowAppendWrites` | `_rowAppendWrites` |
+
+### Files simplified in slice 4
+
+- `lib/src/app/google_workspace.dart`
+- `lib/src/app/spreadsheet_selection.dart`
+- `lib/src/app/spreadsheet_validation_service.dart`
+- `lib/src/app/spreadsheet_validation_wiring.dart`
+- `lib/src/google_sheets/read_adapter.dart`
+- `lib/src/google_sheets/workbook_client.dart`
+- `lib/src/google_sheets/workbook_init.dart`
+- `lib/src/google_sheets/workbook_init_plan.dart`
+- `lib/src/google_sheets/write_adapter.dart`
+- `lib/src/log_format/log_format.dart`
+- `lib/src/sheet_contract/active_sheet/input.dart`
+- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
+- `lib/src/workout_tracker_defaults.dart`
+- `test/app/google_account_session_test.dart`
+- `test/app/spreadsheet_validation_test.dart`
+- `test/google_sheets/google_sheets_read_adapter_test.dart`
+- `test/google_sheets/google_sheets_workbook_client_test.dart`
+- `test/google_sheets/google_sheets_write_adapter_test.dart`

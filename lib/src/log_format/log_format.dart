@@ -4,7 +4,7 @@ sealed class LogFormatParseResult {
   const LogFormatParseResult();
 }
 
-const defaultLogFormatText = workoutTrackerDefaultLogFormat;
+const defaultLogFormatText = defaultLogFormat;
 
 class ParsedLogFormat extends LogFormatParseResult {
   const ParsedLogFormat(this.segments);

@@ -103,8 +103,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -174,8 +174,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -219,8 +219,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -276,8 +276,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -334,8 +334,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -379,8 +379,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -420,8 +420,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -506,8 +506,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -604,8 +604,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -784,8 +784,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -895,8 +895,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -954,8 +954,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -1003,8 +1003,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');
@@ -1064,8 +1064,8 @@ void main() {
       ]);
       final writeClient = _RecordingWriteClient();
       final service = SpreadsheetValidationService(
-        readAdapter: GoogleSheetsReadAdapter(client: readClient),
-        writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
+        readAdapter: SheetsReadAdapter(client: readClient),
+        writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
       final report = await service.validateSpreadsheet('spreadsheet-id');

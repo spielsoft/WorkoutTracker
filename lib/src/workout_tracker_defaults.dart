@@ -1,1 +1,1 @@
-const workoutTrackerDefaultLogFormat = '{Weight}[x]{Reps}[@]{RPE}';
+const defaultLogFormat = '{Weight}[x]{Reps}[@]{RPE}';

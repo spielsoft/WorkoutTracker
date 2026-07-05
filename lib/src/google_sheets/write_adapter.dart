@@ -2,8 +2,8 @@ import 'package:workout_tracker/sheet_contract.dart';
 
 import 'workbook_client.dart';
 
-class GoogleSheetsWriteAdapter {
-  GoogleSheetsWriteAdapter({required this.client});
+class SheetsWriteAdapter {
+  SheetsWriteAdapter({required this.client});
 
   final SheetsWorkbookClient client;
 
@@ -39,7 +39,7 @@ class GoogleSheetsWriteAdapter {
           columnCount: insertion.setLabels.length,
         ),
       for (final insertion in plan.columnInsertions)
-        ..._headerWritesForInsertion(activeSheet, insertion),
+        ..._headerWrites(activeSheet, insertion),
       for (final update in plan.cellUpdates)
         if (update.value.isNotEmpty)
           SheetsCellWrite(
@@ -65,7 +65,7 @@ class GoogleSheetsWriteAdapter {
     );
   }
 
-  Future<void> applyExercisesWritePlan({
+  Future<void> applyExercisesPlan({
     required String spreadsheetId,
     required ExercisesWritePlan plan,
   }) async {
@@ -84,8 +84,8 @@ class GoogleSheetsWriteAdapter {
           sheetRowNumber: append.sheetRowNumber,
           rowCount: 1,
         ),
-      ..._exerciseRowUpdateWrites(exercisesSheet, plan.rowUpdates),
-      ..._exerciseRowAppendWrites(exercisesSheet, plan.rowAppends),
+      ..._rowUpdateWrites(exercisesSheet, plan.rowUpdates),
+      ..._rowAppendWrites(exercisesSheet, plan.rowAppends),
     ];
 
     if (plan.activeSheetFormulaUpdates.isNotEmpty) {
@@ -113,7 +113,7 @@ class GoogleSheetsWriteAdapter {
     return _requiredActiveSheet(metadata);
   }
 
-  Iterable<SheetsCellWrite> _headerWritesForInsertion(
+  Iterable<SheetsCellWrite> _headerWrites(
     SheetsSheetIdentity sheet,
     HistoryColumnInsertion insertion,
   ) sync* {
@@ -137,7 +137,7 @@ class GoogleSheetsWriteAdapter {
     }
   }
 
-  Iterable<SheetsCellWrite> _exerciseRowUpdateWrites(
+  Iterable<SheetsCellWrite> _rowUpdateWrites(
     SheetsSheetIdentity sheet,
     Iterable<ExercisesRowUpdate> rows,
   ) sync* {
@@ -154,7 +154,7 @@ class GoogleSheetsWriteAdapter {
     }
   }
 
-  Iterable<SheetsCellWrite> _exerciseRowAppendWrites(
+  Iterable<SheetsCellWrite> _rowAppendWrites(
     SheetsSheetIdentity sheet,
     Iterable<ExercisesRowAppend> rows,
   ) sync* {

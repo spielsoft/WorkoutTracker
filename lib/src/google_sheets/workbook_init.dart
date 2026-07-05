@@ -13,7 +13,7 @@ abstract interface class WorkbookInit {
 
 class GoogleApisWorkbookInit implements WorkbookInit {
   GoogleApisWorkbookInit(this._api, {SheetsWorkbookClient? workbookClient})
-    : _workbookClient = workbookClient ?? GoogleApisSheetsWorkbookClient(_api);
+    : _workbookClient = workbookClient ?? GoogleApisWorkbookClient(_api);
 
   final sheets.SheetsApi _api;
   final SheetsWorkbookClient _workbookClient;
@@ -25,7 +25,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
     required String spreadsheetId,
     required Workbook workbook,
   }) async {
-    final targets = await _ensureInitializationTargets(spreadsheetId, workbook);
+    final targets = await _ensureTargets(spreadsheetId, workbook);
     await _rewriteSheet(
       spreadsheetId: spreadsheetId,
       target: targets.exercisesSheet,
@@ -40,7 +40,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
     );
   }
 
-  Future<_InitializationTargets> _ensureInitializationTargets(
+  Future<_InitTargets> _ensureTargets(
     String spreadsheetId,
     Workbook workbook,
   ) async {
@@ -77,7 +77,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
             properties: sheets.SheetProperties(
               title: workbook.exercisesSheet.title,
               gridProperties: sheets.GridProperties(
-                rowCount: usableWorkbookRowCount(workbook.exercisesSheet),
+                rowCount: usableRowCount(workbook.exercisesSheet),
                 columnCount: workbook.exercisesSheet.columnCount,
                 frozenRowCount: 1,
               ),
@@ -102,7 +102,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
       throw StateError('Exercises sheet could not be created.');
     }
 
-    return _InitializationTargets(
+    return _InitTargets(
       activeSheet: activeSheet,
       exercisesSheet: exercisesSheet,
     );
@@ -149,11 +149,8 @@ class GoogleApisWorkbookInit implements WorkbookInit {
   }
 }
 
-class _InitializationTargets {
-  const _InitializationTargets({
-    required this.activeSheet,
-    required this.exercisesSheet,
-  });
+class _InitTargets {
+  const _InitTargets({required this.activeSheet, required this.exercisesSheet});
 
   final _SheetShape activeSheet;
   final _SheetShape exercisesSheet;

@@ -2,8 +2,8 @@ import 'package:workout_tracker/sheet_contract.dart';
 
 import 'workbook_client.dart';
 
-class GoogleSheetsReadAdapter {
-  GoogleSheetsReadAdapter({required this.client});
+class SheetsReadAdapter {
+  SheetsReadAdapter({required this.client});
 
   final SheetsWorkbookClient client;
 

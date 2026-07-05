@@ -9,7 +9,7 @@ void main() {
       final client = _FakeSheetsWorkbookClient(
         const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
       );
-      final adapter = GoogleSheetsWriteAdapter(client: client);
+      final adapter = SheetsWriteAdapter(client: client);
 
       await adapter.applyActiveSheetWritePlan(
         spreadsheetId: 'spreadsheet-id',
@@ -94,7 +94,7 @@ void main() {
       final client = _FakeSheetsWorkbookClient(
         const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
       );
-      final adapter = GoogleSheetsWriteAdapter(client: client);
+      final adapter = SheetsWriteAdapter(client: client);
       final activeSheet = parseActiveSheet(
         ActiveSheetInput(
           rows: const [
@@ -301,7 +301,7 @@ void main() {
       final client = _FakeSheetsWorkbookClient(
         const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
       )..failStructuralBatch = true;
-      final adapter = GoogleSheetsWriteAdapter(client: client);
+      final adapter = SheetsWriteAdapter(client: client);
 
       await expectLater(
         adapter.applyActiveSheetWritePlan(
@@ -377,7 +377,7 @@ void main() {
       final client = _FakeSheetsWorkbookClient(
         const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
       );
-      final adapter = GoogleSheetsWriteAdapter(client: client);
+      final adapter = SheetsWriteAdapter(client: client);
 
       await adapter.applyActiveSheetWritePlan(
         spreadsheetId: 'spreadsheet-id',
@@ -417,9 +417,9 @@ void main() {
       final client = _FakeSheetsWorkbookClient(
         const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
       );
-      final adapter = GoogleSheetsWriteAdapter(client: client);
+      final adapter = SheetsWriteAdapter(client: client);
 
-      await adapter.applyExercisesWritePlan(
+      await adapter.applyExercisesPlan(
         spreadsheetId: 'spreadsheet-id',
         plan: ExercisesWritePlan(
           rowUpdates: [
@@ -523,9 +523,9 @@ void main() {
           'Exercises': SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
         },
       );
-      final adapter = GoogleSheetsWriteAdapter(client: client);
+      final adapter = SheetsWriteAdapter(client: client);
 
-      await adapter.applyExercisesWritePlan(
+      await adapter.applyExercisesPlan(
         spreadsheetId: 'spreadsheet-id',
         plan: ExercisesWritePlan(
           rowAppends: [
@@ -639,9 +639,9 @@ void main() {
       final client = _FakeSheetsWorkbookClient(
         const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
       );
-      final adapter = GoogleSheetsWriteAdapter(client: client);
+      final adapter = SheetsWriteAdapter(client: client);
 
-      await adapter.applyExercisesWritePlan(
+      await adapter.applyExercisesPlan(
         spreadsheetId: 'spreadsheet-id',
         plan: ExercisesWritePlan(
           rowUpdates: [

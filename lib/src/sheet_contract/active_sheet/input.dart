@@ -27,7 +27,7 @@ const exercisesSheetColumns = [
   'Log Format',
 ];
 
-const defaultExerciseLogFormat = workoutTrackerDefaultLogFormat;
+const defaultExerciseLogFormat = defaultLogFormat;
 
 class ActiveSheetInput {
   ActiveSheetInput({
