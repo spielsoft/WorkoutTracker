@@ -6,18 +6,18 @@ import 'google_authorization_client.dart';
 import 'spreadsheet_validation_service.dart';
 import 'spreadsheet_validation_core.dart';
 
-typedef GoogleSheetsWorkbookClientFactory =
+typedef WorkbookClientFactory =
     SheetsWorkbookClient Function(sheets.SheetsApi api);
 
-class SpreadsheetAccess implements WorkbookCommandService {
+class SpreadsheetAccess implements WorkbookService {
   SpreadsheetAccess(
     this._googleAccess, {
-    GoogleSheetsWorkbookClientFactory? workbookClientFactory,
+    WorkbookClientFactory? workbookClientFactory,
   }) : _workbookClientFactory =
            workbookClientFactory ?? ((api) => GoogleApisWorkbookClient(api));
 
-  final ScopedGoogleApiAccess _googleAccess;
-  final GoogleSheetsWorkbookClientFactory _workbookClientFactory;
+  final ApiAccess _googleAccess;
+  final WorkbookClientFactory _workbookClientFactory;
 
   @override
   Future<ValidationReport> validateSpreadsheet(String spreadsheetId) {
@@ -140,14 +140,13 @@ class SpreadsheetAccess implements WorkbookCommandService {
   }
 
   Future<ValidationReport> _runWritableWorkbook(
-    Future<ValidationReport> Function(SpreadsheetValidationService service)
-    action,
+    Future<ValidationReport> Function(ValidationService service) action,
   ) {
     return _googleAccess.run(
       scopes: GoogleApisWorkbookClient.writeScopes,
       action: (resources) {
         final workbookClient = _workbookClientFactory(resources.sheetsApi);
-        final service = SpreadsheetValidationService(
+        final service = ValidationService(
           readAdapter: SheetsReadAdapter(client: workbookClient),
           writeAdapter: SheetsWriteAdapter(client: workbookClient),
         );

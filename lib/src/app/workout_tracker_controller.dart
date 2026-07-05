@@ -15,7 +15,7 @@ class AppController extends ChangeNotifier {
 
   static const int _readRetries = 6;
 
-  final WorkbookCommandService svc;
+  final WorkbookService svc;
 
   ValidationReport? _report;
   String? _error;

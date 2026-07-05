@@ -4,44 +4,41 @@ import 'package:http/http.dart' as http;
 
 import 'google_account_session.dart';
 
-typedef GoogleAuthorizationClientFactory =
-    http.Client Function(Map<String, String> headers);
+typedef AuthClientFactory = http.Client Function(Map<String, String> headers);
 
-abstract interface class ScopedGoogleApiAccess {
+abstract interface class ApiAccess {
   Future<T> run<T>({
     required List<String> scopes,
-    required Future<T> Function(GoogleScopedApiResources resources) action,
+    required Future<T> Function(ApiResources resources) action,
   });
 }
 
-class GoogleScopedApiAccess implements ScopedGoogleApiAccess {
-  GoogleScopedApiAccess({
-    required this.auth,
-    GoogleAuthorizationClientFactory? authClientFactory,
-  }) : authClientFactory =
-           authClientFactory ??
-           ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
+class ScopedApiAccess implements ApiAccess {
+  ScopedApiAccess({required this.auth, AuthClientFactory? authClientFactory})
+    : authClientFactory =
+          authClientFactory ??
+          ((headers) => AuthHeadersClient(headers: headers));
 
   final SignInAuthGateway auth;
-  final GoogleAuthorizationClientFactory authClientFactory;
+  final AuthClientFactory authClientFactory;
 
   @override
   Future<T> run<T>({
     required List<String> scopes,
-    required Future<T> Function(GoogleScopedApiResources resources) action,
+    required Future<T> Function(ApiResources resources) action,
   }) async {
     final headers = await auth.authorizationHeaders(scopes);
     final client = authClientFactory(headers);
     try {
-      return await action(GoogleScopedApiResources(client));
+      return await action(ApiResources(client));
     } finally {
       client.close();
     }
   }
 }
 
-class GoogleScopedApiResources {
-  GoogleScopedApiResources(this.client);
+class ApiResources {
+  ApiResources(this.client);
 
   final http.Client client;
 
@@ -49,12 +46,10 @@ class GoogleScopedApiResources {
   late final drive.DriveApi driveApi = drive.DriveApi(client);
 }
 
-class GoogleAuthorizationHeadersClient extends http.BaseClient {
-  GoogleAuthorizationHeadersClient({
-    required Map<String, String> headers,
-    http.Client? inner,
-  }) : headers = Map<String, String>.unmodifiable(headers),
-       _inner = inner ?? http.Client();
+class AuthHeadersClient extends http.BaseClient {
+  AuthHeadersClient({required Map<String, String> headers, http.Client? inner})
+    : headers = Map<String, String>.unmodifiable(headers),
+      _inner = inner ?? http.Client();
 
   final Map<String, String> headers;
   final http.Client _inner;

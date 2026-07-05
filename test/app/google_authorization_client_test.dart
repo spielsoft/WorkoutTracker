@@ -12,10 +12,7 @@ void main() {
     () async {
       final headers = {'Authorization': 'Bearer original-token'};
       final inner = _CapturingClient();
-      final client = GoogleAuthorizationHeadersClient(
-        headers: headers,
-        inner: inner,
-      );
+      final client = AuthHeadersClient(headers: headers, inner: inner);
 
       headers['Authorization'] = 'Bearer mutated-token';
       await client.send(http.Request('GET', Uri.parse('https://example.com')));
@@ -32,7 +29,7 @@ void main() {
     () async {
       final gateway = _RecordingSignInAuthGateway();
       final authClient = _CloseTrackingAuthClient();
-      final access = GoogleScopedApiAccess(
+      final access = ScopedApiAccess(
         auth: gateway,
         authClientFactory: (_) => authClient,
       );

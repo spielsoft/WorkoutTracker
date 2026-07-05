@@ -65,7 +65,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     super.key,
   });
 
-  final WorkbookCommandService svc;
+  final WorkbookService svc;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialText;
@@ -417,7 +417,7 @@ class AppShell extends StatefulWidget {
     super.key,
   });
 
-  final WorkbookCommandService svc;
+  final WorkbookService svc;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialText;

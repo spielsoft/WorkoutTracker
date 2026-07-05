@@ -3,11 +3,8 @@ import 'package:workout_tracker/sheet_contract.dart';
 
 import 'spreadsheet_validation_core.dart';
 
-class SpreadsheetValidationService implements WorkbookCommandService {
-  const SpreadsheetValidationService({
-    required this.readAdapter,
-    this.writeAdapter,
-  });
+class ValidationService implements WorkbookService {
+  const ValidationService({required this.readAdapter, this.writeAdapter});
 
   final SheetsReadAdapter readAdapter;
   final SheetsWriteAdapter? writeAdapter;

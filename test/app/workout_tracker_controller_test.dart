@@ -781,7 +781,7 @@ void main() {
   );
 }
 
-class _RejectingWriteValidationService extends WorkbookCommandService {
+class _RejectingWriteValidationService extends WorkbookService {
   _RejectingWriteValidationService({
     required this.visibleSheet,
     required this.currentSheet,
@@ -821,7 +821,7 @@ class _RejectingWriteValidationService extends WorkbookCommandService {
   }
 }
 
-class _StaleWriteValidationService extends WorkbookCommandService {
+class _StaleWriteValidationService extends WorkbookService {
   _StaleWriteValidationService(this.activeSheet);
 
   final ParsedActiveSheet activeSheet;
@@ -849,7 +849,7 @@ class _StaleWriteValidationService extends WorkbookCommandService {
   }
 }
 
-class _StaleThenFreshWriteValidationService extends WorkbookCommandService {
+class _StaleThenFreshWriteValidationService extends WorkbookService {
   _StaleThenFreshWriteValidationService({
     required this.initialSheet,
     required this.writeReportSheet,
@@ -895,7 +895,7 @@ class _StaleThenFreshWriteValidationService extends WorkbookCommandService {
   }
 }
 
-class _FailingSpreadsheetValidationService extends WorkbookCommandService {
+class _FailingSpreadsheetValidationService extends WorkbookService {
   const _FailingSpreadsheetValidationService(this.message);
 
   final String message;
@@ -915,7 +915,7 @@ class _FailingSpreadsheetValidationService extends WorkbookCommandService {
   }
 }
 
-class _PendingCreateHistoryBlockService extends WorkbookCommandService {
+class _PendingCreateHistoryBlockService extends WorkbookService {
   _PendingCreateHistoryBlockService({
     required this.activeSheet,
     required this.writeCompleter,
@@ -942,7 +942,7 @@ class _PendingCreateHistoryBlockService extends WorkbookCommandService {
   }
 }
 
-class _FormulaRepairValidationService extends WorkbookCommandService {
+class _FormulaRepairValidationService extends WorkbookService {
   _FormulaRepairValidationService({
     required this.initialSheet,
     required this.repairedSheet,

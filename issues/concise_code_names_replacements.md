@@ -410,3 +410,37 @@ Status: shell-state private handler pass.
 ### Files simplified in slice 9
 
 - `lib/src/app/shell.dart`
+
+## Slice 10
+
+Status: auth and workbook-service type pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `GoogleAuthorizationClientFactory` | `AuthClientFactory` |
+| `GoogleAuthorizationHeadersClient` | `AuthHeadersClient` |
+| `GoogleScopedApiResources` | `ApiResources` |
+| `GoogleScopedApiAccess` | `ScopedApiAccess` |
+| `ScopedGoogleApiAccess` | `ApiAccess` |
+| `GoogleSheetsWorkbookClientFactory` | `WorkbookClientFactory` |
+| `SpreadsheetValidationService` | `ValidationService` |
+| `WorkbookCommandService` | `WorkbookService` |
+
+### Files simplified in slice 10
+
+- `lib/main.dart`
+- `lib/src/app/google_authorization_client.dart`
+- `lib/src/app/shell.dart`
+- `lib/src/app/spreadsheet_selection.dart`
+- `lib/src/app/spreadsheet_validation_core.dart`
+- `lib/src/app/spreadsheet_validation_service.dart`
+- `lib/src/app/spreadsheet_validation_wiring.dart`
+- `lib/src/app/workout_tracker_controller.dart`
+- `test/app/google_authorization_client_test.dart`
+- `test/app/spreadsheet_selection_test.dart`
+- `test/app/spreadsheet_validation_test.dart`
+- `test/app/test_spreadsheet_validation_service.dart`
+- `test/app/workout_tracker_controller_test.dart`
+- `test/support/widget_test_support.dart`

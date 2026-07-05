@@ -327,7 +327,7 @@ Future<PickerCallbackReceiver> _unusedCallbackReceiverFactory({
   throw StateError('Spreadsheet picker callback receiver was not expected.');
 }
 
-class _RecordingScopedGoogleApiAccess implements ScopedGoogleApiAccess {
+class _RecordingScopedGoogleApiAccess implements ApiAccess {
   _RecordingScopedGoogleApiAccess(this.client);
 
   final http.Client client;
@@ -336,11 +336,11 @@ class _RecordingScopedGoogleApiAccess implements ScopedGoogleApiAccess {
   @override
   Future<T> run<T>({
     required List<String> scopes,
-    required Future<T> Function(GoogleScopedApiResources resources) action,
+    required Future<T> Function(ApiResources resources) action,
   }) async {
     requestedScopes.add(scopes);
     try {
-      return await action(GoogleScopedApiResources(client));
+      return await action(ApiResources(client));
     } finally {
       client.close();
     }

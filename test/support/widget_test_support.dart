@@ -232,13 +232,13 @@ class CompletingSpreadsheetPicker implements SpreadsheetPicker {
   }
 }
 
-class CompositeWorkbookCommandService implements WorkbookCommandService {
+class CompositeWorkbookCommandService implements WorkbookService {
   const CompositeWorkbookCommandService({
     required this.validation,
     required this.authoring,
   });
 
-  final WorkbookCommandService validation;
+  final WorkbookService validation;
   final AppendingExerciseAuthoringService authoring;
 
   @override
@@ -680,7 +680,7 @@ class RecordingSpreadsheetOpener implements SpreadsheetOpener {
   }
 }
 
-class RevalidatingSpreadsheetValidationService extends WorkbookCommandService {
+class RevalidatingSpreadsheetValidationService extends WorkbookService {
   RevalidatingSpreadsheetValidationService({required this.reports});
 
   final List<ParsedActiveSheet> reports;
@@ -819,7 +819,7 @@ List<String> exerciseRow(
   ];
 }
 
-class CompletingWriteValidationService extends WorkbookCommandService {
+class CompletingWriteValidationService extends WorkbookService {
   CompletingWriteValidationService(this.validSheet);
 
   final ParsedActiveSheet validSheet;
@@ -845,7 +845,7 @@ class CompletingWriteValidationService extends WorkbookCommandService {
   }
 }
 
-class FailingWriteValidationService extends WorkbookCommandService {
+class FailingWriteValidationService extends WorkbookService {
   FailingWriteValidationService(this.validSheet);
 
   final ParsedActiveSheet validSheet;
@@ -870,7 +870,7 @@ class FailingWriteValidationService extends WorkbookCommandService {
   }
 }
 
-class RecoverableConfirmationFailureService extends WorkbookCommandService {
+class RecoverableConfirmationFailureService extends WorkbookService {
   RecoverableConfirmationFailureService()
     : initialSheet = twoSetLoggingSheet(s2Value: ''),
       conflictingSheet = twoSetLoggingSheet(s2Value: '95x10@7'),
@@ -911,7 +911,7 @@ class RecoverableConfirmationFailureService extends WorkbookCommandService {
   }
 }
 
-class DamageAfterSaveValidationService extends WorkbookCommandService {
+class DamageAfterSaveValidationService extends WorkbookService {
   DamageAfterSaveValidationService({
     required this.validSheet,
     required this.damagedSheet,
@@ -943,7 +943,7 @@ class DamageAfterSaveValidationService extends WorkbookCommandService {
   }
 }
 
-class FormulaRepairValidationService extends WorkbookCommandService {
+class FormulaRepairValidationService extends WorkbookService {
   FormulaRepairValidationService({
     required this.initialSheet,
     required this.repairedSheet,

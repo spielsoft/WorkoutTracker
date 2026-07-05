@@ -18,10 +18,7 @@ void main() {
       ];
       final authClient = _CloseTrackingAuthClient();
       final service = SpreadsheetAccess(
-        GoogleScopedApiAccess(
-          auth: gateway,
-          authClientFactory: (_) => authClient,
-        ),
+        ScopedApiAccess(auth: gateway, authClientFactory: (_) => authClient),
         workbookClientFactory: (_) =>
             _CloseTrackingWorkbookClient(authClient, [_snapshot(rows)]),
       );
@@ -58,10 +55,7 @@ void main() {
         _snapshot(refreshedRows),
       ]);
       final service = SpreadsheetAccess(
-        GoogleScopedApiAccess(
-          auth: gateway,
-          authClientFactory: (_) => authClient,
-        ),
+        ScopedApiAccess(auth: gateway, authClientFactory: (_) => authClient),
         workbookClientFactory: (_) => workbookClient,
       );
 
@@ -102,7 +96,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -173,7 +167,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -218,7 +212,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -275,7 +269,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -333,7 +327,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -378,7 +372,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -419,7 +413,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -505,7 +499,7 @@ void main() {
         _workbookSnapshot(updatedActiveRows, updatedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -603,7 +597,7 @@ void main() {
         _workbookSnapshot(updatedActiveRows, reorderedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -783,7 +777,7 @@ void main() {
         _workbookSnapshot(reorderedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -894,7 +888,7 @@ void main() {
         _workbookSnapshot(deletedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -953,7 +947,7 @@ void main() {
         _workbookSnapshot(changedRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -1002,7 +996,7 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
@@ -1063,7 +1057,7 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = SpreadsheetValidationService(
+      final service = ValidationService(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );

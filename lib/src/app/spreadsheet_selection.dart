@@ -245,8 +245,8 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
   final PickerAppConfig config;
   final PickerCallbackReceiverFactory callbackFactory;
   final SignInAuthGateway? auth;
-  final GoogleAuthorizationClientFactory? authClientFactory;
-  final ScopedGoogleApiAccess? googleAccess;
+  final AuthClientFactory? authClientFactory;
+  final ApiAccess? googleAccess;
   final SpreadsheetCreator? spreadsheetCreator;
 
   @override
@@ -406,7 +406,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
 
     final access =
         googleAccess ??
-        GoogleScopedApiAccess(auth: auth, authClientFactory: authClientFactory);
+        ScopedApiAccess(auth: auth, authClientFactory: authClientFactory);
     return access.run(
       scopes: GoogleApisWorkbookClient.writeScopes,
       action: (resources) async {
@@ -483,21 +483,18 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
 class SpreadsheetCreator {
   SpreadsheetCreator({
     required this.auth,
-    GoogleAuthorizationClientFactory? authClientFactory,
-    ScopedGoogleApiAccess? googleAccess,
+    AuthClientFactory? authClientFactory,
+    ApiAccess? googleAccess,
     WorkbookInitFactory? initFactory,
     String Function()? titleFactory,
   }) : googleAccess =
            googleAccess ??
-           GoogleScopedApiAccess(
-             auth: auth,
-             authClientFactory: authClientFactory,
-           ),
+           ScopedApiAccess(auth: auth, authClientFactory: authClientFactory),
        initFactory = initFactory ?? ((api) => GoogleApisWorkbookInit(api)),
        titleFactory = titleFactory ?? defaultWorkoutSpreadsheetTitle;
 
   final SignInAuthGateway auth;
-  final ScopedGoogleApiAccess googleAccess;
+  final ApiAccess googleAccess;
   final WorkbookInitFactory initFactory;
   final String Function() titleFactory;
 

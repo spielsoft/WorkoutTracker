@@ -1,8 +1,8 @@
 import 'package:workout_tracker/sheet_contract.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-abstract class WorkbookCommandService {
-  const WorkbookCommandService();
+abstract class WorkbookService {
+  const WorkbookService();
 
   /// Reads and reparses the active sheet for [spreadsheetId].
   ///

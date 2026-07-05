@@ -8,7 +8,7 @@ Future<void> main() async {
   final googlePickerConfig = await loadPickerAppConfig();
   final googleSignInGateway = PickerAuthGateway();
   final googleSpreadsheetService = SpreadsheetAccess(
-    GoogleScopedApiAccess(auth: googleSignInGateway),
+    ScopedApiAccess(auth: googleSignInGateway),
   );
   runApp(
     WorkoutTrackerApp(
