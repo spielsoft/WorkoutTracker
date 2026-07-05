@@ -6,14 +6,14 @@ import 'package:workout_tracker/workout_tracker_app.dart';
 
 void main() {
   test('Google workspace access state groups sheet-adjacent persistence', () {
-    const state = GoogleWorkspaceAccessState(
+    const state = WorkspaceAccessState(
       spreadsheetText: 'spreadsheet-id',
       selectedSpreadsheet: SelectedSpreadsheet(
         spreadsheetId: 'spreadsheet-id',
         name: 'Development Workouts',
         accountEmail: 'user@example.com',
       ),
-      googleAuthorization: GooglePickerAuthorizationSnapshot(
+      pickerAuth: PickerAuth(
         accessToken: 'picker-access-token',
         accountEmail: 'user@example.com',
         displayName: 'User Name',
@@ -26,18 +26,15 @@ void main() {
       ),
     );
 
-    final decoded = GoogleWorkspaceAccessState.fromJson(state.toJson());
+    final decoded = WorkspaceAccessState.fromJson(state.toJson());
 
     expect(decoded.spreadsheetText, 'spreadsheet-id');
     expect(decoded.selectedSpreadsheet?.name, 'Development Workouts');
     expect(decoded.selectedSpreadsheet?.accountEmail, 'user@example.com');
-    expect(decoded.googleAuthorization?.accessToken, 'picker-access-token');
-    expect(decoded.googleAuthorization?.accountEmail, 'user@example.com');
-    expect(decoded.googleAuthorization?.displayName, 'User Name');
-    expect(
-      decoded.googleAuthorization?.photoUrl,
-      'https://example.com/user.png',
-    );
+    expect(decoded.pickerAuth?.accessToken, 'picker-access-token');
+    expect(decoded.pickerAuth?.accountEmail, 'user@example.com');
+    expect(decoded.pickerAuth?.displayName, 'User Name');
+    expect(decoded.pickerAuth?.photoUrl, 'https://example.com/user.png');
     expect(decoded.workoutSelection?.workout, 'Legs');
     expect(decoded.workoutSelection?.historyBlock, 'Week 1');
   });
@@ -73,24 +70,24 @@ void main() {
       }
     });
     final store = FileAppStateStore(stateDirectory: directory);
-    const state = GoogleWorkspaceAccessState(
+    const state = WorkspaceAccessState(
       spreadsheetText: 'spreadsheet-id',
       selectedSpreadsheet: SelectedSpreadsheet(
         spreadsheetId: 'spreadsheet-id',
         name: 'Development Workouts',
       ),
-      googleAuthorization: GooglePickerAuthorizationSnapshot(
+      pickerAuth: PickerAuth(
         accessToken: 'picker-access-token',
         accountEmail: 'athlete@example.com',
       ),
     );
 
-    await store.writeGoogleWorkspaceAccessState(state);
-    final restored = await store.readGoogleWorkspaceAccessState();
+    await store.writeWorkspaceState(state);
+    final restored = await store.readWorkspaceState();
 
     expect(restored.spreadsheetText, 'spreadsheet-id');
     expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
-    expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
+    expect(restored.pickerAuth?.accountEmail, 'athlete@example.com');
   });
 
   test('state controller preserves overlapping workspace updates', () async {
@@ -103,7 +100,7 @@ void main() {
       }
     });
     final store = FileAppStateStore(stateDirectory: directory);
-    final controller = GoogleWorkspaceAccessStateController(store);
+    final controller = WorkspaceStateController(store);
 
     await Future.wait([
       controller.update(
@@ -115,7 +112,7 @@ void main() {
             spreadsheetId: 'spreadsheet-id',
             name: 'Development Workouts',
           ),
-          googleAuthorization: GooglePickerAuthorizationSnapshot(
+          pickerAuth: PickerAuth(
             accessToken: 'picker-access-token',
             accountEmail: 'athlete@example.com',
           ),
@@ -136,10 +133,10 @@ void main() {
     final decoded = jsonDecode(await file.readAsString());
 
     expect(decoded, isA<Map<String, Object?>>());
-    final restored = await store.readGoogleWorkspaceAccessState();
+    final restored = await store.readWorkspaceState();
     expect(restored.spreadsheetText, 'spreadsheet-id');
     expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
-    expect(restored.googleAuthorization?.accountEmail, 'athlete@example.com');
+    expect(restored.pickerAuth?.accountEmail, 'athlete@example.com');
     expect(restored.workoutSelection?.workout, 'Legs');
   });
 
@@ -157,10 +154,10 @@ void main() {
     ).writeAsString('{"googleWorkspaceAccess":{}}{"extra":true}');
     final store = FileAppStateStore(stateDirectory: directory);
 
-    final restored = await store.readGoogleWorkspaceAccessState();
+    final restored = await store.readWorkspaceState();
 
     expect(restored.spreadsheetText, isNull);
     expect(restored.selectedSpreadsheet, isNull);
-    expect(restored.googleAuthorization, isNull);
+    expect(restored.pickerAuth, isNull);
   });
 }

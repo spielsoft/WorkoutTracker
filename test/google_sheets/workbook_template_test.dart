@@ -29,7 +29,7 @@ void main() {
         everyElement(isA<ParsedLogFormat>()),
       );
 
-      final workbook = await loadWorkoutTrackerWorkbookTemplate();
+      final workbook = await loadWorkbookTemplate();
       final exerciseRows = workbook.exercisesSheet.rows.skip(1).toList();
       expect(exerciseRows, hasLength(defaults.length));
       expect(exerciseRows, everyElement(hasLength(9)));
@@ -46,7 +46,7 @@ void main() {
   );
 
   test('orders app-created workbook exercises alphabetically', () async {
-    final workbook = await loadWorkoutTrackerWorkbookTemplate();
+    final workbook = await loadWorkbookTemplate();
     final exerciseNames = [
       for (final row in workbook.exercisesSheet.rows.skip(1)) row.first,
     ];

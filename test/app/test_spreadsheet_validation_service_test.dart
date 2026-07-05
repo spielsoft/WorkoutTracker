@@ -34,7 +34,7 @@ void main() {
       expect(service.appliedPlans, [plan]);
       expect(
         updatedReport.activeSheet
-            .buildExerciseLoggingContext(
+            .buildLoggingContext(
               primarySheetRowNumber: overview.slots.single.sheetRowNumber,
               selectedSheetRowNumber: overview.slots.single.sheetRowNumber,
               historyBlockLabel: 'Week 1',

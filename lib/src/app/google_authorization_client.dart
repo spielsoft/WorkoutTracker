@@ -22,7 +22,7 @@ class GoogleScopedApiAccess implements ScopedGoogleApiAccess {
            authorizationClientFactory ??
            ((headers) => GoogleAuthorizationHeadersClient(headers: headers));
 
-  final GoogleSignInAuthorizationGateway authorizationGateway;
+  final SignInAuthGateway authorizationGateway;
   final GoogleAuthorizationClientFactory authorizationClientFactory;
 
   @override

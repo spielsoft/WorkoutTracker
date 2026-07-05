@@ -10,14 +10,14 @@ void main() {
   test(
     'Google-backed validation requests writable Sheets scope and keeps the client open while reading',
     () async {
-      final gateway = _RecordingGoogleSignInAuthorizationGateway();
+      final gateway = _RecordingSignInAuthGateway();
       final rows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ];
       final authClient = _CloseTrackingAuthClient();
-      final service = GoogleSpreadsheetWorkbookAccess(
+      final service = SpreadsheetAccess(
         GoogleScopedApiAccess(
           authorizationGateway: gateway,
           authorizationClientFactory: (_) => authClient,
@@ -40,7 +40,7 @@ void main() {
   test(
     'Google-backed writes refresh validation before closing the authorized client',
     () async {
-      final gateway = _RecordingGoogleSignInAuthorizationGateway();
+      final gateway = _RecordingSignInAuthGateway();
       final activeRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -57,7 +57,7 @@ void main() {
         _snapshot(activeRows),
         _snapshot(refreshedRows),
       ]);
-      final service = GoogleSpreadsheetWorkbookAccess(
+      final service = SpreadsheetAccess(
         GoogleScopedApiAccess(
           authorizationGateway: gateway,
           authorizationClientFactory: (_) => authClient,
@@ -102,7 +102,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -173,7 +173,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -218,7 +218,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -275,7 +275,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -333,7 +333,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -378,7 +378,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -419,7 +419,7 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -505,7 +505,7 @@ void main() {
         _workbookSnapshot(updatedActiveRows, updatedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -603,7 +603,7 @@ void main() {
         _workbookSnapshot(updatedActiveRows, reorderedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -783,7 +783,7 @@ void main() {
         _workbookSnapshot(reorderedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -894,7 +894,7 @@ void main() {
         _workbookSnapshot(deletedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -953,7 +953,7 @@ void main() {
         _workbookSnapshot(changedRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -1002,7 +1002,7 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -1063,7 +1063,7 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = GoogleSpreadsheetValidationService(
+      final service = SpreadsheetValidationService(
         readAdapter: GoogleSheetsReadAdapter(client: readClient),
         writeAdapter: GoogleSheetsWriteAdapter(client: writeClient),
       );
@@ -1071,7 +1071,7 @@ void main() {
       final report = await service.validateSpreadsheet('spreadsheet-id');
       final selectedExercise = report.activeSheet.canonicalExercises.single;
 
-      final rejected = await service.addExistingExerciseToWorkout(
+      final rejected = await service.addExerciseToWorkout(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
         exercise: selectedExercise,
@@ -1261,8 +1261,8 @@ class _CloseTrackingAuthClient extends http.BaseClient {
   }
 }
 
-class _RecordingGoogleSignInAuthorizationGateway extends ChangeNotifier
-    implements GoogleSignInAuthorizationGateway {
+class _RecordingSignInAuthGateway extends ChangeNotifier
+    implements SignInAuthGateway {
   final List<List<String>> requestedScopes = [];
 
   @override

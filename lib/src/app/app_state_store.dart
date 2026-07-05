@@ -5,29 +5,29 @@ import 'dart:io';
 import 'google_account_session.dart';
 import 'spreadsheet_selection.dart';
 
-class GoogleWorkspaceAccessState {
-  const GoogleWorkspaceAccessState({
+class WorkspaceAccessState {
+  const WorkspaceAccessState({
     this.spreadsheetText,
     this.selectedSpreadsheet,
-    this.googleAuthorization,
+    this.pickerAuth,
     this.workoutSelection,
   });
 
   final String? spreadsheetText;
   final SelectedSpreadsheet? selectedSpreadsheet;
-  final GooglePickerAuthorizationSnapshot? googleAuthorization;
+  final PickerAuth? pickerAuth;
   final WorkoutSelectionState? workoutSelection;
 
-  GoogleWorkspaceAccessState copyWith({
+  WorkspaceAccessState copyWith({
     String? spreadsheetText,
     SelectedSpreadsheet? selectedSpreadsheet,
-    GooglePickerAuthorizationSnapshot? googleAuthorization,
+    PickerAuth? pickerAuth,
     WorkoutSelectionState? workoutSelection,
   }) {
-    return GoogleWorkspaceAccessState(
+    return WorkspaceAccessState(
       spreadsheetText: spreadsheetText ?? this.spreadsheetText,
       selectedSpreadsheet: selectedSpreadsheet ?? this.selectedSpreadsheet,
-      googleAuthorization: googleAuthorization ?? this.googleAuthorization,
+      pickerAuth: pickerAuth ?? this.pickerAuth,
       workoutSelection: workoutSelection ?? this.workoutSelection,
     );
   }
@@ -37,85 +37,82 @@ class GoogleWorkspaceAccessState {
       if (spreadsheetText != null) 'spreadsheetText': spreadsheetText,
       if (selectedSpreadsheet != null)
         'selectedSpreadsheet': selectedSpreadsheet!.toJson(),
-      if (googleAuthorization != null)
-        'googleAuthorization': googleAuthorization!.toJson(),
+      if (pickerAuth != null) 'pickerAuth': pickerAuth!.toJson(),
       if (workoutSelection != null)
         'workoutSelection': workoutSelection!.toJson(),
     };
   }
 
-  static GoogleWorkspaceAccessState fromJson(Object? value) {
+  static WorkspaceAccessState fromJson(Object? value) {
     if (value case <String, Object?>{
       'spreadsheetText': final String spreadsheetText,
     }) {
-      return GoogleWorkspaceAccessState(
+      return WorkspaceAccessState(
         spreadsheetText: spreadsheetText,
         selectedSpreadsheet: SelectedSpreadsheet.fromJson(
           value['selectedSpreadsheet'],
         ),
-        googleAuthorization: GooglePickerAuthorizationSnapshot.fromJson(
-          value['googleAuthorization'],
-        ),
+        pickerAuth: _pickerAuthFromJson(value),
         workoutSelection: WorkoutSelectionState.fromJson(
           value['workoutSelection'],
         ),
       );
     }
     if (value is Map<String, Object?>) {
-      return GoogleWorkspaceAccessState(
+      return WorkspaceAccessState(
         selectedSpreadsheet: SelectedSpreadsheet.fromJson(
           value['selectedSpreadsheet'],
         ),
-        googleAuthorization: GooglePickerAuthorizationSnapshot.fromJson(
-          value['googleAuthorization'],
-        ),
+        pickerAuth: _pickerAuthFromJson(value),
         workoutSelection: WorkoutSelectionState.fromJson(
           value['workoutSelection'],
         ),
       );
     }
-    return const GoogleWorkspaceAccessState();
+    return const WorkspaceAccessState();
+  }
+
+  static PickerAuth? _pickerAuthFromJson(Map<String, Object?> json) {
+    return PickerAuth.fromJson(
+      json['pickerAuth'] ?? json['googleAuthorization'],
+    );
   }
 }
 
 abstract interface class AppStateStore {
-  Future<GoogleWorkspaceAccessState> readGoogleWorkspaceAccessState();
+  Future<WorkspaceAccessState> readWorkspaceState();
 
-  Future<void> writeGoogleWorkspaceAccessState(
-    GoogleWorkspaceAccessState value,
-  );
+  Future<void> writeWorkspaceState(WorkspaceAccessState value);
 
-  Future<void> clearGoogleWorkspaceAccessState();
+  Future<void> clearWorkspaceState();
 }
 
-abstract interface class GoogleWorkspaceAccessStateOwner {
-  GoogleWorkspaceAccessState get value;
+abstract interface class WorkspaceStateOwner {
+  WorkspaceAccessState get value;
 
-  Future<GoogleWorkspaceAccessState> restore();
+  Future<WorkspaceAccessState> restore();
 
-  Future<GoogleWorkspaceAccessState> update(
-    GoogleWorkspaceAccessState Function(GoogleWorkspaceAccessState current)
-    updateState,
+  Future<WorkspaceAccessState> update(
+    WorkspaceAccessState Function(WorkspaceAccessState current) updateState,
   );
 
   Future<void> clear();
 }
 
-class GoogleWorkspaceAccessStateController
-    implements GoogleWorkspaceAccessStateOwner {
-  GoogleWorkspaceAccessStateController(this._store);
+class WorkspaceStateController implements WorkspaceStateOwner {
+  WorkspaceStateController(this._store);
 
   final AppStateStore _store;
-  GoogleWorkspaceAccessState _state = const GoogleWorkspaceAccessState();
+  WorkspaceAccessState _state = const WorkspaceAccessState();
   Future<void> _pending = Future<void>.value();
-  Future<GoogleWorkspaceAccessState>? _restoreFuture;
+  Future<WorkspaceAccessState>? _restoreFuture;
   bool _hasRestored = false;
 
   @override
-  GoogleWorkspaceAccessState get value => _state;
+  WorkspaceAccessState get value => _state;
 
   @override
-  Future<GoogleWorkspaceAccessState> restore() {
+  Future<WorkspaceAccessState> restore() {
     return _enqueue(() async {
       await _ensureRestored();
       return _state;
@@ -123,15 +120,14 @@ class GoogleWorkspaceAccessStateController
   }
 
   @override
-  Future<GoogleWorkspaceAccessState> update(
-    GoogleWorkspaceAccessState Function(GoogleWorkspaceAccessState current)
-    updateState,
+  Future<WorkspaceAccessState> update(
+    WorkspaceAccessState Function(WorkspaceAccessState current) updateState,
   ) {
     return _enqueue(() async {
       await _ensureRestored();
       final updated = updateState(_state);
       _state = updated;
-      await _store.writeGoogleWorkspaceAccessState(updated);
+      await _store.writeWorkspaceState(updated);
       return updated;
     });
   }
@@ -139,10 +135,10 @@ class GoogleWorkspaceAccessStateController
   @override
   Future<void> clear() {
     return _enqueue(() async {
-      _state = const GoogleWorkspaceAccessState();
+      _state = const WorkspaceAccessState();
       _hasRestored = true;
-      _restoreFuture = Future<GoogleWorkspaceAccessState>.value(_state);
-      await _store.clearGoogleWorkspaceAccessState();
+      _restoreFuture = Future<WorkspaceAccessState>.value(_state);
+      await _store.clearWorkspaceState();
     });
   }
 
@@ -150,7 +146,7 @@ class GoogleWorkspaceAccessStateController
     if (_hasRestored) {
       return;
     }
-    _restoreFuture ??= _store.readGoogleWorkspaceAccessState();
+    _restoreFuture ??= _store.readWorkspaceState();
     try {
       _state = await _restoreFuture!;
       _hasRestored = true;
@@ -173,29 +169,25 @@ class FileAppStateStore implements AppStateStore {
 
   final Directory? _stateDirectoryOverride;
 
-  static const _googleWorkspaceAccessKey = 'googleWorkspaceAccess';
+  static const _workspaceAccessKey = 'googleWorkspaceAccess';
 
   @override
-  Future<GoogleWorkspaceAccessState> readGoogleWorkspaceAccessState() async {
+  Future<WorkspaceAccessState> readWorkspaceState() async {
     final decoded = await _readState();
-    return GoogleWorkspaceAccessState.fromJson(
-      decoded[_googleWorkspaceAccessKey],
-    );
+    return WorkspaceAccessState.fromJson(decoded[_workspaceAccessKey]);
   }
 
   @override
-  Future<void> writeGoogleWorkspaceAccessState(
-    GoogleWorkspaceAccessState value,
-  ) async {
+  Future<void> writeWorkspaceState(WorkspaceAccessState value) async {
     final state = await _readState();
-    state[_googleWorkspaceAccessKey] = value.toJson();
+    state[_workspaceAccessKey] = value.toJson();
     await _writeState(state);
   }
 
   @override
-  Future<void> clearGoogleWorkspaceAccessState() async {
+  Future<void> clearWorkspaceState() async {
     final state = await _readState();
-    state.remove(_googleWorkspaceAccessKey);
+    state.remove(_workspaceAccessKey);
     await _writeState(state);
   }
 

@@ -19,22 +19,20 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
   ParsedActiveSheet get activeSheet => _activeSheet;
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
     spreadsheetIds.add(spreadsheetId);
     return _report(spreadsheetId);
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     final writeRejections = plan.writeRejections(_activeSheet);
     if (writeRejections.isNotEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: _activeSheet,
         writeRejections: writeRejections,
@@ -46,7 +44,7 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExerciseDefinition exercise,
@@ -55,7 +53,7 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -65,7 +63,7 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+  Future<ValidationReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -76,7 +74,7 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderCanonicalExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -85,7 +83,7 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+  Future<ValidationReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -95,7 +93,7 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+  Future<ValidationReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int primarySheetRowNumber,
@@ -103,7 +101,7 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
     return applyActiveSheetWritePlan(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
-      plan: activeSheet.planPrimaryWorkoutExerciseDeletion(
+      plan: activeSheet.planPrimaryExerciseDeletion(
         primarySheetRowNumber: primarySheetRowNumber,
       ),
     );
@@ -119,8 +117,8 @@ class TestSpreadsheetValidationService implements WorkbookCommandService {
     _activeSheet = parseActiveSheet(ActiveSheetInput(rows: _rows!));
   }
 
-  SpreadsheetValidationReport _report(String spreadsheetId) {
-    return SpreadsheetValidationReport(
+  ValidationReport _report(String spreadsheetId) {
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: _activeSheet,
     );

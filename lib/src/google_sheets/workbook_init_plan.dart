@@ -1,12 +1,12 @@
 import 'package:googleapis/sheets/v4.dart' as sheets;
 
 import 'workbook_client.dart';
-import 'workout_tracker_workbook_template.dart';
+import 'workbook_template.dart';
 
-class WorkoutTrackerWorkbookTabRewritePlan {
-  WorkoutTrackerWorkbookTabRewritePlan({
+class WorkbookTabPlan {
+  WorkbookTabPlan({
     required int sheetId,
-    required WorkoutTrackerWorkbookTab tab,
+    required WorkbookTab tab,
     required int frozenRowCount,
   }) : operations = List<SheetsWorkbookOperation>.unmodifiable(
          _operationsForWorkbookInitialization(
@@ -71,7 +71,7 @@ class WorkoutTrackerWorkbookTabRewritePlan {
   final List<SheetsWorkbookOperation> operations;
 }
 
-int usableWorkbookRowCount(WorkoutTrackerWorkbookTab tab) {
+int usableWorkbookRowCount(WorkbookTab tab) {
   final minimumRows = tab.title == 'Exercises' ? 25 : 50;
   return tab.rows.length > minimumRows ? tab.rows.length : minimumRows;
 }

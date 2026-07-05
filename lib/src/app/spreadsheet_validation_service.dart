@@ -3,8 +3,8 @@ import 'package:workout_tracker/sheet_contract.dart';
 
 import 'spreadsheet_validation_core.dart';
 
-class GoogleSpreadsheetValidationService implements WorkbookCommandService {
-  const GoogleSpreadsheetValidationService({
+class SpreadsheetValidationService implements WorkbookCommandService {
+  const SpreadsheetValidationService({
     required this.readAdapter,
     this.writeAdapter,
   });
@@ -13,17 +13,15 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   final GoogleSheetsWriteAdapter? writeAdapter;
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    return SpreadsheetValidationReport(
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: await readAdapter.readParsedActiveSheet(spreadsheetId),
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -37,7 +35,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
     );
     final writeRejections = plan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
@@ -51,7 +49,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExerciseDefinition exercise,
@@ -64,9 +62,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final exercisesPlan = currentActiveSheet.planCanonicalExerciseAppend(
-      exercise,
-    );
+    final exercisesPlan = currentActiveSheet.planCanonicalAppend(exercise);
     final exercisesRow = exercisesPlan.rowAppends.singleOrNull;
     if (exercisesRow == null) {
       throw StateError('No exercise row was planned.');
@@ -80,7 +76,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -99,13 +95,13 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
       selectedExercise: selectedExercise,
     );
     if (canonicalExerciseRejection != null) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: [canonicalExerciseRejection],
       );
     }
-    final exercisesPlan = currentActiveSheet.planCanonicalExerciseUpdate(
+    final exercisesPlan = currentActiveSheet.planCanonicalUpdate(
       selectedExercise: selectedExercise,
       exercise: exercise,
     );
@@ -122,7 +118,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+  Future<ValidationReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -142,26 +138,26 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
       selectedExercise: exercise,
     );
     if (canonicalExerciseRejection != null) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: [canonicalExerciseRejection],
       );
     }
     final activePlan = placement.isBackup
-        ? currentActiveSheet.planBackupWorkoutPlacement(
+        ? currentActiveSheet.planBackupPlacement(
             primarySheetRowNumber: placement.primarySheetRowNumber!,
             exercise: exercise,
             metadata: metadata,
           )
-        : currentActiveSheet.planPrimaryWorkoutPlacement(
+        : currentActiveSheet.planPrimaryPlacement(
             exercise: exercise,
             workout: placement.workout ?? defaultWorkoutName,
             metadata: metadata,
           );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
@@ -176,7 +172,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderCanonicalExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -189,10 +185,10 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final exercisesPlan = activeSheet.planCanonicalExerciseReorder(intent);
+    final exercisesPlan = activeSheet.planCanonicalReorder(intent);
     final writeRejections = exercisesPlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
@@ -200,7 +196,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
     }
     if (exercisesPlan.rowUpdates.isEmpty &&
         exercisesPlan.activeSheetFormulaUpdates.isEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
       );
@@ -214,7 +210,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+  Future<ValidationReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -228,13 +224,13 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final activePlan = activeSheet.planWorkoutExerciseReorder(
+    final activePlan = activeSheet.planExerciseReorder(
       workout: workout,
       intent: intent,
     );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
@@ -243,7 +239,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
     if (activePlan.cellUpdates.isEmpty &&
         activePlan.columnInsertions.isEmpty &&
         activePlan.rowInsertions.isEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
       );
@@ -257,7 +253,7 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+  Future<ValidationReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int primarySheetRowNumber,
@@ -270,19 +266,19 @@ class GoogleSpreadsheetValidationService implements WorkbookCommandService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final activePlan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+    final activePlan = activeSheet.planPrimaryExerciseDeletion(
       primarySheetRowNumber: primarySheetRowNumber,
     );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
       );
     }
     if (activePlan.rowDeletions.isEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: [

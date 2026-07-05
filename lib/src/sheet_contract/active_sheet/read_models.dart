@@ -221,7 +221,7 @@ class _WorkoutReadModelBuilder {
     );
   }
 
-  ExerciseLoggingContext buildExerciseLoggingContext({
+  ExerciseLoggingContext buildLoggingContext({
     required int primarySheetRowNumber,
     required int selectedSheetRowNumber,
     required String historyBlockLabel,

@@ -1,4 +1,4 @@
-part of 'workout_tracker_shell.dart';
+part of 'shell.dart';
 
 class _ValidationSummary extends StatelessWidget {
   const _ValidationSummary({
@@ -8,7 +8,7 @@ class _ValidationSummary extends StatelessWidget {
     this.onOpenSpreadsheet,
   });
 
-  final SpreadsheetValidationReport report;
+  final ValidationReport report;
   final Future<void> Function()? onRepairUnambiguousFormulaIssues;
   final Future<void> Function({
     required int activeSheetRowNumber,

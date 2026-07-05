@@ -129,12 +129,12 @@ void main() {
       ];
       var activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-      var primaryContext = activeSheet.buildExerciseLoggingContext(
+      var primaryContext = activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 3,
         historyBlockLabel: 'Session A',
       );
-      var backupContext = activeSheet.buildExerciseLoggingContext(
+      var backupContext = activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 4,
         historyBlockLabel: 'Session A',
@@ -173,12 +173,12 @@ void main() {
       previewRows = backupPlan.previewRowsAfterApplying(previewRows);
       activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
 
-      primaryContext = activeSheet.buildExerciseLoggingContext(
+      primaryContext = activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 3,
         historyBlockLabel: 'Session A',
       );
-      backupContext = activeSheet.buildExerciseLoggingContext(
+      backupContext = activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 4,
         historyBlockLabel: 'Session A',
@@ -580,7 +580,7 @@ void main() {
       ),
     );
 
-    final plan = activeSheet.planCanonicalExerciseUpdate(
+    final plan = activeSheet.planCanonicalUpdate(
       selectedExercise: activeSheet.canonicalExercises.first,
       exercise: const CanonicalExerciseDefinition(
         exercise: 'High Bar Squat',
@@ -701,7 +701,7 @@ void main() {
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-      final plan = activeSheet.planWorkoutExerciseReorder(
+      final plan = activeSheet.planExerciseReorder(
         workout: 'Legs',
         intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
       );
@@ -726,12 +726,12 @@ void main() {
         ['Chest Press'],
       );
 
-      final movedPrimary = reordered.buildExerciseLoggingContext(
+      final movedPrimary = reordered.buildLoggingContext(
         primarySheetRowNumber: 6,
         selectedSheetRowNumber: 6,
         historyBlockLabel: 'Session A',
       );
-      final movedBackup = reordered.buildExerciseLoggingContext(
+      final movedBackup = reordered.buildLoggingContext(
         primarySheetRowNumber: 6,
         selectedSheetRowNumber: 7,
         historyBlockLabel: 'Session A',
@@ -782,7 +782,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planWorkoutExerciseReorder(
+    final plan = activeSheet.planExerciseReorder(
       workout: 'Legs',
       intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
     );
@@ -856,7 +856,7 @@ void main() {
       ),
     );
 
-    final plan = activeSheet.planWorkoutExerciseReorder(
+    final plan = activeSheet.planExerciseReorder(
       workout: 'Legs',
       intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
     );
@@ -939,7 +939,7 @@ void main() {
       ),
     );
 
-    final plan = activeSheet.planWorkoutExerciseReorder(
+    final plan = activeSheet.planExerciseReorder(
       workout: 'Legs',
       intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
     );
@@ -1001,7 +1001,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+    final plan = activeSheet.planPrimaryExerciseDeletion(
       primarySheetRowNumber: 3,
     );
 
@@ -1062,7 +1062,7 @@ void main() {
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-      final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      final plan = activeSheet.planPrimaryExerciseDeletion(
         primarySheetRowNumber: 3,
       );
 
@@ -1136,7 +1136,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+    final plan = activeSheet.planPrimaryExerciseDeletion(
       primarySheetRowNumber: 3,
     );
 
@@ -1229,7 +1229,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+    final plan = activeSheet.planPrimaryExerciseDeletion(
       primarySheetRowNumber: 3,
     );
     final previewRows = plan.previewRowsAfterApplying(rows);
@@ -1295,7 +1295,7 @@ void main() {
         ],
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
-      final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      final plan = activeSheet.planPrimaryExerciseDeletion(
         primarySheetRowNumber: 3,
       );
       final changedRows = rows.map((row) => [...row]).toList();
@@ -1345,7 +1345,7 @@ void main() {
         ],
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
-      final plan = activeSheet.planPrimaryWorkoutExerciseDeletion(
+      final plan = activeSheet.planPrimaryExerciseDeletion(
         primarySheetRowNumber: 3,
       );
 
@@ -1467,7 +1467,7 @@ void main() {
         ),
       );
 
-      final plan = activeSheet.planCanonicalExerciseReorder(
+      final plan = activeSheet.planCanonicalReorder(
         ReorderIntent(fromIndex: 0, toIndex: 2),
       );
 
@@ -1549,10 +1549,10 @@ void main() {
       ),
     );
 
-    final samePosition = activeSheet.planCanonicalExerciseReorder(
+    final samePosition = activeSheet.planCanonicalReorder(
       const ReorderIntent(fromIndex: 1, toIndex: 1),
     );
-    final outOfRange = activeSheet.planCanonicalExerciseReorder(
+    final outOfRange = activeSheet.planCanonicalReorder(
       const ReorderIntent(fromIndex: 2, toIndex: 0),
     );
 
@@ -1581,7 +1581,7 @@ void main() {
       ),
     );
 
-    final plan = activeSheet.planCanonicalExerciseReorder(
+    final plan = activeSheet.planCanonicalReorder(
       const ReorderIntent(fromIndex: 2, toIndex: 0),
     );
 
@@ -1609,7 +1609,7 @@ void main() {
         exercisesRows: exercisesRows,
       ),
     );
-    final plan = activeSheet.planCanonicalExerciseReorder(
+    final plan = activeSheet.planCanonicalReorder(
       const ReorderIntent(fromIndex: 0, toIndex: 2),
     );
     final changedSheet = parseActiveSheet(
@@ -1670,7 +1670,7 @@ void main() {
         exercisesRows: exercisesRows,
       ),
     );
-    final plan = activeSheet.planCanonicalExerciseReorder(
+    final plan = activeSheet.planCanonicalReorder(
       const ReorderIntent(fromIndex: 0, toIndex: 2),
     );
     final changedSheet = parseActiveSheet(

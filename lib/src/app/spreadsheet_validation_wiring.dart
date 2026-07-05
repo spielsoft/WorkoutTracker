@@ -3,14 +3,14 @@ import 'package:workout_tracker/google_sheets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
 import 'google_authorization_client.dart';
-import 'google_spreadsheet_validation_service.dart';
+import 'spreadsheet_validation_service.dart';
 import 'spreadsheet_validation_core.dart';
 
 typedef GoogleSheetsWorkbookClientFactory =
     SheetsWorkbookClient Function(sheets.SheetsApi api);
 
-class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
-  GoogleSpreadsheetWorkbookAccess(
+class SpreadsheetAccess implements WorkbookCommandService {
+  SpreadsheetAccess(
     this._googleAccess, {
     GoogleSheetsWorkbookClientFactory? workbookClientFactory,
   }) : _workbookClientFactory =
@@ -21,16 +21,14 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   final GoogleSheetsWorkbookClientFactory _workbookClientFactory;
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) {
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) {
     return _runWritableWorkbook(
       (service) => service.validateSpreadsheet(spreadsheetId),
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -45,7 +43,7 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExerciseDefinition exercise,
@@ -60,7 +58,7 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -77,7 +75,7 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+  Future<ValidationReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -85,7 +83,7 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
     required ExercisePlacementTarget placement,
   }) {
     return _runWritableWorkbook(
-      (service) => service.addExistingExerciseToWorkout(
+      (service) => service.addExerciseToWorkout(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
         exercise: exercise,
@@ -96,7 +94,7 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderCanonicalExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -111,7 +109,7 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+  Future<ValidationReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -128,7 +126,7 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
   }
 
   @override
-  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+  Future<ValidationReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int primarySheetRowNumber,
@@ -142,17 +140,15 @@ class GoogleSpreadsheetWorkbookAccess implements WorkbookCommandService {
     );
   }
 
-  Future<SpreadsheetValidationReport> _runWritableWorkbook(
-    Future<SpreadsheetValidationReport> Function(
-      GoogleSpreadsheetValidationService service,
-    )
+  Future<ValidationReport> _runWritableWorkbook(
+    Future<ValidationReport> Function(SpreadsheetValidationService service)
     action,
   ) {
     return _googleAccess.run(
       scopes: GoogleApisSheetsWorkbookClient.writeScopes,
       action: (resources) {
         final workbookClient = _workbookClientFactory(resources.sheetsApi);
-        final service = GoogleSpreadsheetValidationService(
+        final service = SpreadsheetValidationService(
           readAdapter: GoogleSheetsReadAdapter(client: workbookClient),
           writeAdapter: GoogleSheetsWriteAdapter(client: workbookClient),
         );

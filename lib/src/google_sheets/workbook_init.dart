@@ -1,22 +1,19 @@
 import 'package:googleapis/sheets/v4.dart' as sheets;
 
 import 'workbook_client.dart';
-import 'workout_tracker_workbook_initialization_plan.dart';
-import 'workout_tracker_workbook_template.dart';
+import 'workbook_init_plan.dart';
+import 'workbook_template.dart';
 
-abstract interface class WorkoutTrackerWorkbookInitializer {
+abstract interface class WorkbookInit {
   Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required WorkoutTrackerWorkbook workbook,
+    required Workbook workbook,
   });
 }
 
-class GoogleApisWorkoutTrackerWorkbookInitializer
-    implements WorkoutTrackerWorkbookInitializer {
-  GoogleApisWorkoutTrackerWorkbookInitializer(
-    this._api, {
-    SheetsWorkbookClient? workbookClient,
-  }) : _workbookClient = workbookClient ?? GoogleApisSheetsWorkbookClient(_api);
+class GoogleApisWorkbookInit implements WorkbookInit {
+  GoogleApisWorkbookInit(this._api, {SheetsWorkbookClient? workbookClient})
+    : _workbookClient = workbookClient ?? GoogleApisSheetsWorkbookClient(_api);
 
   final sheets.SheetsApi _api;
   final SheetsWorkbookClient _workbookClient;
@@ -26,7 +23,7 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
   @override
   Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required WorkoutTrackerWorkbook workbook,
+    required Workbook workbook,
   }) async {
     final targets = await _ensureInitializationTargets(spreadsheetId, workbook);
     await _rewriteSheet(
@@ -45,7 +42,7 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
 
   Future<_InitializationTargets> _ensureInitializationTargets(
     String spreadsheetId,
-    WorkoutTrackerWorkbook workbook,
+    Workbook workbook,
   ) async {
     var shape = await _fetchSpreadsheetShape(spreadsheetId);
     if (shape.sheets.isEmpty) {
@@ -114,7 +111,7 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
   Future<void> _rewriteSheet({
     required String spreadsheetId,
     required _SheetShape target,
-    required WorkoutTrackerWorkbookTab tab,
+    required WorkbookTab tab,
     required int frozenRowCount,
   }) async {
     await _api.spreadsheets.values.clear(
@@ -124,7 +121,7 @@ class GoogleApisWorkoutTrackerWorkbookInitializer
       $fields: 'spreadsheetId,clearedRange',
     );
 
-    final plan = WorkoutTrackerWorkbookTabRewritePlan(
+    final plan = WorkbookTabPlan(
       sheetId: target.sheetId,
       tab: tab,
       frozenRowCount: frozenRowCount,

@@ -10,14 +10,14 @@ import 'spreadsheet_selection.dart';
 /// write-plan application behind one GUI-facing Module. Row selections are only
 /// valid while [report] remains current, so the controller clears them whenever
 /// workout or history selection changes or a new report is adopted.
-class WorkoutTrackerController extends ChangeNotifier {
-  WorkoutTrackerController({required this.workbookCommands});
+class AppController extends ChangeNotifier {
+  AppController({required this.workbookCommands});
 
   static const int _loggedSetConfirmationRetryReads = 6;
 
   final WorkbookCommandService workbookCommands;
 
-  SpreadsheetValidationReport? _report;
+  ValidationReport? _report;
   String? _error;
   String? _selectedWorkout;
   String? _selectedHistoryBlock;
@@ -27,7 +27,7 @@ class WorkoutTrackerController extends ChangeNotifier {
   bool _isBusy = false;
   bool _isDisposed = false;
 
-  SpreadsheetValidationReport? get report => _report;
+  ValidationReport? get report => _report;
 
   String? get error => _error;
 
@@ -81,7 +81,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
-  Future<bool> validateSpreadsheetSelection(String selection) async {
+  Future<bool> validateSelection(String selection) async {
     final spreadsheetId = spreadsheetIdFromSelection(selection);
     if (spreadsheetId.isEmpty) {
       _report = null;
@@ -305,7 +305,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     );
   }
 
-  Future<bool> addExistingExerciseToWorkout({
+  Future<bool> addExerciseToWorkout({
     required CanonicalExercise exercise,
     required WorkoutPlacementMetadata metadata,
     required ExercisePlacementTarget placement,
@@ -320,7 +320,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to add exercise',
       action: () async {
-        _report = await workbookCommands.addExistingExerciseToWorkout(
+        _report = await workbookCommands.addExerciseToWorkout(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           exercise: exercise,
@@ -480,7 +480,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void reportSpreadsheetSelectionFailure(Object error) {
+  void reportSelectionFailure(Object error) {
     _error = _formatServiceFailure(
       failurePrefix: 'Unable to choose spreadsheet',
       error: error,
@@ -526,7 +526,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     }
   }
 
-  void _adoptReport(SpreadsheetValidationReport report) {
+  void _adoptReport(ValidationReport report) {
     _report = report;
     _error = null;
     _pendingWorkouts.clear();
@@ -581,7 +581,7 @@ class WorkoutTrackerController extends ChangeNotifier {
 
   Future<void> _adoptConfirmedWriteReport({
     required ActiveSheetWritePlan plan,
-    required SpreadsheetValidationReport firstReport,
+    required ValidationReport firstReport,
   }) async {
     final lastConfirmedReport = _report;
     var latestReport = firstReport;
@@ -636,7 +636,7 @@ class WorkoutTrackerController extends ChangeNotifier {
     }
 
     try {
-      final context = activeSheet.buildExerciseLoggingContext(
+      final context = activeSheet.buildLoggingContext(
         primarySheetRowNumber: primarySheetRowNumber,
         selectedSheetRowNumber: nextSetPosition.sheetRowNumber,
         historyBlockLabel: historyBlockLabel,

@@ -1,4 +1,4 @@
-part of 'workout_tracker_shell.dart';
+part of 'shell.dart';
 
 class _A11yScreen extends StatelessWidget {
   const _A11yScreen({required this.label, required this.child});

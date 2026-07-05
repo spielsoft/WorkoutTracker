@@ -512,9 +512,7 @@ class _CanonicalExerciseWritePlanner {
 
   final _WritePlanningContext context;
 
-  ExercisesWritePlan planCanonicalExerciseAppend(
-    CanonicalExerciseDefinition exercise,
-  ) {
+  ExercisesWritePlan planCanonicalAppend(CanonicalExerciseDefinition exercise) {
     final append = ExercisesRowAppend(
       sheetRowNumber: 2,
       values: _canonicalExerciseRowValues(exercise),
@@ -522,7 +520,7 @@ class _CanonicalExerciseWritePlanner {
     return ExercisesWritePlan(rowAppends: [append]);
   }
 
-  ExercisesWritePlan planCanonicalExerciseUpdate({
+  ExercisesWritePlan planCanonicalUpdate({
     required CanonicalExercise selectedExercise,
     required CanonicalExerciseDefinition exercise,
   }) {
@@ -541,7 +539,7 @@ class _CanonicalExerciseWritePlanner {
     );
   }
 
-  ExercisesWritePlan planCanonicalExerciseReorder(ReorderIntent intent) {
+  ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
     if (context.sheet._exercisesRows.length < 3) {
       return ExercisesWritePlan();
     }
@@ -637,7 +635,7 @@ class _WorkoutRowWritePlanner {
 
   final _WritePlanningContext context;
 
-  ActiveSheetWritePlan planWorkoutExerciseReorder({
+  ActiveSheetWritePlan planExerciseReorder({
     required String workout,
     required ReorderIntent intent,
   }) {
@@ -695,7 +693,7 @@ class _WorkoutRowWritePlanner {
     );
   }
 
-  ActiveSheetWritePlan planPrimaryWorkoutPlacement({
+  ActiveSheetWritePlan planPrimaryPlacement({
     required CanonicalExercise exercise,
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
@@ -713,7 +711,7 @@ class _WorkoutRowWritePlanner {
     );
   }
 
-  ActiveSheetWritePlan planBackupWorkoutPlacement({
+  ActiveSheetWritePlan planBackupPlacement({
     required int primarySheetRowNumber,
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
@@ -737,7 +735,7 @@ class _WorkoutRowWritePlanner {
     );
   }
 
-  ActiveSheetWritePlan planPrimaryWorkoutExerciseDeletion({
+  ActiveSheetWritePlan planPrimaryExerciseDeletion({
     required int primarySheetRowNumber,
   }) {
     final primary = context.primarySlotForRow(primarySheetRowNumber);

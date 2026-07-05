@@ -132,7 +132,7 @@ class ExerciseLoggingFlow {
   }
 
   ExerciseLoggingContext get _context {
-    return _activeSheet.buildExerciseLoggingContext(
+    return _activeSheet.buildLoggingContext(
       primarySheetRowNumber: _primarySheetRowNumber,
       selectedSheetRowNumber: _selectedSheetRowNumber,
       historyBlockLabel: _historyBlockLabel,

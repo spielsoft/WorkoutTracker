@@ -978,12 +978,12 @@ void main() {
         drivePath: 'My Drive / Workouts / 2026 Workouts',
         accountEmail: 'saved@example.com',
       ),
-      googleAuthorization: const GooglePickerAuthorizationSnapshot(
+      pickerAuth: const PickerAuth(
         accessToken: 'restored-picker-token',
         accountEmail: 'saved@example.com',
       ),
     );
-    final accountSession = GooglePickerAuthorizationGateway();
+    final accountSession = PickerAuthGateway();
     final service = TestSpreadsheetValidationService.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -1085,7 +1085,7 @@ void main() {
     'picker sheet selection persists account profile for the avatar',
     (tester) async {
       final store = MemoryAppStateStore(null);
-      final accountSession = GooglePickerAuthorizationGateway();
+      final accountSession = PickerAuthGateway();
       final picker = AuthorizingSpreadsheetPicker(accountSession);
       final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
@@ -1107,9 +1107,9 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(store.googleAuthorization?.accessToken, 'picker-token');
-      expect(store.googleAuthorization?.accountEmail, 'athlete@example.com');
-      expect(store.googleAuthorization?.displayName, 'Athlete Name');
+      expect(store.pickerAuth?.accessToken, 'picker-token');
+      expect(store.pickerAuth?.accountEmail, 'athlete@example.com');
+      expect(store.pickerAuth?.displayName, 'Athlete Name');
 
       await tester.tap(find.byTooltip('Back to sheet selection'));
       await tester.pumpAndSettle();
@@ -1169,7 +1169,7 @@ void main() {
       final picker = CountingSpreadsheetPicker();
       final authorization = Completer<bool>();
       picker.creationAuthorization = authorization.future;
-      final accountSession = GooglePickerAuthorizationGateway();
+      final accountSession = PickerAuthGateway();
       final service = TestSpreadsheetValidationService.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -1221,8 +1221,8 @@ void main() {
     tester,
   ) async {
     final picker = CountingSpreadsheetPicker();
-    final accountSession = GooglePickerAuthorizationGateway(
-      initial: const GooglePickerAuthorizationSnapshot(
+    final accountSession = PickerAuthGateway(
+      initial: const PickerAuth(
         accessToken: 'saved-token',
         accountEmail: 'saved@example.com',
       ),

@@ -31,11 +31,11 @@ void main() {
           '',
         ],
       ]);
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
       controller.openExercise(99);
 
-      final validated = await controller.validateSpreadsheetSelection(
+      final validated = await controller.validateSelection(
         'https://docs.google.com/spreadsheets/d/spreadsheet-id/edit?gid=0#gid=0',
       );
 
@@ -63,11 +63,9 @@ void main() {
         final service = TestSpreadsheetValidationService(
           _parseWorkbookFixture(fixture),
         );
-        final controller = WorkoutTrackerController(workbookCommands: service);
+        final controller = AppController(workbookCommands: service);
 
-        final validated = await controller.validateSpreadsheetSelection(
-          'spreadsheet-id',
-        );
+        final validated = await controller.validateSelection('spreadsheet-id');
 
         expect(validated, isTrue);
         expect(controller.report?.schemaViolations, isNotEmpty);
@@ -100,9 +98,9 @@ void main() {
         ],
         ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '', '', ''],
       ]);
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
       controller.selectLoggingRow(4);
 
@@ -171,9 +169,9 @@ void main() {
           '',
         ],
       ]);
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
       controller.selectWorkout('Missing');
       controller.selectHistoryBlock('Missing');
 
@@ -199,9 +197,9 @@ void main() {
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ['Leg Press', '3', '10', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
     ]);
-    final controller = WorkoutTrackerController(workbookCommands: service);
+    final controller = AppController(workbookCommands: service);
 
-    await controller.validateSpreadsheetSelection('spreadsheet-id');
+    await controller.validateSelection('spreadsheet-id');
     controller.openExercise(3);
     controller.selectLoggingRow(99);
 
@@ -222,9 +220,9 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
         ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '45s@8'],
       ]);
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
       controller.selectWorkout('Legs');
 
       final created = await controller.createHistoryBlock('Week 3');
@@ -268,9 +266,9 @@ void main() {
         ],
         ['Lunge', '2', '10', '7', '90s', '', '', '', 'Legs', '', '50x10@7'],
       ]);
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
 
       final deleted = await controller.deleteWorkoutExercise(
         primarySheetRowNumber: 3,
@@ -296,9 +294,9 @@ void main() {
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
 
       final created = await controller.createHistoryBlock(' Week 1 ');
 
@@ -332,9 +330,9 @@ void main() {
       visibleSheet: visibleSheet,
       currentSheet: changedSheet,
     );
-    final controller = WorkoutTrackerController(workbookCommands: service);
+    final controller = AppController(workbookCommands: service);
 
-    await controller.validateSpreadsheetSelection('spreadsheet-id');
+    await controller.validateSelection('spreadsheet-id');
     final plan = visibleSheet.planSetLoggingWrite(
       historyBlockLabel: 'Week 1',
       sheetRowNumber: 3,
@@ -375,9 +373,9 @@ void main() {
         ),
       );
       final service = _StaleWriteValidationService(visibleSheet);
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
       final plan = visibleSheet.planSetLoggingWrite(
         historyBlockLabel: 'Today',
@@ -386,12 +384,11 @@ void main() {
       );
 
       final saved = await controller.applyActiveSheetWritePlan(plan);
-      final context = controller.report!.activeSheet
-          .buildExerciseLoggingContext(
-            primarySheetRowNumber: 3,
-            selectedSheetRowNumber: 3,
-            historyBlockLabel: 'Today',
-          );
+      final context = controller.report!.activeSheet.buildLoggingContext(
+        primarySheetRowNumber: 3,
+        selectedSheetRowNumber: 3,
+        historyBlockLabel: 'Today',
+      );
 
       expect(saved, isFalse);
       expect(
@@ -449,9 +446,9 @@ void main() {
         writeReportSheet: staleSheet,
         retrySheets: [staleSheet, staleSheet, staleSheet, freshSheet],
       );
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
       final plan = staleSheet.planSetLoggingWrite(
         historyBlockLabel: 'Today',
@@ -460,12 +457,11 @@ void main() {
       );
 
       final saved = await controller.applyActiveSheetWritePlan(plan);
-      final context = controller.report!.activeSheet
-          .buildExerciseLoggingContext(
-            primarySheetRowNumber: 3,
-            selectedSheetRowNumber: 3,
-            historyBlockLabel: 'Today',
-          );
+      final context = controller.report!.activeSheet.buildLoggingContext(
+        primarySheetRowNumber: 3,
+        selectedSheetRowNumber: 3,
+        historyBlockLabel: 'Today',
+      );
 
       expect(saved, isTrue);
       expect(controller.error, isNull);
@@ -527,9 +523,9 @@ void main() {
         writeReportSheet: refreshedSheet,
         retrySheets: [refreshedSheet],
       );
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
       final plan = visibleSheet.planSetLoggingWrite(
         historyBlockLabel: 'Today',
@@ -538,12 +534,11 @@ void main() {
       );
 
       final saved = await controller.applyActiveSheetWritePlan(plan);
-      final context = controller.report!.activeSheet
-          .buildExerciseLoggingContext(
-            primarySheetRowNumber: 3,
-            selectedSheetRowNumber: 3,
-            historyBlockLabel: 'Today',
-          );
+      final context = controller.report!.activeSheet.buildLoggingContext(
+        primarySheetRowNumber: 3,
+        selectedSheetRowNumber: 3,
+        historyBlockLabel: 'Today',
+      );
 
       expect(saved, isFalse);
       expect(
@@ -611,9 +606,9 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: repairedSheet,
       );
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
 
       final repaired = await controller.repairUnambiguousFormulaIssues();
 
@@ -648,9 +643,9 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
       );
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
 
       final repaired = await controller.repairFormulaIssue(
         activeSheetRowNumber: 3,
@@ -680,9 +675,9 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
       );
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
 
       final repaired = await controller.repairFormulaIssue(
         activeSheetRowNumber: 3,
@@ -705,7 +700,7 @@ void main() {
   test(
     'blank spreadsheet selection reports a user error without calling the service',
     () async {
-      final controller = WorkoutTrackerController(
+      final controller = AppController(
         workbookCommands: TestSpreadsheetValidationService.fromRows([
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -713,7 +708,7 @@ void main() {
         ]),
       );
 
-      final validated = await controller.validateSpreadsheetSelection('   ');
+      final validated = await controller.validateSelection('   ');
 
       expect(validated, isFalse);
       expect(controller.error, 'Enter a Google Sheets URL or spreadsheet ID.');
@@ -729,7 +724,7 @@ void main() {
   test(
     'disabled Google Sheets API errors explain the project setup action',
     () async {
-      final controller = WorkoutTrackerController(
+      final controller = AppController(
         workbookCommands: _FailingSpreadsheetValidationService(
           'DetailedApiRequestError(status: 403, message: Google Sheets API '
           'has not been used in project 657151291920 before or it is disabled. '
@@ -738,9 +733,7 @@ void main() {
         ),
       );
 
-      final validated = await controller.validateSpreadsheetSelection(
-        'spreadsheet-id',
-      );
+      final validated = await controller.validateSelection('spreadsheet-id');
 
       expect(validated, isFalse);
       expect(
@@ -766,19 +759,19 @@ void main() {
           ],
         ),
       );
-      final writeCompleter = Completer<SpreadsheetValidationReport>();
+      final writeCompleter = Completer<ValidationReport>();
       final service = _PendingCreateHistoryBlockService(
         activeSheet: activeSheet,
         writeCompleter: writeCompleter,
       );
-      final controller = WorkoutTrackerController(workbookCommands: service);
+      final controller = AppController(workbookCommands: service);
 
-      await controller.validateSpreadsheetSelection('spreadsheet-id');
+      await controller.validateSelection('spreadsheet-id');
 
       final createFuture = controller.createHistoryBlock('Week 2');
       controller.dispose();
       writeCompleter.complete(
-        SpreadsheetValidationReport(
+        ValidationReport(
           spreadsheetId: 'spreadsheet-id',
           activeSheet: activeSheet,
         ),
@@ -800,31 +793,29 @@ class _RejectingWriteValidationService extends WorkbookCommandService {
   final List<ActiveSheetWritePlan> appliedPlans = [];
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    return SpreadsheetValidationReport(
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: visibleSheet,
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     final writeRejections = plan.writeRejections(currentSheet);
     if (writeRejections.isNotEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentSheet,
         writeRejections: writeRejections,
       );
     }
     appliedPlans.add(plan);
-    return SpreadsheetValidationReport(
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: currentSheet,
     );
@@ -838,23 +829,21 @@ class _StaleWriteValidationService extends WorkbookCommandService {
   final List<ActiveSheetWritePlan> appliedPlans = [];
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    return SpreadsheetValidationReport(
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     appliedPlans.add(plan);
-    return SpreadsheetValidationReport(
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: this.activeSheet,
     );
@@ -875,11 +864,9 @@ class _StaleThenFreshWriteValidationService extends WorkbookCommandService {
   int postWriteValidationCount = 0;
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
     if (appliedPlans.isEmpty) {
-      return SpreadsheetValidationReport(
+      return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: initialSheet,
       );
@@ -889,20 +876,20 @@ class _StaleThenFreshWriteValidationService extends WorkbookCommandService {
     final activeSheet = readIndex < _retrySheets.length
         ? _retrySheets[readIndex]
         : _retrySheets.last;
-    return SpreadsheetValidationReport(
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     appliedPlans.add(plan);
-    return SpreadsheetValidationReport(
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: writeReportSheet,
     );
@@ -915,14 +902,12 @@ class _FailingSpreadsheetValidationService extends WorkbookCommandService {
   final String message;
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) {
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) {
     throw StateError(message);
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -938,20 +923,18 @@ class _PendingCreateHistoryBlockService extends WorkbookCommandService {
   });
 
   final ParsedActiveSheet activeSheet;
-  final Completer<SpreadsheetValidationReport> writeCompleter;
+  final Completer<ValidationReport> writeCompleter;
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    return SpreadsheetValidationReport(
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -971,23 +954,21 @@ class _FormulaRepairValidationService extends WorkbookCommandService {
   final List<ActiveSheetWritePlan> appliedPlans = [];
 
   @override
-  Future<SpreadsheetValidationReport> validateSpreadsheet(
-    String spreadsheetId,
-  ) async {
-    return SpreadsheetValidationReport(
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: initialSheet,
     );
   }
 
   @override
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     appliedPlans.add(plan);
-    return SpreadsheetValidationReport(
+    return ValidationReport(
       spreadsheetId: spreadsheetId,
       activeSheet: repairedSheet,
     );

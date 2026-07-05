@@ -1219,64 +1219,59 @@ class _ActiveSheetWritePlanner {
     );
   }
 
-  ExercisesWritePlan planCanonicalExerciseAppend(
-    CanonicalExerciseDefinition exercise,
-  ) {
-    return _canonicalExercises.planCanonicalExerciseAppend(exercise);
+  ExercisesWritePlan planCanonicalAppend(CanonicalExerciseDefinition exercise) {
+    return _canonicalExercises.planCanonicalAppend(exercise);
   }
 
-  ExercisesWritePlan planCanonicalExerciseUpdate({
+  ExercisesWritePlan planCanonicalUpdate({
     required CanonicalExercise selectedExercise,
     required CanonicalExerciseDefinition exercise,
   }) {
-    return _canonicalExercises.planCanonicalExerciseUpdate(
+    return _canonicalExercises.planCanonicalUpdate(
       selectedExercise: selectedExercise,
       exercise: exercise,
     );
   }
 
-  ExercisesWritePlan planCanonicalExerciseReorder(ReorderIntent intent) {
-    return _canonicalExercises.planCanonicalExerciseReorder(intent);
+  ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
+    return _canonicalExercises.planCanonicalReorder(intent);
   }
 
-  ActiveSheetWritePlan planWorkoutExerciseReorder({
+  ActiveSheetWritePlan planExerciseReorder({
     required String workout,
     required ReorderIntent intent,
   }) {
-    return _workoutRows.planWorkoutExerciseReorder(
-      workout: workout,
-      intent: intent,
-    );
+    return _workoutRows.planExerciseReorder(workout: workout, intent: intent);
   }
 
-  ActiveSheetWritePlan planPrimaryWorkoutPlacement({
+  ActiveSheetWritePlan planPrimaryPlacement({
     required CanonicalExercise exercise,
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    return _workoutRows.planPrimaryWorkoutPlacement(
+    return _workoutRows.planPrimaryPlacement(
       exercise: exercise,
       workout: workout,
       metadata: metadata,
     );
   }
 
-  ActiveSheetWritePlan planBackupWorkoutPlacement({
+  ActiveSheetWritePlan planBackupPlacement({
     required int primarySheetRowNumber,
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    return _workoutRows.planBackupWorkoutPlacement(
+    return _workoutRows.planBackupPlacement(
       primarySheetRowNumber: primarySheetRowNumber,
       exercise: exercise,
       metadata: metadata,
     );
   }
 
-  ActiveSheetWritePlan planPrimaryWorkoutExerciseDeletion({
+  ActiveSheetWritePlan planPrimaryExerciseDeletion({
     required int primarySheetRowNumber,
   }) {
-    return _workoutRows.planPrimaryWorkoutExerciseDeletion(
+    return _workoutRows.planPrimaryExerciseDeletion(
       primarySheetRowNumber: primarySheetRowNumber,
     );
   }

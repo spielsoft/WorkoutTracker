@@ -12,7 +12,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('loads Google Picker app config from the bundled JSON asset', () async {
-    final config = await loadGooglePickerAppConfig();
+    final config = await loadPickerAppConfig();
 
     expect(config.clientId, isNotEmpty);
     expect(config.callbackTimeout, const Duration(minutes: 5));
@@ -42,7 +42,7 @@ void main() {
 
     expect(config.clientId, isNotEmpty);
     expect(
-      MobileGoogleDriveSpreadsheetPicker(
+      MobileSpreadsheetPicker(
         config: config,
         callbackReceiverFactory: _unusedCallbackReceiverFactory,
       ).availability.canChoose,
@@ -60,13 +60,12 @@ void main() {
         'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
       );
 
-      final authorizationUrl =
-          MobileGoogleDriveSpreadsheetPicker.googlePickerAuthorizationUrl(
-            clientId: 'client-id.apps.googleusercontent.com',
-            redirectUri: config.hostedCallbackUri,
-            state: 'request-state',
-            loginHint: 'athlete@example.com',
-          );
+      final authorizationUrl = MobileSpreadsheetPicker.pickerAuthorizationUrl(
+        clientId: 'client-id.apps.googleusercontent.com',
+        redirectUri: config.hostedCallbackUri,
+        state: 'request-state',
+        loginHint: 'athlete@example.com',
+      );
 
       expect(authorizationUrl.host, 'accounts.google.com');
       expect(
@@ -105,7 +104,7 @@ void main() {
     () {
       final config = _testGooglePickerConfig();
 
-      final success = validateGooglePickerNativeCallback(
+      final success = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&picked_file_ids=first_sheet,second-sheet',
@@ -120,7 +119,7 @@ void main() {
       ]);
       expect(success.errorMessage, isNull);
 
-      final successWithToken = validateGooglePickerNativeCallback(
+      final successWithToken = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&picked_file_ids=spreadsheet-id'
@@ -153,7 +152,7 @@ void main() {
         'ids',
         'id',
       ]) {
-        final aliasSuccess = validateGooglePickerNativeCallback(
+        final aliasSuccess = validatePickerCallback(
           Uri.parse(
             'workouttracker://google-picker-callback'
             '?state=request-state&$alias=spreadsheet-id',
@@ -168,7 +167,7 @@ void main() {
         );
       }
 
-      final cancelled = validateGooglePickerNativeCallback(
+      final cancelled = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&error=access_denied',
@@ -178,7 +177,7 @@ void main() {
       );
       expect(cancelled.result?.cancelled, isTrue);
 
-      final pickerError = validateGooglePickerNativeCallback(
+      final pickerError = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&error=server_error',
@@ -188,7 +187,7 @@ void main() {
       );
       expect(pickerError.result?.error, 'server_error');
 
-      final missingState = validateGooglePickerNativeCallback(
+      final missingState = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?picked_file_ids=spreadsheet-id',
@@ -199,7 +198,7 @@ void main() {
       expect(missingState.result, isNull);
       expect(missingState.errorMessage, contains('missing request state'));
 
-      final wrongState = validateGooglePickerNativeCallback(
+      final wrongState = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=other-state&picked_file_ids=spreadsheet-id',
@@ -210,7 +209,7 @@ void main() {
       expect(wrongState.result, isNull);
       expect(wrongState.errorMessage, contains('state'));
 
-      final malformedSpreadsheetId = validateGooglePickerNativeCallback(
+      final malformedSpreadsheetId = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&picked_file_ids=spreadsheet.id',
@@ -221,7 +220,7 @@ void main() {
       expect(malformedSpreadsheetId.result, isNull);
       expect(malformedSpreadsheetId.errorMessage, contains('spreadsheet ID'));
 
-      final tokenWithoutSelection = validateGooglePickerNativeCallback(
+      final tokenWithoutSelection = validatePickerCallback(
         Uri.parse(
           'workouttracker://google-picker-callback'
           '?state=request-state&access_token=oauth-token',
@@ -232,7 +231,7 @@ void main() {
       expect(tokenWithoutSelection.result, isNull);
       expect(tokenWithoutSelection.errorMessage, contains('spreadsheet IDs'));
 
-      final unrelated = validateGooglePickerNativeCallback(
+      final unrelated = validatePickerCallback(
         Uri.parse(
           'com.googleusercontent.apps.client:/oauth2redirect'
           '?state=request-state&picked_file_ids=spreadsheet-id',
@@ -275,8 +274,8 @@ void main() {
       final client = _SheetsCreateClient();
       final access = _RecordingScopedGoogleApiAccess(client);
       final initializer = _RecordingWorkbookInitializer(client);
-      final creator = GoogleSheetsSpreadsheetCreator(
-        authorizationGateway: _UnusedGoogleSignInAuthorizationGateway(),
+      final creator = SpreadsheetCreator(
+        authorizationGateway: _UnusedSignInAuthGateway(),
         googleAccess: access,
         workbookInitializerFactory: (_) => initializer,
         titleFactory: () => 'Workout Log',
@@ -296,8 +295,8 @@ void main() {
   );
 }
 
-GooglePickerAppConfig _testGooglePickerConfig() {
-  return GooglePickerAppConfig(
+PickerAppConfig _testGooglePickerConfig() {
+  return PickerAppConfig(
     clientId:
         '657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com',
     callbackTimeout: const Duration(minutes: 5),
@@ -321,7 +320,7 @@ GooglePickerAppConfig _testGooglePickerConfig() {
   );
 }
 
-Future<GooglePickerCallbackReceiver> _unusedCallbackReceiverFactory({
+Future<PickerCallbackReceiver> _unusedCallbackReceiverFactory({
   required String state,
   required Duration timeout,
 }) async {
@@ -378,8 +377,7 @@ class _SheetsCreateClient extends http.BaseClient {
   }
 }
 
-class _RecordingWorkbookInitializer
-    implements WorkoutTrackerWorkbookInitializer {
+class _RecordingWorkbookInitializer implements WorkbookInit {
   _RecordingWorkbookInitializer(this.client);
 
   final _SheetsCreateClient client;
@@ -389,15 +387,14 @@ class _RecordingWorkbookInitializer
   @override
   Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required WorkoutTrackerWorkbook workbook,
+    required Workbook workbook,
   }) async {
     initializedSpreadsheetIds.add(spreadsheetId);
     clientWasOpenDuringInitialization = !client.closed;
   }
 }
 
-class _UnusedGoogleSignInAuthorizationGateway
-    implements GoogleSignInAuthorizationGateway {
+class _UnusedSignInAuthGateway implements SignInAuthGateway {
   @override
   GoogleAccountProfile? get currentAccount => null;
 

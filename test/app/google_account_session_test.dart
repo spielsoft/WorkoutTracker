@@ -6,7 +6,7 @@ void main() {
   test(
     'Picker authorization gateway exposes restored access token headers',
     () async {
-      final gateway = GooglePickerAuthorizationGateway();
+      final gateway = PickerAuthGateway();
 
       await expectLater(
         gateway.authorizationHeaders(
@@ -15,8 +15,8 @@ void main() {
         throwsA(isA<StateError>()),
       );
 
-      gateway.restoreGooglePickerAuthorization(
-        const GooglePickerAuthorizationSnapshot(
+      gateway.restorePickerAuth(
+        const PickerAuth(
           accessToken: 'picker-access-token',
           accountEmail: 'user@example.com',
           displayName: 'User Name',
@@ -42,8 +42,8 @@ void main() {
   );
 
   test('Picker authorization refresh preserves existing account profile', () {
-    final gateway = GooglePickerAuthorizationGateway(
-      initial: const GooglePickerAuthorizationSnapshot(
+    final gateway = PickerAuthGateway(
+      initial: const PickerAuth(
         accessToken: 'old-token',
         accountEmail: 'user@example.com',
         displayName: 'User Name',
@@ -51,9 +51,7 @@ void main() {
       ),
     );
 
-    gateway.updateGooglePickerAuthorization(
-      const GooglePickerAuthorizationSnapshot(accessToken: 'new-token'),
-    );
+    gateway.updatePickerAuth(const PickerAuth(accessToken: 'new-token'));
 
     expect(gateway.currentAuthorization?.accessToken, 'new-token');
     expect(gateway.currentAccount?.email, 'user@example.com');

@@ -30,7 +30,7 @@ void main() {
   test(
     'scoped Google API access requests scopes and closes the authenticated client after the action',
     () async {
-      final gateway = _RecordingGoogleSignInAuthorizationGateway();
+      final gateway = _RecordingSignInAuthGateway();
       final authClient = _CloseTrackingAuthClient();
       final access = GoogleScopedApiAccess(
         authorizationGateway: gateway,
@@ -81,8 +81,8 @@ class _CloseTrackingAuthClient extends http.BaseClient {
   }
 }
 
-class _RecordingGoogleSignInAuthorizationGateway extends ChangeNotifier
-    implements GoogleSignInAuthorizationGateway {
+class _RecordingSignInAuthGateway extends ChangeNotifier
+    implements SignInAuthGateway {
   final List<List<String>> requestedScopes = [];
 
   @override

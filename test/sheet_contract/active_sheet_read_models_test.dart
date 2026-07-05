@@ -24,7 +24,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final context = activeSheet.buildExerciseLoggingContext(
+    final context = activeSheet.buildLoggingContext(
       primarySheetRowNumber: 3,
       selectedSheetRowNumber: 3,
       historyBlockLabel: 'Session A',
@@ -50,7 +50,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final context = activeSheet.buildExerciseLoggingContext(
+    final context = activeSheet.buildLoggingContext(
       primarySheetRowNumber: 3,
       selectedSheetRowNumber: 3,
       historyBlockLabel: 'Session A',
@@ -82,7 +82,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final context = activeSheet.buildExerciseLoggingContext(
+    final context = activeSheet.buildLoggingContext(
       primarySheetRowNumber: 3,
       selectedSheetRowNumber: 3,
       historyBlockLabel: 'Session A',
@@ -151,7 +151,7 @@ void main() {
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
       FormattedLogEntry entryFor(int sheetRowNumber) {
-        final context = activeSheet.buildExerciseLoggingContext(
+        final context = activeSheet.buildLoggingContext(
           primarySheetRowNumber: sheetRowNumber,
           selectedSheetRowNumber: sheetRowNumber,
           historyBlockLabel: 'Session A',
@@ -191,12 +191,12 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final primaryContext = activeSheet.buildExerciseLoggingContext(
+    final primaryContext = activeSheet.buildLoggingContext(
       primarySheetRowNumber: 3,
       selectedSheetRowNumber: 3,
       historyBlockLabel: 'Session A',
     );
-    final backupContext = activeSheet.buildExerciseLoggingContext(
+    final backupContext = activeSheet.buildLoggingContext(
       primarySheetRowNumber: 3,
       selectedSheetRowNumber: 4,
       historyBlockLabel: 'Session A',
@@ -223,7 +223,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final context = activeSheet.buildExerciseLoggingContext(
+    final context = activeSheet.buildLoggingContext(
       primarySheetRowNumber: 3,
       selectedSheetRowNumber: 3,
       historyBlockLabel: 'Session A',
@@ -338,7 +338,7 @@ void main() {
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-      final context = activeSheet.buildExerciseLoggingContext(
+      final context = activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 4,
         historyBlockLabel: 'Session B',
@@ -421,7 +421,7 @@ void main() {
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-      final context = activeSheet.buildExerciseLoggingContext(
+      final context = activeSheet.buildLoggingContext(
         primarySheetRowNumber: 3,
         selectedSheetRowNumber: 3,
         historyBlockLabel: 'Session D',

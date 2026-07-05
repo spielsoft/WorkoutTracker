@@ -1,16 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-const workoutTrackerGoogleSignInClientIdDartDefine =
-    'WORKOUT_TRACKER_GOOGLE_CLIENT_ID';
-const workoutTrackerGoogleSignInClientId = String.fromEnvironment(
-  workoutTrackerGoogleSignInClientIdDartDefine,
-);
-const workoutTrackerGoogleSignInServerClientIdDartDefine =
-    'WORKOUT_TRACKER_GOOGLE_SERVER_CLIENT_ID';
-const workoutTrackerGoogleSignInServerClientId = String.fromEnvironment(
-  workoutTrackerGoogleSignInServerClientIdDartDefine,
-);
+const googleClientIdDef = 'WORKOUT_TRACKER_GOOGLE_CLIENT_ID';
+const googleClientId = String.fromEnvironment(googleClientIdDef);
+const googleServerClientIdDef = 'WORKOUT_TRACKER_GOOGLE_SERVER_CLIENT_ID';
+const googleServerClientId = String.fromEnvironment(googleServerClientIdDef);
 
 class GoogleAccountProfile {
   const GoogleAccountProfile({
@@ -39,25 +33,20 @@ abstract interface class GoogleAccountSession implements Listenable {
   Future<void> signOut();
 }
 
-abstract interface class GoogleSignInAuthorizationGateway
-    implements GoogleAccountSession {
+abstract interface class SignInAuthGateway implements GoogleAccountSession {
   Future<Map<String, String>> authorizationHeaders(List<String> scopes);
 }
 
-abstract interface class GooglePickerAuthorizationStore {
-  GooglePickerAuthorizationSnapshot? get currentAuthorization;
+abstract interface class PickerAuthStore {
+  PickerAuth? get currentAuthorization;
 
-  void restoreGooglePickerAuthorization(
-    GooglePickerAuthorizationSnapshot? authorization,
-  );
+  void restorePickerAuth(PickerAuth? authorization);
 
-  void updateGooglePickerAuthorization(
-    GooglePickerAuthorizationSnapshot authorization,
-  );
+  void updatePickerAuth(PickerAuth authorization);
 }
 
-class GooglePickerAuthorizationSnapshot {
-  const GooglePickerAuthorizationSnapshot({
+class PickerAuth {
+  const PickerAuth({
     required this.accessToken,
     this.accountEmail,
     this.displayName,
@@ -69,10 +58,8 @@ class GooglePickerAuthorizationSnapshot {
   final String? displayName;
   final String? photoUrl;
 
-  GooglePickerAuthorizationSnapshot mergeMissingProfileFrom(
-    GooglePickerAuthorizationSnapshot? existing,
-  ) {
-    return GooglePickerAuthorizationSnapshot(
+  PickerAuth mergeMissingProfileFrom(PickerAuth? existing) {
+    return PickerAuth(
       accessToken: accessToken,
       accountEmail:
           _nonEmpty(accountEmail) ?? _nonEmpty(existing?.accountEmail),
@@ -90,13 +77,13 @@ class GooglePickerAuthorizationSnapshot {
     };
   }
 
-  static GooglePickerAuthorizationSnapshot? fromJson(Object? value) {
+  static PickerAuth? fromJson(Object? value) {
     if (value case <String, Object?>{'accessToken': final String accessToken}) {
       final trimmedToken = accessToken.trim();
       if (trimmedToken.isEmpty) {
         return null;
       }
-      return GooglePickerAuthorizationSnapshot(
+      return PickerAuth(
         accessToken: trimmedToken,
         accountEmail: _nonEmpty(value['accountEmail'] as String?),
         displayName: _nonEmpty(value['displayName'] as String?),
@@ -112,17 +99,14 @@ class GooglePickerAuthorizationSnapshot {
   }
 }
 
-class GooglePickerAuthorizationGateway extends ChangeNotifier
-    implements
-        GoogleSignInAuthorizationGateway,
-        GooglePickerAuthorizationStore {
-  GooglePickerAuthorizationGateway({GooglePickerAuthorizationSnapshot? initial})
-    : _authorization = initial;
+class PickerAuthGateway extends ChangeNotifier
+    implements SignInAuthGateway, PickerAuthStore {
+  PickerAuthGateway({PickerAuth? initial}) : _authorization = initial;
 
-  GooglePickerAuthorizationSnapshot? _authorization;
+  PickerAuth? _authorization;
 
   @override
-  GooglePickerAuthorizationSnapshot? get currentAuthorization => _authorization;
+  PickerAuth? get currentAuthorization => _authorization;
 
   @override
   GoogleAccountProfile? get currentAccount {
@@ -149,7 +133,7 @@ class GooglePickerAuthorizationGateway extends ChangeNotifier
 
   @override
   Future<void> signOut() async {
-    restoreGooglePickerAuthorization(null);
+    restorePickerAuth(null);
   }
 
   @override
@@ -162,28 +146,22 @@ class GooglePickerAuthorizationGateway extends ChangeNotifier
   }
 
   @override
-  void restoreGooglePickerAuthorization(
-    GooglePickerAuthorizationSnapshot? authorization,
-  ) {
+  void restorePickerAuth(PickerAuth? authorization) {
     _authorization = authorization;
     notifyListeners();
   }
 
   @override
-  void updateGooglePickerAuthorization(
-    GooglePickerAuthorizationSnapshot authorization,
-  ) {
-    restoreGooglePickerAuthorization(
-      authorization.mergeMissingProfileFrom(_authorization),
-    );
+  void updatePickerAuth(PickerAuth authorization) {
+    restorePickerAuth(authorization.mergeMissingProfileFrom(_authorization));
   }
 }
 
-class NativeGoogleSignInAuthorizationGateway extends ChangeNotifier
-    implements GoogleSignInAuthorizationGateway {
-  NativeGoogleSignInAuthorizationGateway({
-    this.clientId = workoutTrackerGoogleSignInClientId,
-    this.serverClientId = workoutTrackerGoogleSignInServerClientId,
+class NativeSignInAuthGateway extends ChangeNotifier
+    implements SignInAuthGateway {
+  NativeSignInAuthGateway({
+    this.clientId = googleClientId,
+    this.serverClientId = googleServerClientId,
     GoogleSignIn? signIn,
   }) : _signIn = signIn ?? GoogleSignIn.instance;
 

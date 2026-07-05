@@ -61,7 +61,7 @@ class ParsedActiveSheet {
   /// Callers should pass a [workout] selected from [selectableWorkouts] and a
   /// [historyBlockLabel] selected from [historyBlocks]. The returned slot row
   /// numbers are the only supported primary-row inputs for
-  /// [buildExerciseLoggingContext].
+  /// [buildLoggingContext].
   WorkoutOverview buildWorkoutOverview({
     required String workout,
     required String historyBlockLabel,
@@ -78,12 +78,12 @@ class ParsedActiveSheet {
   /// [buildWorkoutOverview]. [selectedSheetRowNumber] must be either that same
   /// primary row or one of the backup row numbers exposed in the returned
   /// logging choices for that primary row.
-  ExerciseLoggingContext buildExerciseLoggingContext({
+  ExerciseLoggingContext buildLoggingContext({
     required int primarySheetRowNumber,
     required int selectedSheetRowNumber,
     required String historyBlockLabel,
   }) {
-    return _WorkoutReadModelBuilder(this).buildExerciseLoggingContext(
+    return _WorkoutReadModelBuilder(this).buildLoggingContext(
       primarySheetRowNumber: primarySheetRowNumber,
       selectedSheetRowNumber: selectedSheetRowNumber,
       historyBlockLabel: historyBlockLabel,
@@ -108,7 +108,7 @@ class ParsedActiveSheet {
   /// Plans a logged-set write for a parsed exercise row.
   ///
   /// [sheetRowNumber] should come from the read-model row numbers exposed by
-  /// [buildWorkoutOverview] or [buildExerciseLoggingContext]. Invalid row
+  /// [buildWorkoutOverview] or [buildLoggingContext]. Invalid row
   /// numbers or missing history blocks return an empty plan instead of leaking
   /// row-validity checks into callers.
   ActiveSheetWritePlan planSetLoggingWrite({
@@ -166,65 +166,63 @@ class ParsedActiveSheet {
     );
   }
 
-  ExercisesWritePlan planCanonicalExerciseAppend(
-    CanonicalExerciseDefinition exercise,
-  ) {
-    return _ActiveSheetWritePlanner(this).planCanonicalExerciseAppend(exercise);
+  ExercisesWritePlan planCanonicalAppend(CanonicalExerciseDefinition exercise) {
+    return _ActiveSheetWritePlanner(this).planCanonicalAppend(exercise);
   }
 
-  ExercisesWritePlan planCanonicalExerciseUpdate({
+  ExercisesWritePlan planCanonicalUpdate({
     required CanonicalExercise selectedExercise,
     required CanonicalExerciseDefinition exercise,
   }) {
-    return _ActiveSheetWritePlanner(this).planCanonicalExerciseUpdate(
+    return _ActiveSheetWritePlanner(this).planCanonicalUpdate(
       selectedExercise: selectedExercise,
       exercise: exercise,
     );
   }
 
-  ExercisesWritePlan planCanonicalExerciseReorder(ReorderIntent intent) {
-    return _ActiveSheetWritePlanner(this).planCanonicalExerciseReorder(intent);
+  ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
+    return _ActiveSheetWritePlanner(this).planCanonicalReorder(intent);
   }
 
-  ActiveSheetWritePlan planWorkoutExerciseReorder({
+  ActiveSheetWritePlan planExerciseReorder({
     required String workout,
     required ReorderIntent intent,
   }) {
     return _ActiveSheetWritePlanner(
       this,
-    ).planWorkoutExerciseReorder(workout: workout, intent: intent);
+    ).planExerciseReorder(workout: workout, intent: intent);
   }
 
-  ActiveSheetWritePlan planPrimaryWorkoutPlacement({
+  ActiveSheetWritePlan planPrimaryPlacement({
     required CanonicalExercise exercise,
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    return _ActiveSheetWritePlanner(this).planPrimaryWorkoutPlacement(
+    return _ActiveSheetWritePlanner(this).planPrimaryPlacement(
       exercise: exercise,
       workout: workout,
       metadata: metadata,
     );
   }
 
-  ActiveSheetWritePlan planBackupWorkoutPlacement({
+  ActiveSheetWritePlan planBackupPlacement({
     required int primarySheetRowNumber,
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    return _ActiveSheetWritePlanner(this).planBackupWorkoutPlacement(
+    return _ActiveSheetWritePlanner(this).planBackupPlacement(
       primarySheetRowNumber: primarySheetRowNumber,
       exercise: exercise,
       metadata: metadata,
     );
   }
 
-  ActiveSheetWritePlan planPrimaryWorkoutExerciseDeletion({
+  ActiveSheetWritePlan planPrimaryExerciseDeletion({
     required int primarySheetRowNumber,
   }) {
-    return _ActiveSheetWritePlanner(this).planPrimaryWorkoutExerciseDeletion(
-      primarySheetRowNumber: primarySheetRowNumber,
-    );
+    return _ActiveSheetWritePlanner(
+      this,
+    ).planPrimaryExerciseDeletion(primarySheetRowNumber: primarySheetRowNumber);
   }
 
   ActiveSheetWritePlan planFormulaHealing({

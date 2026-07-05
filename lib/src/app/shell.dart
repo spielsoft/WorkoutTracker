@@ -12,14 +12,14 @@ import 'spreadsheet_validation.dart';
 import 'spreadsheet_selection.dart';
 import 'workout_tracker_controller.dart';
 
-part 'workout_tracker_shell_account.dart';
-part 'workout_tracker_shell_workout.dart';
-part 'workout_tracker_shell_exercise_authoring.dart';
-part 'workout_tracker_shell_exercise_manager.dart';
-part 'workout_tracker_shell_visual_states.dart';
-part 'workout_tracker_shell_logging.dart';
-part 'workout_tracker_shell_validation.dart';
-part 'workout_tracker_shell_accessibility.dart';
+part 'shell_account.dart';
+part 'shell_workout.dart';
+part 'shell_exercise_authoring.dart';
+part 'shell_exercise_manager.dart';
+part 'shell_visual_states.dart';
+part 'shell_logging.dart';
+part 'shell_validation.dart';
+part 'shell_accessibility.dart';
 
 const _compactSegmentedButtonRadius = 8.0;
 
@@ -81,7 +81,7 @@ class WorkoutTrackerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7C66)),
         useMaterial3: true,
       ),
-      scrollBehavior: const WorkoutTrackerScrollBehavior(),
+      scrollBehavior: const AppScrollBehavior(),
       home: SpreadsheetValidationShell(
         workbookCommands: workbookCommands,
         accountSession: accountSession,
@@ -95,8 +95,8 @@ class WorkoutTrackerApp extends StatelessWidget {
   }
 }
 
-class WorkoutTrackerScrollBehavior extends MaterialScrollBehavior {
-  const WorkoutTrackerScrollBehavior();
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
 
   @override
   Set<PointerDeviceKind> get dragDevices {
@@ -434,22 +434,20 @@ class SpreadsheetValidationShell extends StatefulWidget {
 class _SpreadsheetValidationShellState
     extends State<SpreadsheetValidationShell> {
   late final TextEditingController _spreadsheetController;
-  late final WorkoutTrackerController _controller;
+  late final AppController _controller;
   _WorkoutTrackerScreen _screen = _WorkoutTrackerScreen.sheetSelection;
   _WorkoutTrackerScreen _exerciseAddReturnScreen =
       _WorkoutTrackerScreen.exercisePicker;
   _AddExercisePlacementIntent? _addExercisePlacementIntent;
   CanonicalExercise? _canonicalExerciseBeingEdited;
   int? _highlightedCanonicalExerciseSheetRowNumber;
-  GoogleWorkspaceAccessStateOwner? _accessStateController;
-  late final GoogleWorkspaceLifecycleController _workspaceLifecycle;
+  WorkspaceStateOwner? _accessStateController;
+  late final WorkspaceController _workspaceLifecycle;
 
   @override
   void initState() {
     super.initState();
-    _controller = WorkoutTrackerController(
-      workbookCommands: widget.workbookCommands,
-    );
+    _controller = AppController(workbookCommands: widget.workbookCommands);
     _spreadsheetController = TextEditingController(
       text:
           widget.initialSelectedSpreadsheet?.spreadsheetId ??
@@ -457,11 +455,9 @@ class _SpreadsheetValidationShellState
     );
     final appStateStore = widget.appStateStore;
     if (appStateStore != null) {
-      _accessStateController = GoogleWorkspaceAccessStateController(
-        appStateStore,
-      );
+      _accessStateController = WorkspaceStateController(appStateStore);
     }
-    _workspaceLifecycle = GoogleWorkspaceLifecycleController(
+    _workspaceLifecycle = WorkspaceController(
       accessStateOwner: _accessStateController,
       accountSession: widget.accountSession,
       spreadsheetPicker: widget.spreadsheetPicker,
@@ -480,7 +476,7 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _restoreStartupState() async {
-    GoogleWorkspaceState workspaceState;
+    WorkspaceUiState workspaceState;
     try {
       workspaceState = await _workspaceLifecycle.restoreResolvedSelection();
     } on Object {
@@ -490,7 +486,7 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _restoreSpreadsheetSelection(
-    GoogleWorkspaceState workspaceState,
+    WorkspaceUiState workspaceState,
   ) async {
     if (!mounted) {
       return;
@@ -529,9 +525,7 @@ class _SpreadsheetValidationShellState
   Future<void> _validateSelectedSpreadsheet() async {
     final selectedSpreadsheet = _workspaceLifecycle.state.selectedSpreadsheet;
     final selected = selectedSpreadsheet == null
-        ? await _controller.validateSpreadsheetSelection(
-            _spreadsheetController.text,
-          )
+        ? await _controller.validateSelection(_spreadsheetController.text)
         : await _controller.validateSelectedSpreadsheet(selectedSpreadsheet);
     final report = _controller.report;
     if (!mounted) {
@@ -549,12 +543,12 @@ class _SpreadsheetValidationShellState
       final workspaceState = await _workspaceLifecycle.chooseSpreadsheet();
       await _validateWorkspaceSelectedSpreadsheet(workspaceState);
     } on Object catch (error) {
-      _controller.reportSpreadsheetSelectionFailure(error);
+      _controller.reportSelectionFailure(error);
     }
   }
 
   Future<void> _createSpreadsheet() async {
-    final hasGoogleAccount = await _authorizeSpreadsheetCreation();
+    final hasGoogleAccount = await _authorizeSheetCreation();
     if (!mounted || !hasGoogleAccount) {
       return;
     }
@@ -569,13 +563,13 @@ class _SpreadsheetValidationShellState
       );
       await _validateWorkspaceSelectedSpreadsheet(workspaceState);
     } on Object catch (error) {
-      _controller.reportSpreadsheetSelectionFailure(error);
+      _controller.reportSelectionFailure(error);
     }
   }
 
-  Future<bool> _authorizeSpreadsheetCreation() async {
+  Future<bool> _authorizeSheetCreation() async {
     try {
-      return await _workspaceLifecycle.authorizeSpreadsheetCreation();
+      return await _workspaceLifecycle.authorizeSheetCreation();
     } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -587,7 +581,7 @@ class _SpreadsheetValidationShellState
   }
 
   Future<void> _validateWorkspaceSelectedSpreadsheet(
-    GoogleWorkspaceState workspaceState,
+    WorkspaceUiState workspaceState,
   ) async {
     final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
     if (!mounted || selectedSpreadsheet == null) {
@@ -974,7 +968,7 @@ class _SpreadsheetValidationShellState
     if (intent == null) {
       return false;
     }
-    return _controller.addExistingExerciseToWorkout(
+    return _controller.addExerciseToWorkout(
       exercise: draft.exercise,
       metadata: draft.metadata,
       placement: switch (intent.kind) {

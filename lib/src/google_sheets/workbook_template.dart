@@ -6,23 +6,18 @@ import 'package:workout_tracker/sheet_contract.dart';
 const defaultExerciseDefaultsAsset =
     'assets/exercise_defaults/default_exercises.json';
 
-class WorkoutTrackerWorkbook {
-  WorkoutTrackerWorkbook({
-    required this.activeSheet,
-    required this.exercisesSheet,
-  });
+class Workbook {
+  Workbook({required this.activeSheet, required this.exercisesSheet});
 
-  final WorkoutTrackerWorkbookTab activeSheet;
-  final WorkoutTrackerWorkbookTab exercisesSheet;
+  final WorkbookTab activeSheet;
+  final WorkbookTab exercisesSheet;
 }
 
-class WorkoutTrackerWorkbookTab {
-  WorkoutTrackerWorkbookTab({
-    required this.title,
-    required Iterable<Iterable<String>> rows,
-  }) : rows = List<List<String>>.unmodifiable(
-         rows.map((row) => List<String>.unmodifiable(row)),
-       );
+class WorkbookTab {
+  WorkbookTab({required this.title, required Iterable<Iterable<String>> rows})
+    : rows = List<List<String>>.unmodifiable(
+        rows.map((row) => List<String>.unmodifiable(row)),
+      );
 
   final String title;
   final List<List<String>> rows;
@@ -38,7 +33,7 @@ class WorkoutTrackerWorkbookTab {
   }
 }
 
-Future<WorkoutTrackerWorkbook> loadWorkoutTrackerWorkbookTemplate({
+Future<Workbook> loadWorkbookTemplate({
   AssetBundle? bundle,
   String exerciseDefaultsAsset = defaultExerciseDefaultsAsset,
 }) async {
@@ -46,7 +41,7 @@ Future<WorkoutTrackerWorkbook> loadWorkoutTrackerWorkbookTemplate({
     bundle: bundle,
     assetPath: exerciseDefaultsAsset,
   );
-  return workoutTrackerWorkbookTemplate(exerciseDefaults: defaults);
+  return workbookTemplate(exerciseDefaults: defaults);
 }
 
 Future<List<CanonicalExerciseDefinition>> loadExerciseDefaults({
@@ -63,20 +58,20 @@ Future<List<CanonicalExerciseDefinition>> loadExerciseDefaults({
   );
 }
 
-WorkoutTrackerWorkbook workoutTrackerWorkbookTemplate({
+Workbook workbookTemplate({
   required Iterable<CanonicalExerciseDefinition> exerciseDefaults,
 }) {
   final sortedExerciseDefaults = [...exerciseDefaults]
     ..sort(_compareExerciseDefaults);
-  final exercisesSheet = WorkoutTrackerWorkbookTab(
+  final exercisesSheet = WorkbookTab(
     title: 'Exercises',
     rows: [
       exercisesSheetColumns,
       for (final exercise in sortedExerciseDefaults) _exerciseRow(exercise),
     ],
   );
-  return WorkoutTrackerWorkbook(
-    activeSheet: WorkoutTrackerWorkbookTab(
+  return Workbook(
+    activeSheet: WorkbookTab(
       title: 'Active Workout',
       rows: const [activeSheetFixedColumns],
     ),

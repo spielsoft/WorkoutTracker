@@ -89,7 +89,7 @@ class _RecordingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<bool> authorizeSpreadsheetCreation() async {
+  Future<bool> authorizeSheetCreation() async {
     return true;
   }
 
@@ -100,7 +100,7 @@ class _RecordingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+  Future<SelectedSpreadsheet> resolveSelection(
     SelectedSpreadsheet selected,
   ) async {
     return selected;

@@ -1,4 +1,4 @@
-part of 'workout_tracker_shell.dart';
+part of 'shell.dart';
 
 const _addWorkoutMenuValue = '__workout_tracker_add_workout__';
 const _addHistoryBlockMenuValue = '__workout_tracker_add_history_block__';

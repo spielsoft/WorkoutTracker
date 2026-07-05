@@ -1,4 +1,4 @@
-part of 'workout_tracker_shell.dart';
+part of 'shell.dart';
 
 class _GoogleAccountMenu extends StatefulWidget {
   const _GoogleAccountMenu({

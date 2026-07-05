@@ -5,9 +5,9 @@ import 'package:workout_tracker/workout_tracker_app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final appLinks = AppLinks();
-  final googlePickerConfig = await loadGooglePickerAppConfig();
-  final googleSignInGateway = GooglePickerAuthorizationGateway();
-  final googleSpreadsheetService = GoogleSpreadsheetWorkbookAccess(
+  final googlePickerConfig = await loadPickerAppConfig();
+  final googleSignInGateway = PickerAuthGateway();
+  final googleSpreadsheetService = SpreadsheetAccess(
     GoogleScopedApiAccess(authorizationGateway: googleSignInGateway),
   );
   runApp(
@@ -15,18 +15,18 @@ Future<void> main() async {
       workbookCommands: googleSpreadsheetService,
       accountSession: googleSignInGateway,
       appStateStore: const FileAppStateStore(),
-      spreadsheetPicker: MobileGoogleDriveSpreadsheetPicker(
+      spreadsheetPicker: MobileSpreadsheetPicker(
         config: googlePickerConfig,
         authorizationGateway: googleSignInGateway,
         callbackReceiverFactory: ({required state, required timeout}) async {
-          return NativeGooglePickerCallbackReceiver(
+          return NativePickerCallbackReceiver(
             state: state,
             config: googlePickerConfig,
             timeout: timeout,
             uriLinkStream: appLinks.uriLinkStream,
           );
         },
-        spreadsheetCreator: GoogleSheetsSpreadsheetCreator(
+        spreadsheetCreator: SpreadsheetCreator(
           authorizationGateway: googleSignInGateway,
         ),
       ),

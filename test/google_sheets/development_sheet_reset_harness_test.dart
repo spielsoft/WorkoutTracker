@@ -77,7 +77,7 @@ void main() {
   test(
     'plans workbook seeding through workbook operations and keeps formatting requests local',
     () {
-      final tab = WorkoutTrackerWorkbookTab(
+      final tab = WorkbookTab(
         title: 'Active Workout',
         rows: [
           ['Exercise', 'Tempo', 'History'],
@@ -86,11 +86,7 @@ void main() {
         ],
       );
 
-      final plan = WorkoutTrackerWorkbookTabRewritePlan(
-        sheetId: 42,
-        tab: tab,
-        frozenRowCount: 1,
-      );
+      final plan = WorkbookTabPlan(sheetId: 42, tab: tab, frozenRowCount: 1);
 
       final textFormatRequest = plan.requests.singleWhere(
         (request) =>
@@ -192,14 +188,14 @@ void main() {
   );
 }
 
-class _FakeWorkbookInitializer implements WorkoutTrackerWorkbookInitializer {
+class _FakeWorkbookInitializer implements WorkbookInit {
   final initializedSpreadsheetIds = <String>[];
-  final workbooks = <WorkoutTrackerWorkbook>[];
+  final workbooks = <Workbook>[];
 
   @override
   Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required WorkoutTrackerWorkbook workbook,
+    required Workbook workbook,
   }) async {
     initializedSpreadsheetIds.add(spreadsheetId);
     workbooks.add(workbook);

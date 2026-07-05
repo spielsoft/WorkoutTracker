@@ -1,4 +1,4 @@
-part of 'workout_tracker_shell.dart';
+part of 'shell.dart';
 
 class _ExerciseManagerInventory extends StatelessWidget {
   const _ExerciseManagerInventory({

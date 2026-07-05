@@ -9,7 +9,7 @@ abstract class WorkbookCommandService {
   /// The returned [ParsedActiveSheet] becomes the ordering source for every
   /// later workout, history-block, and row selection passed back through this
   /// Interface.
-  Future<SpreadsheetValidationReport> validateSpreadsheet(String spreadsheetId);
+  Future<ValidationReport> validateSpreadsheet(String spreadsheetId);
 
   /// Applies [plan] to the active sheet and rereads the spreadsheet.
   ///
@@ -17,13 +17,13 @@ abstract class WorkbookCommandService {
   /// same [activeSheet] they pass here. The sheet contract Module owns row and
   /// history-block validity; callers should pass row numbers obtained from the
   /// parsed read models rather than inventing them.
-  Future<SpreadsheetValidationReport> applyActiveSheetWritePlan({
+  Future<ValidationReport> applyActiveSheetWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   });
 
-  Future<SpreadsheetValidationReport> createCanonicalExercise({
+  Future<ValidationReport> createCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExerciseDefinition exercise,
@@ -31,7 +31,7 @@ abstract class WorkbookCommandService {
     throw UnsupportedError('Exercise authoring is not supported.');
   }
 
-  Future<SpreadsheetValidationReport> updateCanonicalExercise({
+  Future<ValidationReport> updateCanonicalExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -40,7 +40,7 @@ abstract class WorkbookCommandService {
     throw UnsupportedError('Exercise authoring is not supported.');
   }
 
-  Future<SpreadsheetValidationReport> addExistingExerciseToWorkout({
+  Future<ValidationReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -50,7 +50,7 @@ abstract class WorkbookCommandService {
     throw UnsupportedError('Exercise placement is not supported.');
   }
 
-  Future<SpreadsheetValidationReport> reorderCanonicalExercises({
+  Future<ValidationReport> reorderCanonicalExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -58,7 +58,7 @@ abstract class WorkbookCommandService {
     throw UnsupportedError('Exercise reorder is not supported.');
   }
 
-  Future<SpreadsheetValidationReport> reorderWorkoutExercises({
+  Future<ValidationReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -67,7 +67,7 @@ abstract class WorkbookCommandService {
     throw UnsupportedError('Workout exercise reorder is not supported.');
   }
 
-  Future<SpreadsheetValidationReport> deleteWorkoutExercise({
+  Future<ValidationReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required int primarySheetRowNumber,
@@ -108,8 +108,8 @@ class UrlLauncherSpreadsheetOpener implements SpreadsheetOpener {
   }
 }
 
-class SpreadsheetValidationReport {
-  SpreadsheetValidationReport({
+class ValidationReport {
+  ValidationReport({
     required this.spreadsheetId,
     required this.activeSheet,
     Iterable<ActiveSheetWriteRejection> writeRejections = const [],

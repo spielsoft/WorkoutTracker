@@ -1,4 +1,4 @@
-part of 'workout_tracker_shell.dart';
+part of 'shell.dart';
 
 enum _WorkoutVisualState { logged, current, backup, warning, error }
 

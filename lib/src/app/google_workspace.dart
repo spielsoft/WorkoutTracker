@@ -8,8 +8,8 @@ import 'spreadsheet_selection.dart';
 const _pickerNotConfiguredReason =
     'Google Drive Picker is not configured for this build.';
 
-class GoogleWorkspaceState {
-  const GoogleWorkspaceState({
+class WorkspaceUiState {
+  const WorkspaceUiState({
     this.selectedSpreadsheet,
     this.pastedSpreadsheetText,
     this.accountProfile,
@@ -22,7 +22,7 @@ class GoogleWorkspaceState {
   final SelectedSpreadsheet? selectedSpreadsheet;
   final String? pastedSpreadsheetText;
   final GoogleAccountProfile? accountProfile;
-  final GooglePickerAuthorizationSnapshot? pickerAuthorization;
+  final PickerAuth? pickerAuthorization;
   final WorkoutSelectionState? workoutSelection;
   final bool isCommandInFlight;
   final SpreadsheetPickerAvailability pickerAvailability;
@@ -32,44 +32,41 @@ class GoogleWorkspaceState {
   }
 }
 
-abstract interface class GoogleWorkspaceLifecycle implements Listenable {
-  GoogleWorkspaceState get state;
+abstract interface class WorkspaceLifecycle implements Listenable {
+  WorkspaceUiState get state;
 
-  Future<GoogleWorkspaceState> restore();
+  Future<WorkspaceUiState> restore();
 
-  Future<GoogleWorkspaceState> restoreResolvedSelection();
+  Future<WorkspaceUiState> restoreResolvedSelection();
 
-  Future<GoogleWorkspaceState> persistPastedSpreadsheetText(String text);
+  Future<WorkspaceUiState> persistPastedSpreadsheetText(String text);
 
-  Future<GoogleWorkspaceState> usePastedSpreadsheetText(String text);
+  Future<WorkspaceUiState> usePastedSpreadsheetText(String text);
 
-  Future<GoogleWorkspaceState> adoptSelectedSpreadsheet(
+  Future<WorkspaceUiState> adoptSelectedSpreadsheet(
     SelectedSpreadsheet selected,
   );
 
-  Future<GoogleWorkspaceState> chooseSpreadsheet();
+  Future<WorkspaceUiState> chooseSpreadsheet();
 
-  Future<bool> authorizeSpreadsheetCreation();
+  Future<bool> authorizeSheetCreation();
 
-  Future<GoogleWorkspaceState> createSpreadsheet({String? name});
+  Future<WorkspaceUiState> createSpreadsheet({String? name});
 
-  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
-    SelectedSpreadsheet selected,
-  );
+  Future<SelectedSpreadsheet> resolveSelection(SelectedSpreadsheet selected);
 
-  Future<GoogleWorkspaceState> signOut();
+  Future<WorkspaceUiState> signOut();
 
-  Future<GoogleWorkspaceState> persistWorkoutSelection(
+  Future<WorkspaceUiState> persistWorkoutSelection(
     WorkoutSelectionState selection,
   );
 
   WorkoutSelectionState? workoutSelectionFor(String spreadsheetId);
 }
 
-class GoogleWorkspaceLifecycleController extends ChangeNotifier
-    implements GoogleWorkspaceLifecycle {
-  GoogleWorkspaceLifecycleController({
-    GoogleWorkspaceAccessStateOwner? accessStateOwner,
+class WorkspaceController extends ChangeNotifier implements WorkspaceLifecycle {
+  WorkspaceController({
+    WorkspaceStateOwner? accessStateOwner,
     GoogleAccountSession? accountSession,
     SpreadsheetPicker? spreadsheetPicker,
     String initialSpreadsheetText = '',
@@ -79,7 +76,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
        _spreadsheetPicker = spreadsheetPicker,
        _initialSpreadsheetText = initialSpreadsheetText,
        _initialSelectedSpreadsheet = initialSelectedSpreadsheet,
-       _state = GoogleWorkspaceState(
+       _state = WorkspaceUiState(
          selectedSpreadsheet: initialSelectedSpreadsheet,
          pastedSpreadsheetText: _trimmedOrNull(initialSpreadsheetText),
          accountProfile: accountSession?.currentAccount,
@@ -89,27 +86,26 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
          pickerAvailability: _availabilityFor(spreadsheetPicker),
        );
 
-  final GoogleWorkspaceAccessStateOwner? _accessState;
+  final WorkspaceStateOwner? _accessState;
   final GoogleAccountSession? _accountSession;
   final SpreadsheetPicker? _spreadsheetPicker;
   final String _initialSpreadsheetText;
   final SelectedSpreadsheet? _initialSelectedSpreadsheet;
-  GoogleWorkspaceState _state;
+  WorkspaceUiState _state;
   bool _isCommandInFlight = false;
 
   @override
-  GoogleWorkspaceState get state => _state;
+  WorkspaceUiState get state => _state;
 
   @override
-  Future<GoogleWorkspaceState> restore() async {
+  Future<WorkspaceUiState> restore() async {
     await _restoreAccount();
     final restoredAccessState = await _restoreAccessState();
-    final accessState =
-        restoredAccessState ?? const GoogleWorkspaceAccessState();
+    final accessState = restoredAccessState ?? const WorkspaceAccessState();
     if (restoredAccessState != null) {
-      _restorePickerAuthorization(accessState.googleAuthorization);
+      _restorePickerAuthorization(accessState.pickerAuth);
     }
-    _state = GoogleWorkspaceState(
+    _state = WorkspaceUiState(
       selectedSpreadsheet:
           accessState.selectedSpreadsheet ?? _initialSelectedSpreadsheet,
       pastedSpreadsheetText:
@@ -126,24 +122,24 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<GoogleWorkspaceState> restoreResolvedSelection() async {
+  Future<WorkspaceUiState> restoreResolvedSelection() async {
     final restored = await restore();
     final selected = restored.selectedSpreadsheet;
     if (selected == null) {
       return restored;
     }
-    await resolveSelectedSpreadsheet(selected);
+    await resolveSelection(selected);
     return _state;
   }
 
   @override
-  Future<GoogleWorkspaceState> persistPastedSpreadsheetText(String text) async {
+  Future<WorkspaceUiState> persistPastedSpreadsheetText(String text) async {
     final persistedText = _trimmedOrNull(text);
     await _updateAccessStateBestEffort(
-      (accessState) => GoogleWorkspaceAccessState(
+      (accessState) => WorkspaceAccessState(
         spreadsheetText: persistedText,
         selectedSpreadsheet: accessState.selectedSpreadsheet,
-        googleAuthorization: accessState.googleAuthorization,
+        pickerAuth: accessState.pickerAuth,
         workoutSelection: accessState.workoutSelection,
       ),
     );
@@ -158,13 +154,13 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<GoogleWorkspaceState> usePastedSpreadsheetText(String text) async {
+  Future<WorkspaceUiState> usePastedSpreadsheetText(String text) async {
     final persistedText = _trimmedOrNull(text);
     final updatedAccessState = await _updateAccessStateBestEffort(
-      (accessState) => GoogleWorkspaceAccessState(
+      (accessState) => WorkspaceAccessState(
         spreadsheetText: persistedText,
         selectedSpreadsheet: null,
-        googleAuthorization: accessState.googleAuthorization,
+        pickerAuth: accessState.pickerAuth,
         workoutSelection: null,
       ),
     );
@@ -173,8 +169,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
         selectedSpreadsheet: null,
         pastedSpreadsheetText: persistedText,
         pickerAuthorization:
-            updatedAccessState?.googleAuthorization ??
-            _state.pickerAuthorization,
+            updatedAccessState?.pickerAuth ?? _state.pickerAuthorization,
         workoutSelection: null,
       ),
     );
@@ -182,15 +177,15 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<GoogleWorkspaceState> adoptSelectedSpreadsheet(
+  Future<WorkspaceUiState> adoptSelectedSpreadsheet(
     SelectedSpreadsheet selected,
   ) async {
     final authorization = _currentPickerAuthorization(_accountSession);
     final updatedAccessState = await _updateAccessStateBestEffort(
-      (accessState) => GoogleWorkspaceAccessState(
+      (accessState) => WorkspaceAccessState(
         spreadsheetText: selected.spreadsheetId,
         selectedSpreadsheet: selected,
-        googleAuthorization: authorization ?? accessState.googleAuthorization,
+        pickerAuth: authorization ?? accessState.pickerAuth,
         workoutSelection: accessState.workoutSelection,
       ),
     );
@@ -198,8 +193,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
       _stateWith(
         selectedSpreadsheet: selected,
         pastedSpreadsheetText: selected.spreadsheetId,
-        pickerAuthorization:
-            authorization ?? updatedAccessState?.googleAuthorization,
+        pickerAuthorization: authorization ?? updatedAccessState?.pickerAuth,
         workoutSelection:
             updatedAccessState?.workoutSelection ?? _state.workoutSelection,
       ),
@@ -208,7 +202,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<GoogleWorkspaceState> chooseSpreadsheet() async {
+  Future<WorkspaceUiState> chooseSpreadsheet() async {
     final picker = _spreadsheetPicker;
     if (picker == null) {
       return _state;
@@ -223,7 +217,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<bool> authorizeSpreadsheetCreation() async {
+  Future<bool> authorizeSheetCreation() async {
     if (_isCommandInFlight) {
       return false;
     }
@@ -231,7 +225,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
     try {
       final picker = _spreadsheetPicker;
       if (picker != null) {
-        return await picker.authorizeSpreadsheetCreation();
+        return await picker.authorizeSheetCreation();
       }
 
       final accountSession = _accountSession;
@@ -248,7 +242,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<GoogleWorkspaceState> createSpreadsheet({String? name}) async {
+  Future<WorkspaceUiState> createSpreadsheet({String? name}) async {
     final picker = _spreadsheetPicker;
     if (picker == null) {
       return _state;
@@ -263,7 +257,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelectedSpreadsheet(
+  Future<SelectedSpreadsheet> resolveSelection(
     SelectedSpreadsheet selected,
   ) async {
     final picker = _spreadsheetPicker;
@@ -271,7 +265,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
       return selected;
     }
     try {
-      final resolved = await picker.resolveSelectedSpreadsheet(selected);
+      final resolved = await picker.resolveSelection(selected);
       await adoptSelectedSpreadsheet(resolved);
       return resolved;
     } on Object {
@@ -280,14 +274,14 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<GoogleWorkspaceState> persistWorkoutSelection(
+  Future<WorkspaceUiState> persistWorkoutSelection(
     WorkoutSelectionState selection,
   ) async {
     final updatedAccessState = await _updateAccessStateBestEffort(
-      (accessState) => GoogleWorkspaceAccessState(
+      (accessState) => WorkspaceAccessState(
         spreadsheetText: accessState.spreadsheetText,
         selectedSpreadsheet: accessState.selectedSpreadsheet,
-        googleAuthorization: accessState.googleAuthorization,
+        pickerAuth: accessState.pickerAuth,
         workoutSelection: selection,
       ),
     );
@@ -296,8 +290,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
         selectedSpreadsheet: _state.selectedSpreadsheet,
         pastedSpreadsheetText: _state.pastedSpreadsheetText,
         pickerAuthorization:
-            updatedAccessState?.googleAuthorization ??
-            _state.pickerAuthorization,
+            updatedAccessState?.pickerAuth ?? _state.pickerAuthorization,
         workoutSelection: selection,
       ),
     );
@@ -314,7 +307,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
   }
 
   @override
-  Future<GoogleWorkspaceState> signOut() async {
+  Future<WorkspaceUiState> signOut() async {
     if (_isCommandInFlight) {
       return _state;
     }
@@ -323,7 +316,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
       await _accountSession?.signOut();
       await _accessState?.clear();
       _setState(
-        GoogleWorkspaceState(
+        WorkspaceUiState(
           selectedSpreadsheet: null,
           pastedSpreadsheetText: null,
           accountProfile: _accountSession?.currentAccount,
@@ -347,7 +340,7 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
     }
   }
 
-  Future<GoogleWorkspaceAccessState?> _restoreAccessState() async {
+  Future<WorkspaceAccessState?> _restoreAccessState() async {
     try {
       return await _accessState?.restore();
     } on Object {
@@ -355,18 +348,15 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
     }
   }
 
-  void _restorePickerAuthorization(
-    GooglePickerAuthorizationSnapshot? authorization,
-  ) {
+  void _restorePickerAuthorization(PickerAuth? authorization) {
     final accountSession = _accountSession;
-    if (accountSession case final GooglePickerAuthorizationStore store) {
-      store.restoreGooglePickerAuthorization(authorization);
+    if (accountSession case final PickerAuthStore store) {
+      store.restorePickerAuth(authorization);
     }
   }
 
-  Future<GoogleWorkspaceAccessState?> _updateAccessStateBestEffort(
-    GoogleWorkspaceAccessState Function(GoogleWorkspaceAccessState current)
-    updateState,
+  Future<WorkspaceAccessState?> _updateAccessStateBestEffort(
+    WorkspaceAccessState Function(WorkspaceAccessState current) updateState,
   ) async {
     try {
       return await _accessState?.update(updateState);
@@ -375,13 +365,13 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
     }
   }
 
-  void _setState(GoogleWorkspaceState state) {
+  void _setState(WorkspaceUiState state) {
     _state = state;
     notifyListeners();
   }
 
-  Future<GoogleWorkspaceState> _runStateCommand(
-    Future<GoogleWorkspaceState> Function() action,
+  Future<WorkspaceUiState> _runStateCommand(
+    Future<WorkspaceUiState> Function() action,
   ) async {
     if (_isCommandInFlight) {
       return _state;
@@ -420,14 +410,14 @@ class GoogleWorkspaceLifecycleController extends ChangeNotifier
     );
   }
 
-  GoogleWorkspaceState _stateWith({
+  WorkspaceUiState _stateWith({
     required SelectedSpreadsheet? selectedSpreadsheet,
     required String? pastedSpreadsheetText,
-    GooglePickerAuthorizationSnapshot? pickerAuthorization,
+    PickerAuth? pickerAuthorization,
     required WorkoutSelectionState? workoutSelection,
     bool? isCommandInFlight,
   }) {
-    return GoogleWorkspaceState(
+    return WorkspaceUiState(
       selectedSpreadsheet: selectedSpreadsheet,
       pastedSpreadsheetText: pastedSpreadsheetText,
       accountProfile: _accountSession?.currentAccount,
@@ -448,10 +438,8 @@ SpreadsheetPickerAvailability _availabilityFor(SpreadsheetPicker? picker) {
       );
 }
 
-GooglePickerAuthorizationSnapshot? _currentPickerAuthorization(
-  GoogleAccountSession? accountSession,
-) {
-  if (accountSession case final GooglePickerAuthorizationStore store) {
+PickerAuth? _currentPickerAuthorization(GoogleAccountSession? accountSession) {
+  if (accountSession case final PickerAuthStore store) {
     return store.currentAuthorization;
   }
   return null;
