@@ -435,11 +435,11 @@ class _AppShellState extends State<AppShell> {
   late final TextEditingController _spreadsheetController;
   late final AppController _controller;
   _AppScreen _screen = _AppScreen.sheetSelection;
-  _AppScreen _exerciseAddReturnScreen = _AppScreen.exercisePicker;
+  _AppScreen _addReturnScreen = _AppScreen.exercisePicker;
   _PlaceIntent? placementIntent;
   CanonicalExercise? _editingExercise;
   int? _highlightedExerciseRow;
-  WorkspaceStateOwner? _accessStateController;
+  WorkspaceStateOwner? _stateCtrl;
   late final WorkspaceController _workspaceLifecycle;
 
   @override
@@ -451,10 +451,10 @@ class _AppShellState extends State<AppShell> {
     );
     final appStateStore = widget.appStateStore;
     if (appStateStore != null) {
-      _accessStateController = WorkspaceStateController(appStateStore);
+      _stateCtrl = WorkspaceStateController(appStateStore);
     }
     _workspaceLifecycle = WorkspaceController(
-      accessStateOwner: _accessStateController,
+      accessStateOwner: _stateCtrl,
       accountSession: widget.accountSession,
       picker: widget.picker,
       initialText: widget.initialText,
@@ -491,7 +491,7 @@ class _AppShellState extends State<AppShell> {
         _spreadsheetController.text = savedSelection.spreadsheetId;
       });
       await _validateSelected();
-      _restoreWorkoutSelection(
+      _restoreWorkout(
         _workspaceLifecycle.workoutSelectionFor(
           _controller.report?.spreadsheetId ?? savedSelection.spreadsheetId,
         ),
@@ -504,7 +504,7 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  void _usePastedSpreadsheetText() {
+  void _usePastedText() {
     unawaited(() async {
       try {
         await _workspaceLifecycle.usePastedSpreadsheetText(
@@ -535,7 +535,7 @@ class _AppShellState extends State<AppShell> {
   Future<void> _chooseSpreadsheet() async {
     try {
       final workspaceState = await _workspaceLifecycle.chooseSpreadsheet();
-      await _validateWorkspaceSelection(workspaceState);
+      await _validateSelection(workspaceState);
     } on Object catch (error) {
       _controller.reportSelectionFailure(error);
     }
@@ -555,7 +555,7 @@ class _AppShellState extends State<AppShell> {
       final workspaceState = await _workspaceLifecycle.createSpreadsheet(
         name: name,
       );
-      await _validateWorkspaceSelection(workspaceState);
+      await _validateSelection(workspaceState);
     } on Object catch (error) {
       _controller.reportSelectionFailure(error);
     }
@@ -574,9 +574,7 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  Future<void> _validateWorkspaceSelection(
-    WorkspaceUiState workspaceState,
-  ) async {
+  Future<void> _validateSelection(WorkspaceUiState workspaceState) async {
     final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
     if (!mounted || selectedSpreadsheet == null) {
       return;
@@ -593,7 +591,7 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _spreadsheetController.clear();
       _screen = _AppScreen.sheetSelection;
-      _exerciseAddReturnScreen = _AppScreen.exercisePicker;
+      _addReturnScreen = _AppScreen.exercisePicker;
       placementIntent = null;
       _editingExercise = null;
     });
@@ -652,11 +650,11 @@ class _AppShellState extends State<AppShell> {
     }
     final created = _controller.createWorkout(name);
     if (created) {
-      _persistWorkoutSelection();
+      _saveWorkoutSelection();
     }
   }
 
-  Future<void> _promptForNewHistoryBlock() async {
+  Future<void> _promptNewBlock() async {
     final name = await _promptForName(
       title: 'Add history block',
       label: 'History block label',
@@ -666,7 +664,7 @@ class _AppShellState extends State<AppShell> {
     }
     final created = await _controller.createHistoryBlock(name);
     if (created && mounted) {
-      _persistWorkoutSelection();
+      _saveWorkoutSelection();
     }
   }
 
@@ -702,7 +700,7 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  Future<void> _openSelectedSpreadsheet() async {
+  Future<void> _openSheet() async {
     final report = _controller.report;
     if (report == null) {
       return;
@@ -777,18 +775,18 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  void _openPrimaryExerciseAdd(String workout) {
+  void _openPrimaryAdd(String workout) {
     _controller.closeExercise();
     _editingExercise = null;
     _highlightedExerciseRow = null;
     setState(() {
-      _exerciseAddReturnScreen = _AppScreen.workoutSetup;
+      _addReturnScreen = _AppScreen.workoutSetup;
       placementIntent = _PlaceIntent.primary(workout: workout);
       _screen = _AppScreen.addExercise;
     });
   }
 
-  void _openBackupExerciseAdd(WorkoutOverviewSlot primarySlot) {
+  void _openBackupAdd(WorkoutOverviewSlot primarySlot) {
     final workout = _controller.workoutSetup?.selectedWorkout;
     if (workout == null) {
       return;
@@ -799,7 +797,7 @@ class _AppShellState extends State<AppShell> {
     _controller.closeExercise();
     _editingExercise = null;
     setState(() {
-      _exerciseAddReturnScreen = returnScreen;
+      _addReturnScreen = returnScreen;
       placementIntent = _PlaceIntent.backup(
         workout: workout,
         primarySheetRowNumber: primarySlot.sheetRowNumber,
@@ -841,11 +839,11 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  void _openCanonicalExerciseCreation() {
+  void _openExerciseCreate() {
     _controller.closeExercise();
     _editingExercise = null;
     setState(() {
-      _exerciseAddReturnScreen = _screen == _AppScreen.exerciseManager
+      _addReturnScreen = _screen == _AppScreen.exerciseManager
           ? _AppScreen.exerciseManager
           : _AppScreen.workoutSetup;
       placementIntent = null;
@@ -857,11 +855,11 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       placementIntent = null;
       _editingExercise = null;
-      _screen = _exerciseAddReturnScreen;
+      _screen = _addReturnScreen;
     });
   }
 
-  void _openCanonicalExerciseEdit(CanonicalExercise exercise) {
+  void _openExerciseEdit(CanonicalExercise exercise) {
     _controller.closeExercise();
     placementIntent = null;
     _highlightedExerciseRow = null;
@@ -878,9 +876,7 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  Future<void> _handleCanonicalExerciseDraft(
-    CanonicalExerciseDraft draft,
-  ) async {
+  Future<void> _saveExerciseDraft(CanonicalExerciseDraft draft) async {
     final created = await _controller.createCanonicalExercise(
       exercise: draft.toDefinition(),
     );
@@ -889,17 +885,14 @@ class _AppShellState extends State<AppShell> {
     }
     final createdExerciseName = draft.normalized().exerciseName;
     setState(() {
-      _highlightedExerciseRow =
-          _exerciseAddReturnScreen == _AppScreen.exerciseManager
-          ? _lastCanonicalExerciseSheetRowNumberByName(createdExerciseName)
+      _highlightedExerciseRow = _addReturnScreen == _AppScreen.exerciseManager
+          ? _lastExerciseRowByName(createdExerciseName)
           : null;
-      _screen = _exerciseAddReturnScreen;
+      _screen = _addReturnScreen;
     });
   }
 
-  Future<void> _handleCanonicalExerciseEditDraft(
-    CanonicalExerciseDraft draft,
-  ) async {
+  Future<void> _saveExerciseEdit(CanonicalExerciseDraft draft) async {
     final selectedExercise = _editingExercise;
     if (selectedExercise == null) {
       return;
@@ -918,7 +911,7 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  int? _lastCanonicalExerciseSheetRowNumberByName(String exerciseName) {
+  int? _lastExerciseRowByName(String exerciseName) {
     final exercises = _controller.report?.activeSheet.canonicalExercises;
     if (exercises == null) {
       return null;
@@ -931,20 +924,18 @@ class _AppShellState extends State<AppShell> {
     return null;
   }
 
-  Future<void> _handleExercisePlacement(_ExercisePlacementDraft draft) async {
+  Future<void> _placeExercise(_ExercisePlacementDraft draft) async {
     final added = await _addExercisePlacement(draft);
     if (!mounted || !added) {
       return;
     }
     placementIntent = null;
     setState(() {
-      _screen = _exerciseAddReturnScreen;
+      _screen = _addReturnScreen;
     });
   }
 
-  Future<bool> _handleExercisePlacementAndAddAnother(
-    _ExercisePlacementDraft draft,
-  ) async {
+  Future<bool> _placeAndKeepAdding(_ExercisePlacementDraft draft) async {
     final added = await _addExercisePlacement(draft);
     if (!mounted || !added) {
       return false;
@@ -974,7 +965,7 @@ class _AppShellState extends State<AppShell> {
 
   void _selectWorkout(String? workout) {
     _controller.selectWorkout(workout);
-    _persistWorkoutSelection();
+    _saveWorkoutSelection();
     setState(() {
       _screen = _AppScreen.workoutSetup;
     });
@@ -982,13 +973,13 @@ class _AppShellState extends State<AppShell> {
 
   void _selectHistoryBlock(String? historyBlock) {
     _controller.selectHistoryBlock(historyBlock);
-    _persistWorkoutSelection();
+    _saveWorkoutSelection();
     setState(() {
       _screen = _AppScreen.workoutSetup;
     });
   }
 
-  void _restoreWorkoutSelection(WorkoutSelectionState? savedSelection) {
+  void _restoreWorkout(WorkoutSelectionState? savedSelection) {
     final report = _controller.report;
     if (savedSelection == null ||
         report == null ||
@@ -1001,7 +992,7 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  void _persistWorkoutSelection() {
+  void _saveWorkoutSelection() {
     final report = _controller.report;
     final setup = _controller.workoutSetup;
     if (report == null || setup == null) {
@@ -1080,7 +1071,7 @@ class _AppShellState extends State<AppShell> {
                               isBusy: isBusy,
                               accountSession: widget.accountSession,
                               onSignedOut: _handleSignedOut,
-                              onChanged: _usePastedSpreadsheetText,
+                              onChanged: _usePastedText,
                               onSubmitted: _validateSelected,
                               onValidate: _validateSelected,
                             ),
@@ -1104,9 +1095,7 @@ class _AppShellState extends State<AppShell> {
                             onRepairFormulaIssue: isBusy
                                 ? null
                                 : _repairFormulaIssue,
-                            onOpenSpreadsheet: isBusy
-                                ? null
-                                : _openSelectedSpreadsheet,
+                            onOpenSpreadsheet: isBusy ? null : _openSheet,
                           ),
                         if (!showSheetSelection)
                           _WorkoutPane(
@@ -1123,15 +1112,13 @@ class _AppShellState extends State<AppShell> {
                             onWorkoutChanged: _selectWorkout,
                             onHistoryBlockChanged: _selectHistoryBlock,
                             onAddWorkout: isBusy ? null : _promptForNewWorkout,
-                            onAddHistoryBlock: isBusy
-                                ? null
-                                : _promptForNewHistoryBlock,
+                            onAddHistoryBlock: isBusy ? null : _promptNewBlock,
                             onCreateCanonicalExercise: isBusy
                                 ? null
-                                : _openCanonicalExerciseCreation,
+                                : _openExerciseCreate,
                             onEditCanonicalExercise: isBusy
                                 ? null
-                                : _openCanonicalExerciseEdit,
+                                : _openExerciseEdit,
                             highlightedExerciseRow: _highlightedExerciseRow,
                             onReorderCanonicalExercises: isBusy
                                 ? null
@@ -1140,22 +1127,19 @@ class _AppShellState extends State<AppShell> {
                                 ? null
                                 : _controller.reorderWorkoutExercises,
                             onOpenExercise: _openExercise,
-                            onAddPrimaryExercise: _openPrimaryExerciseAdd,
-                            onAddBackupExercise: _openBackupExerciseAdd,
+                            onAddPrimaryExercise: _openPrimaryAdd,
+                            onAddBackupExercise: _openBackupAdd,
                             onDeleteWorkoutExercise: isBusy
                                 ? null
                                 : _confirmDeleteWorkoutExercise,
-                            exerciseAddReturnScreen: _exerciseAddReturnScreen,
+                            exerciseAddReturnScreen: _addReturnScreen,
                             addExercisePlacementIntent: placementIntent,
                             onCloseExerciseAdd: _closeExerciseAdd,
-                            onSubmitCanonicalExercise:
-                                _handleCanonicalExerciseDraft,
-                            onSubmitCanonicalExerciseEdit:
-                                _handleCanonicalExerciseEditDraft,
+                            onSubmitCanonicalExercise: _saveExerciseDraft,
+                            onSubmitCanonicalExerciseEdit: _saveExerciseEdit,
                             onCloseExerciseEdit: _closeExerciseEdit,
-                            onSubmitExercisePlacement: _handleExercisePlacement,
-                            onSubmitPlacementAndAddAnother:
-                                _handleExercisePlacementAndAddAnother,
+                            onSubmitExercisePlacement: _placeExercise,
+                            onSubmitPlacementAndAddAnother: _placeAndKeepAdding,
                             onCloseExercise: _closeExercise,
                             onLoggingRowChanged: _controller.selectLoggingRow,
                             onApplyWritePlan:

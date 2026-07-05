@@ -380,3 +380,33 @@ Status: workout-pane private UI pass.
 ### Files simplified in slice 8
 
 - `lib/src/app/shell_workout.dart`
+
+## Slice 9
+
+Status: shell-state private handler pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `_exerciseAddReturnScreen` | `_addReturnScreen` |
+| `_accessStateController` | `_stateCtrl` |
+| `_usePastedSpreadsheetText` | `_usePastedText` |
+| `_validateWorkspaceSelection` | `_validateSelection` |
+| `_promptForNewHistoryBlock` | `_promptNewBlock` |
+| `_openSelectedSpreadsheet` | `_openSheet` |
+| `_openPrimaryExerciseAdd` | `_openPrimaryAdd` |
+| `_openBackupExerciseAdd` | `_openBackupAdd` |
+| `_openCanonicalExerciseCreation` | `_openExerciseCreate` |
+| `_openCanonicalExerciseEdit` | `_openExerciseEdit` |
+| `_handleCanonicalExerciseDraft` | `_saveExerciseDraft` |
+| `_handleCanonicalExerciseEditDraft` | `_saveExerciseEdit` |
+| `_lastCanonicalExerciseSheetRowNumberByName` | `_lastExerciseRowByName` |
+| `_handleExercisePlacement` | `_placeExercise` |
+| `_handleExercisePlacementAndAddAnother` | `_placeAndKeepAdding` |
+| `_restoreWorkoutSelection` | `_restoreWorkout` |
+| `_persistWorkoutSelection` | `_saveWorkoutSelection` |
+
+### Files simplified in slice 9
+
+- `lib/src/app/shell.dart`
