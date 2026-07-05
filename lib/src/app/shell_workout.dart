@@ -156,12 +156,12 @@ class _WorkoutPane extends StatelessWidget {
 
     if (screen == _AppScreen.exerciseLogging && setup.loggingTarget != null) {
       final target = setup.loggingTarget!;
-      return _ExerciseLoggingScreen(
+      return _LogScreen(
         sheetLabel: sheetLabel,
         activeSheet: activeSheet,
         historyBlockLabel: target.historyBlockLabel,
-        primarySheetRowNumber: target.primarySheetRowNumber,
-        selectedSheetRowNumber: target.selectedSheetRowNumber,
+        primaryRow: target.primarySheetRowNumber,
+        selectedRow: target.selectedSheetRowNumber,
         onChoiceChanged: onLoggingRowChanged,
         onClose: onCloseExercise,
         onApplyWritePlan: onApplyWritePlan,

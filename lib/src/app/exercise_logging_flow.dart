@@ -3,31 +3,31 @@
 import 'package:flutter/widgets.dart';
 import 'package:workout_tracker/sheet_contract.dart';
 
-class ExerciseLoggingFlow {
-  ExerciseLoggingFlow({
+class LoggingFlow {
+  LoggingFlow({
     required ParsedActiveSheet activeSheet,
     required String historyBlockLabel,
-    required int primarySheetRowNumber,
-    required int selectedSheetRowNumber,
+    required int primaryRow,
+    required int selectedRow,
   }) : _activeSheet = activeSheet,
        _historyBlockLabel = historyBlockLabel,
-       _primarySheetRowNumber = primarySheetRowNumber,
-       _selectedSheetRowNumber = selectedSheetRowNumber {
+       _primaryRow = primaryRow,
+       _selectedRow = selectedRow {
     _syncControllers(_context);
   }
 
   ParsedActiveSheet _activeSheet;
   String _historyBlockLabel;
-  int _primarySheetRowNumber;
-  int _selectedSheetRowNumber;
+  int _primaryRow;
+  int _selectedRow;
 
   final _newSetControllers = <String, TextEditingController>{};
   final _loggedFieldControllers = <int, Map<String, TextEditingController>>{};
   final _rawControllers = <int, TextEditingController>{};
 
-  ExerciseLoggingViewModel get viewModel {
+  LoggingVm get viewModel {
     final context = _context;
-    return ExerciseLoggingViewModel(
+    return LoggingVm(
       context: context,
       loggedEntries: _loggedEntries(context),
       nextSetNumber: _nextSetNumber(context.selectedHistory),
@@ -35,7 +35,7 @@ class ExerciseLoggingFlow {
       newSetControllers: Map<String, TextEditingController>.unmodifiable(
         _newSetControllers,
       ),
-      loggedFormattedControllers:
+      loggedControllers:
           Map<int, Map<String, TextEditingController>>.unmodifiable({
             for (final entry in _loggedFieldControllers.entries)
               entry.key: Map<String, TextEditingController>.unmodifiable(
@@ -51,17 +51,17 @@ class ExerciseLoggingFlow {
   void update({
     required ParsedActiveSheet activeSheet,
     required String historyBlockLabel,
-    required int primarySheetRowNumber,
-    required int selectedSheetRowNumber,
+    required int primaryRow,
+    required int selectedRow,
   }) {
     _activeSheet = activeSheet;
     _historyBlockLabel = historyBlockLabel;
-    _primarySheetRowNumber = primarySheetRowNumber;
-    _selectedSheetRowNumber = selectedSheetRowNumber;
+    _primaryRow = primaryRow;
+    _selectedRow = selectedRow;
     _syncControllers(_context);
   }
 
-  ActiveSheetWritePlan? planStructuredSetSave() {
+  ActiveSheetWritePlan? planSetSave() {
     final fieldValues = {
       for (final entry in _newSetControllers.entries)
         entry.key: entry.value.text.trim(),
@@ -77,7 +77,7 @@ class ExerciseLoggingFlow {
     );
   }
 
-  ActiveSheetWritePlan? planStructuredSetEdit(RowHistoryEntry entry) {
+  ActiveSheetWritePlan? planSetEdit(RowHistoryEntry entry) {
     final controllers = _loggedFieldControllers[entry.setNumber];
     if (controllers == null) {
       return null;
@@ -111,7 +111,7 @@ class ExerciseLoggingFlow {
     );
   }
 
-  void clearNewSetControllers() {
+  void clearNewSets() {
     for (final controller in _newSetControllers.values) {
       controller.clear();
     }
@@ -133,15 +133,15 @@ class ExerciseLoggingFlow {
 
   ExerciseLoggingContext get _context {
     return _activeSheet.buildLoggingContext(
-      primarySheetRowNumber: _primarySheetRowNumber,
-      selectedSheetRowNumber: _selectedSheetRowNumber,
+      primarySheetRowNumber: _primaryRow,
+      selectedSheetRowNumber: _selectedRow,
       historyBlockLabel: _historyBlockLabel,
     );
   }
 
   void _syncControllers(ExerciseLoggingContext context) {
     _syncNewSetControllers(context);
-    _syncLoggedEntryControllers(context);
+    _syncLoggedControllers(context);
   }
 
   void _syncNewSetControllers(ExerciseLoggingContext context) {
@@ -160,7 +160,7 @@ class ExerciseLoggingFlow {
     }
   }
 
-  void _syncLoggedEntryControllers(ExerciseLoggingContext context) {
+  void _syncLoggedControllers(ExerciseLoggingContext context) {
     final nonEmptyEntries = _nonEmptyEntries(context);
     final activeSetNumbers = {
       for (final entry in nonEmptyEntries) entry.setNumber,
@@ -170,11 +170,11 @@ class ExerciseLoggingFlow {
         if (entry.logEntry is RawLogEntry) entry.setNumber,
     };
 
-    final removedFormattedSetNumbers = _loggedFieldControllers.keys
+    final removedLoggedSets = _loggedFieldControllers.keys
         .where((setNumber) => !activeSetNumbers.contains(setNumber))
         .toList();
-    for (final setNumber in removedFormattedSetNumbers) {
-      _disposeLoggedFieldControllers(setNumber);
+    for (final setNumber in removedLoggedSets) {
+      _disposeSetControllers(setNumber);
     }
 
     final removedRawSetNumbers = _rawControllers.keys
@@ -185,13 +185,13 @@ class ExerciseLoggingFlow {
     }
 
     for (final setNumber in rawSetNumbers) {
-      _disposeLoggedFieldControllers(setNumber);
+      _disposeSetControllers(setNumber);
     }
 
     for (final entry in nonEmptyEntries) {
       final logEntry = entry.logEntry;
       if (logEntry is FormattedLogEntry) {
-        _syncLoggedFieldControllers(entry.setNumber, logEntry);
+        _syncSetControllers(entry.setNumber, logEntry);
         continue;
       }
       final controller = _rawControllers.putIfAbsent(
@@ -204,7 +204,7 @@ class ExerciseLoggingFlow {
     }
   }
 
-  void _syncLoggedFieldControllers(int setNumber, FormattedLogEntry logEntry) {
+  void _syncSetControllers(int setNumber, FormattedLogEntry logEntry) {
     _rawControllers.remove(setNumber)?.dispose();
     final controllers = _loggedFieldControllers.putIfAbsent(
       setNumber,
@@ -229,7 +229,7 @@ class ExerciseLoggingFlow {
     }
   }
 
-  void _disposeLoggedFieldControllers(int setNumber) {
+  void _disposeSetControllers(int setNumber) {
     final controllers = _loggedFieldControllers.remove(setNumber);
     if (controllers == null) {
       return;
@@ -271,14 +271,14 @@ class ExerciseLoggingFlow {
   }
 }
 
-class ExerciseLoggingViewModel {
-  ExerciseLoggingViewModel({
+class LoggingVm {
+  LoggingVm({
     required this.context,
     required Iterable<RowHistoryEntry> loggedEntries,
     required this.nextSetNumber,
     required this.latestHistoryValue,
     required this.newSetControllers,
-    required this.loggedFormattedControllers,
+    required this.loggedControllers,
     required this.rawControllers,
   }) : loggedEntries = List<RowHistoryEntry>.unmodifiable(loggedEntries);
 
@@ -287,7 +287,7 @@ class ExerciseLoggingViewModel {
   final int nextSetNumber;
   final String? latestHistoryValue;
   final Map<String, TextEditingController> newSetControllers;
-  final Map<int, Map<String, TextEditingController>> loggedFormattedControllers;
+  final Map<int, Map<String, TextEditingController>> loggedControllers;
   final Map<int, TextEditingController> rawControllers;
 
   WorkoutChoice get selectedChoice => context.selectedChoice;

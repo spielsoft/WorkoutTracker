@@ -256,3 +256,35 @@ Status: google-sheets infrastructure and default-name pass.
 - `test/google_sheets/google_sheets_read_adapter_test.dart`
 - `test/google_sheets/google_sheets_workbook_client_test.dart`
 - `test/google_sheets/google_sheets_write_adapter_test.dart`
+
+## Slice 5
+
+Status: logging flow and logging-screen pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `ExerciseLoggingFlow` | `LoggingFlow` |
+| `ExerciseLoggingViewModel` | `LoggingVm` |
+| `_primarySheetRowNumber` | `_primaryRow` |
+| `_selectedSheetRowNumber` | `_selectedRow` |
+| `_ExerciseLoggingScreen.primarySheetRowNumber` | `_LogScreen.primaryRow` |
+| `_ExerciseLoggingScreen.selectedSheetRowNumber` | `_LogScreen.selectedRow` |
+| `loggedFormattedControllers` | `loggedControllers` |
+| `planStructuredSetSave` | `planSetSave` |
+| `planStructuredSetEdit` | `planSetEdit` |
+| `clearNewSetControllers` | `clearNewSets` |
+| `_syncLoggedEntryControllers` | `_syncLoggedControllers` |
+| `_syncLoggedFieldControllers` | `_syncSetControllers` |
+| `_disposeLoggedFieldControllers` | `_disposeSetControllers` |
+| `removedFormattedSetNumbers` | `removedLoggedSets` |
+| `_ExerciseLoggingScreen` | `_LogScreen` |
+| `_ExerciseLoggingScreenState` | `_LogScreenState` |
+| `_LoggedFormattedSetEditor` | `_LoggedSetFields` |
+
+### Files simplified in slice 5
+
+- `lib/src/app/exercise_logging_flow.dart`
+- `lib/src/app/shell_logging.dart`
+- `lib/src/app/shell_workout.dart`

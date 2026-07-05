@@ -1,12 +1,12 @@
 part of 'shell.dart';
 
-class _ExerciseLoggingScreen extends StatefulWidget {
-  const _ExerciseLoggingScreen({
+class _LogScreen extends StatefulWidget {
+  const _LogScreen({
     required this.sheetLabel,
     required this.activeSheet,
     required this.historyBlockLabel,
-    required this.primarySheetRowNumber,
-    required this.selectedSheetRowNumber,
+    required this.primaryRow,
+    required this.selectedRow,
     required this.onChoiceChanged,
     required this.onClose,
     required this.onApplyWritePlan,
@@ -15,18 +15,18 @@ class _ExerciseLoggingScreen extends StatefulWidget {
   final String sheetLabel;
   final ParsedActiveSheet activeSheet;
   final String historyBlockLabel;
-  final int primarySheetRowNumber;
-  final int selectedSheetRowNumber;
+  final int primaryRow;
+  final int selectedRow;
   final ValueChanged<int> onChoiceChanged;
   final VoidCallback onClose;
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
 
   @override
-  State<_ExerciseLoggingScreen> createState() => _ExerciseLoggingScreenState();
+  State<_LogScreen> createState() => _LogScreenState();
 }
 
-class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
-  late final ExerciseLoggingFlow _flow;
+class _LogScreenState extends State<_LogScreen> {
+  late final LoggingFlow _flow;
   bool _isWriting = false;
   String? _writeError;
 
@@ -37,17 +37,17 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
   }
 
   @override
-  void didUpdateWidget(_ExerciseLoggingScreen oldWidget) {
+  void didUpdateWidget(_LogScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedSheetRowNumber != widget.selectedSheetRowNumber ||
+    if (oldWidget.selectedRow != widget.selectedRow ||
         oldWidget.historyBlockLabel != widget.historyBlockLabel ||
-        oldWidget.primarySheetRowNumber != widget.primarySheetRowNumber ||
+        oldWidget.primaryRow != widget.primaryRow ||
         oldWidget.activeSheet != widget.activeSheet) {
       _flow.update(
         activeSheet: widget.activeSheet,
         historyBlockLabel: widget.historyBlockLabel,
-        primarySheetRowNumber: widget.primarySheetRowNumber,
-        selectedSheetRowNumber: widget.selectedSheetRowNumber,
+        primaryRow: widget.primaryRow,
+        selectedRow: widget.selectedRow,
       );
     }
   }
@@ -58,20 +58,20 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     super.dispose();
   }
 
-  ExerciseLoggingFlow _createFlow() {
-    return ExerciseLoggingFlow(
+  LoggingFlow _createFlow() {
+    return LoggingFlow(
       activeSheet: widget.activeSheet,
       historyBlockLabel: widget.historyBlockLabel,
-      primarySheetRowNumber: widget.primarySheetRowNumber,
-      selectedSheetRowNumber: widget.selectedSheetRowNumber,
+      primaryRow: widget.primaryRow,
+      selectedRow: widget.selectedRow,
     );
   }
 
-  Future<void> _saveStructuredSet() async {
+  Future<void> _saveSet() async {
     if (_isWriting) {
       return;
     }
-    final plan = _flow.planStructuredSetSave();
+    final plan = _flow.planSetSave();
     if (plan == null) {
       return;
     }
@@ -81,7 +81,7 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
       if (!saved) {
         return false;
       }
-      _flow.clearNewSetControllers();
+      _flow.clearNewSets();
       return true;
     });
   }
@@ -116,11 +116,11 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
     });
   }
 
-  Future<void> _saveStructuredSetEdit(RowHistoryEntry entry) async {
+  Future<void> _saveSetEdit(RowHistoryEntry entry) async {
     if (_isWriting) {
       return;
     }
-    final plan = _flow.planStructuredSetEdit(entry);
+    final plan = _flow.planSetEdit(entry);
     if (plan == null) {
       return;
     }
@@ -252,7 +252,7 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
             logFormat: loggingContext.logFormat,
             controllers: viewModel.newSetControllers,
             isBusy: _isWriting,
-            onSave: _saveStructuredSet,
+            onSave: _saveSet,
           ),
           if (_writeError != null) ...[
             const SizedBox(height: 8),
@@ -272,13 +272,12 @@ class _ExerciseLoggingScreenState extends State<_ExerciseLoggingScreen> {
           else
             for (final entry in viewModel.loggedEntries)
               if (entry.logEntry case FormattedLogEntry(:final fieldLabels))
-                _LoggedFormattedSetEditor(
+                _LoggedSetFields(
                   entry: entry,
                   fieldLabels: fieldLabels,
-                  controllers:
-                      viewModel.loggedFormattedControllers[entry.setNumber]!,
+                  controllers: viewModel.loggedControllers[entry.setNumber]!,
                   isBusy: _isWriting,
-                  onSave: () => _saveStructuredSetEdit(entry),
+                  onSave: () => _saveSetEdit(entry),
                   onClear: () => _clearSet(entry),
                 )
               else
@@ -670,8 +669,8 @@ class _LoggedSetEditor extends StatelessWidget {
   }
 }
 
-class _LoggedFormattedSetEditor extends StatelessWidget {
-  const _LoggedFormattedSetEditor({
+class _LoggedSetFields extends StatelessWidget {
+  const _LoggedSetFields({
     required this.entry,
     required this.fieldLabels,
     required this.controllers,
