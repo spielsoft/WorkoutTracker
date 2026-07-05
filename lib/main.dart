@@ -12,7 +12,7 @@ Future<void> main() async {
   );
   runApp(
     WorkoutTrackerApp(
-      workbookCommands: googleSpreadsheetService,
+      svc: googleSpreadsheetService,
       accountSession: googleSignInGateway,
       appStateStore: const FileAppStateStore(),
       spreadsheetPicker: MobileSpreadsheetPicker(

@@ -23,7 +23,7 @@ part 'shell_accessibility.dart';
 
 const _compactSegmentedButtonRadius = 8.0;
 
-enum _WorkoutTrackerScreen {
+enum _AppScreen {
   sheetSelection,
   workoutSetup,
   exerciseManager,
@@ -33,21 +33,21 @@ enum _WorkoutTrackerScreen {
   exerciseLogging,
 }
 
-enum _ExercisePlacementKind { primary, backup }
+enum _PlaceKind { primary, backup }
 
-class _AddExercisePlacementIntent {
-  const _AddExercisePlacementIntent.primary({required this.workout})
-    : kind = _ExercisePlacementKind.primary,
+class _PlaceIntent {
+  const _PlaceIntent.primary({required this.workout})
+    : kind = _PlaceKind.primary,
       primarySheetRowNumber = null,
       primaryExercise = null;
 
-  const _AddExercisePlacementIntent.backup({
+  const _PlaceIntent.backup({
     required this.workout,
     required this.primarySheetRowNumber,
     required this.primaryExercise,
-  }) : kind = _ExercisePlacementKind.backup;
+  }) : kind = _PlaceKind.backup;
 
-  final _ExercisePlacementKind kind;
+  final _PlaceKind kind;
   final String workout;
   final int? primarySheetRowNumber;
   final String? primaryExercise;
@@ -55,7 +55,7 @@ class _AddExercisePlacementIntent {
 
 class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
-    required this.workbookCommands,
+    required this.svc,
     this.accountSession,
     this.appStateStore,
     this.initialSpreadsheetText = '',
@@ -65,7 +65,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     super.key,
   });
 
-  final WorkbookCommandService workbookCommands;
+  final WorkbookCommandService svc;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
@@ -82,8 +82,8 @@ class WorkoutTrackerApp extends StatelessWidget {
         useMaterial3: true,
       ),
       scrollBehavior: const AppScrollBehavior(),
-      home: SpreadsheetValidationShell(
-        workbookCommands: workbookCommands,
+      home: AppShell(
+        svc: svc,
         accountSession: accountSession,
         appStateStore: appStateStore,
         initialSpreadsheetText: initialSpreadsheetText,
@@ -110,8 +110,8 @@ class AppScrollBehavior extends MaterialScrollBehavior {
   }
 }
 
-class _SelectedSpreadsheetChooser extends StatelessWidget {
-  const _SelectedSpreadsheetChooser({
+class _SheetPick extends StatelessWidget {
+  const _SheetPick({
     required this.selectedSpreadsheet,
     required this.availability,
     required this.showAvailabilitySummary,
@@ -236,8 +236,8 @@ class _SelectedSpreadsheetChooser extends StatelessWidget {
   }
 }
 
-class _NamePromptDialog extends StatefulWidget {
-  const _NamePromptDialog({
+class _NameDialog extends StatefulWidget {
+  const _NameDialog({
     required this.title,
     required this.label,
     this.initialValue,
@@ -252,10 +252,10 @@ class _NamePromptDialog extends StatefulWidget {
   final Key? textFieldKey;
 
   @override
-  State<_NamePromptDialog> createState() => _NamePromptDialogState();
+  State<_NameDialog> createState() => _NamePromptDialogState();
 }
 
-class _NamePromptDialogState extends State<_NamePromptDialog> {
+class _NamePromptDialogState extends State<_NameDialog> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
 
@@ -332,8 +332,8 @@ class _NamePromptDialogState extends State<_NamePromptDialog> {
   }
 }
 
-class _SpreadsheetTextFallback extends StatelessWidget {
-  const _SpreadsheetTextFallback({
+class _SheetTextFallback extends StatelessWidget {
+  const _SheetTextFallback({
     required this.controller,
     required this.isBusy,
     required this.onChanged,
@@ -405,9 +405,9 @@ class _SpreadsheetTextFallback extends StatelessWidget {
   }
 }
 
-class SpreadsheetValidationShell extends StatefulWidget {
-  const SpreadsheetValidationShell({
-    required this.workbookCommands,
+class AppShell extends StatefulWidget {
+  const AppShell({
+    required this.svc,
     this.accountSession,
     this.appStateStore,
     required this.initialSpreadsheetText,
@@ -417,7 +417,7 @@ class SpreadsheetValidationShell extends StatefulWidget {
     super.key,
   });
 
-  final WorkbookCommandService workbookCommands;
+  final WorkbookCommandService svc;
   final GoogleAccountSession? accountSession;
   final AppStateStore? appStateStore;
   final String initialSpreadsheetText;
@@ -426,28 +426,26 @@ class SpreadsheetValidationShell extends StatefulWidget {
   final SpreadsheetOpener spreadsheetOpener;
 
   @override
-  State<SpreadsheetValidationShell> createState() {
-    return _SpreadsheetValidationShellState();
+  State<AppShell> createState() {
+    return _AppShellState();
   }
 }
 
-class _SpreadsheetValidationShellState
-    extends State<SpreadsheetValidationShell> {
+class _AppShellState extends State<AppShell> {
   late final TextEditingController _spreadsheetController;
   late final AppController _controller;
-  _WorkoutTrackerScreen _screen = _WorkoutTrackerScreen.sheetSelection;
-  _WorkoutTrackerScreen _exerciseAddReturnScreen =
-      _WorkoutTrackerScreen.exercisePicker;
-  _AddExercisePlacementIntent? _addExercisePlacementIntent;
-  CanonicalExercise? _canonicalExerciseBeingEdited;
-  int? _highlightedCanonicalExerciseSheetRowNumber;
+  _AppScreen _screen = _AppScreen.sheetSelection;
+  _AppScreen _exerciseAddReturnScreen = _AppScreen.exercisePicker;
+  _PlaceIntent? placementIntent;
+  CanonicalExercise? _editingExercise;
+  int? _highlightedExerciseRow;
   WorkspaceStateOwner? _accessStateController;
   late final WorkspaceController _workspaceLifecycle;
 
   @override
   void initState() {
     super.initState();
-    _controller = AppController(workbookCommands: widget.workbookCommands);
+    _controller = AppController(svc: widget.svc);
     _spreadsheetController = TextEditingController(
       text:
           widget.initialSelectedSpreadsheet?.spreadsheetId ??
@@ -482,12 +480,10 @@ class _SpreadsheetValidationShellState
     } on Object {
       return;
     }
-    await _restoreSpreadsheetSelection(workspaceState);
+    await _restoreSelection(workspaceState);
   }
 
-  Future<void> _restoreSpreadsheetSelection(
-    WorkspaceUiState workspaceState,
-  ) async {
+  Future<void> _restoreSelection(WorkspaceUiState workspaceState) async {
     if (!mounted) {
       return;
     }
@@ -496,7 +492,7 @@ class _SpreadsheetValidationShellState
       setState(() {
         _spreadsheetController.text = savedSelection.spreadsheetId;
       });
-      await _validateSelectedSpreadsheet();
+      await _validateSelected();
       _restoreWorkoutSelection(
         _workspaceLifecycle.workoutSelectionFor(
           _controller.report?.spreadsheetId ?? savedSelection.spreadsheetId,
@@ -522,26 +518,26 @@ class _SpreadsheetValidationShellState
     }());
   }
 
-  Future<void> _validateSelectedSpreadsheet() async {
+  Future<void> _validateSelected() async {
     final selectedSpreadsheet = _workspaceLifecycle.state.selectedSpreadsheet;
     final selected = selectedSpreadsheet == null
         ? await _controller.validateSelection(_spreadsheetController.text)
-        : await _controller.validateSelectedSpreadsheet(selectedSpreadsheet);
+        : await _controller.validateSelected(selectedSpreadsheet);
     final report = _controller.report;
     if (!mounted) {
       return;
     }
     setState(() {
       _screen = selected && report != null && !report.hasBlockingIssues
-          ? _WorkoutTrackerScreen.workoutSetup
-          : _WorkoutTrackerScreen.sheetSelection;
+          ? _AppScreen.workoutSetup
+          : _AppScreen.sheetSelection;
     });
   }
 
   Future<void> _chooseSpreadsheet() async {
     try {
       final workspaceState = await _workspaceLifecycle.chooseSpreadsheet();
-      await _validateWorkspaceSelectedSpreadsheet(workspaceState);
+      await _validateWorkspaceSelection(workspaceState);
     } on Object catch (error) {
       _controller.reportSelectionFailure(error);
     }
@@ -553,7 +549,7 @@ class _SpreadsheetValidationShellState
       return;
     }
     final defaultName = defaultWorkoutSpreadsheetTitle();
-    final name = await _promptForSpreadsheetName(defaultName);
+    final name = await _promptForSheetName(defaultName);
     if (!mounted || name == null) {
       return;
     }
@@ -561,7 +557,7 @@ class _SpreadsheetValidationShellState
       final workspaceState = await _workspaceLifecycle.createSpreadsheet(
         name: name,
       );
-      await _validateWorkspaceSelectedSpreadsheet(workspaceState);
+      await _validateWorkspaceSelection(workspaceState);
     } on Object catch (error) {
       _controller.reportSelectionFailure(error);
     }
@@ -580,7 +576,7 @@ class _SpreadsheetValidationShellState
     }
   }
 
-  Future<void> _validateWorkspaceSelectedSpreadsheet(
+  Future<void> _validateWorkspaceSelection(
     WorkspaceUiState workspaceState,
   ) async {
     final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
@@ -590,18 +586,18 @@ class _SpreadsheetValidationShellState
     setState(() {
       _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
     });
-    await _validateSelectedSpreadsheet();
+    await _validateSelected();
   }
 
   Future<void> _handleSignedOut() async {
     await _workspaceLifecycle.signOut();
-    _controller.clearSpreadsheetSelection();
+    _controller.clearSelection();
     setState(() {
       _spreadsheetController.clear();
-      _screen = _WorkoutTrackerScreen.sheetSelection;
-      _exerciseAddReturnScreen = _WorkoutTrackerScreen.exercisePicker;
-      _addExercisePlacementIntent = null;
-      _canonicalExerciseBeingEdited = null;
+      _screen = _AppScreen.sheetSelection;
+      _exerciseAddReturnScreen = _AppScreen.exercisePicker;
+      placementIntent = null;
+      _editingExercise = null;
     });
   }
 
@@ -615,7 +611,7 @@ class _SpreadsheetValidationShellState
     final value = await showDialog<String>(
       context: context,
       builder: (context) {
-        return _NamePromptDialog(
+        return _NameDialog(
           title: title,
           label: label,
           initialValue: initialValue,
@@ -628,11 +624,11 @@ class _SpreadsheetValidationShellState
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
-  Future<String?> _promptForSpreadsheetName(String defaultName) async {
+  Future<String?> _promptForSheetName(String defaultName) async {
     final value = await showDialog<String>(
       context: context,
       builder: (context) {
-        return _NamePromptDialog(
+        return _NameDialog(
           title: 'Create sheet',
           label: 'Sheet name',
           initialValue: defaultName,
@@ -676,16 +672,16 @@ class _SpreadsheetValidationShellState
     }
   }
 
-  Future<void> _repairUnambiguousFormulaIssues() async {
-    final repaired = await _controller.repairUnambiguousFormulaIssues();
+  Future<void> _repairUnambiguousFormulas() async {
+    final repaired = await _controller.repairUnambiguousFormulas();
     final report = _controller.report;
     if (!mounted || !repaired) {
       return;
     }
     setState(() {
       _screen = report != null && !report.hasBlockingIssues
-          ? _WorkoutTrackerScreen.workoutSetup
-          : _WorkoutTrackerScreen.sheetSelection;
+          ? _AppScreen.workoutSetup
+          : _AppScreen.sheetSelection;
     });
   }
 
@@ -703,8 +699,8 @@ class _SpreadsheetValidationShellState
     }
     setState(() {
       _screen = report != null && !report.hasBlockingIssues
-          ? _WorkoutTrackerScreen.workoutSetup
-          : _WorkoutTrackerScreen.sheetSelection;
+          ? _AppScreen.workoutSetup
+          : _AppScreen.sheetSelection;
     });
   }
 
@@ -716,24 +712,24 @@ class _SpreadsheetValidationShellState
     try {
       await widget.spreadsheetOpener.openSpreadsheet(report.spreadsheetUrl);
     } on Object catch (error) {
-      _controller.reportOpenSpreadsheetFailure(error);
+      _controller.reportOpenFailure(error);
     }
   }
 
   void _returnToSheetSelection() {
     _controller.closeExercise();
-    _addExercisePlacementIntent = null;
-    _canonicalExerciseBeingEdited = null;
+    placementIntent = null;
+    _editingExercise = null;
     setState(() {
-      _screen = _WorkoutTrackerScreen.sheetSelection;
+      _screen = _AppScreen.sheetSelection;
     });
   }
 
   void _selectWorkoutSetup() {
-    _addExercisePlacementIntent = null;
-    _canonicalExerciseBeingEdited = null;
+    placementIntent = null;
+    _editingExercise = null;
     setState(() {
-      _screen = _WorkoutTrackerScreen.exercisePicker;
+      _screen = _AppScreen.exercisePicker;
     });
   }
 
@@ -742,57 +738,55 @@ class _SpreadsheetValidationShellState
     if (report == null || report.hasBlockingIssues) {
       return;
     }
-    _addExercisePlacementIntent = null;
-    _canonicalExerciseBeingEdited = null;
+    placementIntent = null;
+    _editingExercise = null;
     _controller.closeExercise();
     setState(() {
-      _screen = _WorkoutTrackerScreen.workoutSetup;
+      _screen = _AppScreen.workoutSetup;
     });
   }
 
   void _returnToWorkoutSetup() {
     _controller.closeExercise();
-    _addExercisePlacementIntent = null;
-    _canonicalExerciseBeingEdited = null;
+    placementIntent = null;
+    _editingExercise = null;
     setState(() {
-      _screen = _WorkoutTrackerScreen.workoutSetup;
+      _screen = _AppScreen.workoutSetup;
     });
   }
 
   void _openExerciseManager() {
     _controller.closeExercise();
-    _addExercisePlacementIntent = null;
-    _canonicalExerciseBeingEdited = null;
-    _highlightedCanonicalExerciseSheetRowNumber = null;
+    placementIntent = null;
+    _editingExercise = null;
+    _highlightedExerciseRow = null;
     setState(() {
-      _screen = _WorkoutTrackerScreen.exerciseManager;
+      _screen = _AppScreen.exerciseManager;
     });
   }
 
   void _openExercise(int primarySheetRowNumber) {
     _controller.openExercise(primarySheetRowNumber);
     setState(() {
-      _screen = _WorkoutTrackerScreen.exerciseLogging;
+      _screen = _AppScreen.exerciseLogging;
     });
   }
 
   void _closeExercise() {
     _controller.closeExercise();
     setState(() {
-      _screen = _WorkoutTrackerScreen.exercisePicker;
+      _screen = _AppScreen.exercisePicker;
     });
   }
 
   void _openPrimaryExerciseAdd(String workout) {
     _controller.closeExercise();
-    _canonicalExerciseBeingEdited = null;
-    _highlightedCanonicalExerciseSheetRowNumber = null;
+    _editingExercise = null;
+    _highlightedExerciseRow = null;
     setState(() {
-      _exerciseAddReturnScreen = _WorkoutTrackerScreen.workoutSetup;
-      _addExercisePlacementIntent = _AddExercisePlacementIntent.primary(
-        workout: workout,
-      );
-      _screen = _WorkoutTrackerScreen.addExercise;
+      _exerciseAddReturnScreen = _AppScreen.workoutSetup;
+      placementIntent = _PlaceIntent.primary(workout: workout);
+      _screen = _AppScreen.addExercise;
     });
   }
 
@@ -801,19 +795,19 @@ class _SpreadsheetValidationShellState
     if (workout == null) {
       return;
     }
-    final returnScreen = _screen == _WorkoutTrackerScreen.workoutSetup
-        ? _WorkoutTrackerScreen.workoutSetup
-        : _WorkoutTrackerScreen.exercisePicker;
+    final returnScreen = _screen == _AppScreen.workoutSetup
+        ? _AppScreen.workoutSetup
+        : _AppScreen.exercisePicker;
     _controller.closeExercise();
-    _canonicalExerciseBeingEdited = null;
+    _editingExercise = null;
     setState(() {
       _exerciseAddReturnScreen = returnScreen;
-      _addExercisePlacementIntent = _AddExercisePlacementIntent.backup(
+      placementIntent = _PlaceIntent.backup(
         workout: workout,
         primarySheetRowNumber: primarySlot.sheetRowNumber,
         primaryExercise: primarySlot.exercise,
       );
-      _screen = _WorkoutTrackerScreen.addExercise;
+      _screen = _AppScreen.addExercise;
     });
   }
 
@@ -851,39 +845,38 @@ class _SpreadsheetValidationShellState
 
   void _openCanonicalExerciseCreation() {
     _controller.closeExercise();
-    _canonicalExerciseBeingEdited = null;
+    _editingExercise = null;
     setState(() {
-      _exerciseAddReturnScreen =
-          _screen == _WorkoutTrackerScreen.exerciseManager
-          ? _WorkoutTrackerScreen.exerciseManager
-          : _WorkoutTrackerScreen.workoutSetup;
-      _addExercisePlacementIntent = null;
-      _screen = _WorkoutTrackerScreen.addExercise;
+      _exerciseAddReturnScreen = _screen == _AppScreen.exerciseManager
+          ? _AppScreen.exerciseManager
+          : _AppScreen.workoutSetup;
+      placementIntent = null;
+      _screen = _AppScreen.addExercise;
     });
   }
 
   void _closeExerciseAdd() {
     setState(() {
-      _addExercisePlacementIntent = null;
-      _canonicalExerciseBeingEdited = null;
+      placementIntent = null;
+      _editingExercise = null;
       _screen = _exerciseAddReturnScreen;
     });
   }
 
   void _openCanonicalExerciseEdit(CanonicalExercise exercise) {
     _controller.closeExercise();
-    _addExercisePlacementIntent = null;
-    _highlightedCanonicalExerciseSheetRowNumber = null;
+    placementIntent = null;
+    _highlightedExerciseRow = null;
     setState(() {
-      _canonicalExerciseBeingEdited = exercise;
-      _screen = _WorkoutTrackerScreen.editExercise;
+      _editingExercise = exercise;
+      _screen = _AppScreen.editExercise;
     });
   }
 
   void _closeExerciseEdit() {
     setState(() {
-      _canonicalExerciseBeingEdited = null;
-      _screen = _WorkoutTrackerScreen.exerciseManager;
+      _editingExercise = null;
+      _screen = _AppScreen.exerciseManager;
     });
   }
 
@@ -898,8 +891,8 @@ class _SpreadsheetValidationShellState
     }
     final createdExerciseName = draft.normalized().exerciseName;
     setState(() {
-      _highlightedCanonicalExerciseSheetRowNumber =
-          _exerciseAddReturnScreen == _WorkoutTrackerScreen.exerciseManager
+      _highlightedExerciseRow =
+          _exerciseAddReturnScreen == _AppScreen.exerciseManager
           ? _lastCanonicalExerciseSheetRowNumberByName(createdExerciseName)
           : null;
       _screen = _exerciseAddReturnScreen;
@@ -909,7 +902,7 @@ class _SpreadsheetValidationShellState
   Future<void> _handleCanonicalExerciseEditDraft(
     CanonicalExerciseDraft draft,
   ) async {
-    final selectedExercise = _canonicalExerciseBeingEdited;
+    final selectedExercise = _editingExercise;
     if (selectedExercise == null) {
       return;
     }
@@ -921,10 +914,9 @@ class _SpreadsheetValidationShellState
       return;
     }
     setState(() {
-      _canonicalExerciseBeingEdited = null;
-      _highlightedCanonicalExerciseSheetRowNumber =
-          selectedExercise.sheetRowNumber;
-      _screen = _WorkoutTrackerScreen.exerciseManager;
+      _editingExercise = null;
+      _highlightedExerciseRow = selectedExercise.sheetRowNumber;
+      _screen = _AppScreen.exerciseManager;
     });
   }
 
@@ -946,7 +938,7 @@ class _SpreadsheetValidationShellState
     if (!mounted || !added) {
       return;
     }
-    _addExercisePlacementIntent = null;
+    placementIntent = null;
     setState(() {
       _screen = _exerciseAddReturnScreen;
     });
@@ -964,7 +956,7 @@ class _SpreadsheetValidationShellState
   }
 
   Future<bool> _addExercisePlacement(_ExercisePlacementDraft draft) async {
-    final intent = _addExercisePlacementIntent;
+    final intent = placementIntent;
     if (intent == null) {
       return false;
     }
@@ -972,10 +964,10 @@ class _SpreadsheetValidationShellState
       exercise: draft.exercise,
       metadata: draft.metadata,
       placement: switch (intent.kind) {
-        _ExercisePlacementKind.primary => ExercisePlacementTarget.primary(
+        _PlaceKind.primary => ExercisePlacementTarget.primary(
           workout: intent.workout,
         ),
-        _ExercisePlacementKind.backup => ExercisePlacementTarget.backup(
+        _PlaceKind.backup => ExercisePlacementTarget.backup(
           primarySheetRowNumber: intent.primarySheetRowNumber!,
         ),
       },
@@ -986,7 +978,7 @@ class _SpreadsheetValidationShellState
     _controller.selectWorkout(workout);
     _persistWorkoutSelection();
     setState(() {
-      _screen = _WorkoutTrackerScreen.workoutSetup;
+      _screen = _AppScreen.workoutSetup;
     });
   }
 
@@ -994,7 +986,7 @@ class _SpreadsheetValidationShellState
     _controller.selectHistoryBlock(historyBlock);
     _persistWorkoutSelection();
     setState(() {
-      _screen = _WorkoutTrackerScreen.workoutSetup;
+      _screen = _AppScreen.workoutSetup;
     });
   }
 
@@ -1053,7 +1045,7 @@ class _SpreadsheetValidationShellState
               final showPickerAvailability =
                   selectedSpreadsheet == null && spreadsheetPicker != null;
               final showSheetSelection =
-                  _screen == _WorkoutTrackerScreen.sheetSelection ||
+                  _screen == _AppScreen.sheetSelection ||
                   report == null ||
                   report.hasBlockingIssues;
               final showSpreadsheetTextFallback =
@@ -1069,7 +1061,7 @@ class _SpreadsheetValidationShellState
                       children: [
                         if (showSheetSelection) ...[
                           if (spreadsheetPicker != null) ...[
-                            _SelectedSpreadsheetChooser(
+                            _SheetPick(
                               selectedSpreadsheet: selectedSpreadsheet,
                               availability: pickerAvailability,
                               showAvailabilitySummary: showPickerAvailability,
@@ -1086,14 +1078,14 @@ class _SpreadsheetValidationShellState
                               const SizedBox(height: 12),
                           ],
                           if (showSpreadsheetTextFallback)
-                            _SpreadsheetTextFallback(
+                            _SheetTextFallback(
                               controller: _spreadsheetController,
                               isBusy: isBusy,
                               accountSession: widget.accountSession,
                               onSignedOut: _handleSignedOut,
                               onChanged: _usePastedSpreadsheetText,
-                              onSubmitted: _validateSelectedSpreadsheet,
-                              onValidate: _validateSelectedSpreadsheet,
+                              onSubmitted: _validateSelected,
+                              onValidate: _validateSelected,
                             ),
                           const SizedBox(height: 24),
                         ],
@@ -1111,7 +1103,7 @@ class _SpreadsheetValidationShellState
                             report: report,
                             onRepairUnambiguousFormulaIssues: isBusy
                                 ? null
-                                : _repairUnambiguousFormulaIssues,
+                                : _repairUnambiguousFormulas,
                             onRepairFormulaIssue: isBusy
                                 ? null
                                 : _repairFormulaIssue,
@@ -1120,7 +1112,7 @@ class _SpreadsheetValidationShellState
                                 : _openSelectedSpreadsheet,
                           ),
                         if (!showSheetSelection)
-                          _WorkoutAndHistorySelection(
+                          _WorkoutPane(
                             setup: _controller.workoutSetup!,
                             sheetLabel:
                                 selectedSpreadsheet?.displayLabel ??
@@ -1130,8 +1122,7 @@ class _SpreadsheetValidationShellState
                             onSelectWorkoutSetup: _selectWorkoutSetup,
                             onBackToWorkoutSetup: _returnToWorkoutSetup,
                             onOpenExerciseManager: _openExerciseManager,
-                            canonicalExerciseBeingEdited:
-                                _canonicalExerciseBeingEdited,
+                            editingExercise: _editingExercise,
                             onWorkoutChanged: _selectWorkout,
                             onHistoryBlockChanged: _selectHistoryBlock,
                             onAddWorkout: isBusy ? null : _promptForNewWorkout,
@@ -1144,8 +1135,7 @@ class _SpreadsheetValidationShellState
                             onEditCanonicalExercise: isBusy
                                 ? null
                                 : _openCanonicalExerciseEdit,
-                            highlightedCanonicalExerciseSheetRowNumber:
-                                _highlightedCanonicalExerciseSheetRowNumber,
+                            highlightedExerciseRow: _highlightedExerciseRow,
                             onReorderCanonicalExercises: isBusy
                                 ? null
                                 : _controller.reorderCanonicalExercises,
@@ -1159,8 +1149,7 @@ class _SpreadsheetValidationShellState
                                 ? null
                                 : _confirmDeleteWorkoutExercise,
                             exerciseAddReturnScreen: _exerciseAddReturnScreen,
-                            addExercisePlacementIntent:
-                                _addExercisePlacementIntent,
+                            addExercisePlacementIntent: placementIntent,
                             onCloseExerciseAdd: _closeExerciseAdd,
                             onSubmitCanonicalExercise:
                                 _handleCanonicalExerciseDraft,
@@ -1168,7 +1157,7 @@ class _SpreadsheetValidationShellState
                                 _handleCanonicalExerciseEditDraft,
                             onCloseExerciseEdit: _closeExerciseEdit,
                             onSubmitExercisePlacement: _handleExercisePlacement,
-                            onSubmitExercisePlacementAndAddAnother:
+                            onSubmitPlacementAndAddAnother:
                                 _handleExercisePlacementAndAddAnother,
                             onCloseExercise: _closeExercise,
                             onLoggingRowChanged: _controller.selectLoggingRow,

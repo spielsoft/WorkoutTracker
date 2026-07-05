@@ -11,19 +11,19 @@ import 'spreadsheet_selection.dart';
 /// valid while [report] remains current, so the controller clears them whenever
 /// workout or history selection changes or a new report is adopted.
 class AppController extends ChangeNotifier {
-  AppController({required this.workbookCommands});
+  AppController({required this.svc});
 
-  static const int _loggedSetConfirmationRetryReads = 6;
+  static const int _readRetries = 6;
 
-  final WorkbookCommandService workbookCommands;
+  final WorkbookCommandService svc;
 
   ValidationReport? _report;
   String? _error;
   String? _selectedWorkout;
   String? _selectedHistoryBlock;
   final List<String> _pendingWorkouts = [];
-  int? _loggingPrimarySheetRowNumber;
-  int? _selectedLoggingSheetRowNumber;
+  int? _loggingPrimaryRow;
+  int? _selectedLoggingRow;
   bool _isBusy = false;
   bool _isDisposed = false;
 
@@ -74,7 +74,7 @@ class AppController extends ChangeNotifier {
             historyBlockLabel: selectedHistoryBlock,
           ),
       },
-      loggingTarget: _loggingTargetForOverview(
+      loggingTarget: _loggingTarget(
         overview: overview,
         selectedHistoryBlock: selectedHistoryBlock,
       ),
@@ -94,28 +94,24 @@ class AppController extends ChangeNotifier {
       clearReport: true,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
-        final report = await workbookCommands.validateSpreadsheet(
-          spreadsheetId,
-        );
+        final report = await svc.validateSpreadsheet(spreadsheetId);
         _adoptReport(report);
       },
     );
   }
 
-  Future<bool> validateSelectedSpreadsheet(SelectedSpreadsheet selection) {
+  Future<bool> validateSelected(SelectedSpreadsheet selection) {
     return _runServiceAction(
       clearReport: true,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
-        final report = await workbookCommands.validateSpreadsheet(
-          selection.spreadsheetId,
-        );
+        final report = await svc.validateSpreadsheet(selection.spreadsheetId);
         _adoptReport(report);
       },
     );
   }
 
-  void clearSpreadsheetSelection() {
+  void clearSelection() {
     _report = null;
     _error = null;
     _selectedWorkout = null;
@@ -144,7 +140,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create history block',
       action: () async {
-        final updatedReport = await workbookCommands.applyActiveSheetWritePlan(
+        final updatedReport = await svc.applyActiveSheetWritePlan(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           plan: report.activeSheet.planNewHistoryBlock(label: trimmedLabel),
@@ -186,7 +182,7 @@ class AppController extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> repairUnambiguousFormulaIssues() async {
+  Future<bool> repairUnambiguousFormulas() async {
     final report = _report;
     if (report == null) {
       return false;
@@ -196,7 +192,7 @@ class AppController extends ChangeNotifier {
       failurePrefix: 'Unable to repair formulas',
       action: () async {
         _adoptReport(
-          await workbookCommands.applyActiveSheetWritePlan(
+          await svc.applyActiveSheetWritePlan(
             spreadsheetId: report.spreadsheetId,
             activeSheet: report.activeSheet,
             plan: report.activeSheet.planUnambiguousFormulaHealing(),
@@ -219,7 +215,7 @@ class AppController extends ChangeNotifier {
       failurePrefix: 'Unable to repair formula',
       action: () async {
         _adoptReport(
-          await workbookCommands.applyActiveSheetWritePlan(
+          await svc.applyActiveSheetWritePlan(
             spreadsheetId: report.spreadsheetId,
             activeSheet: report.activeSheet,
             plan: report.activeSheet.planFormulaHealing(
@@ -241,15 +237,12 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to save set',
       action: () async {
-        final updatedReport = await workbookCommands.applyActiveSheetWritePlan(
+        final updatedReport = await svc.applyActiveSheetWritePlan(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           plan: plan,
         );
-        await _adoptConfirmedWriteReport(
-          plan: plan,
-          firstReport: updatedReport,
-        );
+        await _confirmWriteReport(plan: plan, firstReport: updatedReport);
         _error = null;
       },
     );
@@ -268,7 +261,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create exercise',
       action: () async {
-        _report = await workbookCommands.createCanonicalExercise(
+        _report = await svc.createCanonicalExercise(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           exercise: exercise,
@@ -293,7 +286,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to update exercise',
       action: () async {
-        _report = await workbookCommands.updateCanonicalExercise(
+        _report = await svc.updateCanonicalExercise(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           selectedExercise: selectedExercise,
@@ -320,7 +313,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to add exercise',
       action: () async {
-        _report = await workbookCommands.addExerciseToWorkout(
+        _report = await svc.addExerciseToWorkout(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           exercise: exercise,
@@ -357,7 +350,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to reorder exercises',
       action: () async {
-        _report = await workbookCommands.reorderCanonicalExercises(
+        _report = await svc.reorderCanonicalExercises(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           intent: intent,
@@ -380,7 +373,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to reorder workout exercises',
       action: () async {
-        _report = await workbookCommands.reorderWorkoutExercises(
+        _report = await svc.reorderWorkoutExercises(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           workout: workout,
@@ -407,7 +400,7 @@ class AppController extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to delete exercise',
       action: () async {
-        final deleteReport = await workbookCommands.deleteWorkoutExercise(
+        final deleteReport = await svc.deleteWorkoutExercise(
           spreadsheetId: report.spreadsheetId,
           activeSheet: report.activeSheet,
           primarySheetRowNumber: primarySheetRowNumber,
@@ -457,8 +450,8 @@ class AppController extends ChangeNotifier {
   }
 
   void openExercise(int primarySheetRowNumber) {
-    _loggingPrimarySheetRowNumber = primarySheetRowNumber;
-    _selectedLoggingSheetRowNumber = primarySheetRowNumber;
+    _loggingPrimaryRow = primarySheetRowNumber;
+    _selectedLoggingRow = primarySheetRowNumber;
     notifyListeners();
   }
 
@@ -468,11 +461,11 @@ class AppController extends ChangeNotifier {
   }
 
   void selectLoggingRow(int sheetRowNumber) {
-    _selectedLoggingSheetRowNumber = sheetRowNumber;
+    _selectedLoggingRow = sheetRowNumber;
     notifyListeners();
   }
 
-  void reportOpenSpreadsheetFailure(Object error) {
+  void reportOpenFailure(Object error) {
     _error = _formatServiceFailure(
       failurePrefix: 'Unable to open spreadsheet',
       error: error,
@@ -575,11 +568,11 @@ class AppController extends ChangeNotifier {
   }
 
   void _clearLoggingSelection() {
-    _loggingPrimarySheetRowNumber = null;
-    _selectedLoggingSheetRowNumber = null;
+    _loggingPrimaryRow = null;
+    _selectedLoggingRow = null;
   }
 
-  Future<void> _adoptConfirmedWriteReport({
+  Future<void> _confirmWriteReport({
     required ActiveSheetWritePlan plan,
     required ValidationReport firstReport,
   }) async {
@@ -591,14 +584,8 @@ class AppController extends ChangeNotifier {
       return;
     }
 
-    for (
-      var readCount = 0;
-      readCount < _loggedSetConfirmationRetryReads;
-      readCount += 1
-    ) {
-      latestReport = await workbookCommands.validateSpreadsheet(
-        firstReport.spreadsheetId,
-      );
+    for (var readCount = 0; readCount < _readRetries; readCount += 1) {
+      latestReport = await svc.validateSpreadsheet(firstReport.spreadsheetId);
       _report = latestReport;
       if (_retainsLoggedSetWrite(plan, latestReport.activeSheet)) {
         return;
@@ -606,9 +593,7 @@ class AppController extends ChangeNotifier {
     }
 
     _report = lastConfirmedReport;
-    throw const _ControllerActionFailure(
-      'saved set was not visible after refresh.',
-    );
+    throw const _SaveFail('saved set was not visible after refresh.');
   }
 
   bool _retainsLoggedSetWrite(
@@ -621,7 +606,7 @@ class AppController extends ChangeNotifier {
     }
 
     final historyBlockLabel = _selectedHistoryBlock;
-    final primarySheetRowNumber = _loggingPrimarySheetRowNumber;
+    final primarySheetRowNumber = _loggingPrimaryRow;
     if (historyBlockLabel == null || primarySheetRowNumber == null) {
       return true;
     }
@@ -665,11 +650,11 @@ class AppController extends ChangeNotifier {
     return null;
   }
 
-  WorkoutLoggingTarget? _loggingTargetForOverview({
+  WorkoutLoggingTarget? _loggingTarget({
     required WorkoutOverview? overview,
     required String? selectedHistoryBlock,
   }) {
-    final primarySheetRowNumber = _loggingPrimarySheetRowNumber;
+    final primarySheetRowNumber = _loggingPrimaryRow;
     if (overview == null ||
         selectedHistoryBlock == null ||
         primarySheetRowNumber == null) {
@@ -687,8 +672,7 @@ class AppController extends ChangeNotifier {
       return null;
     }
 
-    final requestedLoggingRow =
-        _selectedLoggingSheetRowNumber ?? primarySheetRowNumber;
+    final requestedLoggingRow = _selectedLoggingRow ?? primarySheetRowNumber;
     final selectedSheetRowNumber =
         requestedLoggingRow == primarySheetRowNumber ||
             slot.backups.any(
@@ -744,8 +728,8 @@ class AppController extends ChangeNotifier {
   }
 }
 
-class _ControllerActionFailure {
-  const _ControllerActionFailure(this.message);
+class _SaveFail {
+  const _SaveFail(this.message);
 
   final String message;
 

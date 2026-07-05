@@ -31,7 +31,7 @@ void main() {
           '',
         ],
       ]);
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       controller.openExercise(99);
 
@@ -63,7 +63,7 @@ void main() {
         final service = TestSpreadsheetValidationService(
           _parseWorkbookFixture(fixture),
         );
-        final controller = AppController(workbookCommands: service);
+        final controller = AppController(svc: service);
 
         final validated = await controller.validateSelection('spreadsheet-id');
 
@@ -98,7 +98,7 @@ void main() {
         ],
         ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '', '', ''],
       ]);
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -169,7 +169,7 @@ void main() {
           '',
         ],
       ]);
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
       controller.selectWorkout('Missing');
@@ -197,7 +197,7 @@ void main() {
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ['Leg Press', '3', '10', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
     ]);
-    final controller = AppController(workbookCommands: service);
+    final controller = AppController(svc: service);
 
     await controller.validateSelection('spreadsheet-id');
     controller.openExercise(3);
@@ -220,7 +220,7 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
         ['Plank', '3', '45s', '8', '60s', '', '', '', '', '', '45s@8'],
       ]);
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
       controller.selectWorkout('Legs');
@@ -266,7 +266,7 @@ void main() {
         ],
         ['Lunge', '2', '10', '7', '90s', '', '', '', 'Legs', '', '50x10@7'],
       ]);
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
 
@@ -294,7 +294,7 @@ void main() {
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
 
@@ -330,7 +330,7 @@ void main() {
       visibleSheet: visibleSheet,
       currentSheet: changedSheet,
     );
-    final controller = AppController(workbookCommands: service);
+    final controller = AppController(svc: service);
 
     await controller.validateSelection('spreadsheet-id');
     final plan = visibleSheet.planSetLoggingWrite(
@@ -373,7 +373,7 @@ void main() {
         ),
       );
       final service = _StaleWriteValidationService(visibleSheet);
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -446,7 +446,7 @@ void main() {
         writeReportSheet: staleSheet,
         retrySheets: [staleSheet, staleSheet, staleSheet, freshSheet],
       );
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -523,7 +523,7 @@ void main() {
         writeReportSheet: refreshedSheet,
         retrySheets: [refreshedSheet],
       );
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
       controller.openExercise(3);
@@ -606,11 +606,11 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: repairedSheet,
       );
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
 
-      final repaired = await controller.repairUnambiguousFormulaIssues();
+      final repaired = await controller.repairUnambiguousFormulas();
 
       expect(repaired, isTrue);
       expect(service.appliedPlans.single.cellUpdates, const [
@@ -643,7 +643,7 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
       );
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
 
@@ -675,7 +675,7 @@ void main() {
         initialSheet: damagedSheet,
         repairedSheet: _parseWorkbookFixture(loadLocalWorkoutWorkbookFixture()),
       );
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
 
@@ -701,7 +701,7 @@ void main() {
     'blank spreadsheet selection reports a user error without calling the service',
     () async {
       final controller = AppController(
-        workbookCommands: TestSpreadsheetValidationService.fromRows([
+        svc: TestSpreadsheetValidationService.fromRows([
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
           ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -714,8 +714,7 @@ void main() {
       expect(controller.error, 'Enter a Google Sheets URL or spreadsheet ID.');
       expect(controller.report, isNull);
       expect(
-        (controller.workbookCommands as TestSpreadsheetValidationService)
-            .spreadsheetIds,
+        (controller.svc as TestSpreadsheetValidationService).spreadsheetIds,
         isEmpty,
       );
     },
@@ -725,7 +724,7 @@ void main() {
     'disabled Google Sheets API errors explain the project setup action',
     () async {
       final controller = AppController(
-        workbookCommands: _FailingSpreadsheetValidationService(
+        svc: _FailingSpreadsheetValidationService(
           'DetailedApiRequestError(status: 403, message: Google Sheets API '
           'has not been used in project 657151291920 before or it is disabled. '
           'Enable it by visiting https://console.developers.google.com/apis/'
@@ -764,7 +763,7 @@ void main() {
         activeSheet: activeSheet,
         writeCompleter: writeCompleter,
       );
-      final controller = AppController(workbookCommands: service);
+      final controller = AppController(svc: service);
 
       await controller.validateSelection('spreadsheet-id');
 

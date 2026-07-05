@@ -74,8 +74,8 @@ class _ScreenHeader extends StatelessWidget {
   }
 }
 
-class _WorkoutAndHistorySelection extends StatelessWidget {
-  const _WorkoutAndHistorySelection({
+class _WorkoutPane extends StatelessWidget {
+  const _WorkoutPane({
     required this.setup,
     required this.sheetLabel,
     required this.screen,
@@ -83,14 +83,14 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onSelectWorkoutSetup,
     required this.onBackToWorkoutSetup,
     required this.onOpenExerciseManager,
-    required this.canonicalExerciseBeingEdited,
+    required this.editingExercise,
     required this.onWorkoutChanged,
     required this.onHistoryBlockChanged,
     required this.onAddWorkout,
     required this.onAddHistoryBlock,
     required this.onCreateCanonicalExercise,
     required this.onEditCanonicalExercise,
-    required this.highlightedCanonicalExerciseSheetRowNumber,
+    required this.highlightedExerciseRow,
     required this.onReorderCanonicalExercises,
     required this.onReorderWorkoutExercises,
     required this.onOpenExercise,
@@ -104,7 +104,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     required this.onSubmitCanonicalExerciseEdit,
     required this.onCloseExerciseEdit,
     required this.onSubmitExercisePlacement,
-    required this.onSubmitExercisePlacementAndAddAnother,
+    required this.onSubmitPlacementAndAddAnother,
     required this.onCloseExercise,
     required this.onLoggingRowChanged,
     required this.onApplyWritePlan,
@@ -112,19 +112,19 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
 
   final WorkoutSetupReadModel setup;
   final String sheetLabel;
-  final _WorkoutTrackerScreen screen;
+  final _AppScreen screen;
   final VoidCallback onBackToSheetSelection;
   final VoidCallback onSelectWorkoutSetup;
   final VoidCallback onBackToWorkoutSetup;
   final VoidCallback onOpenExerciseManager;
-  final CanonicalExercise? canonicalExerciseBeingEdited;
+  final CanonicalExercise? editingExercise;
   final ValueChanged<String?> onWorkoutChanged;
   final ValueChanged<String?> onHistoryBlockChanged;
   final VoidCallback? onAddWorkout;
   final VoidCallback? onAddHistoryBlock;
   final VoidCallback? onCreateCanonicalExercise;
   final ValueChanged<CanonicalExercise>? onEditCanonicalExercise;
-  final int? highlightedCanonicalExerciseSheetRowNumber;
+  final int? highlightedExerciseRow;
   final Future<bool> Function(ReorderIntent intent)?
   onReorderCanonicalExercises;
   final Future<bool> Function(ReorderIntent intent)? onReorderWorkoutExercises;
@@ -132,15 +132,15 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
   final ValueChanged<String> onAddPrimaryExercise;
   final ValueChanged<WorkoutOverviewSlot> onAddBackupExercise;
   final ValueChanged<WorkoutOverviewSlot>? onDeleteWorkoutExercise;
-  final _WorkoutTrackerScreen exerciseAddReturnScreen;
-  final _AddExercisePlacementIntent? addExercisePlacementIntent;
+  final _AppScreen exerciseAddReturnScreen;
+  final _PlaceIntent? addExercisePlacementIntent;
   final VoidCallback onCloseExerciseAdd;
   final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExercise;
   final ValueChanged<CanonicalExerciseDraft> onSubmitCanonicalExerciseEdit;
   final VoidCallback onCloseExerciseEdit;
   final ValueChanged<_ExercisePlacementDraft> onSubmitExercisePlacement;
   final Future<bool> Function(_ExercisePlacementDraft draft)
-  onSubmitExercisePlacementAndAddAnother;
+  onSubmitPlacementAndAddAnother;
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
@@ -154,8 +154,7 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
     final selectedHistoryBlock = setup.selectedHistoryBlock;
     final overview = setup.overview;
 
-    if (screen == _WorkoutTrackerScreen.exerciseLogging &&
-        setup.loggingTarget != null) {
+    if (screen == _AppScreen.exerciseLogging && setup.loggingTarget != null) {
       final target = setup.loggingTarget!;
       return _ExerciseLoggingScreen(
         sheetLabel: sheetLabel,
@@ -169,11 +168,10 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       );
     }
 
-    if (screen == _WorkoutTrackerScreen.addExercise) {
+    if (screen == _AppScreen.addExercise) {
       final intent = addExercisePlacementIntent;
       if (intent != null) {
-        final backTooltip =
-            exerciseAddReturnScreen == _WorkoutTrackerScreen.workoutSetup
+        final backTooltip = exerciseAddReturnScreen == _AppScreen.workoutSetup
             ? 'Back to workout setup'
             : 'Back to exercises';
         return _AddExercisePlacementScreen(
@@ -183,13 +181,12 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
           backTooltip: backTooltip,
           onBack: onCloseExerciseAdd,
           onSubmit: onSubmitExercisePlacement,
-          onSubmitAndAddAnother: onSubmitExercisePlacementAndAddAnother,
+          onSubmitAndAddAnother: onSubmitPlacementAndAddAnother,
         );
       }
       return _CanonicalExerciseCreationScreen(
         sheetLabel: sheetLabel,
-        backTooltip:
-            exerciseAddReturnScreen == _WorkoutTrackerScreen.exerciseManager
+        backTooltip: exerciseAddReturnScreen == _AppScreen.exerciseManager
             ? 'Back to edit exercises'
             : 'Back to workout setup',
         onBack: onCloseExerciseAdd,
@@ -197,17 +194,16 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
       );
     }
 
-    if (screen == _WorkoutTrackerScreen.editExercise &&
-        canonicalExerciseBeingEdited != null) {
+    if (screen == _AppScreen.editExercise && editingExercise != null) {
       return _CanonicalExerciseEditScreen(
         sheetLabel: sheetLabel,
-        exercise: canonicalExerciseBeingEdited!,
+        exercise: editingExercise!,
         onBack: onCloseExerciseEdit,
         onSubmit: onSubmitCanonicalExerciseEdit,
       );
     }
 
-    if (screen == _WorkoutTrackerScreen.exerciseManager) {
+    if (screen == _AppScreen.exerciseManager) {
       return _ExerciseManagerInventory(
         sheetLabel: sheetLabel,
         exercises: activeSheet.canonicalExercises,
@@ -215,12 +211,11 @@ class _WorkoutAndHistorySelection extends StatelessWidget {
         onAddExercise: onCreateCanonicalExercise,
         onEditExercise: onEditCanonicalExercise,
         onReorderExercises: onReorderCanonicalExercises,
-        highlightedExerciseSheetRowNumber:
-            highlightedCanonicalExerciseSheetRowNumber,
+        highlightedExerciseSheetRowNumber: highlightedExerciseRow,
       );
     }
 
-    if (screen == _WorkoutTrackerScreen.exercisePicker) {
+    if (screen == _AppScreen.exercisePicker) {
       final title = selectedWorkout == null || selectedHistoryBlock == null
           ? 'Exercises'
           : '$selectedWorkout - $selectedHistoryBlock';
@@ -989,7 +984,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
   });
 
   final String sheetLabel;
-  final _AddExercisePlacementIntent intent;
+  final _PlaceIntent intent;
   final List<CanonicalExercise> exercises;
   final String backTooltip;
   final VoidCallback onBack;
@@ -999,7 +994,7 @@ class _AddExercisePlacementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBackup = intent.kind == _ExercisePlacementKind.backup;
+    final isBackup = intent.kind == _PlaceKind.backup;
     return _A11yScreen(
       label: isBackup ? 'Add backup exercise' : 'Add exercise to workout',
       child: Column(

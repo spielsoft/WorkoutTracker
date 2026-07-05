@@ -17,7 +17,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      WorkoutTrackerApp(workbookCommands: service, spreadsheetPicker: picker),
+      WorkoutTrackerApp(svc: service, spreadsheetPicker: picker),
     );
     await tester.pump();
 

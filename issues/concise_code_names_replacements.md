@@ -135,3 +135,28 @@ Status: committed after the initial hotspot pass.
 
 - Audit every Dart file under `lib` for names that are still too long even when they no longer carry the original project/module prefixes.
 - Commit follow-up slices in small batches and append their replacements here.
+
+## Slice 2
+
+Status: controller and shell follow-up pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `workbookCommands` | `svc` |
+| `_confirmWriteReads` | `_readRetries` |
+| `_ControllerActionFailure` | `_SaveFail` |
+| `_WorkoutTrackerScreen` | `_AppScreen` |
+| `_ExercisePlacementKind` | `_PlaceKind` |
+| `_PlacementIntent` | `_PlaceIntent` |
+| `_SheetChooser` | `_SheetPick` |
+| `_NamePromptDialog` | `_NameDialog` |
+
+### Files simplified in slice 2
+
+- `lib/src/app/workout_tracker_controller.dart`
+- `lib/src/app/shell.dart`
+- `lib/src/app/shell_workout.dart`
+- `test/app/workout_tracker_controller_test.dart`
+- `test/widget_test.dart`
