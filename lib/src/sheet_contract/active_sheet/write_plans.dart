@@ -665,19 +665,19 @@ class InsertionPointExpectation extends WriteExpectation {
 class RowInsertExpectation extends WriteExpectation {
   RowInsertExpectation({
     required this.sheetRowNumber,
-    Iterable<String>? expectedRowAtInsertionPoint,
-  }) : expectedRowAtInsertionPoint = expectedRowAtInsertionPoint == null
+    Iterable<String>? expectedRow,
+  }) : expectedRow = expectedRow == null
            ? null
-           : List<String>.unmodifiable(expectedRowAtInsertionPoint);
+           : List<String>.unmodifiable(expectedRow);
 
   final int sheetRowNumber;
-  final List<String>? expectedRowAtInsertionPoint;
+  final List<String>? expectedRow;
 
   @override
   List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     final rowIndex = sheetRowNumber - 1;
-    final expectedRow = expectedRowAtInsertionPoint;
-    if (expectedRow == null) {
+    final row = expectedRow;
+    if (row == null) {
       if (rowIndex == sheet._rows.length) {
         return const [];
       }
@@ -685,7 +685,7 @@ class RowInsertExpectation extends WriteExpectation {
     }
     if (rowIndex >= 0 &&
         rowIndex < sheet._rows.length &&
-        _listEquals(sheet._rows[rowIndex], expectedRow)) {
+        _listEquals(sheet._rows[rowIndex], row)) {
       return const [];
     }
     return [_rejection()];
@@ -703,19 +703,14 @@ class RowInsertExpectation extends WriteExpectation {
     return identical(this, other) ||
         other is RowInsertExpectation &&
             sheetRowNumber == other.sheetRowNumber &&
-            _nullableListEquals(
-              expectedRowAtInsertionPoint,
-              other.expectedRowAtInsertionPoint,
-            );
+            _nullableListEquals(expectedRow, other.expectedRow);
   }
 
   @override
   int get hashCode {
     return Object.hash(
       sheetRowNumber,
-      expectedRowAtInsertionPoint == null
-          ? null
-          : Object.hashAll(expectedRowAtInsertionPoint!),
+      expectedRow == null ? null : Object.hashAll(expectedRow!),
     );
   }
 
@@ -723,7 +718,7 @@ class RowInsertExpectation extends WriteExpectation {
   String toString() {
     return 'RowInsertExpectation('
         'sheetRowNumber: $sheetRowNumber, '
-        'expectedRowAtInsertionPoint: $expectedRowAtInsertionPoint'
+        'expectedRow: $expectedRow'
         ')';
   }
 }
@@ -888,18 +883,16 @@ class ExercisesWritePlan {
   ExercisesWritePlan({
     Iterable<ExercisesRowAppend> rowAppends = const [],
     Iterable<ExercisesRowUpdate> rowUpdates = const [],
-    Iterable<CellUpdate> activeSheetFormulaUpdates = const [],
+    Iterable<CellUpdate> formulaUpdates = const [],
     Iterable<WriteExpectation> expectations = const [],
   }) : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends),
        rowUpdates = List<ExercisesRowUpdate>.unmodifiable(rowUpdates),
-       activeSheetFormulaUpdates = List<CellUpdate>.unmodifiable(
-         activeSheetFormulaUpdates,
-       ),
+       formulaUpdates = List<CellUpdate>.unmodifiable(formulaUpdates),
        expectations = List<WriteExpectation>.unmodifiable(expectations);
 
   final List<ExercisesRowAppend> rowAppends;
   final List<ExercisesRowUpdate> rowUpdates;
-  final List<CellUpdate> activeSheetFormulaUpdates;
+  final List<CellUpdate> formulaUpdates;
   final List<WriteExpectation> expectations;
 
   List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
@@ -937,10 +930,7 @@ class ExercisesWritePlan {
         other is ExercisesWritePlan &&
             _listEquals(rowAppends, other.rowAppends) &&
             _listEquals(rowUpdates, other.rowUpdates) &&
-            _listEquals(
-              activeSheetFormulaUpdates,
-              other.activeSheetFormulaUpdates,
-            ) &&
+            _listEquals(formulaUpdates, other.formulaUpdates) &&
             _listEquals(expectations, other.expectations);
   }
 
@@ -948,7 +938,7 @@ class ExercisesWritePlan {
   int get hashCode => Object.hash(
     Object.hashAll(rowAppends),
     Object.hashAll(rowUpdates),
-    Object.hashAll(activeSheetFormulaUpdates),
+    Object.hashAll(formulaUpdates),
     Object.hashAll(expectations),
   );
 
@@ -957,7 +947,7 @@ class ExercisesWritePlan {
     return 'ExercisesWritePlan('
         'rowAppends: $rowAppends, '
         'rowUpdates: $rowUpdates, '
-        'activeSheetFormulaUpdates: $activeSheetFormulaUpdates, '
+        'formulaUpdates: $formulaUpdates, '
         'expectations: $expectations'
         ')';
   }
@@ -1181,10 +1171,10 @@ class _WritePlanner {
 
   final _WritePlanningContext _context;
 
-  late final _HistoryBlockWritePlanner _historyBlocks =
-      _HistoryBlockWritePlanner(_context);
-  late final _CanonicalExerciseWritePlanner _canonicalExercises =
-      _CanonicalExerciseWritePlanner(_context);
+  late final _BlockWritePlanner _historyBlocks = _BlockWritePlanner(_context);
+  late final _ExerciseWritePlanner _canonicalExercises = _ExerciseWritePlanner(
+    _context,
+  );
   late final _WorkoutRowWritePlanner _workoutRows = _WorkoutRowWritePlanner(
     _context,
   );
@@ -1256,10 +1246,8 @@ class _WritePlanner {
     );
   }
 
-  ActiveSheetWritePlan planPrimaryExerciseDeletion({
-    required int primarySheetRowNumber,
-  }) {
-    return _workoutRows.planPrimaryExerciseDeletion(
+  ActiveSheetWritePlan planDeletePrimary({required int primarySheetRowNumber}) {
+    return _workoutRows.planDeletePrimary(
       primarySheetRowNumber: primarySheetRowNumber,
     );
   }
@@ -1365,7 +1353,7 @@ bool _nestedListEquals<T>(List<List<T>> first, List<List<T>> second) {
   return true;
 }
 
-_DirectExercisesReference? _directExercisesReference(String formula) {
+_ExerciseRef? _exerciseRef(String formula) {
   final normalized = formula.trim();
   final match = RegExp(
     r"^=('?Exercises'?)!([A-Z]+)(\d+)$",
@@ -1373,17 +1361,14 @@ _DirectExercisesReference? _directExercisesReference(String formula) {
   if (match == null) {
     return null;
   }
-  return _DirectExercisesReference(
+  return _ExerciseRef(
     columnNumber: _columnNumber(match.group(2)!),
     rowNumber: int.parse(match.group(3)!),
   );
 }
 
-class _DirectExercisesReference {
-  const _DirectExercisesReference({
-    required this.columnNumber,
-    required this.rowNumber,
-  });
+class _ExerciseRef {
+  const _ExerciseRef({required this.columnNumber, required this.rowNumber});
 
   final int columnNumber;
   final int rowNumber;

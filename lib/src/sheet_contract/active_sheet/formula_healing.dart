@@ -182,9 +182,9 @@ class _HealingPlanner {
             sheetRowNumber: cell.sheetRowNumber,
             sheetColumnNumber: cell.sheetColumnNumber,
             value: _directExercisesFormula(
-              exercisesSheetColumnNumber:
-                  sheet._formulaExerciseColumnNumbers[cell.columnName] ??
-                  _defaultExerciseColumnNumber(cell.columnName),
+              exerciseColumn:
+                  sheet._exerciseFormulaColumns[cell.columnName] ??
+                  _defaultExerciseColumn(cell.columnName),
               exercisesSheetRowNumber: exerciseSheetRowNumber,
             ),
           ),
@@ -278,7 +278,7 @@ List<FormulaHealingIssue> _healingIssues(
         );
       } else if (!_matchesAnyDirectRef(
         currentFormula,
-        exercisesSheetColumnNumber: formulaColumn.exercisesSheetColumnIndex + 1,
+        exerciseColumn: formulaColumn.exerciseColumnIndex + 1,
         exercisesSheetRowNumbers: candidates.isEmpty
             ? exerciseChoices.map((choice) => choice.sheetRowNumber)
             : candidates,
@@ -356,15 +356,15 @@ List<int> _matchingRows(
 
 bool _matchesDirectRef(
   String formula, {
-  required int exercisesSheetColumnNumber,
+  required int exerciseColumn,
   required int exercisesSheetRowNumber,
 }) {
   final expected = _directExercisesFormula(
-    exercisesSheetColumnNumber: exercisesSheetColumnNumber,
+    exerciseColumn: exerciseColumn,
     exercisesSheetRowNumber: exercisesSheetRowNumber,
   );
   final quotedExpected =
-      "='Exercises'!${_columnLetter(exercisesSheetColumnNumber)}"
+      "='Exercises'!${_columnLetter(exerciseColumn)}"
       '$exercisesSheetRowNumber';
   final normalized = formula.trim();
   return normalized == expected || normalized == quotedExpected;
@@ -372,13 +372,13 @@ bool _matchesDirectRef(
 
 bool _matchesAnyDirectRef(
   String formula, {
-  required int exercisesSheetColumnNumber,
+  required int exerciseColumn,
   required Iterable<int> exercisesSheetRowNumbers,
 }) {
   for (final rowNumber in exercisesSheetRowNumbers) {
     if (_matchesDirectRef(
       formula,
-      exercisesSheetColumnNumber: exercisesSheetColumnNumber,
+      exerciseColumn: exerciseColumn,
       exercisesSheetRowNumber: rowNumber,
     )) {
       return true;
@@ -388,14 +388,14 @@ bool _matchesAnyDirectRef(
 }
 
 String _directExercisesFormula({
-  required int exercisesSheetColumnNumber,
+  required int exerciseColumn,
   required int exercisesSheetRowNumber,
 }) {
-  return '=Exercises!${_columnLetter(exercisesSheetColumnNumber)}'
+  return '=Exercises!${_columnLetter(exerciseColumn)}'
       '$exercisesSheetRowNumber';
 }
 
-int _defaultExerciseColumnNumber(String activeColumnName) {
+int _defaultExerciseColumn(String activeColumnName) {
   switch (activeColumnName) {
     case 'Exercise':
       return 1;
@@ -433,12 +433,12 @@ class _FormulaDrivenColumn {
   const _FormulaDrivenColumn({
     required this.activeColumnName,
     required this.activeSheetColumnIndex,
-    required this.exercisesSheetColumnIndex,
+    required this.exerciseColumnIndex,
   });
 
   final String activeColumnName;
   final int activeSheetColumnIndex;
-  final int exercisesSheetColumnIndex;
+  final int exerciseColumnIndex;
 }
 
 List<_FormulaDrivenColumn> _formulaDrivenColumns(
@@ -449,13 +449,13 @@ List<_FormulaDrivenColumn> _formulaDrivenColumns(
     _FormulaDrivenColumn(
       activeColumnName: 'Exercise',
       activeSheetColumnIndex: active.exercise,
-      exercisesSheetColumnIndex: exercises.exercise,
+      exerciseColumnIndex: exercises.exercise,
     ),
     if (active.logFormat != null && exercises.logFormat != null)
       _FormulaDrivenColumn(
         activeColumnName: 'Log Format',
         activeSheetColumnIndex: active.logFormat!,
-        exercisesSheetColumnIndex: exercises.logFormat!,
+        exerciseColumnIndex: exercises.logFormat!,
       ),
   ];
 }

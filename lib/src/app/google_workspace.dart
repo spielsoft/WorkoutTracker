@@ -5,7 +5,7 @@ import 'app_state_store.dart';
 import 'google_account_session.dart';
 import 'spreadsheet_selection.dart';
 
-const _pickerNotConfiguredReason =
+const _pickerConfigReason =
     'Google Drive Picker is not configured for this build.';
 
 class WorkspaceUiState {
@@ -427,8 +427,8 @@ class WorkspaceController extends ChangeNotifier implements WorkspaceLifecycle {
 PickerAvailability _availabilityFor(SpreadsheetPicker? picker) {
   return picker?.availability ??
       const PickerAvailability.unavailable(
-        chooseReason: _pickerNotConfiguredReason,
-        createReason: _pickerNotConfiguredReason,
+        chooseReason: _pickerConfigReason,
+        createReason: _pickerConfigReason,
       );
 }
 

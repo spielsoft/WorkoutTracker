@@ -530,7 +530,7 @@ class ReorderingExerciseAuthoringService
       spreadsheetId: spreadsheetId,
       activeSheet: exerciseInventoryParsedSheet(
         _exercises,
-        cellFormulas: plan.activeSheetFormulaUpdates
+        cellFormulas: plan.formulaUpdates
             .map(
               (update) => CellFormula(
                 sheetRowNumber: update.sheetRowNumber,
@@ -617,7 +617,7 @@ class DeletingWorkoutExerciseAuthoringService
       );
     }
 
-    final plan = activeSheet.planPrimaryExerciseDeletion(
+    final plan = activeSheet.planDeletePrimary(
       primarySheetRowNumber: primarySheetRowNumber,
     );
     final previewRows = plan.previewRowsAfterApplying(_rows);

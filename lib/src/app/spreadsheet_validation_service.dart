@@ -84,15 +84,15 @@ class ValidationService implements WorkbookService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final canonicalExerciseRejection = _canonicalExerciseRowRejection(
+    final exerciseRejection = _exerciseRowRejection(
       currentSheet: currentActiveSheet,
       selectedExercise: selectedExercise,
     );
-    if (canonicalExerciseRejection != null) {
+    if (exerciseRejection != null) {
       return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
-        writeRejections: [canonicalExerciseRejection],
+        writeRejections: [exerciseRejection],
       );
     }
     final exercisesPlan = currentActiveSheet.planCanonicalUpdate(
@@ -127,15 +127,15 @@ class ValidationService implements WorkbookService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final canonicalExerciseRejection = _canonicalExerciseRowRejection(
+    final exerciseRejection = _exerciseRowRejection(
       currentSheet: currentActiveSheet,
       selectedExercise: exercise,
     );
-    if (canonicalExerciseRejection != null) {
+    if (exerciseRejection != null) {
       return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
-        writeRejections: [canonicalExerciseRejection],
+        writeRejections: [exerciseRejection],
       );
     }
     final activePlan = placement.isBackup
@@ -189,7 +189,7 @@ class ValidationService implements WorkbookService {
       );
     }
     if (exercisesPlan.rowUpdates.isEmpty &&
-        exercisesPlan.activeSheetFormulaUpdates.isEmpty) {
+        exercisesPlan.formulaUpdates.isEmpty) {
       return ValidationReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
@@ -260,7 +260,7 @@ class ValidationService implements WorkbookService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final activePlan = activeSheet.planPrimaryExerciseDeletion(
+    final activePlan = activeSheet.planDeletePrimary(
       primarySheetRowNumber: primarySheetRowNumber,
     );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
@@ -292,7 +292,7 @@ class ValidationService implements WorkbookService {
   }
 }
 
-WriteRejection? _canonicalExerciseRowRejection({
+WriteRejection? _exerciseRowRejection({
   required ParsedActiveSheet currentSheet,
   required CanonicalExercise selectedExercise,
 }) {

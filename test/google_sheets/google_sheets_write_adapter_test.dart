@@ -658,7 +658,7 @@ void main() {
               ],
             ),
           ],
-          activeSheetFormulaUpdates: const [
+          formulaUpdates: const [
             CellUpdate.formula(
               sheetRowNumber: 3,
               sheetColumnNumber: 1,

@@ -7,7 +7,7 @@ class ParsedActiveSheet {
     Iterable<WorkoutSlot> primarySlots = const [],
     Iterable<SchemaViolation> schemaViolations = const [],
     Iterable<FormulaHealingIssue> formulaHealingIssues = const [],
-    Map<String, int> formulaExerciseColumnNumbers = const {},
+    Map<String, int> exerciseFormulaColumns = const {},
     Iterable<Iterable<String>> rows = const [],
     Iterable<Iterable<String>> exercisesRows = const [],
     Iterable<CellFormula> cellFormulas = const [],
@@ -18,8 +18,8 @@ class ParsedActiveSheet {
        formulaHealingIssues = List<FormulaHealingIssue>.unmodifiable(
          formulaHealingIssues,
        ),
-       _formulaExerciseColumnNumbers = Map<String, int>.unmodifiable(
-         formulaExerciseColumnNumbers,
+       _exerciseFormulaColumns = Map<String, int>.unmodifiable(
+         exerciseFormulaColumns,
        ),
        _rows = List<List<String>>.unmodifiable(
          rows.map((row) => List<String>.unmodifiable(row)),
@@ -34,7 +34,7 @@ class ParsedActiveSheet {
   final List<WorkoutSlot> primarySlots;
   final List<SchemaViolation> schemaViolations;
   final List<FormulaHealingIssue> formulaHealingIssues;
-  final Map<String, int> _formulaExerciseColumnNumbers;
+  final Map<String, int> _exerciseFormulaColumns;
   final List<List<String>> _rows;
   final List<List<String>> _exercisesRows;
   final List<CellFormula> _cellFormulas;
@@ -217,12 +217,10 @@ class ParsedActiveSheet {
     );
   }
 
-  ActiveSheetWritePlan planPrimaryExerciseDeletion({
-    required int primarySheetRowNumber,
-  }) {
+  ActiveSheetWritePlan planDeletePrimary({required int primarySheetRowNumber}) {
     return _WritePlanner(
       this,
-    ).planPrimaryExerciseDeletion(primarySheetRowNumber: primarySheetRowNumber);
+    ).planDeletePrimary(primarySheetRowNumber: primarySheetRowNumber);
   }
 
   ActiveSheetWritePlan planFormulaHealing({

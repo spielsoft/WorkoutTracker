@@ -1001,9 +1001,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planPrimaryExerciseDeletion(
-      primarySheetRowNumber: 3,
-    );
+    final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
 
     expect(plan.rowDeletions, const [
       RowDeletion(sheetRowNumber: 3, rowCount: 1),
@@ -1062,9 +1060,7 @@ void main() {
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-      final plan = activeSheet.planPrimaryExerciseDeletion(
-        primarySheetRowNumber: 3,
-      );
+      final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
 
       expect(plan.rowDeletions, const [
         RowDeletion(sheetRowNumber: 3, rowCount: 2),
@@ -1136,9 +1132,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planPrimaryExerciseDeletion(
-      primarySheetRowNumber: 3,
-    );
+    final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
 
     expect(plan.rowDeletions, const [
       RowDeletion(sheetRowNumber: 3, rowCount: 1),
@@ -1229,9 +1223,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planPrimaryExerciseDeletion(
-      primarySheetRowNumber: 3,
-    );
+    final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
     final previewRows = plan.previewRowsAfterApplying(rows);
     final previewSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
 
@@ -1295,9 +1287,7 @@ void main() {
         ],
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
-      final plan = activeSheet.planPrimaryExerciseDeletion(
-        primarySheetRowNumber: 3,
-      );
+      final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
       final changedRows = rows.map((row) => [...row]).toList();
       changedRows.insert(4, [
         'Hack Squat',
@@ -1345,9 +1335,7 @@ void main() {
         ],
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
-      final plan = activeSheet.planPrimaryExerciseDeletion(
-        primarySheetRowNumber: 3,
-      );
+      final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
 
       for (final mutation in [
         (List<List<String>> changedRows) => changedRows[2][0] = 'Front Squat',
@@ -1509,7 +1497,7 @@ void main() {
           '{Weight}[x]{Reps}[@]{RPE}',
         ],
       ]);
-      expect(plan.activeSheetFormulaUpdates, [
+      expect(plan.formulaUpdates, [
         CellUpdate.formula(
           sheetRowNumber: 3,
           sheetColumnNumber: 1,
@@ -1557,10 +1545,10 @@ void main() {
     );
 
     expect(samePosition.rowUpdates, isEmpty);
-    expect(samePosition.activeSheetFormulaUpdates, isEmpty);
+    expect(samePosition.formulaUpdates, isEmpty);
     expect(samePosition.expectations, isEmpty);
     expect(outOfRange.rowUpdates, isEmpty);
-    expect(outOfRange.activeSheetFormulaUpdates, isEmpty);
+    expect(outOfRange.formulaUpdates, isEmpty);
     expect(outOfRange.expectations, isEmpty);
   });
 

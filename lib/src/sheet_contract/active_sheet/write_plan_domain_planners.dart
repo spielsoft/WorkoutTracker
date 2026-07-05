@@ -126,7 +126,7 @@ class _WritePlanningContext {
     );
   }
 
-  InsertionPointExpectation insertionPointExpectation(int sheetColumnNumber) {
+  InsertionPointExpectation insertExpectation(int sheetColumnNumber) {
     return InsertionPointExpectation(
       sheetColumnNumber: sheetColumnNumber,
       expectedHeaderValue: _cell(sheet._sheetRow(1), sheetColumnNumber - 1),
@@ -134,12 +134,11 @@ class _WritePlanningContext {
     );
   }
 
-  RowInsertExpectation rowInsertionPointExpectation(int sheetRowNumber) {
+  RowInsertExpectation rowInsertExpectation(int sheetRowNumber) {
     final rowIndex = sheetRowNumber - 1;
     return RowInsertExpectation(
       sheetRowNumber: sheetRowNumber,
-      expectedRowAtInsertionPoint:
-          rowIndex >= 0 && rowIndex < sheet._rows.length
+      expectedRow: rowIndex >= 0 && rowIndex < sheet._rows.length
           ? sheet._rows[rowIndex]
           : null,
     );
@@ -187,9 +186,9 @@ class _WritePlanningContext {
     return sheetRowNumber;
   }
 
-  int exercisesSheetColumnNumber(String activeColumnName) {
-    return sheet._formulaExerciseColumnNumbers[activeColumnName] ??
-        _defaultExerciseColumnNumber(activeColumnName);
+  int exerciseColumn(String activeColumnName) {
+    return sheet._exerciseFormulaColumns[activeColumnName] ??
+        _defaultExerciseColumn(activeColumnName);
   }
 
   List<CellUpdate> rowReorderCellUpdates({
@@ -237,29 +236,29 @@ class _WritePlanningContext {
     return null;
   }
 
-  List<CellUpdate> activeFormulaUpdatesForReorder(Map<int, int> oldToNewRows) {
+  List<CellUpdate> reorderFormulaUpdates(Map<int, int> oldToNewRows) {
     return [
       for (final formula in sheet._cellFormulas)
-        if (_directExercisesReference(formula.formula) case final reference?)
+        if (_exerciseRef(formula.formula) case final reference?)
           if (oldToNewRows[reference.rowNumber] case final newRowNumber?)
             if (newRowNumber != reference.rowNumber)
               CellUpdate.formula(
                 sheetRowNumber: formula.sheetRowNumber,
                 sheetColumnNumber: formula.sheetColumnNumber,
                 value: _directExercisesFormula(
-                  exercisesSheetColumnNumber: reference.columnNumber,
+                  exerciseColumn: reference.columnNumber,
                   exercisesSheetRowNumber: newRowNumber,
                 ),
               ),
     ];
   }
 
-  List<FormulaExpectation> activeFormulaExpectationsForReorder(
+  List<FormulaExpectation> reorderFormulaExpectations(
     Map<int, int> oldToNewRows,
   ) {
     return [
       for (final formula in sheet._cellFormulas)
-        if (_directExercisesReference(formula.formula) case final reference?)
+        if (_exerciseRef(formula.formula) case final reference?)
           if (oldToNewRows[reference.rowNumber] case final newRowNumber?)
             if (newRowNumber != reference.rowNumber)
               FormulaExpectation(
@@ -271,8 +270,8 @@ class _WritePlanningContext {
   }
 }
 
-class _HistoryBlockWritePlanner {
-  _HistoryBlockWritePlanner(this.context);
+class _BlockWritePlanner {
+  _BlockWritePlanner(this.context);
 
   final _WritePlanningContext context;
 
@@ -286,7 +285,7 @@ class _HistoryBlockWritePlanner {
           setLabels: const ['S1'],
         ),
       ],
-      expectations: [context.insertionPointExpectation(sheetColumnNumber)],
+      expectations: [context.insertExpectation(sheetColumnNumber)],
     );
   }
 
@@ -322,9 +321,7 @@ class _HistoryBlockWritePlanner {
           sheetColumnNumber: block.setColumns.last.sheetColumnNumber,
           setLabel: block.setColumns.last.label,
         ),
-        context.insertionPointExpectation(
-          block.setColumns.last.sheetColumnNumber + 1,
-        ),
+        context.insertExpectation(block.setColumns.last.sheetColumnNumber + 1),
       ],
     );
   }
@@ -334,7 +331,7 @@ class _SetWritePlanner {
   _SetWritePlanner({required this.context, required this.historyBlocks});
 
   final _WritePlanningContext context;
-  final _HistoryBlockWritePlanner historyBlocks;
+  final _BlockWritePlanner historyBlocks;
 
   ActiveSheetWritePlan planSetLoggingWrite({
     required String historyBlockLabel,
@@ -426,7 +423,7 @@ class _SetWritePlanner {
       return ActiveSheetWritePlan();
     }
 
-    return _planExistingSetCellWrite(
+    return _planSetWrite(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
@@ -444,7 +441,7 @@ class _SetWritePlanner {
       return ActiveSheetWritePlan();
     }
 
-    return _planExistingSetCellWrite(
+    return _planSetWrite(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
@@ -461,7 +458,7 @@ class _SetWritePlanner {
       return ActiveSheetWritePlan();
     }
 
-    return _planExistingSetCellWrite(
+    return _planSetWrite(
       historyBlockLabel: historyBlockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
@@ -469,7 +466,7 @@ class _SetWritePlanner {
     );
   }
 
-  ActiveSheetWritePlan _planExistingSetCellWrite({
+  ActiveSheetWritePlan _planSetWrite({
     required String historyBlockLabel,
     required int sheetRowNumber,
     required int setNumber,
@@ -500,8 +497,8 @@ class _SetWritePlanner {
   }
 }
 
-class _CanonicalExerciseWritePlanner {
-  _CanonicalExerciseWritePlanner(this.context);
+class _ExerciseWritePlanner {
+  _ExerciseWritePlanner(this.context);
 
   final _WritePlanningContext context;
 
@@ -562,16 +559,14 @@ class _CanonicalExerciseWritePlanner {
             values: _normalizedExerciseRow(header, reorderedRows[index]),
           ),
       ],
-      activeSheetFormulaUpdates: context.activeFormulaUpdatesForReorder(
-        oldToNewRows,
-      ),
+      formulaUpdates: context.reorderFormulaUpdates(oldToNewRows),
       expectations: [
         for (var index = 0; index < exerciseRows.length; index += 1)
           ExercisesRowExpectation(
             sheetRowNumber: index + 2,
             expectedValues: exerciseRows[index],
           ),
-        ...context.activeFormulaExpectationsForReorder(oldToNewRows),
+        ...context.reorderFormulaExpectations(oldToNewRows),
       ],
     );
   }
@@ -726,9 +721,7 @@ class _WorkoutRowWritePlanner {
     );
   }
 
-  ActiveSheetWritePlan planPrimaryExerciseDeletion({
-    required int primarySheetRowNumber,
-  }) {
+  ActiveSheetWritePlan planDeletePrimary({required int primarySheetRowNumber}) {
     final primary = context.primarySlotForRow(primarySheetRowNumber);
     if (primary == null) {
       return ActiveSheetWritePlan();
@@ -767,7 +760,7 @@ class _WorkoutRowWritePlanner {
           cellCount: context.activeSheetRowWidth,
         ),
       ],
-      cellUpdates: _workoutPlacementCellUpdates(
+      cellUpdates: _placementUpdates(
         sheetRowNumber: sheetRowNumber,
         exercisesSheetRowNumber: exercisesSheetRowNumber,
         workout: workout,
@@ -776,12 +769,12 @@ class _WorkoutRowWritePlanner {
       ),
       expectations: [
         if (parentPrimary != null) context.rowExpectation(parentPrimary),
-        context.rowInsertionPointExpectation(sheetRowNumber),
+        context.rowInsertExpectation(sheetRowNumber),
       ],
     );
   }
 
-  List<CellUpdate> _workoutPlacementCellUpdates({
+  List<CellUpdate> _placementUpdates({
     required int sheetRowNumber,
     required int exercisesSheetRowNumber,
     required String workout,
@@ -795,15 +788,13 @@ class _WorkoutRowWritePlanner {
       _FormulaDrivenColumn(
         activeColumnName: 'Exercise',
         activeSheetColumnIndex: activeColumns.exercise,
-        exercisesSheetColumnIndex:
-            context.exercisesSheetColumnNumber('Exercise') - 1,
+        exerciseColumnIndex: context.exerciseColumn('Exercise') - 1,
       ),
       if (activeColumns.logFormat != null)
         _FormulaDrivenColumn(
           activeColumnName: 'Log Format',
           activeSheetColumnIndex: activeColumns.logFormat!,
-          exercisesSheetColumnIndex:
-              context.exercisesSheetColumnNumber('Log Format') - 1,
+          exerciseColumnIndex: context.exerciseColumn('Log Format') - 1,
         ),
     ];
 
@@ -813,7 +804,7 @@ class _WorkoutRowWritePlanner {
           sheetRowNumber: sheetRowNumber,
           sheetColumnNumber: column.activeSheetColumnIndex + 1,
           value: _directExercisesFormula(
-            exercisesSheetColumnNumber: column.exercisesSheetColumnIndex + 1,
+            exerciseColumn: column.exerciseColumnIndex + 1,
             exercisesSheetRowNumber: exercisesSheetRowNumber,
           ),
         ),

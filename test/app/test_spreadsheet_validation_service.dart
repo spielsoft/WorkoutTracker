@@ -101,7 +101,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
     return applyWritePlan(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
-      plan: activeSheet.planPrimaryExerciseDeletion(
+      plan: activeSheet.planDeletePrimary(
         primarySheetRowNumber: primarySheetRowNumber,
       ),
     );

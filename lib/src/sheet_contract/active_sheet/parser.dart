@@ -92,7 +92,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     primarySlots: primarySlotBuilders.map((builder) => builder.toSlot()),
     schemaViolations: schemaViolations,
     formulaHealingIssues: _healingIssues(sheet, columns),
-    formulaExerciseColumnNumbers: sheet.exercisesRows.isEmpty
+    exerciseFormulaColumns: sheet.exercisesRows.isEmpty
         ? const {}
         : {
             for (final formulaColumn in _formulaDrivenColumns(
@@ -100,7 +100,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
               _ExercisesColumnIndexes.fromHeader(sheet.exercisesRows.first),
             ))
               formulaColumn.activeColumnName:
-                  formulaColumn.exercisesSheetColumnIndex + 1,
+                  formulaColumn.exerciseColumnIndex + 1,
           },
     rows: sheet.rows,
     exercisesRows: sheet.exercisesRows,
@@ -134,7 +134,7 @@ List<SchemaViolation> _historyBlockViolations({
 }) {
   final violations = <SchemaViolation>[];
   final seenBlockLabels = <String>{};
-  final builders = <_HistoryBlockValidationBuilder>[];
+  final builders = <_BlockValidationBuilder>[];
   final historyWidth = _historyHeaderWidth(
     header: header,
     setHeader: setHeader,
@@ -156,7 +156,7 @@ List<SchemaViolation> _historyBlockViolations({
           ),
         );
       }
-      builders.add(_HistoryBlockValidationBuilder(blockLabel));
+      builders.add(_BlockValidationBuilder(blockLabel));
     }
 
     final setLabel = _cell(setHeader, columnIndex).trim();
@@ -209,8 +209,8 @@ List<SchemaViolation> _historyBlockViolations({
   return violations;
 }
 
-class _HistoryBlockValidationBuilder {
-  _HistoryBlockValidationBuilder(this.label);
+class _BlockValidationBuilder {
+  _BlockValidationBuilder(this.label);
 
   final String label;
   final List<String> setLabels = [];

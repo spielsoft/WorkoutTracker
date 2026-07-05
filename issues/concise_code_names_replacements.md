@@ -593,3 +593,49 @@ Status: workout-pane callback vocabulary pass.
 
 - `lib/src/app/shell.dart`
 - `lib/src/app/shell_workout.dart`
+
+## Slice 15
+
+Status: sheet-contract and validation internal-name pass.
+
+### Symbol replacements
+
+| Old name | New name |
+| --- | --- |
+| `expectedRowAtInsertionPoint` | `expectedRow` |
+| `activeSheetFormulaUpdates` | `formulaUpdates` |
+| `_CanonicalExerciseWritePlanner` | `_ExerciseWritePlanner` |
+| `planPrimaryExerciseDeletion` | `planDeletePrimary` |
+| `_DirectExercisesReference` | `_ExerciseRef` |
+| `_directExercisesReference` | `_exerciseRef` |
+| `canonicalExerciseRejection` | `exerciseRejection` |
+| `_canonicalExerciseRowRejection` | `_exerciseRowRejection` |
+| `_pickerNotConfiguredReason` | `_pickerConfigReason` |
+| `exercisesSheetColumnNumber` | `exerciseColumn` |
+| `exercisesSheetColumnIndex` | `exerciseColumnIndex` |
+| `formulaExerciseColumnNumbers` | `exerciseFormulaColumns` |
+| `_formulaExerciseColumnNumbers` | `_exerciseFormulaColumns` |
+| `_defaultExerciseColumnNumber` | `_defaultExerciseColumn` |
+| `activeFormulaUpdatesForReorder` | `reorderFormulaUpdates` |
+| `activeFormulaExpectationsForReorder` | `reorderFormulaExpectations` |
+| `_workoutPlacementCellUpdates` | `_placementUpdates` |
+| `rowInsertionPointExpectation` | `rowInsertExpectation` |
+| `insertionPointExpectation` | `insertExpectation` |
+| `_planExistingSetCellWrite` | `_planSetWrite` |
+| `_HistoryBlockValidationBuilder` | `_BlockValidationBuilder` |
+| `_HistoryBlockWritePlanner` | `_BlockWritePlanner` |
+
+### Files simplified in slice 15
+
+- `lib/src/app/google_workspace.dart`
+- `lib/src/app/spreadsheet_validation_service.dart`
+- `lib/src/google_sheets/write_adapter.dart`
+- `lib/src/sheet_contract/active_sheet/formula_healing.dart`
+- `lib/src/sheet_contract/active_sheet/parsed_active_sheet.dart`
+- `lib/src/sheet_contract/active_sheet/parser.dart`
+- `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart`
+- `lib/src/sheet_contract/active_sheet/write_plans.dart`
+- `test/app/test_spreadsheet_validation_service.dart`
+- `test/google_sheets/google_sheets_write_adapter_test.dart`
+- `test/sheet_contract/active_sheet_write_planning_test.dart`
+- `test/support/widget_test_support.dart`

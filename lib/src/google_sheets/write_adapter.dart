@@ -71,7 +71,7 @@ class SheetsWriteAdapter {
   }) async {
     if (plan.rowAppends.isEmpty &&
         plan.rowUpdates.isEmpty &&
-        plan.activeSheetFormulaUpdates.isEmpty) {
+        plan.formulaUpdates.isEmpty) {
       return;
     }
 
@@ -88,10 +88,10 @@ class SheetsWriteAdapter {
       ..._rowAppendWrites(exercisesSheet, plan.rowAppends),
     ];
 
-    if (plan.activeSheetFormulaUpdates.isNotEmpty) {
+    if (plan.formulaUpdates.isNotEmpty) {
       final activeSheet = _requiredActiveSheet(metadata);
       operations.addAll([
-        for (final update in plan.activeSheetFormulaUpdates)
+        for (final update in plan.formulaUpdates)
           SheetsCellWrite(
             sheet: activeSheet,
             sheetRowNumber: update.sheetRowNumber,
