@@ -68,7 +68,7 @@ class CanonicalExerciseDraft {
     );
   }
 
-  ExerciseDef toDefinition() {
+  ExerciseDef toDef() {
     final draft = normalized();
     return ExerciseDef(
       exercise: draft.exerciseName,
@@ -182,10 +182,10 @@ class ExerciseAuthoringForm extends StatefulWidget {
   final bool isBusy;
 
   @override
-  State<ExerciseAuthoringForm> createState() => _AuthoringFormState();
+  State<ExerciseAuthoringForm> createState() => _AuthoringFormSt();
 }
 
-class _AuthoringFormState extends State<ExerciseAuthoringForm> {
+class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
@@ -493,10 +493,10 @@ class _AuthoringField extends StatefulWidget {
   final TextInputType? keyboardType;
 
   @override
-  State<_AuthoringField> createState() => _AuthoringFieldState();
+  State<_AuthoringField> createState() => _AuthoringFieldSt();
 }
 
-class _AuthoringFieldState extends State<_AuthoringField> {
+class _AuthoringFieldSt extends State<_AuthoringField> {
   late final FocusNode _focusNode;
 
   @override

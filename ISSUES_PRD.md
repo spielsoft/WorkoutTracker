@@ -1,195 +1,88 @@
-# Google Sheets Consolidation And Exercise Delete PRD
+# WorkoutTracker Reliability and Architecture Cleanup PRD
 
 ## Problem Statement
 
-WorkoutTracker relies on a user-owned Google Sheet as the source of truth, but
-the Google-facing implementation is split across account authorization, Picker
-selection, workbook initialization, sheet reads, sheet writes, and
-WorkoutTracker-specific validation services. The current shape is workable, but
-it makes upcoming spreadsheet operations harder than they should be. In
-particular, generic row and column operations such as delete and move are not
-available through one reusable sheet interface.
+WorkoutTracker currently lets the macOS app look connected to Google Sheets while write operations can still fail with Google `401` errors. The user can read and navigate the selected sheet, including the workout contents, but writes such as creating an exercise or adding an exercise to a workout can fail. Disconnecting and reconnecting through the app reportedly does not fix the failure, so the problem is not proven to be only a stale restored token.
 
-The next product feature exposes that gap directly. A user needs to delete a
-primary exercise from a workout from the same tap-and-hold or right-click menu
-that currently only offers Add backup. Deleting that primary exercise must also
-delete all of its associated backup rows and all logged history on those rows.
-Because this permanently removes sheet rows and history, the app must require
-an explicit confirmation before applying the delete.
+The verified code path shows a likely read/write authorization mismatch. Production wires `GooglePickerAuthorizationGateway` into all Google API access. Validation and writes request Sheets write scope from `GoogleScopedApiAccess`, but the Picker gateway ignores the requested scopes and returns whatever bearer token was most recently received from the Picker callback. The Picker authorization URL currently requests `drive.file`, not the Sheets write scope that the workbook client says it needs. That makes reconnect insufficient if reconnect simply obtains another token with the same insufficient scope. Persisted short-lived Picker tokens are still a risk after restart, but scope alignment and write authorization must be tested first rather than assumed.
 
-The desired refactor is not a broad rewrite. The goal is to deepen the existing
-Google seams so Google account/picker concerns and generic Sheets workbook
-operations live in one or two clear locations, while WorkoutTracker domain
-behavior remains in the sheet-contract and controller/service modules.
+The auth bug sits next to broader maintainability issues found in review: startup restore and command execution can race, GUI flow state is spread through a large shell and callback graph, Google Picker selection mixes multiple responsibilities, the active-sheet write-plan interface exposes too much internal machinery, and widget tests remain large and coupled to private UI keys. These issues make the auth bug harder to fix safely and make future sheet-contract changes more expensive.
 
 ## Solution
 
-Create a deeper generic Google Sheets workbook module that owns low-level sheet
-operations: sheet metadata, grid reads, cell writes, cell clears, row and column
-insertions, row and column deletions, and row and column moves. Existing
-WorkoutTracker-specific read/write adapters and workbook initialization should
-use this generic module instead of each owning raw Google request construction.
+WorkoutTracker should make Google authorization explicit and verifiable for the operation being attempted. Read access, metadata resolution, and write access must not be conflated. Before any Sheets write, the app must either hold authorization that was requested for the required Sheets write scopes or route the user through the single chosen authorization path to obtain it. The app should treat Google Picker access tokens as short-lived credentials, not durable app state, but stale-token handling must be implemented alongside scope-correct authorization rather than as the only explanation.
 
-Create a small authenticated Google access module that owns the repeated
-pattern of requesting scoped authorization, creating authenticated clients or
-Google API objects, and closing resources. Picker and account session behavior
-should remain conceptually separate from generic Sheets workbook operations, but
-callers should no longer need to recreate the same authorization/client
-lifecycle by hand.
+The implementation should preserve the product decision that Google Picker is the single user-facing sheet selection and authorization path unless a later explicit decision replaces it with a single Google Sign-In-backed path that does not require a second prompt. The immediate plan should use the Picker-oriented architecture and remove misleading naming that implies durable native Google Sign-In ownership.
 
-After those seams exist, add a domain delete plan for workout exercise rows. The
-delete plan should remove a primary active-sheet row and every backup row
-attached to it by the current sheet contract. It must preserve the rule that the
-Google Sheet is the source of truth, and it must not delete the canonical
-exercise definition from the Exercises tab.
+When Google returns an auth failure, the app should distinguish expired credentials from insufficient scopes where possible. It should clear or invalidate unusable authorization, keep selected spreadsheet metadata where useful, show an actionable reconnect or reauthorize state, and avoid making write failures appear silent. The add-to-workout form should remain recoverable after failures but should show the failure near the action that failed.
 
-Expose the delete plan through the existing workout overview action menu. The
-primary exercise menu should contain Add backup exercise and Delete exercise.
-Selecting Delete exercise should show a confirmation dialog that names the
-exercise, explains that associated backups and logged history will be deleted,
-and requires the user to confirm before any sheet write occurs. After a
-successful delete, the workout overview should refresh from the sheet and no
-longer show the deleted primary or its backups.
+In parallel, the app should deepen the relevant modules: centralize authorization/session handling, centralize command serialization and stale-result protection, narrow GUI flow ownership, split Google Picker selection responsibilities, hide low-level write-plan machinery, and continue test cleanup so tests assert public behavior rather than private widget structure.
 
 ## User Stories
 
-1. As a lifter, I want the exercise row action menu to include Delete exercise,
-   so that I can remove an exercise I no longer want in a workout.
-2. As a lifter, I want deleting a primary exercise to also remove its backup
-   exercises, so that the workout does not keep orphaned backup rows.
-3. As a lifter, I want the app to warn me before deleting an exercise row and
-   history, so that I do not accidentally lose workout data.
-4. As a lifter, I want the confirmation message to mention associated backups
-   and history, so that I understand the consequence before confirming.
-5. As a lifter, I want cancelling the confirmation dialog to leave the sheet
-   unchanged, so that accidental menu taps are harmless.
-6. As a lifter, I want the workout overview to refresh after delete, so that I
-   can immediately see the remaining exercises.
-7. As a lifter, I want deleting one primary exercise to leave unrelated primary
-   exercises and their backups untouched, so that the rest of my workout remains
-   intact.
-8. As a lifter, I want canonical exercise definitions to remain in the exercise
-   library after deleting a workout placement, so that I can add the exercise to
-   another workout later.
-9. As a maintainer, I want generic row and column delete operations in the
-   Sheets library, so that future sheet features do not duplicate Google request
-   construction.
-10. As a maintainer, I want generic row and column move operations in the Sheets
-    library, so that reorder and future structure features have a single
-    implementation path.
-11. As a maintainer, I want workbook initialization to use the same generic
-    Sheets module as normal writes, so that structure and value request behavior
-    is localized.
-12. As a maintainer, I want Google API authorization/client lifecycle code in
-    one place, so that Picker, validation, creation, and integration tests do
-    not each reinvent it.
-13. As a maintainer, I want the delete plan tested through public sheet-contract
-    behavior, so that backup attachment rules are protected without testing
-    private helpers.
-14. As a maintainer, I want the service to reread and reject stale delete plans
-    when sheet order changes, so that manual sheet edits cannot delete the wrong
-    rows.
-15. As a maintainer, I want widget tests for the menu and confirmation flow, so
-    that the irreversible UI path stays reachable and guarded.
-16. As a maintainer, I want temporary TDD scaffolding cleaned up at the end, so
-    that the suite remains behavior-focused after the refactor.
+1. As a returning macOS user, I want reopening the app to show whether my Google session can perform the needed write operations, so that I do not discover an unusable session only after a failed write.
+2. As a returning macOS user, I want my selected spreadsheet to remain remembered after restart, so that reconnecting does not require finding the sheet again.
+3. As a returning macOS user, I want expired Google authorization to produce a clear reconnect action, so that I know how to fix the problem.
+4. As a workout logger, I want adding an exercise to a workout to visibly report write failures on the same form, so that the action does not feel like it did nothing.
+5. As a workout logger, I want add-to-workout submit controls disabled while a write is in flight, so that duplicate writes are not launched.
+6. As a workout logger, I want failed add-to-workout attempts to preserve my selected exercise and edited metadata, so that I can reconnect or retry without re-entering work.
+7. As a workout logger, I want Google auth failures to identify expired credentials or insufficient scopes when possible, so that the next action fixes the real authorization problem.
+8. As a user choosing a spreadsheet, I want Google Picker authorization to request the scopes needed for later Sheets write operations, so that reading a sheet does not mask a write-scope failure.
+9. As a user choosing a spreadsheet, I want only one Google-facing auth path, so that I am not asked to sign in twice.
+10. As a developer, I want authorization interfaces named around generic Google authorization rather than Google Sign-In if Picker is the chosen path, so that the code matches the product architecture.
+11. As a developer, I want startup restore operations to ignore stale async results, so that slow saved-state restore cannot overwrite a newer user selection.
+12. As a developer, I want app service actions serialized or guarded, so that overlapping validation/write results cannot overwrite newer state.
+13. As a developer, I want GUI screen transitions owned by a small flow module or controller interface, so that adding a flow does not require threading state and callbacks through a large shell.
+14. As a developer, I want Google Picker selection, callback parsing, selected-sheet resolving, and workbook creation separated into focused modules, so that each behavior can be tested and changed locally.
+15. As a developer, I want active-sheet write plans to expose domain-level behavior rather than low-level expectation classes, so that callers cannot couple to internal write mechanics.
+16. As a developer, I want widget tests split by behavior area with shared helper libraries, so that GUI cleanup can continue without one giant test file.
+17. As a developer, I want tests to assert visible behavior, public controller outcomes, and documented adapter contracts, so that tests survive internal widget and module refactors.
+18. As a release owner, I want opt-in live Google validation to remain separate from local tests, so that local cleanup stays fast and deterministic while real Google behavior is validated deliberately.
 
 ## Implementation Decisions
 
-- Keep two Google-facing locations rather than one large module: one for
-  Google account, authorization, Picker, and authenticated client lifecycle;
-  one for generic Google Sheets workbook operations.
-- The generic Sheets workbook interface should be deeper than the current
-  plan-specific write client. It should expose a workbook operation vocabulary
-  that can represent cell writes, cell clears, row and column insertions, row
-  and column deletions, and row and column moves.
-- Row and column operations should use one-based sheet coordinates at the app
-  interface and hide Google API zero-based index conversion inside the Google
-  adapter.
-- Deletion and movement should support rows and columns, even though the first
-  product consumer is deleting active-sheet rows.
-- Existing WorkoutTracker-specific plan application should translate domain
-  write plans into generic workbook operations rather than building Google
-  request details directly.
-- Workbook initialization should reuse generic workbook operations where
-  practical. Any remaining initialization-only formatting operations should live
-  near the generic Sheets adapter, not in app workflow code.
-- The authenticated Google access module should own scoped authorization,
-  authenticated HTTP client creation, Sheets or Drive API construction, and
-  cleanup. It should not own WorkoutTracker domain parsing or write planning.
-- The delete feature deletes workout placements from the active sheet only. It
-  does not delete canonical exercise rows from Exercises.
-- The delete plan removes the selected primary row plus the backup rows that are
-  attached to that primary by the current parsed sheet model.
-- The delete plan should carry enough expectations to reject the write if the
-  target row identity, workout, backup state, or attached backup rows no longer
-  match the parsed sheet used to plan the delete.
-- The UI should add Delete exercise to the existing primary exercise action
-  menu used by overflow, right-click, and long-press actions.
-- Delete exercise must show a confirmation dialog before any controller or
-  service write method runs.
-- The confirmation dialog should use clear, direct language: deleting removes
-  the exercise from the workout, deletes associated backups, and deletes logged
-  history for those rows.
-- The delete operation should use the existing validation/report refresh
-  behavior after write so the visible overview reflects the sheet source of
-  truth.
-- Keep the refactor incremental and test-driven. Each implementation slice
-  should leave the app compiling and the relevant targeted tests green.
+- First prove the actual auth failure mode through local tests around the app-owned authorization interfaces. Do not assume stale-token-only behavior when read succeeds and reconnect does not fix writes.
+- Treat Google Picker access tokens as operation-scoped and ephemeral. Persist selected spreadsheet metadata and account display metadata, but do not restore a persisted bearer token as valid write authorization.
+- Make requested scopes meaningful for Picker-backed authorization. The Picker gateway must not ignore the scopes requested by Google API access when later writes depend on those scopes.
+- Keep Google Picker as the immediate single user-facing path. Do not revert to a second native Google Sign-In prompt unless a later explicit architecture decision integrates it behind the same user-facing session.
+- Introduce a neutral authorization vocabulary. Interfaces and local variables should describe Google authorization/session ownership without implying native Google Sign-In if Picker remains the path.
+- Centralize Google authorization state transitions. A single module should decide whether authorization is usable, expired, missing, or requires reconnect.
+- Centralize handling for Google auth failures. The app should clear or invalidate unusable authorization, preserve selected spreadsheet metadata where useful, and expose an actionable reconnect or reauthorize state.
+- Align Picker authorization scopes with the scopes required by workbook validation, workbook creation, exercise creation, workout placement, formula repair, and set logging.
+- Preserve selected spreadsheet state independently from authorization state. A user should be able to reconnect to the same sheet after session expiry.
+- Make write failure UX local to the active write surface when possible. The add-to-workout form should show failures inline or through an immediately visible snackbar while preserving form state.
+- Guard startup restore and command execution with stale-result protection or command serialization. Older async results must not overwrite newer user choices.
+- Move GUI flow state toward a small explicit flow module or controller-owned read model. Avoid expanding the callback bag in the shell.
+- Split Google Picker-related responsibilities into focused modules: app config parsing, callback validation, Picker authorization launch, selected-spreadsheet resolving, and spreadsheet creation.
+- Hide low-level active-sheet write-plan operation and expectation classes from the public sheet-contract interface where practical. Preserve public domain planning behavior.
+- Continue test cleanup from the extracted widget-test support library. Split tests by behavior area and prefer user-visible queries over private `ValueKey` strings unless a key is intentionally public test surface.
 
 ## Testing Decisions
 
-- Use TDD for implementation slices. Start each behavior change with a failing
-  test through a public sheet-contract, adapter, service, controller, or widget
-  interface.
-- Add generic Sheets workbook tests that verify row/column delete and move
-  operations are represented correctly through the app-owned interface. These
-  tests should not claim to prove Google behavior.
-- Preserve or adapt existing read/write adapter tests so they verify the app's
-  request intent without requiring Google credentials.
-- Add sheet-contract tests showing that deleting a primary exercise plans
-  removal of the primary row and attached backups, leaves unrelated rows alone,
-  and rejects stale row/order changes.
-- Add service/controller tests showing that a delete plan rereads the sheet,
-  applies structural row deletion only when expectations still match, and
-  returns a refreshed report.
-- Add widget tests showing that the primary exercise action menu includes both
-  Add backup exercise and Delete exercise, that the delete confirmation is
-  required, that cancel does not call delete, and that confirm calls the delete
-  path.
-- Use targeted Flutter tests for backend, adapter, controller, and widget
-  behavior. These tests must not require Google credentials or write to the
-  development sheet.
-- Do not run opt-in live Google integration unless a later slice explicitly
-  asks for live validation and the user authorizes Google login and sheet
-  writes.
-- Include a final test-cleanup slice to remove or rewrite TDD scaffolding that
-  pins private implementation details while preserving durable behavior tests.
+- Fast local tests should cover read/write authorization differences without Google credentials. A token obtained with only read/file selection scope must not be treated as valid for Sheets writes.
+- Fast local tests should cover authorization state restoration without Google credentials. Restored persisted Picker metadata must not imply valid write authorization.
+- Local adapter/controller tests should simulate Google auth failures at the app-owned interface and assert that unusable authorization is invalidated, selected sheet metadata is preserved, and reconnect or reauthorize state is visible.
+- Local widget tests should assert add-to-workout failure behavior through visible text, disabled submit state, form preservation, and retry/reconnect affordances.
+- Scope tests should assert the app requests the scopes required for its own Google API calls. These tests verify the app-owned request contract, not Google behavior.
+- Startup race tests should use controllable futures to prove stale restore/validation/write results do not overwrite newer selections.
+- GUI flow tests should assert user-visible navigation and controller outcomes rather than private widget structure.
+- Sheet-contract write-plan tests should remain focused on public domain behavior: planned writes, previews, rejections, and preservation of sheet data.
+- Live Google integration remains opt-in and should only be used when real Google behavior must be validated with user/HITL readiness.
 
 ## Out of Scope
 
-- Deleting canonical exercise definitions from the Exercises tab.
-- Bulk deleting multiple primary exercises at once.
-- Undo or restore for deleted rows.
-- A recycle bin, archive tab, or backup export.
-- Changing the sheet contract's backup attachment rule.
-- Replacing Google Sheets as the source of truth.
-- Building an app-owned workout database.
-- Broad visual redesign of the workout overview.
-- Live Google validation unless separately authorized.
-- Reworking unrelated GUI reliability issues from the previous superseded root
-  plan.
+- Replacing the Google Sheet as the source of truth.
+- Adding an app-owned backend or workout database.
+- Broad redesign of workout programming, coaching, or progression behavior.
+- Making the app a general spreadsheet editor.
+- Running live Google integration by default.
+- Rewriting all GUI code before fixing the auth-expired user path.
+- Deleting native Google Sign-In code before confirming it is not used by any current runnable platform path.
 
 ## Further Notes
 
-This PRD replaces the previous root-level GUI MVP reliability plan at the
-user's request. The previous plan is no longer the active root issue plan.
-
-The current code already has useful seams: app-level validation services, a
-Google account/session abstraction, a Picker abstraction, read/write adapters,
-and sheet-contract write plans. The refactor should deepen those seams instead
-of replacing them wholesale.
-
-The current primary exercise action menu already has both visible overflow and
-right-click/long-press entry points. Adding Delete exercise should reuse that
-single menu path so desktop and touch behavior remain consistent.
+- The concrete user-visible failure was reported against a spreadsheet at `https://docs.google.com/spreadsheets/d/11rdY4Xi75FlISC9MD3fRu1_hxwlOZvHAGQyE-79L2ZI/edit?gid=437507741#gid=437507741`.
+- The reported error was `DetailedApiRequestError(status: 401, message: Request had invalid authentication credentials...)`.
+- The user reported that the app could read and navigate the sheet contents, and that disconnecting/reconnecting through the app did not fix the write failure. The plan must therefore test scope/write authorization behavior rather than trusting a stale-token-only diagnosis.
+- Prior cleanup commit `0a50ac5` extracted shared widget-test support helpers; further test cleanup should build on that support library.
+- Existing local docs and issue files may have unrelated worktree changes. Agents implementing this plan must preserve unrelated changes and stage only files belonging to each slice.

@@ -8,7 +8,7 @@ void main() {
     final activeSheet = parseFixtureActiveSheet();
 
     final plan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Week 2',
+      blockLabel: 'Week 2',
       sheetRowNumber: 3,
       fieldValues: const {'Weight': '150', 'Reps': '10', 'RPE': '8'},
     );
@@ -43,7 +43,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       fieldValues: const {
         'Weight': '150',
@@ -81,12 +81,12 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final primaryPlan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
     );
     final backupPlan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 4,
       fieldValues: const {'Reps': '10', 'RPE': '8'},
     );
@@ -130,14 +130,14 @@ void main() {
       var activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
       var primaryContext = activeSheet.buildLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 3,
-        historyBlockLabel: 'Session A',
+        primaryRow: 3,
+        selectedRow: 3,
+        blockLabel: 'Session A',
       );
       var backupContext = activeSheet.buildLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 4,
-        historyBlockLabel: 'Session A',
+        primaryRow: 3,
+        selectedRow: 4,
+        blockLabel: 'Session A',
       );
 
       expect(
@@ -158,7 +158,7 @@ void main() {
       );
 
       final primaryPlan = activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Session A',
+        blockLabel: 'Session A',
         sheetRowNumber: primaryContext.selectedChoice.sheetRowNumber,
         fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
@@ -166,7 +166,7 @@ void main() {
       activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
 
       final backupPlan = activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Session A',
+        blockLabel: 'Session A',
         sheetRowNumber: backupContext.selectedChoice.sheetRowNumber,
         fieldValues: const {'Reps': '12', 'RPE': '8'},
       );
@@ -174,14 +174,14 @@ void main() {
       activeSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
 
       primaryContext = activeSheet.buildLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 3,
-        historyBlockLabel: 'Session A',
+        primaryRow: 3,
+        selectedRow: 3,
+        blockLabel: 'Session A',
       );
       backupContext = activeSheet.buildLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 4,
-        historyBlockLabel: 'Session A',
+        primaryRow: 3,
+        selectedRow: 4,
+        blockLabel: 'Session A',
       );
 
       expect(primaryContext.selectedHistory.entries.first.rawValue, '225x5@8');
@@ -201,7 +201,7 @@ void main() {
     final activeSheet = parseFixtureActiveSheet();
 
     final plan = activeSheet.planSetEdit(
-      historyBlockLabel: 'Week 2',
+      blockLabel: 'Week 2',
       sheetRowNumber: 6,
       setNumber: 1,
       fieldValues: const {'Weight': '160', 'Reps': '6', 'RPE': '8'},
@@ -221,7 +221,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
     );
@@ -242,7 +242,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planSetEdit(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       setNumber: 1,
       fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
@@ -263,7 +263,7 @@ void main() {
     final activeSheet = parseFixtureActiveSheet();
 
     final plan = activeSheet.planSetClear(
-      historyBlockLabel: 'Week 2',
+      blockLabel: 'Week 2',
       sheetRowNumber: 6,
       setNumber: 1,
     );
@@ -282,7 +282,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planSetClear(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       setNumber: 1,
     );
@@ -309,7 +309,7 @@ void main() {
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
       final plan = activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Session A',
+        blockLabel: 'Session A',
         sheetRowNumber: 3,
         fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
       );
@@ -342,7 +342,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
     );
@@ -383,7 +383,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
     );
@@ -421,18 +421,18 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final loggingPlan = activeSheet.planSetLoggingWrite(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 99,
       fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
     );
     final editPlan = activeSheet.planSetEdit(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       setNumber: 1,
       fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
     );
     final clearPlan = activeSheet.planSetClear(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 1,
       setNumber: 1,
     );
@@ -465,7 +465,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planRawSetEdit(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       setNumber: 1,
       rawText: 'worked up, knee felt better',
@@ -501,7 +501,7 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final plan = activeSheet.planRawSetEdit(
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
       sheetRowNumber: 3,
       setNumber: 1,
       rawText: 'worked up, knee felt better',
@@ -709,7 +709,7 @@ void main() {
       final reordered = parseActiveSheet(ActiveSheetInput(rows: previewRows));
       final overview = reordered.buildWorkoutOverview(
         workout: 'Legs',
-        historyBlockLabel: 'Session A',
+        blockLabel: 'Session A',
       );
 
       expect(overview.slots.map((slot) => slot.exercise), ['Lunge', 'Squat']);
@@ -727,14 +727,14 @@ void main() {
       );
 
       final movedPrimary = reordered.buildLoggingContext(
-        primarySheetRowNumber: 6,
-        selectedSheetRowNumber: 6,
-        historyBlockLabel: 'Session A',
+        primaryRow: 6,
+        selectedRow: 6,
+        blockLabel: 'Session A',
       );
       final movedBackup = reordered.buildLoggingContext(
-        primarySheetRowNumber: 6,
-        selectedSheetRowNumber: 7,
-        historyBlockLabel: 'Session A',
+        primaryRow: 6,
+        selectedRow: 7,
+        blockLabel: 'Session A',
       );
 
       expect(movedPrimary.targets.sets, '3');
@@ -1001,7 +1001,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
+    final plan = activeSheet.planDeletePrimary(primaryRow: 3);
 
     expect(plan.rowDeletions, const [
       RowDeletion(sheetRowNumber: 3, rowCount: 1),
@@ -1060,7 +1060,7 @@ void main() {
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-      final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
+      final plan = activeSheet.planDeletePrimary(primaryRow: 3);
 
       expect(plan.rowDeletions, const [
         RowDeletion(sheetRowNumber: 3, rowCount: 2),
@@ -1132,7 +1132,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
+    final plan = activeSheet.planDeletePrimary(primaryRow: 3);
 
     expect(plan.rowDeletions, const [
       RowDeletion(sheetRowNumber: 3, rowCount: 1),
@@ -1223,7 +1223,7 @@ void main() {
     ];
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
-    final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
+    final plan = activeSheet.planDeletePrimary(primaryRow: 3);
     final previewRows = plan.previewRowsAfterApplying(rows);
     final previewSheet = parseActiveSheet(ActiveSheetInput(rows: previewRows));
 
@@ -1287,7 +1287,7 @@ void main() {
         ],
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
-      final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
+      final plan = activeSheet.planDeletePrimary(primaryRow: 3);
       final changedRows = rows.map((row) => [...row]).toList();
       changedRows.insert(4, [
         'Hack Squat',
@@ -1335,7 +1335,7 @@ void main() {
         ],
       ];
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
-      final plan = activeSheet.planDeletePrimary(primarySheetRowNumber: 3);
+      final plan = activeSheet.planDeletePrimary(primaryRow: 3);
 
       for (final mutation in [
         (List<List<String>> changedRows) => changedRows[2][0] = 'Front Squat',

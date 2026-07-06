@@ -8,7 +8,7 @@ class _ValidationSummary extends StatelessWidget {
     this.onOpenSpreadsheet,
   });
 
-  final ValidationReport report;
+  final ValReport report;
   final Future<void> Function()? onRepairFormulas;
   final Future<void> Function({
     required int activeSheetRowNumber,
@@ -19,10 +19,10 @@ class _ValidationSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unambiguousFormulaIssues = report.formulaHealingIssues
+    final unambiguousFormulaIssues = report.healingIssues
         .where((issue) => !issue.needsChoice)
         .toList();
-    final choiceFormulaIssues = report.formulaHealingIssues.where(
+    final choiceFormulaIssues = report.healingIssues.where(
       (issue) => issue.needsChoice,
     );
     final panels = <Widget>[
@@ -46,7 +46,7 @@ class _ValidationSummary extends StatelessWidget {
           ),
           tone: _IssueTone.error,
         ),
-      if (!report.hasSchemaDamage && report.formulaHealingIssues.isNotEmpty)
+      if (!report.hasSchemaDamage && report.healingIssues.isNotEmpty)
         _IssuePanel(
           icon: Icons.build_outlined,
           title: 'Reconnect exercises to logging rows',
@@ -111,11 +111,11 @@ class _RepairChoiceItem extends StatefulWidget {
 
   @override
   State<_RepairChoiceItem> createState() {
-    return _RepairChoiceItemState();
+    return _RepairChoiceItemSt();
   }
 }
 
-class _RepairChoiceItemState extends State<_RepairChoiceItem> {
+class _RepairChoiceItemSt extends State<_RepairChoiceItem> {
   int? _selectedRow;
 
   @override
@@ -123,7 +123,7 @@ class _RepairChoiceItemState extends State<_RepairChoiceItem> {
     final issue = widget.issue;
     final warningStyle = _stateStyle(
       Theme.of(context).colorScheme,
-      _WorkoutVisualState.warning,
+      _WorkoutVisualSt.warning,
     );
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -139,7 +139,7 @@ class _RepairChoiceItemState extends State<_RepairChoiceItem> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Choose the exercise for ${issue.displayedExerciseName}',
+                'Choose the exercise for ${issue.exerciseName}',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -203,7 +203,7 @@ class _RepairChoiceItemState extends State<_RepairChoiceItem> {
                         ),
                       ),
                 icon: const Icon(Icons.build_circle_outlined),
-                label: Text('Repair ${issue.displayedExerciseName}'),
+                label: Text('Repair ${issue.exerciseName}'),
               ),
             ],
           ),
@@ -216,7 +216,7 @@ class _RepairChoiceItemState extends State<_RepairChoiceItem> {
 Iterable<String> _issueLines(FormulaHealingIssue issue) sync* {
   yield 'Repair formula cells so each workout row points to the correct '
       'Exercises entry.';
-  yield '${issue.displayedExerciseName} can be reconnected automatically.';
+  yield '${issue.exerciseName} can be reconnected automatically.';
   yield 'Spreadsheet details';
   final selectedRow = issue.preselectedRow;
   if (selectedRow == null) {
@@ -285,10 +285,10 @@ class _IssuePanel extends StatelessWidget {
       }
     }
 
-    return _StateCallout(
+    return _StCallout(
       state: switch (tone) {
-        _IssueTone.error => _WorkoutVisualState.error,
-        _IssueTone.warning => _WorkoutVisualState.warning,
+        _IssueTone.error => _WorkoutVisualSt.error,
+        _IssueTone.warning => _WorkoutVisualSt.warning,
       },
       icon: icon,
       title: title,

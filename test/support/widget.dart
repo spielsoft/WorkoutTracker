@@ -78,57 +78,53 @@ Future<void> expectFlutterAccessibilityGuidelines(WidgetTester tester) async {
   }
 }
 
-class MemoryAppStateStore implements AppStateStore {
-  MemoryAppStateStore(
-    this.spreadsheetText, {
-    this.selectedSpreadsheet,
-    this.pickerAuth,
-  });
+class MemoryAppStStore implements AppStStore {
+  MemoryAppStStore(this.sheetText, {this.selectedSheet, this.pickerAuth});
 
-  String? spreadsheetText;
-  SelectedSpreadsheet? selectedSpreadsheet;
+  String? sheetText;
+  SelectedSheet? selectedSheet;
   PickerAuth? pickerAuth;
-  WorkoutSelectionState? workoutSelection;
-  final accessStateWrites = <WorkspaceAccessState>[];
+  WorkoutSelectionSt? workoutSelection;
+  final accessStWrites = <WorkspaceAccessSt>[];
   int clearCount = 0;
 
   @override
-  Future<WorkspaceAccessState> readWorkspaceState() async {
-    return WorkspaceAccessState(
-      spreadsheetText: spreadsheetText,
-      selectedSpreadsheet: selectedSpreadsheet,
+  Future<WorkspaceAccessSt> readWorkspaceSt() async {
+    return WorkspaceAccessSt(
+      sheetText: sheetText,
+      selectedSheet: selectedSheet,
       pickerAuth: pickerAuth,
       workoutSelection: workoutSelection,
     );
   }
 
   @override
-  Future<void> writeWorkspaceState(WorkspaceAccessState value) async {
-    spreadsheetText = value.spreadsheetText;
-    selectedSpreadsheet = value.selectedSpreadsheet;
+  Future<void> writeWorkspaceSt(WorkspaceAccessSt value) async {
+    sheetText = value.sheetText;
+    selectedSheet = value.selectedSheet;
     pickerAuth = value.pickerAuth;
     workoutSelection = value.workoutSelection;
-    accessStateWrites.add(value);
+    accessStWrites.add(value);
   }
 
   @override
-  Future<void> clearWorkspaceState() async {
+  Future<void> clearWorkspaceSt() async {
     clearCount += 1;
-    spreadsheetText = null;
-    selectedSpreadsheet = null;
+    sheetText = null;
+    selectedSheet = null;
     pickerAuth = null;
     workoutSelection = null;
   }
 }
 
-class FakeSpreadsheetPicker implements SpreadsheetPicker {
+class FakeSheetPicker implements SheetPicker {
   @override
-  PickerAvailability get availability {
-    return const PickerAvailability.available();
+  PickerAvail get availability {
+    return const PickerAvail.available();
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+  Future<SelectedSheet?> chooseSheet() async {
     return null;
   }
 
@@ -138,30 +134,28 @@ class FakeSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+  Future<SelectedSheet?> createSheet({String? name}) async {
     return null;
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return selected;
   }
 }
 
-class AuthorizingSpreadsheetPicker implements SpreadsheetPicker {
-  AuthorizingSpreadsheetPicker(this.authorizationStore);
+class AuthorizingSheetPicker implements SheetPicker {
+  AuthorizingSheetPicker(this.authorizationStore);
 
   final PickerAuthStore authorizationStore;
 
   @override
-  PickerAvailability get availability {
-    return const PickerAvailability.available();
+  PickerAvail get availability {
+    return const PickerAvail.available();
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+  Future<SelectedSheet?> chooseSheet() async {
     authorizationStore.updatePickerAuth(
       const PickerAuth(
         accessToken: 'picker-token',
@@ -169,7 +163,7 @@ class AuthorizingSpreadsheetPicker implements SpreadsheetPicker {
         displayName: 'Athlete Name',
       ),
     );
-    return const SelectedSpreadsheet(
+    return const SelectedSheet(
       spreadsheetId: 'selected-spreadsheet-id',
       name: 'Development Workouts',
       accountEmail: 'athlete@example.com',
@@ -182,32 +176,30 @@ class AuthorizingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+  Future<SelectedSheet?> createSheet({String? name}) async {
     return null;
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return selected;
   }
 }
 
-class CompletingSpreadsheetPicker implements SpreadsheetPicker {
-  final chooseCompleter = Completer<SelectedSpreadsheet?>();
-  final createCompleter = Completer<SelectedSpreadsheet?>();
+class CompletingSheetPicker implements SheetPicker {
+  final chooseCompleter = Completer<SelectedSheet?>();
+  final createCompleter = Completer<SelectedSheet?>();
   int chooseCount = 0;
   int createCount = 0;
   final createNames = <String?>[];
 
   @override
-  PickerAvailability get availability {
-    return const PickerAvailability.available();
+  PickerAvail get availability {
+    return const PickerAvail.available();
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() {
+  Future<SelectedSheet?> chooseSheet() {
     chooseCount += 1;
     return chooseCompleter.future;
   }
@@ -218,36 +210,34 @@ class CompletingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) {
+  Future<SelectedSheet?> createSheet({String? name}) {
     createCount += 1;
     createNames.add(name);
     return createCompleter.future;
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return selected;
   }
 }
 
-class CompositeWorkbookCommandService implements WorkbookService {
+class CompositeWorkbookCommandService implements WbkSvc {
   const CompositeWorkbookCommandService({
     required this.validation,
     required this.authoring,
   });
 
-  final WorkbookService validation;
+  final WbkSvc validation;
   final AppendingExerciseAuthoringService authoring;
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) {
-    return validation.validateSpreadsheet(spreadsheetId);
+  Future<ValReport> validateSheet(String spreadsheetId) {
+    return validation.validateSheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -260,7 +250,7 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> createExercise({
+  Future<ValReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ExerciseDef exercise,
@@ -273,7 +263,7 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> updateExercise({
+  Future<ValReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -288,7 +278,7 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> addExerciseToWorkout({
+  Future<ValReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -305,7 +295,7 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderExercises({
+  Future<ValReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -318,7 +308,7 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -333,15 +323,15 @@ class CompositeWorkbookCommandService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> deleteWorkoutExercise({
+  Future<ValReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int primarySheetRowNumber,
+    required int primaryRow,
   }) {
     return authoring.deleteWorkoutExercise(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
-      primarySheetRowNumber: primarySheetRowNumber,
+      primaryRow: primaryRow,
     );
   }
 }
@@ -353,7 +343,7 @@ class AppendingExerciseAuthoringService {
   final List<List<String>> _exercises;
   final createdExercises = <ExerciseDef>[];
 
-  Future<ValidationReport> createExercise({
+  Future<ValReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ExerciseDef exercise,
@@ -376,7 +366,7 @@ class AppendingExerciseAuthoringService {
     final activeExerciseRowNumber = activeExerciseIndex == -1
         ? 2
         : activeExerciseIndex + 2;
-    return ValidationReport(
+    return ValReport(
       spreadsheetId: spreadsheetId,
       activeSheet: exerciseInventoryParsedSheet(
         _exercises,
@@ -396,7 +386,7 @@ class AppendingExerciseAuthoringService {
     );
   }
 
-  Future<ValidationReport> updateExercise({
+  Future<ValReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -405,7 +395,7 @@ class AppendingExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  Future<ValidationReport> addExerciseToWorkout({
+  Future<ValReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -415,7 +405,7 @@ class AppendingExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  Future<ValidationReport> reorderExercises({
+  Future<ValReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -423,7 +413,7 @@ class AppendingExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -432,10 +422,10 @@ class AppendingExerciseAuthoringService {
     throw UnimplementedError();
   }
 
-  Future<ValidationReport> deleteWorkoutExercise({
+  Future<ValReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int primarySheetRowNumber,
+    required int primaryRow,
   }) {
     throw UnimplementedError();
   }
@@ -450,7 +440,7 @@ class EditingExerciseAuthoringService
   int get exerciseCount => _exercises.length;
 
   @override
-  Future<ValidationReport> updateExercise({
+  Future<ValReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -471,7 +461,7 @@ class EditingExerciseAuthoringService
       exercise.notes,
       exercise.resolvedLogFormat,
     ];
-    return ValidationReport(
+    return ValReport(
       spreadsheetId: spreadsheetId,
       activeSheet: exerciseInventoryParsedSheet(_exercises),
     );
@@ -486,7 +476,7 @@ class WorkoutPlacementRecordingService
   final placements = <({String exercise, String? workout, bool isBackup})>[];
 
   @override
-  Future<ValidationReport> addExerciseToWorkout({
+  Future<ValReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -498,10 +488,7 @@ class WorkoutPlacementRecordingService
       workout: placement.workout,
       isBackup: placement.isBackup,
     ));
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: _activeSheet,
-    );
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: _activeSheet);
   }
 }
 
@@ -512,7 +499,7 @@ class ReorderingExerciseAuthoringService
   final reorderIntents = <ReorderIntent>[];
 
   @override
-  Future<ValidationReport> reorderExercises({
+  Future<ValReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -526,7 +513,7 @@ class ReorderingExerciseAuthoringService
     _exercises
       ..clear()
       ..addAll(previewRows.skip(1).map((row) => row.toList()));
-    return ValidationReport(
+    return ValReport(
       spreadsheetId: spreadsheetId,
       activeSheet: exerciseInventoryParsedSheet(
         _exercises,
@@ -544,7 +531,7 @@ class ReorderingExerciseAuthoringService
   }
 
   @override
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -564,7 +551,7 @@ class ReorderingWorkoutExerciseAuthoringService
   final reorderIntents = <ReorderIntent>[];
 
   @override
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -579,7 +566,7 @@ class ReorderingWorkoutExerciseAuthoringService
     _rows
       ..clear()
       ..addAll(previewRows.map((row) => row.toList()));
-    return ValidationReport(
+    return ValReport(
       spreadsheetId: spreadsheetId,
       activeSheet: parseActiveSheet(ActiveSheetInput(rows: _rows)),
     );
@@ -599,39 +586,35 @@ class DeletingWorkoutExerciseAuthoringService
   final deletedRows = <int>[];
 
   @override
-  Future<ValidationReport> deleteWorkoutExercise({
+  Future<ValReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int primarySheetRowNumber,
+    required int primaryRow,
   }) async {
-    deletedRows.add(primarySheetRowNumber);
+    deletedRows.add(primaryRow);
     if (rejectDelete) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
         writeRejections: [
-          WriteRejection(
-            'Row $primarySheetRowNumber no longer matches Pull Up.',
-          ),
+          WriteRejection('Row $primaryRow no longer matches Pull Up.'),
         ],
       );
     }
 
-    final plan = activeSheet.planDeletePrimary(
-      primarySheetRowNumber: primarySheetRowNumber,
-    );
+    final plan = activeSheet.planDeletePrimary(primaryRow: primaryRow);
     final previewRows = plan.previewRowsAfterApplying(_rows);
     _rows
       ..clear()
       ..addAll(previewRows.map((row) => row.toList()));
-    return ValidationReport(
+    return ValReport(
       spreadsheetId: spreadsheetId,
       activeSheet: parseActiveSheet(ActiveSheetInput(rows: _rows)),
     );
   }
 }
 
-class CountingSpreadsheetPicker implements SpreadsheetPicker {
+class CountingSheetPicker implements SheetPicker {
   int chooseCount = 0;
   int createCount = 0;
   int creationAuthorizationCount = 0;
@@ -639,18 +622,18 @@ class CountingSpreadsheetPicker implements SpreadsheetPicker {
   Future<bool>? creationAuthorization;
 
   @override
-  PickerAvailability get availability {
-    return const PickerAvailability.available();
+  PickerAvail get availability {
+    return const PickerAvail.available();
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+  Future<SelectedSheet?> chooseSheet() async {
     chooseCount += 1;
     return null;
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+  Future<SelectedSheet?> createSheet({String? name}) async {
     createCount += 1;
     createNames.add(name);
     return null;
@@ -663,40 +646,35 @@ class CountingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return selected;
   }
 }
 
-class RecordingSpreadsheetOpener implements SpreadsheetOpener {
+class RecordingSheetOpener implements SheetOpener {
   final openedUrls = <String>[];
 
   @override
-  Future<void> openSpreadsheet(String url) async {
+  Future<void> openSheet(String url) async {
     openedUrls.add(url);
   }
 }
 
-class RevalidatingSpreadsheetValidationService extends WorkbookService {
-  RevalidatingSpreadsheetValidationService({required this.reports});
+class RevalidatingValService extends WbkSvc {
+  RevalidatingValService({required this.reports});
 
   final List<ParsedActiveSheet> reports;
   int _reportIndex = 0;
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+  Future<ValReport> validateSheet(String spreadsheetId) async {
     final index = _reportIndex.clamp(0, reports.length - 1);
     _reportIndex += 1;
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: reports[index],
-    );
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: reports[index]);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -818,23 +796,20 @@ List<String> exerciseRow(
   ];
 }
 
-class CompletingWriteValidationService extends WorkbookService {
+class CompletingWriteValidationService extends WbkSvc {
   CompletingWriteValidationService(this.validSheet);
 
   final ParsedActiveSheet validSheet;
   final appliedPlans = <ActiveSheetWritePlan>[];
-  final writeCompleter = Completer<ValidationReport>();
+  final writeCompleter = Completer<ValReport>();
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: validSheet,
-    );
+  Future<ValReport> validateSheet(String spreadsheetId) async {
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: validSheet);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -844,22 +819,19 @@ class CompletingWriteValidationService extends WorkbookService {
   }
 }
 
-class FailingWriteValidationService extends WorkbookService {
+class FailingWriteValidationService extends WbkSvc {
   FailingWriteValidationService(this.validSheet);
 
   final ParsedActiveSheet validSheet;
   final appliedPlans = <ActiveSheetWritePlan>[];
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: validSheet,
-    );
+  Future<ValReport> validateSheet(String spreadsheetId) async {
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: validSheet);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -869,7 +841,7 @@ class FailingWriteValidationService extends WorkbookService {
   }
 }
 
-class RecoverableConfirmationFailureService extends WorkbookService {
+class RecoverableConfirmationFailureService extends WbkSvc {
   RecoverableConfirmationFailureService()
     : initialSheet = twoSetLoggingSheet(s2Value: ''),
       conflictingSheet = twoSetLoggingSheet(s2Value: '95x10@7'),
@@ -881,20 +853,17 @@ class RecoverableConfirmationFailureService extends WorkbookService {
   final appliedPlans = <ActiveSheetWritePlan>[];
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+  Future<ValReport> validateSheet(String spreadsheetId) async {
     final activeSheet = switch (appliedPlans.length) {
       0 => initialSheet,
       1 => conflictingSheet,
       _ => savedSheet,
     };
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-    );
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: activeSheet);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -903,14 +872,11 @@ class RecoverableConfirmationFailureService extends WorkbookService {
     final activeSheet = appliedPlans.length == 1
         ? conflictingSheet
         : savedSheet;
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-    );
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: activeSheet);
   }
 }
 
-class DamageAfterSaveValidationService extends WorkbookService {
+class DamageAfterSaveValidationService extends WbkSvc {
   DamageAfterSaveValidationService({
     required this.validSheet,
     required this.damagedSheet,
@@ -921,28 +887,22 @@ class DamageAfterSaveValidationService extends WorkbookService {
   final appliedPlans = <ActiveSheetWritePlan>[];
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: validSheet,
-    );
+  Future<ValReport> validateSheet(String spreadsheetId) async {
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: validSheet);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     appliedPlans.add(plan);
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: damagedSheet,
-    );
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: damagedSheet);
   }
 }
 
-class FormulaRepairValidationService extends WorkbookService {
+class FormulaRepairValidationService extends WbkSvc {
   FormulaRepairValidationService({
     required this.initialSheet,
     required this.repairedSheet,
@@ -953,24 +913,18 @@ class FormulaRepairValidationService extends WorkbookService {
   final List<ActiveSheetWritePlan> appliedPlans = [];
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: initialSheet,
-    );
+  Future<ValReport> validateSheet(String spreadsheetId) async {
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: initialSheet);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     appliedPlans.add(plan);
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: repairedSheet,
-    );
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: repairedSheet);
   }
 }
 

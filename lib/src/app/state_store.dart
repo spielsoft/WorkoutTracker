@@ -5,28 +5,28 @@ import 'dart:io';
 import 'account_session.dart';
 import 'selection.dart';
 
-class WorkspaceAccessState {
-  const WorkspaceAccessState({
-    this.spreadsheetText,
-    this.selectedSpreadsheet,
+class WorkspaceAccessSt {
+  const WorkspaceAccessSt({
+    this.sheetText,
+    this.selectedSheet,
     this.pickerAuth,
     this.workoutSelection,
   });
 
-  final String? spreadsheetText;
-  final SelectedSpreadsheet? selectedSpreadsheet;
+  final String? sheetText;
+  final SelectedSheet? selectedSheet;
   final PickerAuth? pickerAuth;
-  final WorkoutSelectionState? workoutSelection;
+  final WorkoutSelectionSt? workoutSelection;
 
-  WorkspaceAccessState copyWith({
-    String? spreadsheetText,
-    SelectedSpreadsheet? selectedSpreadsheet,
+  WorkspaceAccessSt copyWith({
+    String? sheetText,
+    SelectedSheet? selectedSheet,
     PickerAuth? pickerAuth,
-    WorkoutSelectionState? workoutSelection,
+    WorkoutSelectionSt? workoutSelection,
   }) {
-    return WorkspaceAccessState(
-      spreadsheetText: spreadsheetText ?? this.spreadsheetText,
-      selectedSpreadsheet: selectedSpreadsheet ?? this.selectedSpreadsheet,
+    return WorkspaceAccessSt(
+      sheetText: sheetText ?? this.sheetText,
+      selectedSheet: selectedSheet ?? this.selectedSheet,
       pickerAuth: pickerAuth ?? this.pickerAuth,
       workoutSelection: workoutSelection ?? this.workoutSelection,
     );
@@ -34,42 +34,35 @@ class WorkspaceAccessState {
 
   Map<String, Object?> toJson() {
     return {
-      if (spreadsheetText != null) 'spreadsheetText': spreadsheetText,
-      if (selectedSpreadsheet != null)
-        'selectedSpreadsheet': selectedSpreadsheet!.toJson(),
+      if (sheetText != null) 'sheetText': sheetText,
+      if (selectedSheet != null) 'selectedSheet': selectedSheet!.toJson(),
       if (pickerAuth != null) 'pickerAuth': pickerAuth!.toJson(),
       if (workoutSelection != null)
         'workoutSelection': workoutSelection!.toJson(),
     };
   }
 
-  static WorkspaceAccessState fromJson(Object? value) {
-    if (value case <String, Object?>{
-      'spreadsheetText': final String spreadsheetText,
-    }) {
-      return WorkspaceAccessState(
-        spreadsheetText: spreadsheetText,
-        selectedSpreadsheet: SelectedSpreadsheet.fromJson(
-          value['selectedSpreadsheet'],
-        ),
+  static WorkspaceAccessSt fromJson(Object? value) {
+    if (value case <String, Object?>{'sheetText': final String sheetText}) {
+      return WorkspaceAccessSt(
+        sheetText: sheetText,
+        selectedSheet: SelectedSheet.fromJson(value['selectedSheet']),
         pickerAuth: _pickerAuthFromJson(value),
-        workoutSelection: WorkoutSelectionState.fromJson(
+        workoutSelection: WorkoutSelectionSt.fromJson(
           value['workoutSelection'],
         ),
       );
     }
     if (value is Map<String, Object?>) {
-      return WorkspaceAccessState(
-        selectedSpreadsheet: SelectedSpreadsheet.fromJson(
-          value['selectedSpreadsheet'],
-        ),
+      return WorkspaceAccessSt(
+        selectedSheet: SelectedSheet.fromJson(value['selectedSheet']),
         pickerAuth: _pickerAuthFromJson(value),
-        workoutSelection: WorkoutSelectionState.fromJson(
+        workoutSelection: WorkoutSelectionSt.fromJson(
           value['workoutSelection'],
         ),
       );
     }
-    return const WorkspaceAccessState();
+    return const WorkspaceAccessSt();
   }
 
   static PickerAuth? _pickerAuthFromJson(Map<String, Object?> json) {
@@ -79,40 +72,40 @@ class WorkspaceAccessState {
   }
 }
 
-abstract interface class AppStateStore {
-  Future<WorkspaceAccessState> readWorkspaceState();
+abstract interface class AppStStore {
+  Future<WorkspaceAccessSt> readWorkspaceSt();
 
-  Future<void> writeWorkspaceState(WorkspaceAccessState value);
+  Future<void> writeWorkspaceSt(WorkspaceAccessSt value);
 
-  Future<void> clearWorkspaceState();
+  Future<void> clearWorkspaceSt();
 }
 
-abstract interface class WorkspaceStateOwner {
-  WorkspaceAccessState get value;
+abstract interface class WorkspaceStOwner {
+  WorkspaceAccessSt get value;
 
-  Future<WorkspaceAccessState> restore();
+  Future<WorkspaceAccessSt> restore();
 
-  Future<WorkspaceAccessState> update(
-    WorkspaceAccessState Function(WorkspaceAccessState current) updateState,
+  Future<WorkspaceAccessSt> update(
+    WorkspaceAccessSt Function(WorkspaceAccessSt current) updateFn,
   );
 
   Future<void> clear();
 }
 
-class WorkspaceStateController implements WorkspaceStateOwner {
-  WorkspaceStateController(this._store);
+class WorkspaceStCtrl implements WorkspaceStOwner {
+  WorkspaceStCtrl(this._store);
 
-  final AppStateStore _store;
-  WorkspaceAccessState _state = const WorkspaceAccessState();
+  final AppStStore _store;
+  WorkspaceAccessSt _state = const WorkspaceAccessSt();
   Future<void> _pending = Future<void>.value();
-  Future<WorkspaceAccessState>? _restoreFuture;
+  Future<WorkspaceAccessSt>? _restoreFuture;
   bool _hasRestored = false;
 
   @override
-  WorkspaceAccessState get value => _state;
+  WorkspaceAccessSt get value => _state;
 
   @override
-  Future<WorkspaceAccessState> restore() {
+  Future<WorkspaceAccessSt> restore() {
     return _enqueue(() async {
       await _ensureRestored();
       return _state;
@@ -120,14 +113,14 @@ class WorkspaceStateController implements WorkspaceStateOwner {
   }
 
   @override
-  Future<WorkspaceAccessState> update(
-    WorkspaceAccessState Function(WorkspaceAccessState current) updateState,
+  Future<WorkspaceAccessSt> update(
+    WorkspaceAccessSt Function(WorkspaceAccessSt current) updateFn,
   ) {
     return _enqueue(() async {
       await _ensureRestored();
-      final updated = updateState(_state);
+      final updated = updateFn(_state);
       _state = updated;
-      await _store.writeWorkspaceState(updated);
+      await _store.writeWorkspaceSt(updated);
       return updated;
     });
   }
@@ -135,10 +128,10 @@ class WorkspaceStateController implements WorkspaceStateOwner {
   @override
   Future<void> clear() {
     return _enqueue(() async {
-      _state = const WorkspaceAccessState();
+      _state = const WorkspaceAccessSt();
       _hasRestored = true;
-      _restoreFuture = Future<WorkspaceAccessState>.value(_state);
-      await _store.clearWorkspaceState();
+      _restoreFuture = Future<WorkspaceAccessSt>.value(_state);
+      await _store.clearWorkspaceSt();
     });
   }
 
@@ -146,7 +139,7 @@ class WorkspaceStateController implements WorkspaceStateOwner {
     if (_hasRestored) {
       return;
     }
-    _restoreFuture ??= _store.readWorkspaceState();
+    _restoreFuture ??= _store.readWorkspaceSt();
     try {
       _state = await _restoreFuture!;
       _hasRestored = true;
@@ -163,8 +156,8 @@ class WorkspaceStateController implements WorkspaceStateOwner {
   }
 }
 
-class FileAppStateStore implements AppStateStore {
-  const FileAppStateStore({Directory? stateDirectory})
+class FileAppStStore implements AppStStore {
+  const FileAppStStore({Directory? stateDirectory})
     : _stateDirectoryOverride = stateDirectory;
 
   final Directory? _stateDirectoryOverride;
@@ -172,30 +165,30 @@ class FileAppStateStore implements AppStateStore {
   static const _workspaceAccessKey = 'googleWorkspaceAccess';
 
   @override
-  Future<WorkspaceAccessState> readWorkspaceState() async {
-    final decoded = await _readState();
-    return WorkspaceAccessState.fromJson(decoded[_workspaceAccessKey]);
+  Future<WorkspaceAccessSt> readWorkspaceSt() async {
+    final decoded = await _readSt();
+    return WorkspaceAccessSt.fromJson(decoded[_workspaceAccessKey]);
   }
 
   @override
-  Future<void> writeWorkspaceState(WorkspaceAccessState value) async {
-    final state = await _readState();
+  Future<void> writeWorkspaceSt(WorkspaceAccessSt value) async {
+    final state = await _readSt();
     state[_workspaceAccessKey] = value.toJson();
-    await _writeState(state);
+    await _writeSt(state);
   }
 
   @override
-  Future<void> clearWorkspaceState() async {
-    final state = await _readState();
+  Future<void> clearWorkspaceSt() async {
+    final state = await _readSt();
     state.remove(_workspaceAccessKey);
-    await _writeState(state);
+    await _writeSt(state);
   }
 
-  Future<Map<String, Object?>> _readState() async {
-    return await _readStateFile(await _stateFile()) ?? <String, Object?>{};
+  Future<Map<String, Object?>> _readSt() async {
+    return await _readStFile(await _stateFile()) ?? <String, Object?>{};
   }
 
-  Future<Map<String, Object?>?> _readStateFile(File file) async {
+  Future<Map<String, Object?>?> _readStFile(File file) async {
     if (!await file.exists()) {
       return null;
     }
@@ -211,7 +204,7 @@ class FileAppStateStore implements AppStateStore {
     return null;
   }
 
-  Future<void> _writeState(Map<String, Object?> state) async {
+  Future<void> _writeSt(Map<String, Object?> state) async {
     final file = await _stateFile();
     await file.parent.create(recursive: true);
     final temporaryFile = File(
@@ -229,7 +222,7 @@ class FileAppStateStore implements AppStateStore {
 
   Directory _stateDirectory() {
     return _stateDirectoryOverride ??
-        defaultStateDirectory(
+        defaultStDir(
           isWindows: Platform.isWindows,
           isMacOS: Platform.isMacOS,
           environment: Platform.environment,
@@ -237,7 +230,7 @@ class FileAppStateStore implements AppStateStore {
         );
   }
 
-  static Directory defaultStateDirectory({
+  static Directory defaultStDir({
     required bool isWindows,
     required bool isMacOS,
     required Map<String, String> environment,
@@ -268,28 +261,28 @@ class FileAppStateStore implements AppStateStore {
   }
 }
 
-class WorkoutSelectionState {
-  const WorkoutSelectionState({
-    required this.spreadsheetId,
+class WorkoutSelectionSt {
+  const WorkoutSelectionSt({
+    required String spreadsheetId,
     this.workout,
     this.historyBlock,
-  });
+  }) : sheetId = spreadsheetId;
 
-  final String spreadsheetId;
+  final String sheetId;
   final String? workout;
   final String? historyBlock;
 
   Map<String, Object?> toJson() {
     return {
-      'spreadsheetId': spreadsheetId,
+      'spreadsheetId': sheetId,
       if (workout != null) 'workout': workout,
       if (historyBlock != null) 'historyBlock': historyBlock,
     };
   }
 
-  static WorkoutSelectionState? fromJson(Object? value) {
+  static WorkoutSelectionSt? fromJson(Object? value) {
     if (value case <String, Object?>{'spreadsheetId': final String id}) {
-      return WorkoutSelectionState(
+      return WorkoutSelectionSt(
         spreadsheetId: id,
         workout: value['workout'] as String?,
         historyBlock: value['historyBlock'] as String?,

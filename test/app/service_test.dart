@@ -7,25 +7,25 @@ void main() {
   test(
     'applies write plans through the spreadsheet validation interface and reparses rows',
     () async {
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
 
-      final firstReport = await service.validateSpreadsheet('spreadsheet-id');
+      final firstReport = await service.validateSheet('spreadsheet-id');
       final overview = firstReport.activeSheet.buildWorkoutOverview(
         workout: 'Legs',
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
       );
       final plan = firstReport.activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: overview.slots.single.sheetRowNumber,
         fieldValues: {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
 
       final updatedReport = await service.applyWritePlan(
-        spreadsheetId: firstReport.spreadsheetId,
+        spreadsheetId: firstReport.sheetId,
         activeSheet: firstReport.activeSheet,
         plan: plan,
       );
@@ -35,9 +35,9 @@ void main() {
       expect(
         updatedReport.activeSheet
             .buildLoggingContext(
-              primarySheetRowNumber: overview.slots.single.sheetRowNumber,
-              selectedSheetRowNumber: overview.slots.single.sheetRowNumber,
-              historyBlockLabel: 'Week 1',
+              primaryRow: overview.slots.single.sheetRowNumber,
+              selectedRow: overview.slots.single.sheetRowNumber,
+              blockLabel: 'Week 1',
             )
             .selectedHistory
             .entries

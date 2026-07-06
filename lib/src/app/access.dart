@@ -6,28 +6,25 @@ import 'auth_client.dart';
 import 'validation_service.dart';
 import 'validation_core.dart';
 
-typedef WorkbookClientFactory =
-    SheetsWorkbookClient Function(sheets.SheetsApi api);
+typedef WbkClientFact = SheetsWorkbookClient Function(sheets.SheetsApi api);
 
-class SpreadsheetAccess implements WorkbookService {
-  SpreadsheetAccess(
-    this._googleAccess, {
-    WorkbookClientFactory? workbookClientFactory,
-  }) : _workbookClientFactory =
-           workbookClientFactory ?? ((api) => GoogleApisWorkbookClient(api));
+class SheetAccess implements WbkSvc {
+  SheetAccess(this._googleAccess, {WbkClientFact? workbookClientFactory})
+    : _workbookClientFactory =
+          workbookClientFactory ?? ((api) => GoogleApisWbkClient(api));
 
   final ApiAccess _googleAccess;
-  final WorkbookClientFactory _workbookClientFactory;
+  final WbkClientFact _workbookClientFactory;
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) {
+  Future<ValReport> validateSheet(String spreadsheetId) {
     return _runWritableWorkbook(
-      (service) => service.validateSpreadsheet(spreadsheetId),
+      (service) => service.validateSheet(spreadsheetId),
     );
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -42,7 +39,7 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> createExercise({
+  Future<ValReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ExerciseDef exercise,
@@ -57,7 +54,7 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> updateExercise({
+  Future<ValReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -74,7 +71,7 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> addExerciseToWorkout({
+  Future<ValReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -93,7 +90,7 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderExercises({
+  Future<ValReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -108,7 +105,7 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -125,28 +122,28 @@ class SpreadsheetAccess implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> deleteWorkoutExercise({
+  Future<ValReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int primarySheetRowNumber,
+    required int primaryRow,
   }) {
     return _runWritableWorkbook(
       (service) => service.deleteWorkoutExercise(
         spreadsheetId: spreadsheetId,
         activeSheet: activeSheet,
-        primarySheetRowNumber: primarySheetRowNumber,
+        primaryRow: primaryRow,
       ),
     );
   }
 
-  Future<ValidationReport> _runWritableWorkbook(
-    Future<ValidationReport> Function(ValidationService service) action,
+  Future<ValReport> _runWritableWorkbook(
+    Future<ValReport> Function(ValSvc service) action,
   ) {
     return _googleAccess.run(
-      scopes: GoogleApisWorkbookClient.writeScopes,
+      scopes: GoogleApisWbkClient.writeScopes,
       action: (resources) {
         final workbookClient = _workbookClientFactory(resources.sheetsApi);
-        final service = ValidationService(
+        final service = ValSvc(
           readAdapter: SheetsReadAdapter(client: workbookClient),
           writeAdapter: SheetsWriteAdapter(client: workbookClient),
         );

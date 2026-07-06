@@ -1,692 +1,416 @@
-# Concise Code Names Replacement Log
+# Concise Code Names Replacement Record
 
-Living log for the repo-wide concise-name cleanup.
+Each row reads as `original name seen in the repo` -> `current final name in the repo`.
 
-## Slice 1
-
-Status: committed after the initial hotspot pass.
-
-### File renames
-
-| Old file | New file |
-| --- | --- |
-| `lib/src/sheets/workout_tracker_workbook_initialization_plan.dart` | `lib/src/sheets/init_plan.dart` |
-| `lib/src/sheets/workout_tracker_workbook_initializer.dart` | `lib/src/sheets/init.dart` |
-| `lib/src/sheets/workout_tracker_template.dart` | `lib/src/sheets/template.dart` |
-| `lib/src/app/google_validation_service.dart` | `lib/src/app/validation_service.dart` |
-| `lib/src/app/google_access.dart` | `lib/src/app/access.dart` |
-| `lib/src/app/workout_tracker_shell.dart` | `lib/src/app/shell.dart` |
-| `lib/src/app/workout_tracker_account.dart` | `lib/src/app/account.dart` |
-| `lib/src/app/workout_tracker_workout.dart` | `lib/src/app/workout.dart` |
-| `lib/src/app/workout_tracker_repair.dart` | `lib/src/app/repair.dart` |
-| `lib/src/app/workout_tracker_exercise_form.dart` | `lib/src/app/exercise_form.dart` |
-| `lib/src/app/workout_tracker_exercise_library.dart` | `lib/src/app/exercise_library.dart` |
-| `lib/src/app/workout_tracker_states.dart` | `lib/src/app/states.dart` |
-| `lib/src/app/workout_tracker_logging.dart` | `lib/src/app/logging.dart` |
-| `lib/src/app/workout_tracker_a11y.dart` | `lib/src/app/a11y.dart` |
-| `test/sheets/workout_tracker_workbook_template_test.dart` | `test/sheets/template_test.dart` |
-
-### Symbol replacements
+## Symbol replacements
 
 | Old name | New name |
 | --- | --- |
-| `WorkoutTrackerWorkbookInitializerFactory` | `WorkbookInitFactory` |
-| `WorkoutTrackerWorkbookInitializer` | `WorkbookInit` |
-| `GoogleApisWorkoutTrackerWorkbookInitializer` | `GoogleApisWorkbookInit` |
-| `WorkoutTrackerWorkbookTabRewritePlan` | `WorkbookTabPlan` |
-| `WorkoutTrackerWorkbookTab` | `WorkbookTab` |
-| `WorkoutTrackerWorkbook` | `Workbook` |
-| `loadWorkoutTrackerWorkbookTemplate` | `loadWorkbookTemplate` |
-| `workoutTrackerWorkbookTemplate` | `workbookTemplate` |
-| `GoogleSpreadsheetValidationService` | `SpreadsheetValidationService` |
-| `GoogleSpreadsheetWorkbookAccess` | `SpreadsheetAccess` |
-| `SpreadsheetValidationReport` | `ValidationReport` |
-| `WorkoutTrackerController` | `AppController` |
-| `WorkoutTrackerScrollBehavior` | `AppScrollBehavior` |
-| `validateSpreadsheetSelection` | `validateSelection` |
-| `reportSpreadsheetSelectionFailure` | `reportSelectionFailure` |
-| `addExistingExerciseToWorkout` | `addExerciseToWorkout` |
-| `GoogleWorkspaceAccessStateController` | `WorkspaceStateController` |
-| `GoogleWorkspaceAccessStateOwner` | `WorkspaceStateOwner` |
-| `GoogleWorkspaceAccessState` | `WorkspaceAccessState` |
-| `readGoogleWorkspaceAccessState` | `readWorkspaceState` |
-| `writeGoogleWorkspaceAccessState` | `writeWorkspaceState` |
-| `clearGoogleWorkspaceAccessState` | `clearWorkspaceState` |
-| `GoogleWorkspaceLifecycleController` | `WorkspaceController` |
-| `GoogleWorkspaceLifecycle` | `WorkspaceLifecycle` |
-| `GoogleWorkspaceState` | `WorkspaceUiState` |
-| `authorizeSpreadsheetCreation` | `authorizeSheetCreation` |
-| `resolveSelectedSpreadsheet` | `resolveSelection` |
-| `GooglePickerAuthorizationSnapshot` | `PickerAuth` |
-| `GooglePickerAuthorizationGateway` | `PickerAuthGateway` |
-| `GooglePickerAuthorizationStore` | `PickerAuthStore` |
-| `restoreGooglePickerAuthorization` | `restorePickerAuth` |
-| `updateGooglePickerAuthorization` | `updatePickerAuth` |
-| `GoogleSignInAuthorizationGateway` | `SignInAuthGateway` |
-| `NativeGoogleSignInAuthorizationGateway` | `NativeSignInAuthGateway` |
-| `workoutTrackerGoogleSignInClientIdDartDefine` | `googleClientIdDef` |
-| `workoutTrackerGoogleSignInClientId` | `googleClientId` |
-| `workoutTrackerGoogleSignInServerClientIdDartDefine` | `googleServerClientIdDef` |
-| `workoutTrackerGoogleSignInServerClientId` | `googleServerClientId` |
-| `GooglePickerCallbackReceiverFactory` | `PickerCallbackReceiverFactory` |
-| `GooglePickerCallbackReceiver` | `PickerCallbackReceiver` |
-| `NativeGooglePickerCallbackReceiver` | `NativePickerCallbackReceiver` |
-| `GooglePickerCallbackResult` | `PickerCallbackResult` |
-| `MobileGoogleDriveSpreadsheetPicker` | `MobileSpreadsheetPicker` |
-| `GooglePickerAppConfig` | `PickerAppConfig` |
-| `loadGooglePickerAppConfig` | `loadPickerAppConfig` |
-| `defaultGooglePickerAppConfigAsset` | `defaultPickerAppConfigAsset` |
-| `googlePickerAuthorizationUrl` | `pickerAuthorizationUrl` |
-| `GoogleSheetsSpreadsheetCreator` | `SpreadsheetCreator` |
-| `GooglePickerNativeCallbackValidation` | `PickerCallbackValidation` |
-| `validateGooglePickerNativeCallback` | `validatePickerCallback` |
-| `_newGooglePickerCallbackState` | `_newPickerCallbackState` |
-| `_isGooglePickerNativeCallbackUri` | `_isNativeCallbackUri` |
-| `buildExerciseLoggingContext` | `buildLoggingContext` |
-| `planPrimaryWorkoutPlacement` | `planPrimaryPlacement` |
-| `planBackupWorkoutPlacement` | `planBackupPlacement` |
-| `planWorkoutExerciseReorder` | `planExerciseReorder` |
-| `planPrimaryWorkoutExerciseDeletion` | `planPrimaryExerciseDeletion` |
-| `planCanonicalExerciseAppend` | `planCanonicalAppend` |
-| `planCanonicalExerciseUpdate` | `planCanonicalUpdate` |
-| `planCanonicalExerciseReorder` | `planCanonicalReorder` |
-| `googleAuthorization` | `pickerAuth` |
-| `_MemoryGoogleWorkspaceAccessStateOwner` | `_MemoryWorkspaceStateOwner` |
-| `_RecordingGoogleSignInAuthorizationGateway` | `_RecordingSignInAuthGateway` |
-| `_UnusedGoogleSignInAuthorizationGateway` | `_UnusedSignInAuthGateway` |
-| `_updateGooglePickerAuthorization` | `_updatePickerAuth` |
-| `_authorizeSpreadsheetCreation` | `_authorizeSheetCreation` |
-| `_googlePickerCallbackStateBytes` | `_pickerCallbackStateBytes` |
-| `_googlePickerSpreadsheetIdPattern` | `_sheetIdPattern` |
-
-### Files simplified in slice 1
-
-- `lib/main.dart`
-- `lib/sheets.dart`
-- `lib/app.dart`
-- `lib/src/app/state_store.dart`
-- `lib/src/app/account_session.dart`
-- `lib/src/app/auth_client.dart`
-- `lib/src/app/workspace.dart`
-- `lib/src/app/selection.dart`
-- `lib/src/app/validation.dart`
-- `lib/src/app/validation_core.dart`
-- `lib/src/app/validation_service.dart`
-- `lib/src/app/access.dart`
-- `lib/src/app/controller.dart`
-- `lib/src/app/shell.dart`
-- `lib/src/app/account.dart`
-- `lib/src/app/workout.dart`
-- `lib/src/app/repair.dart`
-- `lib/src/app/exercise_form.dart`
-- `lib/src/app/exercise_library.dart`
-- `lib/src/app/states.dart`
-- `lib/src/app/logging.dart`
-- `lib/src/app/a11y.dart`
-- `lib/src/sheets/init_plan.dart`
-- `lib/src/sheets/init.dart`
-- `lib/src/sheets/template.dart`
-- `lib/src/contract/active/parsed.dart`
-- `lib/src/contract/active/models.dart`
-- `lib/src/contract/active/planners.dart`
-- `lib/src/contract/active/plans.dart`
-
-## Remaining work
-
-- Audit every Dart file under `lib` for names that are still too long even when they no longer carry the original project/module prefixes.
-- Commit follow-up slices in small batches and append their replacements here.
-
-## Slice 2
-
-Status: controller and shell follow-up pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `workbookCommands` | `svc` |
-| `_confirmWriteReads` | `_readRetries` |
-| `_ControllerActionFailure` | `_SaveFail` |
-| `_WorkoutTrackerScreen` | `_AppScreen` |
-| `_ExercisePlacementKind` | `_PlaceKind` |
-| `_PlacementIntent` | `_PlaceIntent` |
-| `_SheetChooser` | `_SheetPick` |
-| `_NamePromptDialog` | `_NameDialog` |
-
-### Files simplified in slice 2
-
-- `lib/src/app/controller.dart`
-- `lib/src/app/shell.dart`
-- `lib/src/app/workout.dart`
-- `test/app/controller_test.dart`
-- `test/widget_test.dart`
-
-## Slice 3
-
-Status: workspace and spreadsheet-selection follow-up pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `SpreadsheetPickerAvailability` | `PickerAvailability` |
-| `DisabledSpreadsheetPicker` | `DisabledPicker` |
-| `chooseUnavailableReason` | `chooseReason` |
-| `createUnavailableReason` | `createReason` |
-| `authorizationGateway` | `auth` |
-| `authorizationClientFactory` | `authClientFactory` |
-| `callbackReceiverFactory` | `callbackFactory` |
-| `workbookInitializerFactory` | `initFactory` |
-| `_selectedSpreadsheetForPickedId` | `_pickedSheet` |
-| `_restoreAccountProfileFromDrive` | `_restoreProfile` |
-| `createWorkoutSpreadsheet` | `createSheet` |
-| `_spreadsheetPicker` | `_picker` |
-| `spreadsheetPicker` | `picker` |
-| `_initialSelectedSpreadsheet` | `_initialSelection` |
-| `initialSelectedSpreadsheet` | `initialSelection` |
-| `_initialSpreadsheetText` | `_initialText` |
-| `initialSpreadsheetText` | `initialText` |
-| `pastedSpreadsheetText` | `pastedText` |
-| `pastedSheetFallbackAvailable` | `fallbackAvailable` |
-| `persistPastedSpreadsheetText` | `persistPastedText` |
-| `restoreResolvedSelection` | `restoreResolved` |
-| `adoptSelectedSpreadsheet` | `adoptSelection` |
-| `_currentPickerAuthorization` | `_currentAuth` |
-| `_restorePickerAuthorization` | `_restoreAuth` |
-| `_updateAccessStateBestEffort` | `_updateState` |
-
-### Files simplified in slice 3
-
-- `lib/main.dart`
-- `lib/src/app/workspace.dart`
-- `lib/src/app/selection.dart`
-- `lib/src/app/shell.dart`
-- `test/app/create_dialog_test.dart`
-- `test/app/auth_client_test.dart`
-- `test/app/workspace_test.dart`
-- `test/app/progress_test.dart`
-- `test/app/selection_test.dart`
-- `test/app/validation_test.dart`
-- `test/widget_test.dart`
-
-## Slice 4
-
-Status: google-sheets infrastructure and default-name pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `GoogleSheetsReadAdapter` | `SheetsReadAdapter` |
-| `GoogleSheetsWriteAdapter` | `SheetsWriteAdapter` |
-| `GoogleApisSheetsWorkbookClient` | `GoogleApisWorkbookClient` |
-| `workoutTrackerDefaultLogFormat` | `defaultLogFormat` |
-| `usableWorkbookRowCount` | `usableRowCount` |
-| `_operationsForWorkbookInitialization` | `_initOps` |
-| `_valueInputModeForWorkbookInitialization` | `_initMode` |
-| `_ensureInitializationTargets` | `_ensureTargets` |
-| `_InitializationTargets` | `_InitTargets` |
-| `_gridSnapshotFromApiSheet` | `_sheetSnapshot` |
-| `sourceSheetRowNumber` | `fromRow` |
-| `destinationSheetRowNumber` | `toRow` |
-| `sourceSheetColumnNumber` | `fromColumn` |
-| `destinationSheetColumnNumber` | `toColumn` |
-| `applyExercisesWritePlan` | `applyExercisesPlan` |
-| `_headerWritesForInsertion` | `_headerWrites` |
-| `_exerciseRowUpdateWrites` | `_rowUpdateWrites` |
-| `_exerciseRowAppendWrites` | `_rowAppendWrites` |
-
-### Files simplified in slice 4
-
-- `lib/src/app/workspace.dart`
-- `lib/src/app/selection.dart`
-- `lib/src/app/validation_service.dart`
-- `lib/src/app/access.dart`
-- `lib/src/sheets/read_adapter.dart`
-- `lib/src/sheets/client.dart`
-- `lib/src/sheets/init.dart`
-- `lib/src/sheets/init_plan.dart`
-- `lib/src/sheets/write_adapter.dart`
-- `lib/src/log_format/format.dart`
-- `lib/src/contract/active/input.dart`
-- `lib/src/contract/active/planners.dart`
-- `lib/src/defaults.dart`
-- `test/app/account_session_test.dart`
-- `test/app/validation_test.dart`
-- `test/sheets/read_adapter_test.dart`
-- `test/sheets/client_test.dart`
-- `test/sheets/write_adapter_test.dart`
-
-## Slice 5
-
-Status: logging flow and logging-screen pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `ExerciseLoggingFlow` | `LoggingFlow` |
-| `ExerciseLoggingViewModel` | `LoggingVm` |
-| `_primarySheetRowNumber` | `_primaryRow` |
-| `_selectedSheetRowNumber` | `_selectedRow` |
-| `_ExerciseLoggingScreen.primarySheetRowNumber` | `_LogScreen.primaryRow` |
-| `_ExerciseLoggingScreen.selectedSheetRowNumber` | `_LogScreen.selectedRow` |
-| `loggedFormattedControllers` | `loggedControllers` |
-| `planStructuredSetSave` | `planSetSave` |
-| `planStructuredSetEdit` | `planSetEdit` |
-| `clearNewSetControllers` | `clearNewSets` |
-| `_syncLoggedEntryControllers` | `_syncLoggedControllers` |
-| `_syncLoggedFieldControllers` | `_syncSetControllers` |
-| `_disposeLoggedFieldControllers` | `_disposeSetControllers` |
-| `removedFormattedSetNumbers` | `removedLoggedSets` |
-| `_ExerciseLoggingScreen` | `_LogScreen` |
-| `_ExerciseLoggingScreenState` | `_LogScreenState` |
-| `_LoggedFormattedSetEditor` | `_LoggedSetFields` |
-
-### Files simplified in slice 5
-
-- `lib/src/app/logging_flow.dart`
-- `lib/src/app/logging.dart`
-- `lib/src/app/workout.dart`
-
-## Slice 6
-
-Status: validation-panel and exercise-manager pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `onRepairUnambiguousFormulaIssues` | `onRepairFormulas` |
-| `_FormulaChoiceRepairItem` | `_RepairChoiceItem` |
-| `_FormulaChoiceRepairItemState` | `_RepairChoiceItemState` |
-| `_selectedExerciseSheetRowNumber` | `_selectedRow` |
-| `_formulaHealingIssueLines` | `_issueLines` |
-| `_ExerciseManagerInventory` | `_ExerciseLibrary` |
-| `highlightedExerciseSheetRowNumber` | `highlightedRow` |
-| `_repairFormulaIssue.selectedExerciseSheetRowNumber` | `_repairFormulaIssue.selectedRow` |
-
-### Files simplified in slice 6
-
-- `lib/src/app/shell.dart`
-- `lib/src/app/exercise_library.dart`
-- `lib/src/app/repair.dart`
-- `lib/src/app/workout.dart`
-
-## Slice 7
-
-Status: exercise-authoring form pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `toCanonicalExerciseDefinition` | `toDefinition` |
-| `_ExerciseAuthoringFormState` | `_AuthoringFormState` |
-| `_ExerciseAuthoringTextField` | `_AuthoringField` |
-| `_ExerciseAuthoringTextFieldState` | `_AuthoringFieldState` |
-| `_exerciseAuthoringTitle` | `_authoringTitle` |
-| `_exerciseAuthoringSubmitLabel` | `_submitLabelText` |
-| `_exerciseAuthoringIcon` | `_authoringIcon` |
-| `_draftFromControllers` | `_draft` |
-| `_exerciseNameController` | `_nameCtrl` |
-| `_descriptionController` | `_descCtrl` |
-| `_defaultSetsController` | `_setsCtrl` |
-| `_defaultRepsController` | `_repsCtrl` |
-| `_defaultRPEController` | `_rpeCtrl` |
-| `_defaultRestController` | `_restCtrl` |
-| `_defaultTempoController` | `_tempoCtrl` |
-| `_notesController` | `_notesCtrl` |
-| `_logFormatController` | `_formatCtrl` |
-
-### Files simplified in slice 7
-
-- `lib/src/app/shell.dart`
-- `lib/src/app/exercise_form.dart`
-
-## Slice 8
-
-Status: workout-pane private UI pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `_WorkoutSelectorField` | `_WorkoutField` |
-| `_WorkoutSelectorFieldState` | `_WorkoutFieldState` |
-| `_HistoryBlockSelectorField` | `_HistoryField` |
-| `_HistoryBlockSelectorFieldState` | `_HistoryFieldState` |
-| `_openAddAfterDropdownCloses` | `_openAddAfterClose` |
-| `_PrimaryExerciseAddBackupMenuItem` | `_AddBackupMenuItem` |
-| `_PrimaryExerciseDeleteMenuItem` | `_DeleteExerciseMenuItem` |
+| `_accessState` | `_accessSt` |
+| `_accessStateController` | `_stateCtrl` |
+| `_ActiveSheetWritePlanner` | `_WritePlanner` |
 | `_AddExercisePlacementScreen` | `_PlaceExerciseScreen` |
-| `_ExercisePlacementForm` | `_PlaceForm` |
-| `_ExercisePlacementFormState` | `_PlaceFormState` |
-| `_PlacementMetadataField` | `_MetaField` |
+| `_addHistoryBlockMenuValue` | `_addBlockMenuValue` |
+| `_AppShellState` | `_AppShellSt` |
+| `_AuthoringFieldState` | `_AuthoringFieldSt` |
+| `_AuthoringFormState` | `_AuthoringFormSt` |
+| `_authorizeSpreadsheetCreation` | `_authorizeSheetCreation` |
+| `_callbackStateBytes` | `_callbackStBytes` |
 | `_CanonicalExerciseCreationScreen` | `_CreateExerciseScreen` |
 | `_CanonicalExerciseEditScreen` | `_EditExerciseScreen` |
-| `_handleExerciseSearchChanged` | `_handleSearch` |
-| `_exerciseSearchController` | `_searchCtrl` |
-| `_loadExerciseDefaults` | `_loadDefaults` |
+| `_canonicalExerciseRowRejection` | `_exerciseRowRejection` |
+| `_canonicalExerciseRowValues` | `_exerciseValues` |
+| `_CanonicalExerciseWritePlanner` | `_ExerciseWritePlanner` |
 | `_clearSelectionForAnother` | `_clearForNext` |
-| `_metadataFromControllers` | `_metadata` |
-| `_setsController` | `_setsCtrl` |
-| `_repsController` | `_repsCtrl` |
-| `_rpeController` | `_rpeCtrl` |
-| `_restController` | `_restCtrl` |
-| `_tempoController` | `_tempoCtrl` |
-| `_notesController` | `_notesCtrl` |
-
-### Files simplified in slice 8
-
-- `lib/src/app/workout.dart`
-
-## Slice 9
-
-Status: shell-state private handler pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
+| `_confirmDeleteWorkoutExercise` | `_confirmDeleteExercise` |
+| `_confirmWriteReads` | `_readRetries` |
+| `_ControllerActionFailure` | `_SaveFail` |
+| `_currentPickerAuthorization` | `_currentAuth` |
+| `_defaultExerciseColumnNumber` | `_defaultExerciseColumn` |
+| `_defaultRepsController` | `_repsCtrl` |
+| `_defaultRestController` | `_restCtrl` |
+| `_defaultRPEController` | `_rpeCtrl` |
+| `_defaultSetsController` | `_setsCtrl` |
+| `_defaultTempoController` | `_tempoCtrl` |
+| `_descriptionController` | `_descCtrl` |
+| `_DirectExercisesReference` | `_ExerciseRef` |
+| `_directExercisesReference` | `_exerciseRef` |
+| `_disposeLoggedFieldControllers` | `_disposeSetCtrls` |
+| `_disposeSetControllers` | `_disposeSetCtrls` |
+| `_draftFromControllers` | `_draft` |
+| `_ensureInitializationTargets` | `_ensureTargets` |
 | `_exerciseAddReturnScreen` | `_addReturnScreen` |
-| `_accessStateController` | `_stateCtrl` |
-| `_usePastedSpreadsheetText` | `_usePastedText` |
-| `_validateWorkspaceSelection` | `_validateSelection` |
-| `_promptForNewHistoryBlock` | `_promptNewBlock` |
-| `_openSelectedSpreadsheet` | `_openSheet` |
-| `_openPrimaryExerciseAdd` | `_openPrimaryAdd` |
+| `_ExerciseAuthoringFormState` | `_AuthoringFormSt` |
+| `_exerciseAuthoringIcon` | `_authoringIcon` |
+| `_exerciseAuthoringSubmitLabel` | `_submitLabelText` |
+| `_ExerciseAuthoringTextField` | `_AuthoringField` |
+| `_ExerciseAuthoringTextFieldState` | `_AuthoringFieldSt` |
+| `_exerciseAuthoringTitle` | `_authoringTitle` |
+| `_ExerciseLoggingScreen` | `_LogScreen` |
+| `_ExerciseLoggingScreen.primarySheetRowNumber` | `_LogScreen.primaryRow` |
+| `_ExerciseLoggingScreen.selectedSheetRowNumber` | `_LogScreen.selectedRow` |
+| `_ExerciseLoggingScreenState` | `_LogScreenSt` |
+| `_ExerciseManagerInventory` | `_ExerciseLibrary` |
+| `_exerciseNameController` | `_nameCtrl` |
+| `_ExercisePlacementForm` | `_PlaceForm` |
+| `_ExercisePlacementFormState` | `_PlaceFormSt` |
+| `_ExercisePlacementKind` | `_PlaceKind` |
+| `_exerciseRowAppendWrites` | `_rowAppendWrites` |
+| `_exerciseRowUpdateWrites` | `_rowUpdateWrites` |
+| `_exerciseSearchController` | `_searchCtrl` |
+| `_FormulaChoiceRepairItem` | `_RepairChoiceItem` |
+| `_FormulaChoiceRepairItemState` | `_RepairChoiceItemSt` |
+| `_formulaExerciseColumnNumbers` | `_exerciseFormulaColumns` |
+| `_formulaHealingIssueLines` | `_issueLines` |
+| `_formulaHealingIssues` | `_healingIssues` |
+| `_FormulaHealingPlanner` | `_HealingPlanner` |
+| `_formulaMatchesAnyDirectReference` | `_matchesAnyDirectRef` |
+| `_formulaMatchesDirectReference` | `_matchesDirectRef` |
+| `_GoogleAccountMenuState` | `_GoogleAccountMenuSt` |
+| `_googlePickerCallbackStateBytes` | `_callbackStBytes` |
+| `_googlePickerSpreadsheetIdPattern` | `_sheetIdPattern` |
+| `_gridSnapshotFromApiSheet` | `_sheetSnapshot` |
+| `_handleCanonicalExerciseDraft` | `_saveExerciseDraft` |
+| `_handleCanonicalExerciseEditDraft` | `_saveExerciseEdit` |
+| `_handleExercisePlacement` | `_placeExercise` |
+| `_handleExercisePlacementAndAddAnother` | `_placeAndKeepAdding` |
+| `_handleExerciseSearchChanged` | `_handleSearch` |
+| `_handlePrimaryExerciseAction` | `_handleExerciseAction` |
+| `_headerWritesForInsertion` | `_headerWrites` |
+| `_historyBlockLabel` | `_blockLabel` |
+| `_HistoryBlockSelectorField` | `_HistoryField` |
+| `_HistoryBlockSelectorFieldState` | `_HistoryFieldSt` |
+| `_HistoryBlockValidationBuilder` | `_BlockValidationBuilder` |
+| `_HistoryBlockWritePlanner` | `_BlockWritePlanner` |
+| `_HistoryFieldState` | `_HistoryFieldSt` |
+| `_InitializationTargets` | `_InitTargets` |
+| `_initialSelectedSpreadsheet` | `_initialSelection` |
+| `_initialSpreadsheetText` | `_initialText` |
+| `_isGooglePickerNativeCallbackUri` | `_isNativeCallbackUri` |
+| `_lastCanonicalExerciseSheetRowNumberByName` | `_lastExerciseRowByName` |
+| `_loadExerciseDefaults` | `_loadDefaults` |
+| `_logFormatController` | `_formatCtrl` |
+| `_loggedFieldControllers` | `_loggedFieldCtrls` |
+| `_LoggedFormattedSetEditor` | `_LoggedSetFields` |
+| `_LogScreenState` | `_LogScreenSt` |
+| `_matchingExerciseRows` | `_matchingRows` |
+| `_MemoryGoogleWorkspaceAccessStateOwner` | `_MemoryWorkspaceStOwner` |
+| `_MemoryWorkspaceStateOwner` | `_MemoryWorkspaceStOwner` |
+| `_metadataFromControllers` | `_metadata` |
+| `_NamePromptDialog` | `_NameDialog` |
+| `_NamePromptDialogState` | `_NameDialogSt` |
+| `_newGooglePickerCallbackState` | `_newPickerCbSt` |
+| `_newPickerCallbackState` | `_newPickerCbSt` |
+| `_newSetControllers` | `_newSetCtrls` |
+| `_notesController` | `_notesCtrl` |
+| `_openAddAfterDropdownCloses` | `_openAddAfterClose` |
 | `_openBackupExerciseAdd` | `_openBackupAdd` |
 | `_openCanonicalExerciseCreation` | `_openExerciseCreate` |
 | `_openCanonicalExerciseEdit` | `_openExerciseEdit` |
-| `_handleCanonicalExerciseDraft` | `_saveExerciseDraft` |
-| `_handleCanonicalExerciseEditDraft` | `_saveExerciseEdit` |
-| `_lastCanonicalExerciseSheetRowNumberByName` | `_lastExerciseRowByName` |
-| `_handleExercisePlacement` | `_placeExercise` |
-| `_handleExercisePlacementAndAddAnother` | `_placeAndKeepAdding` |
-| `_restoreWorkoutSelection` | `_restoreWorkout` |
+| `_openPrimaryExerciseAdd` | `_openPrimaryAdd` |
+| `_openSelectedSpreadsheet` | `_openSheet` |
+| `_operationsForWorkbookInitialization` | `_initOps` |
 | `_persistWorkoutSelection` | `_saveWorkoutSelection` |
-
-### Files simplified in slice 9
-
-- `lib/src/app/shell.dart`
-
-## Slice 10
-
-Status: auth and workbook-service type pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `GoogleAuthorizationClientFactory` | `AuthClientFactory` |
-| `GoogleAuthorizationHeadersClient` | `AuthHeadersClient` |
-| `GoogleScopedApiResources` | `ApiResources` |
-| `GoogleScopedApiAccess` | `ScopedApiAccess` |
-| `ScopedGoogleApiAccess` | `ApiAccess` |
-| `GoogleSheetsWorkbookClientFactory` | `WorkbookClientFactory` |
-| `SpreadsheetValidationService` | `ValidationService` |
-| `WorkbookCommandService` | `WorkbookService` |
-
-### Files simplified in slice 10
-
-- `lib/main.dart`
-- `lib/src/app/auth_client.dart`
-- `lib/src/app/shell.dart`
-- `lib/src/app/selection.dart`
-- `lib/src/app/validation_core.dart`
-- `lib/src/app/validation_service.dart`
-- `lib/src/app/access.dart`
-- `lib/src/app/controller.dart`
-- `test/app/auth_client_test.dart`
-- `test/app/selection_test.dart`
-- `test/app/validation_test.dart`
-- `test/app/service_fake.dart`
-- `test/app/controller_test.dart`
-- `test/support/widget.dart`
-
-## Slice 11
-
-Status: formula-healing vocabulary pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `FormulaHealingIssueReason` | `HealingIssueReason` |
+| `_pickerNotConfiguredReason` | `_pickerConfigReason` |
+| `_PlaceFormState` | `_PlaceFormSt` |
+| `_PlacementIntent` | `_PlaceIntent` |
+| `_PlacementMetadataField` | `_MetaField` |
+| `_planExistingSetCellWrite` | `_planSetWrite` |
+| `_PrimaryExerciseAddBackupMenuItem` | `_AddBackupMenuItem` |
+| `_PrimaryExerciseDeleteMenuItem` | `_DeleteExerciseMenuItem` |
+| `_primarySheetRowNumber` | `_primaryRow` |
+| `_promptForNewHistoryBlock` | `_promptNewBlock` |
+| `_rawControllers` | `_rawCtrls` |
+| `_readState` | `_readSt` |
+| `_readStateFile` | `_readStFile` |
+| `_RecordingGoogleSignInAuthorizationGateway` | `_RecordingSignInAuthGateway` |
+| `_RepairChoiceItemState` | `_RepairChoiceItemSt` |
+| `_repairFormulaIssue.selectedExerciseSheetRowNumber` | `_repairFormulaIssue.selectedRow` |
+| `_repairUnambiguousFormulas` | `_repairFormulas` |
+| `_repsController` | `_repsCtrl` |
+| `_requiredConfigPositiveInt` | `_requiredInt` |
+| `_requiredConfigStringList` | `_requiredStrings` |
+| `_restController` | `_restCtrl` |
+| `_restoreAccessState` | `_restoreAccessSt` |
+| `_restoreAccountProfileFromDrive` | `_restoreProfile` |
+| `_restorePickerAuthorization` | `_restoreAuth` |
+| `_restoreStartupState` | `_restoreStartupSt` |
+| `_restoreWorkoutSelection` | `_restoreWorkout` |
+| `_rpeController` | `_rpeCtrl` |
+| `_runStateCommand` | `_runStCmd` |
+| `_selectedExerciseSheetRowNumber` | `_selectedRow` |
+| `_selectedSheetRowNumber` | `_selectedRow` |
+| `_selectedSpreadsheetForPickedId` | `_pickedSheet` |
+| `_setsController` | `_setsCtrl` |
+| `_setState` | `_setUiSt` |
+| `_SetupSelectorFieldState` | `_SetupSelectorFieldSt` |
+| `_SheetChooser` | `_SheetPick` |
+| `_spreadsheetController` | `_sheetCtrl` |
+| `_spreadsheetPicker` | `_picker` |
+| `_StateCallout` | `_StCallout` |
+| `_StateChip` | `_StChip` |
+| `_syncControllers` | `_syncCtrls` |
+| `_syncLoggedControllers` | `_syncLoggedCtrls` |
+| `_syncLoggedEntryControllers` | `_syncLoggedCtrls` |
+| `_syncLoggedFieldControllers` | `_syncSetCtrls` |
+| `_syncNewSetControllers` | `_syncNewSetCtrls` |
+| `_syncSetControllers` | `_syncSetCtrls` |
+| `_tempoController` | `_tempoCtrl` |
+| `_UnusedGoogleSignInAuthorizationGateway` | `_UnusedSignInAuthGateway` |
+| `_updateAccessStateBestEffort` | `_updateSt` |
+| `_updateGooglePickerAuthorization` | `_updatePickerAuth` |
+| `_updateState` | `_updateSt` |
+| `_usePastedSpreadsheetText` | `_usePastedText` |
+| `_validateWorkspaceSelection` | `_validateSelection` |
+| `_valueInputModeForWorkbookInitialization` | `_initMode` |
+| `_WorkoutFieldState` | `_WorkoutFieldSt` |
+| `_workoutPlacementCellUpdates` | `_placementUpdates` |
+| `_WorkoutSelectorField` | `_WorkoutField` |
+| `_WorkoutSelectorFieldState` | `_WorkoutFieldSt` |
+| `_WorkoutTrackerScreen` | `_AppScreen` |
+| `_WorkoutVisualState` | `_WorkoutVisualSt` |
+| `_writeState` | `_writeSt` |
+| `accessState` | `accessSt` |
+| `accessStateOwner` | `accessStOwner` |
+| `accessStateWrites` | `accessStWrites` |
+| `activeFormulaExpectationsForReorder` | `reorderFormulaExpcts` |
+| `activeFormulaUpdatesForReorder` | `reorderFormulaUpdates` |
+| `ActiveSheetBackupGroupExpectation` | `BackupGroupExpct` |
+| `ActiveSheetCellExpectation` | `CellExpct` |
+| `ActiveSheetFormulaExpectation` | `FormulaExpct` |
+| `activeSheetFormulaUpdates` | `formulaUpdates` |
+| `ActiveSheetInsertionPointExpectation` | `InsertExpct` |
+| `ActiveSheetRowDeletion` | `RowDeletion` |
+| `ActiveSheetRowExpectation` | `RowExpct` |
+| `ActiveSheetRowInsertion` | `RowInsertion` |
+| `ActiveSheetRowInsertionPointExpectation` | `RowInsertExpct` |
+| `ActiveSheetRowValuesExpectation` | `RowValuesExpct` |
+| `ActiveSheetSetColumnExpectation` | `SetColumnExpct` |
+| `ActiveSheetWriteExpectation` | `WriteExpct` |
+| `ActiveSheetWriteRejection` | `WriteRejection` |
+| `addExercisePlacementIntent` | `addIntent` |
+| `addExistingExerciseToWorkout` | `addExerciseToWorkout` |
+| `adoptSelectedSpreadsheet` | `adoptSelection` |
+| `AppCtr` | `AppCtrl` |
+| `applyActiveSheetWritePlan` | `applyWritePlan` |
+| `applyExercisesWritePlan` | `applyExercisesPlan` |
+| `AppStateStore` | `AppStStore` |
+| `appStateStore` | `appStStore` |
+| `authorizationClientFactory` | `authClientFactory` |
+| `authorizationGateway` | `auth` |
+| `authorizeSpreadsheetCreation` | `authorizeSheetCreation` |
+| `BackupGroupExpectation` | `BackupGroupExpct` |
+| `buildExerciseLoggingContext` | `buildLoggingContext` |
+| `callbackReceiverFactory` | `callbackFactory` |
+| `callbackState` | `callbackSt` |
+| `candidateExerciseSheetRowNumbers` | `candidateRows` |
+| `CanonicalExerciseDefinition` | `ExerciseDef` |
+| `canonicalExerciseRejection` | `exerciseRejection` |
+| `CellExpectation` | `CellExpct` |
+| `chooseUnavailableReason` | `chooseReason` |
+| `clearGoogleWorkspaceAccessState` | `clearWorkspaceSt` |
+| `clearNewSetControllers` | `clearNewSets` |
+| `clearWorkspaceState` | `clearWorkspaceSt` |
+| `createCanonicalExercise` | `createExercise` |
+| `createUnavailableReason` | `createReason` |
+| `createWorkoutSpreadsheet` | `createSheet` |
+| `defaultExerciseDefaultsAsset` | `defaultExerciseAsset` |
+| `defaultGooglePickerAppConfigAsset` | `defaultPickerCfgAsset` |
+| `defaultStateDirectory` | `defaultStDir` |
+| `defaultWorkoutSpreadsheetTitle` | `defaultSheetTitle` |
+| `destinationSheetColumnNumber` | `toColumn` |
+| `destinationSheetRowNumber` | `toRow` |
+| `DisabledSpreadsheetPicker` | `DisabledPicker` |
+| `displayedExerciseName` | `exerciseName` |
+| `duplicateState` | `duplicateSt` |
+| `exerciseAddReturnScreen` | `addReturnScreen` |
+| `ExerciseLoggingFlow` | `LoggingFlow` |
+| `ExerciseLoggingViewModel` | `LoggingVm` |
+| `exerciseRowExpectations` | `exerciseRowExpcts` |
+| `ExercisesRowExpectation` | `ExercisesRowExpct` |
+| `exercisesSheetColumnIndex` | `exerciseColumnIndex` |
+| `exercisesSheetColumnNumber` | `exerciseColumn` |
+| `expectedRowAtInsertionPoint` | `expectedRow` |
+| `expectedState` | `expectedSt` |
+| `FileAppStateStore` | `FileAppStStore` |
+| `formulaExerciseColumnNumbers` | `exerciseFormulaColumns` |
+| `FormulaExpectation` | `FormulaExpct` |
 | `FormulaHealingCellIssue` | `HealingCellIssue` |
 | `FormulaHealingExerciseChoice` | `HealingChoice` |
-| `FormulaRepairRowExpectation` | `RepairRowExpectation` |
-| `_FormulaHealingPlanner` | `_HealingPlanner` |
-| `requiresUserSelection` | `needsChoice` |
-| `preselectedExerciseSheetRowNumber` | `preselectedRow` |
-| `candidateExerciseSheetRowNumbers` | `candidateRows` |
-| `selectedExerciseSheetRowNumber` | `selectedRow` |
-| `_formulaHealingIssues` | `_healingIssues` |
-| `_formulaMatchesAnyDirectReference` | `_matchesAnyDirectRef` |
-| `_formulaMatchesDirectReference` | `_matchesDirectRef` |
-| `_matchingExerciseRows` | `_matchingRows` |
-
-### Files simplified in slice 11
-
-- `lib/src/app/shell.dart`
-- `lib/src/app/repair.dart`
-- `lib/src/app/controller.dart`
-- `lib/src/contract/active/healing.dart`
-- `lib/src/contract/active/parsed.dart`
-- `lib/src/contract/active/parser.dart`
-- `lib/src/contract/active/plans.dart`
-- `test/app/controller_test.dart`
-- `test/fixtures/workbook_test.dart`
-- `test/contract/active/healing_test.dart`
-
-## Slice 12
-
-Status: active-sheet write expectation pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `ActiveSheetWriteExpectation` | `WriteExpectation` |
-| `ActiveSheetWriteRejection` | `WriteRejection` |
-| `ActiveSheetRowExpectation` | `RowExpectation` |
-| `ActiveSheetRowValuesExpectation` | `RowValuesExpectation` |
-| `ActiveSheetBackupGroupExpectation` | `BackupGroupExpectation` |
-| `ActiveSheetCellExpectation` | `CellExpectation` |
-| `ActiveSheetFormulaExpectation` | `FormulaExpectation` |
-| `ActiveSheetSetColumnExpectation` | `SetColumnExpectation` |
-| `ActiveSheetInsertionPointExpectation` | `InsertionPointExpectation` |
-| `ActiveSheetRowInsertionPointExpectation` | `RowInsertExpectation` |
-| `ActiveSheetRowInsertion` | `RowInsertion` |
-| `ActiveSheetRowDeletion` | `RowDeletion` |
-| `_ActiveSheetWritePlanner` | `_WritePlanner` |
-
-### Files simplified in slice 12
-
-- `lib/src/app/validation_core.dart`
-- `lib/src/app/validation_service.dart`
-- `lib/src/sheets/write_adapter.dart`
-- `lib/src/contract/active/healing.dart`
-- `lib/src/contract/active/parsed.dart`
-- `lib/src/contract/active/planners.dart`
-- `lib/src/contract/active/plans.dart`
-- `test/app/controller_test.dart`
-- `test/sheets/write_adapter_test.dart`
-- `test/contract/active/healing_test.dart`
-- `test/contract/active/plans_test.dart`
-- `test/support/widget.dart`
-
-## Slice 13
-
-Status: public API and exercise-definition pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `CanonicalExerciseDefinition` | `ExerciseDef` |
-| `applyActiveSheetWritePlan` | `applyWritePlan` |
-| `createCanonicalExercise` | `createExercise` |
-| `updateCanonicalExercise` | `updateExercise` |
-| `reorderCanonicalExercises` | `reorderExercises` |
-| `planUnambiguousFormulaHealing` | `planFormulaRepair` |
-| `repairUnambiguousFormulas` | `repairFormulas` |
+| `FormulaHealingIssueReason` | `HealingIssueReason` |
+| `formulaHealingIssues` | `healingIssues` |
+| `FormulaRepairRowExpectation` | `RepairRowExpct` |
+| `GoogleApisSheetsWorkbookClient` | `GoogleApisWbkClient` |
+| `GoogleApisWorkoutTrackerWorkbookInitializer` | `GoogleApisWbkInit` |
+| `googleAuthorization` | `pickerAuth` |
+| `GoogleAuthorizationClientFactory` | `AuthClientFact` |
+| `GoogleAuthorizationHeadersClient` | `AuthHeadersClient` |
+| `GooglePickerAppConfig` | `PickerAppCfg` |
+| `GooglePickerAuthorizationGateway` | `PickerAuthGateway` |
+| `GooglePickerAuthorizationSnapshot` | `PickerAuth` |
+| `GooglePickerAuthorizationStore` | `PickerAuthStore` |
+| `googlePickerAuthorizationUrl` | `pickerAuthorizationUrl` |
+| `GooglePickerCallbackReceiver` | `PickerCbReceiver` |
+| `GooglePickerCallbackReceiverFactory` | `CbReceiverFact` |
+| `GooglePickerCallbackResult` | `PickerCbResult` |
+| `GooglePickerNativeCallbackValidation` | `PickerCbVal` |
+| `GoogleScopedApiAccess` | `ScopedApiAccess` |
+| `GoogleScopedApiResources` | `ApiResources` |
+| `GoogleSheetsReadAdapter` | `SheetsReadAdapter` |
+| `GoogleSheetsSpreadsheetCreator` | `SheetCreator` |
+| `googleSheetsUrl` | `sheetUrl` |
+| `GoogleSheetsWorkbookClientFactory` | `WbkClientFact` |
+| `GoogleSheetsWriteAdapter` | `SheetsWriteAdapter` |
+| `GoogleSignInAuthorizationGateway` | `SignInAuthGateway` |
+| `googleSpreadsheetService` | `sheetSvc` |
+| `GoogleSpreadsheetValidationService` | `ValSvc` |
+| `GoogleSpreadsheetWorkbookAccess` | `SheetAccess` |
+| `GoogleWorkspaceAccessState` | `WorkspaceAccessSt` |
+| `GoogleWorkspaceAccessStateController` | `WorkspaceStCtrl` |
+| `GoogleWorkspaceAccessStateOwner` | `WorkspaceStOwner` |
+| `GoogleWorkspaceLifecycle` | `WorkspaceLifecycle` |
+| `GoogleWorkspaceLifecycleController` | `WorkspaceCtrl` |
+| `GoogleWorkspaceState` | `WorkspaceUiSt` |
 | `hasBlockingSchemaViolations` | `hasSchemaDamage` |
-| `defaultWorkoutSpreadsheetTitle` | `defaultSheetTitle` |
-| `showSpreadsheetTextFallback` | `showTextFallback` |
-| `_repairUnambiguousFormulas` | `_repairFormulas` |
-
-### Files simplified in slice 13
-
-- `lib/src/app/shell.dart`
-- `lib/src/app/exercise_form.dart`
-- `lib/src/app/repair.dart`
-- `lib/src/app/selection.dart`
-- `lib/src/app/validation_core.dart`
-- `lib/src/app/validation_service.dart`
-- `lib/src/app/access.dart`
-- `lib/src/app/controller.dart`
-- `lib/src/sheets/template.dart`
-- `lib/src/sheets/write_adapter.dart`
-- `lib/src/contract/active/healing.dart`
-- `lib/src/contract/active/parsed.dart`
-- `lib/src/contract/active/planners.dart`
-- `lib/src/contract/active/plans.dart`
-- `test/app/validation_test.dart`
-- `test/app/service_fake.dart`
-- `test/app/service_test.dart`
-- `test/app/controller_test.dart`
-- `test/sheets/write_adapter_test.dart`
-- `test/contract/active/plans_test.dart`
-- `test/support/widget.dart`
-- `test/widget_test.dart`
-
-## Slice 14
-
-Status: workout-pane callback vocabulary pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
+| `highlightedExerciseSheetRowNumber` | `highlightedRow` |
+| `historyBlockLabel` | `blockLabel` |
+| `initialSelectedSpreadsheet` | `initialSelection` |
+| `initialSpreadsheetText` | `initialText` |
+| `InsertExpectation` | `InsertExpct` |
+| `insertExpectation` | `insertExpct` |
+| `insertionPointExpectation` | `insertExpct` |
+| `loadGooglePickerAppConfig` | `loadPickerAppCfg` |
+| `loadWorkoutTrackerWorkbookTemplate` | `loadWbkTmpl` |
+| `logFormatExpectation` | `logFormatExpct` |
+| `loggedControllers` | `loggedCtrls` |
+| `loggedFormattedControllers` | `loggedCtrls` |
+| `MemoryAppStateStore` | `MemoryAppStStore` |
+| `missingState` | `missingSt` |
+| `MobileGoogleDriveSpreadsheetPicker` | `MobileSheetPicker` |
+| `NativeGooglePickerCallbackReceiver` | `NativeCbReceiver` |
+| `NativeGoogleSignInAuthorizationGateway` | `NativeSignInAuthGateway` |
+| `newSetControllers` | `newSetCtrls` |
+| `onAddBackupExercise` | `onAddBackup` |
+| `onAddPrimaryExercise` | `onAddPrimary` |
 | `onBackToSheetSelection` | `onBackToSheets` |
-| `onSelectWorkoutSetup` | `onOpenSetup` |
 | `onBackToWorkoutSetup` | `onBackToSetup` |
-| `onOpenExerciseManager` | `onOpenLibrary` |
 | `onCreateCanonicalExercise` | `onCreateExercise` |
+| `onDeleteWorkoutExercise` | `onDeleteExercise` |
 | `onEditCanonicalExercise` | `onEditExercise` |
+| `onOpenExerciseManager` | `onOpenLibrary` |
 | `onReorderCanonicalExercises` | `onReorderExercises` |
 | `onReorderWorkoutExercises` | `onReorderWorkout` |
-| `onAddPrimaryExercise` | `onAddPrimary` |
-| `onAddBackupExercise` | `onAddBackup` |
-| `onDeleteWorkoutExercise` | `onDeleteExercise` |
-| `exerciseAddReturnScreen` | `addReturnScreen` |
-| `addExercisePlacementIntent` | `addIntent` |
+| `onRepairUnambiguousFormulaIssues` | `onRepairFormulas` |
+| `onSelectWorkoutSetup` | `onOpenSetup` |
 | `onSubmitCanonicalExercise` | `onSubmitExercise` |
 | `onSubmitCanonicalExerciseEdit` | `onSubmitExerciseEdit` |
 | `onSubmitExercisePlacement` | `onSubmitPlacement` |
 | `onSubmitPlacementAndAddAnother` | `onSubmitAndAddAnother` |
-| `_confirmDeleteWorkoutExercise` | `_confirmDeleteExercise` |
-
-### Files simplified in slice 14
-
-- `lib/src/app/shell.dart`
-- `lib/src/app/workout.dart`
-
-## Slice 15
-
-Status: sheet-contract and validation internal-name pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `expectedRowAtInsertionPoint` | `expectedRow` |
-| `activeSheetFormulaUpdates` | `formulaUpdates` |
-| `_CanonicalExerciseWritePlanner` | `_ExerciseWritePlanner` |
-| `planPrimaryExerciseDeletion` | `planDeletePrimary` |
-| `_DirectExercisesReference` | `_ExerciseRef` |
-| `_directExercisesReference` | `_exerciseRef` |
-| `canonicalExerciseRejection` | `exerciseRejection` |
-| `_canonicalExerciseRowRejection` | `_exerciseRowRejection` |
-| `_pickerNotConfiguredReason` | `_pickerConfigReason` |
-| `exercisesSheetColumnNumber` | `exerciseColumn` |
-| `exercisesSheetColumnIndex` | `exerciseColumnIndex` |
-| `formulaExerciseColumnNumbers` | `exerciseFormulaColumns` |
-| `_formulaExerciseColumnNumbers` | `_exerciseFormulaColumns` |
-| `_defaultExerciseColumnNumber` | `_defaultExerciseColumn` |
-| `activeFormulaUpdatesForReorder` | `reorderFormulaUpdates` |
-| `activeFormulaExpectationsForReorder` | `reorderFormulaExpectations` |
-| `_workoutPlacementCellUpdates` | `_placementUpdates` |
-| `rowInsertionPointExpectation` | `rowInsertExpectation` |
-| `insertionPointExpectation` | `insertExpectation` |
-| `_planExistingSetCellWrite` | `_planSetWrite` |
-| `_HistoryBlockValidationBuilder` | `_BlockValidationBuilder` |
-| `_HistoryBlockWritePlanner` | `_BlockWritePlanner` |
-
-### Files simplified in slice 15
-
-- `lib/src/app/workspace.dart`
-- `lib/src/app/validation_service.dart`
-- `lib/src/sheets/write_adapter.dart`
-- `lib/src/contract/active/healing.dart`
-- `lib/src/contract/active/parsed.dart`
-- `lib/src/contract/active/parser.dart`
-- `lib/src/contract/active/planners.dart`
-- `lib/src/contract/active/plans.dart`
-- `test/app/service_fake.dart`
-- `test/sheets/write_adapter_test.dart`
-- `test/contract/active/plans_test.dart`
-- `test/support/widget.dart`
-
-## Slice 16
-
-Status: selection/bootstrap helper pass.
-
-### Symbol replacements
-
-| Old name | New name |
-| --- | --- |
-| `InsertionPointExpectation` | `InsertExpectation` |
-| `_canonicalExerciseRowValues` | `_exerciseValues` |
-| `defaultExerciseDefaultsAsset` | `defaultExerciseAsset` |
+| `pastedSheetFallbackAvailable` | `fallbackAvailable` |
+| `pastedSpreadsheetText` | `pastedText` |
+| `persistPastedSpreadsheetText` | `persistPastedText` |
+| `planBackupWorkoutPlacement` | `planBackupPlacement` |
+| `planCanonicalExerciseAppend` | `planCanonicalAppend` |
+| `planCanonicalExerciseReorder` | `planCanonicalReorder` |
+| `planCanonicalExerciseUpdate` | `planCanonicalUpdate` |
+| `planPrimaryWorkoutExerciseDeletion` | `planDeletePrimary` |
+| `planPrimaryWorkoutPlacement` | `planPrimaryPlacement` |
+| `planStructuredSetEdit` | `planSetEdit` |
+| `planStructuredSetSave` | `planSetSave` |
+| `planUnambiguousFormulaHealing` | `planFormulaRepair` |
+| `planWorkoutExerciseReorder` | `planExerciseReorder` |
+| `preselectedExerciseSheetRowNumber` | `preselectedRow` |
+| `primarySheetRowNumber` | `primaryRow` |
+| `rawControllers` | `rawCtrls` |
+| `readGoogleWorkspaceAccessState` | `readWorkspaceSt` |
+| `readWorkspaceState` | `readWorkspaceSt` |
+| `removedFormattedSetNumbers` | `removedLoggedSets` |
+| `reorderCanonicalExercises` | `reorderExercises` |
+| `reorderFormulaExpectations` | `reorderFormulaExpcts` |
+| `RepairRowExpectation` | `RepairRowExpct` |
+| `repairUnambiguousFormulas` | `repairFormulas` |
+| `reportSpreadsheetSelectionFailure` | `reportSelectionFailure` |
+| `requiresUserSelection` | `needsChoice` |
+| `resolveSelectedSpreadsheet` | `resolveSelection` |
+| `restoredAccessState` | `restoredAccessSt` |
+| `restoreGooglePickerAuthorization` | `restorePickerAuth` |
+| `restoreResolvedSelection` | `restoreResolved` |
+| `returnedState` | `returnedSt` |
+| `RowExpectation` | `RowExpct` |
+| `rowExpectation` | `rowExpct` |
+| `RowInsertExpectation` | `RowInsertExpct` |
+| `rowInsertExpectation` | `rowInsertExpct` |
+| `rowInsertionPointExpectation` | `rowInsertExpct` |
+| `RowValuesExpectation` | `RowValuesExpct` |
+| `ScopedGoogleApiAccess` | `ApiAccess` |
+| `selectedExerciseSheetRowNumber` | `selectedRow` |
+| `SelectedSheet.spreadsheetId` | `SelectedSheet.id` |
+| `selectedSheetRowNumber` | `selectedRow` |
+| `setCellExpectations` | `setCellExpcts` |
+| `SetColumnExpectation` | `SetColumnExpct` |
+| `showSpreadsheetTextFallback` | `showTextFallback` |
+| `sourceSheetColumnNumber` | `fromColumn` |
+| `sourceSheetRowNumber` | `fromRow` |
+| `spreadsheetCreator` | `sheetCreator` |
+| `spreadsheetOpener` | `sheetOpener` |
+| `spreadsheetPicker` | `picker` |
+| `SpreadsheetPickerAvailability` | `PickerAvail` |
+| `spreadsheetUrl` | `sheetUrl` |
+| `SpreadsheetValidationReport` | `ValReport` |
+| `toCanonicalExerciseDefinition` | `toDef` |
+| `toDefinition` | `toDef` |
+| `updateCanonicalExercise` | `updateExercise` |
+| `updatedAccessState` | `updatedAccessSt` |
+| `updateGooglePickerAuthorization` | `updatePickerAuth` |
+| `updateState` | `updateFn` |
 | `UrlLauncherSpreadsheetOpener` | `UrlSpreadsheetOpener` |
-| `defaultPickerAppConfigAsset` | `defaultPickerConfigAsset` |
-| `_requiredConfigStringList` | `_requiredStrings` |
-| `_requiredConfigPositiveInt` | `_requiredInt` |
-| `PickerCallbackReceiverFactory` | `CallbackReceiverFactory` |
-| `NativePickerCallbackReceiver` | `NativeCallbackReceiver` |
-| `_handlePrimaryExerciseAction` | `_handleExerciseAction` |
-| `_addHistoryBlockMenuValue` | `_addBlockMenuValue` |
-| `_pickerCallbackStateBytes` | `_callbackStateBytes` |
+| `usableWorkbookRowCount` | `usableRowCount` |
+| `usePastedSpreadsheetText` | `usePastedSheetText` |
+| `validateGooglePickerNativeCallback` | `validatePickerCb` |
+| `validateSpreadsheetSelection` | `validateSelection` |
+| `ValReport.spreadsheetId` | `ValReport.sheetId` |
+| `workbookCommands` | `svc` |
+| `WorkbookCommandService` | `WbkSvc` |
+| `workbookInitializerFactory` | `initFactory` |
+| `WorkoutSelectionState` | `WorkoutSelectionSt` |
+| `WorkoutSelectionState.spreadsheetId` | `WorkoutSelectionSt.sheetId` |
+| `WorkoutTrackerController` | `AppCtrl` |
+| `workoutTrackerDefaultLogFormat` | `defaultLogFormat` |
+| `workoutTrackerGoogleSignInClientId` | `googleClientId` |
+| `workoutTrackerGoogleSignInClientIdDartDefine` | `googleClientIdDef` |
+| `workoutTrackerGoogleSignInServerClientId` | `googleServerClientId` |
+| `workoutTrackerGoogleSignInServerClientIdDartDefine` | `googleServerClientIdDef` |
+| `WorkoutTrackerScrollBehavior` | `AppScrollBehavior` |
+| `WorkoutTrackerWorkbook` | `Wbk` |
+| `WorkoutTrackerWorkbookInitializer` | `WbkInit` |
+| `WorkoutTrackerWorkbookInitializerFactory` | `WbkInitFact` |
+| `WorkoutTrackerWorkbookTab` | `WbkTab` |
+| `WorkoutTrackerWorkbookTabRewritePlan` | `WbkTabPlan` |
+| `workoutTrackerWorkbookTemplate` | `wbkTmpl` |
+| `WorkspaceAccessState` | `WorkspaceAccessSt` |
+| `WorkspaceController` | `WorkspaceCtrl` |
+| `workspaceState` | `workspaceSt` |
+| `WorkspaceStateCtr` | `WorkspaceStCtrl` |
+| `WorkspaceStateOwner` | `WorkspaceStOwner` |
+| `WorkspaceUiState` | `WorkspaceUiSt` |
+| `WriteExpectation` | `WriteExpct` |
+| `writeGoogleWorkspaceAccessState` | `writeWorkspaceSt` |
+| `writeWorkspaceState` | `writeWorkspaceSt` |
+| `wrongState` | `wrongSt` |
 
-### Files simplified in slice 16
-
-- `lib/main.dart`
-- `lib/src/app/shell.dart`
-- `lib/src/app/workout.dart`
-- `lib/src/app/selection.dart`
-- `lib/src/app/validation_core.dart`
-- `lib/src/sheets/template.dart`
-- `lib/src/contract/active/planners.dart`
-- `lib/src/contract/active/plans.dart`
-- `test/sheets/template_test.dart`
-
-## Filename changes
-
-Final filename and path renames for this pass.
+## File replacements
 
 | Old file | New file |
 | --- | --- |
 | `lib/google_sheets.dart` | `lib/sheets.dart` |
 | `lib/log_format.dart` | `lib/format.dart` |
 | `lib/sheet_contract.dart` | `lib/contract.dart` |
-| `lib/workout_tracker_app.dart` | `lib/app.dart` |
 | `lib/src/app/app_state_store.dart` | `lib/src/app/state_store.dart` |
 | `lib/src/app/exercise_logging_flow.dart` | `lib/src/app/logging_flow.dart` |
+| `lib/src/app/google_access.dart` | `lib/src/app/access.dart` |
 | `lib/src/app/google_account_session.dart` | `lib/src/app/account_session.dart` |
 | `lib/src/app/google_authorization_client.dart` | `lib/src/app/auth_client.dart` |
+| `lib/src/app/google_validation_service.dart` | `lib/src/app/validation_service.dart` |
 | `lib/src/app/google_workspace.dart` | `lib/src/app/workspace.dart` |
 | `lib/src/app/shell_accessibility.dart` | `lib/src/app/a11y.dart` |
 | `lib/src/app/shell_account.dart` | `lib/src/app/account.dart` |
@@ -701,7 +425,16 @@ Final filename and path renames for this pass.
 | `lib/src/app/spreadsheet_validation_core.dart` | `lib/src/app/validation_core.dart` |
 | `lib/src/app/spreadsheet_validation_service.dart` | `lib/src/app/validation_service.dart` |
 | `lib/src/app/spreadsheet_validation_wiring.dart` | `lib/src/app/access.dart` |
+| `lib/src/app/workout_tracker_a11y.dart` | `lib/src/app/a11y.dart` |
+| `lib/src/app/workout_tracker_account.dart` | `lib/src/app/account.dart` |
 | `lib/src/app/workout_tracker_controller.dart` | `lib/src/app/controller.dart` |
+| `lib/src/app/workout_tracker_exercise_form.dart` | `lib/src/app/exercise_form.dart` |
+| `lib/src/app/workout_tracker_exercise_library.dart` | `lib/src/app/exercise_library.dart` |
+| `lib/src/app/workout_tracker_logging.dart` | `lib/src/app/logging.dart` |
+| `lib/src/app/workout_tracker_repair.dart` | `lib/src/app/repair.dart` |
+| `lib/src/app/workout_tracker_shell.dart` | `lib/src/app/shell.dart` |
+| `lib/src/app/workout_tracker_states.dart` | `lib/src/app/states.dart` |
+| `lib/src/app/workout_tracker_workout.dart` | `lib/src/app/workout.dart` |
 | `lib/src/google_sheets/read_adapter.dart` | `lib/src/sheets/read_adapter.dart` |
 | `lib/src/google_sheets/workbook_client.dart` | `lib/src/sheets/client.dart` |
 | `lib/src/google_sheets/workbook_init.dart` | `lib/src/sheets/init.dart` |
@@ -719,7 +452,11 @@ Final filename and path renames for this pass.
 | `lib/src/sheet_contract/active_sheet/workout_rows.dart` | `lib/src/contract/active/rows.dart` |
 | `lib/src/sheet_contract/active_sheet/write_plan_domain_planners.dart` | `lib/src/contract/active/planners.dart` |
 | `lib/src/sheet_contract/active_sheet/write_plans.dart` | `lib/src/contract/active/plans.dart` |
+| `lib/src/sheets/workout_tracker_template.dart` | `lib/src/sheets/template.dart` |
+| `lib/src/sheets/workout_tracker_workbook_initialization_plan.dart` | `lib/src/sheets/init_plan.dart` |
+| `lib/src/sheets/workout_tracker_workbook_initializer.dart` | `lib/src/sheets/init.dart` |
 | `lib/src/workout_tracker_defaults.dart` | `lib/src/defaults.dart` |
+| `lib/workout_tracker_app.dart` | `lib/app.dart` |
 | `test/app/app_state_store_test.dart` | `test/app/store_test.dart` |
 | `test/app/create_sheet_dialog_test.dart` | `test/app/create_dialog_test.dart` |
 | `test/app/google_account_session_test.dart` | `test/app/account_session_test.dart` |
@@ -745,5 +482,6 @@ Final filename and path renames for this pass.
 | `test/sheet_contract/active_sheet_read_models_test.dart` | `test/contract/active/models_test.dart` |
 | `test/sheet_contract/active_sheet_test_helpers.dart` | `test/contract/active/helpers.dart` |
 | `test/sheet_contract/active_sheet_write_planning_test.dart` | `test/contract/active/plans_test.dart` |
+| `test/sheets/workout_tracker_workbook_template_test.dart` | `test/sheets/template_test.dart` |
 | `test/support/development_sheet_reset.dart` | `test/support/reset.dart` |
 | `test/support/widget_test_support.dart` | `test/support/widget.dart` |

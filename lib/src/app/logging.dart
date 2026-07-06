@@ -4,7 +4,7 @@ class _LogScreen extends StatefulWidget {
   const _LogScreen({
     required this.sheetLabel,
     required this.activeSheet,
-    required this.historyBlockLabel,
+    required this.blockLabel,
     required this.primaryRow,
     required this.selectedRow,
     required this.onChoiceChanged,
@@ -14,7 +14,7 @@ class _LogScreen extends StatefulWidget {
 
   final String sheetLabel;
   final ParsedActiveSheet activeSheet;
-  final String historyBlockLabel;
+  final String blockLabel;
   final int primaryRow;
   final int selectedRow;
   final ValueChanged<int> onChoiceChanged;
@@ -22,10 +22,10 @@ class _LogScreen extends StatefulWidget {
   final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
 
   @override
-  State<_LogScreen> createState() => _LogScreenState();
+  State<_LogScreen> createState() => _LogScreenSt();
 }
 
-class _LogScreenState extends State<_LogScreen> {
+class _LogScreenSt extends State<_LogScreen> {
   late final LoggingFlow _flow;
   bool _isWriting = false;
   String? _writeError;
@@ -40,12 +40,12 @@ class _LogScreenState extends State<_LogScreen> {
   void didUpdateWidget(_LogScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedRow != widget.selectedRow ||
-        oldWidget.historyBlockLabel != widget.historyBlockLabel ||
+        oldWidget.blockLabel != widget.blockLabel ||
         oldWidget.primaryRow != widget.primaryRow ||
         oldWidget.activeSheet != widget.activeSheet) {
       _flow.update(
         activeSheet: widget.activeSheet,
-        historyBlockLabel: widget.historyBlockLabel,
+        blockLabel: widget.blockLabel,
         primaryRow: widget.primaryRow,
         selectedRow: widget.selectedRow,
       );
@@ -61,7 +61,7 @@ class _LogScreenState extends State<_LogScreen> {
   LoggingFlow _createFlow() {
     return LoggingFlow(
       activeSheet: widget.activeSheet,
-      historyBlockLabel: widget.historyBlockLabel,
+      blockLabel: widget.blockLabel,
       primaryRow: widget.primaryRow,
       selectedRow: widget.selectedRow,
     );
@@ -198,8 +198,8 @@ class _LogScreenState extends State<_LogScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (choice.isBackup)
-                            const _StateChip(
-                              state: _WorkoutVisualState.backup,
+                            const _StChip(
+                              state: _WorkoutVisualSt.backup,
                               label: 'Backup',
                             ),
                         ],
@@ -236,10 +236,7 @@ class _LogScreenState extends State<_LogScreen> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               if (selectedChoice.isBackup)
-                const _StateChip(
-                  state: _WorkoutVisualState.backup,
-                  label: 'Backup',
-                ),
+                const _StChip(state: _WorkoutVisualSt.backup, label: 'Backup'),
             ],
           ),
           const SizedBox(height: 8),
@@ -250,7 +247,7 @@ class _LogScreenState extends State<_LogScreen> {
           const SizedBox(height: 8),
           _StructuredSetEditor(
             logFormat: loggingContext.logFormat,
-            controllers: viewModel.newSetControllers,
+            controllers: viewModel.newSetCtrls,
             isBusy: _isWriting,
             onSave: _saveSet,
           ),
@@ -275,7 +272,7 @@ class _LogScreenState extends State<_LogScreen> {
                 _LoggedSetFields(
                   entry: entry,
                   fieldLabels: fieldLabels,
-                  controllers: viewModel.loggedControllers[entry.setNumber]!,
+                  controllers: viewModel.loggedCtrls[entry.setNumber]!,
                   isBusy: _isWriting,
                   onSave: () => _saveSetEdit(entry),
                   onClear: () => _clearSet(entry),
@@ -283,7 +280,7 @@ class _LogScreenState extends State<_LogScreen> {
               else
                 _LoggedSetEditor(
                   entry: entry,
-                  controller: viewModel.rawControllers[entry.setNumber]!,
+                  controller: viewModel.rawCtrls[entry.setNumber]!,
                   isBusy: _isWriting,
                   onSave: () => _saveRawSet(entry),
                   onClear: () => _clearSet(entry),

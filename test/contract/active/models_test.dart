@@ -25,9 +25,9 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final context = activeSheet.buildLoggingContext(
-      primarySheetRowNumber: 3,
-      selectedSheetRowNumber: 3,
-      historyBlockLabel: 'Session A',
+      primaryRow: 3,
+      selectedRow: 3,
+      blockLabel: 'Session A',
     );
 
     final logEntry = context.selectedHistory.entries.single.logEntry;
@@ -51,9 +51,9 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final context = activeSheet.buildLoggingContext(
-      primarySheetRowNumber: 3,
-      selectedSheetRowNumber: 3,
-      historyBlockLabel: 'Session A',
+      primaryRow: 3,
+      selectedRow: 3,
+      blockLabel: 'Session A',
     );
 
     final entry = context.selectedHistory.entries.single;
@@ -83,9 +83,9 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final context = activeSheet.buildLoggingContext(
-      primarySheetRowNumber: 3,
-      selectedSheetRowNumber: 3,
-      historyBlockLabel: 'Session A',
+      primaryRow: 3,
+      selectedRow: 3,
+      blockLabel: 'Session A',
     );
 
     final formatted = context.selectedHistory.entries.first.logEntry;
@@ -152,9 +152,9 @@ void main() {
 
       FormattedLogEntry entryFor(int sheetRowNumber) {
         final context = activeSheet.buildLoggingContext(
-          primarySheetRowNumber: sheetRowNumber,
-          selectedSheetRowNumber: sheetRowNumber,
-          historyBlockLabel: 'Session A',
+          primaryRow: sheetRowNumber,
+          selectedRow: sheetRowNumber,
+          blockLabel: 'Session A',
         );
         return context.selectedHistory.entries.single.logEntry
             as FormattedLogEntry;
@@ -192,14 +192,14 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final primaryContext = activeSheet.buildLoggingContext(
-      primarySheetRowNumber: 3,
-      selectedSheetRowNumber: 3,
-      historyBlockLabel: 'Session A',
+      primaryRow: 3,
+      selectedRow: 3,
+      blockLabel: 'Session A',
     );
     final backupContext = activeSheet.buildLoggingContext(
-      primarySheetRowNumber: 3,
-      selectedSheetRowNumber: 4,
-      historyBlockLabel: 'Session A',
+      primaryRow: 3,
+      selectedRow: 4,
+      blockLabel: 'Session A',
     );
 
     final primaryEntry =
@@ -224,9 +224,9 @@ void main() {
     final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
     final context = activeSheet.buildLoggingContext(
-      primarySheetRowNumber: 3,
-      selectedSheetRowNumber: 3,
-      historyBlockLabel: 'Session A',
+      primaryRow: 3,
+      selectedRow: 3,
+      blockLabel: 'Session A',
     );
 
     final entry =
@@ -274,7 +274,7 @@ void main() {
 
     final overview = activeSheet.buildWorkoutOverview(
       workout: 'Legs',
-      historyBlockLabel: 'Session A',
+      blockLabel: 'Session A',
     );
 
     expect(overview.workout, 'Legs');
@@ -339,9 +339,9 @@ void main() {
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
       final context = activeSheet.buildLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 4,
-        historyBlockLabel: 'Session B',
+        primaryRow: 3,
+        selectedRow: 4,
+        blockLabel: 'Session B',
       );
 
       expect(context.selectedChoice.exercise, 'Leg Press');
@@ -422,9 +422,9 @@ void main() {
       final activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows));
 
       final context = activeSheet.buildLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 3,
-        historyBlockLabel: 'Session D',
+        primaryRow: 3,
+        selectedRow: 3,
+        blockLabel: 'Session D',
       );
 
       expect(context.recentHistoryBlocks.map((block) => block.label), [

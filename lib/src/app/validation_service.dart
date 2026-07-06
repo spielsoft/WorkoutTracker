@@ -3,22 +3,22 @@ import 'package:workout_tracker/contract.dart';
 
 import 'validation_core.dart';
 
-class ValidationService implements WorkbookService {
-  const ValidationService({required this.readAdapter, this.writeAdapter});
+class ValSvc implements WbkSvc {
+  const ValSvc({required this.readAdapter, this.writeAdapter});
 
   final SheetsReadAdapter readAdapter;
   final SheetsWriteAdapter? writeAdapter;
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
-    return ValidationReport(
+  Future<ValReport> validateSheet(String spreadsheetId) async {
+    return ValReport(
       spreadsheetId: spreadsheetId,
       activeSheet: await readAdapter.readParsedActiveSheet(spreadsheetId),
     );
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
@@ -32,18 +32,18 @@ class ValidationService implements WorkbookService {
     );
     final writeRejections = plan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
       );
     }
     await writeAdapter.applyWritePlan(spreadsheetId: spreadsheetId, plan: plan);
-    return validateSpreadsheet(spreadsheetId);
+    return validateSheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> createExercise({
+  Future<ValReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ExerciseDef exercise,
@@ -66,11 +66,11 @@ class ValidationService implements WorkbookService {
       spreadsheetId: spreadsheetId,
       plan: exercisesPlan,
     );
-    return validateSpreadsheet(spreadsheetId);
+    return validateSheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> updateExercise({
+  Future<ValReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -89,7 +89,7 @@ class ValidationService implements WorkbookService {
       selectedExercise: selectedExercise,
     );
     if (exerciseRejection != null) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: [exerciseRejection],
@@ -108,11 +108,11 @@ class ValidationService implements WorkbookService {
       spreadsheetId: spreadsheetId,
       plan: exercisesPlan,
     );
-    return validateSpreadsheet(spreadsheetId);
+    return validateSheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> addExerciseToWorkout({
+  Future<ValReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -132,7 +132,7 @@ class ValidationService implements WorkbookService {
       selectedExercise: exercise,
     );
     if (exerciseRejection != null) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: [exerciseRejection],
@@ -140,7 +140,7 @@ class ValidationService implements WorkbookService {
     }
     final activePlan = placement.isBackup
         ? currentActiveSheet.planBackupPlacement(
-            primarySheetRowNumber: placement.primarySheetRowNumber!,
+            primaryRow: placement.primaryRow!,
             exercise: exercise,
             metadata: metadata,
           )
@@ -151,7 +151,7 @@ class ValidationService implements WorkbookService {
           );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
@@ -162,11 +162,11 @@ class ValidationService implements WorkbookService {
       spreadsheetId: spreadsheetId,
       plan: activePlan,
     );
-    return validateSpreadsheet(spreadsheetId);
+    return validateSheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> reorderExercises({
+  Future<ValReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -182,7 +182,7 @@ class ValidationService implements WorkbookService {
     final exercisesPlan = activeSheet.planCanonicalReorder(intent);
     final writeRejections = exercisesPlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
@@ -190,7 +190,7 @@ class ValidationService implements WorkbookService {
     }
     if (exercisesPlan.rowUpdates.isEmpty &&
         exercisesPlan.formulaUpdates.isEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
       );
@@ -200,11 +200,11 @@ class ValidationService implements WorkbookService {
       spreadsheetId: spreadsheetId,
       plan: exercisesPlan,
     );
-    return validateSpreadsheet(spreadsheetId);
+    return validateSheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -224,7 +224,7 @@ class ValidationService implements WorkbookService {
     );
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
@@ -233,7 +233,7 @@ class ValidationService implements WorkbookService {
     if (activePlan.cellUpdates.isEmpty &&
         activePlan.columnInsertions.isEmpty &&
         activePlan.rowInsertions.isEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
       );
@@ -243,14 +243,14 @@ class ValidationService implements WorkbookService {
       spreadsheetId: spreadsheetId,
       plan: activePlan,
     );
-    return validateSpreadsheet(spreadsheetId);
+    return validateSheet(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> deleteWorkoutExercise({
+  Future<ValReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int primarySheetRowNumber,
+    required int primaryRow,
   }) async {
     final writeAdapter = this.writeAdapter;
     if (writeAdapter == null) {
@@ -260,24 +260,22 @@ class ValidationService implements WorkbookService {
     final currentActiveSheet = await readAdapter.readParsedActiveSheet(
       spreadsheetId,
     );
-    final activePlan = activeSheet.planDeletePrimary(
-      primarySheetRowNumber: primarySheetRowNumber,
-    );
+    final activePlan = activeSheet.planDeletePrimary(primaryRow: primaryRow);
     final writeRejections = activePlan.writeRejections(currentActiveSheet);
     if (writeRejections.isNotEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: writeRejections,
       );
     }
     if (activePlan.rowDeletions.isEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: currentActiveSheet,
         writeRejections: [
           WriteRejection(
-            'Row $primarySheetRowNumber is no longer a primary workout '
+            'Row $primaryRow is no longer a primary workout '
             'exercise.',
           ),
         ],
@@ -288,7 +286,7 @@ class ValidationService implements WorkbookService {
       spreadsheetId: spreadsheetId,
       plan: activePlan,
     );
-    return validateSpreadsheet(spreadsheetId);
+    return validateSheet(spreadsheetId);
   }
 }
 

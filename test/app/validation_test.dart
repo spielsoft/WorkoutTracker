@@ -17,13 +17,13 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ];
       final authClient = _CloseTrackingAuthClient();
-      final service = SpreadsheetAccess(
+      final service = SheetAccess(
         ScopedApiAccess(auth: gateway, authClientFactory: (_) => authClient),
         workbookClientFactory: (_) =>
             _CloseTrackingWorkbookClient(authClient, [_snapshot(rows)]),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
 
       expect(authClient.closedDuringAction, isFalse);
       expect(authClient.closed, isTrue);
@@ -54,7 +54,7 @@ void main() {
         _snapshot(activeRows),
         _snapshot(refreshedRows),
       ]);
-      final service = SpreadsheetAccess(
+      final service = SheetAccess(
         ScopedApiAccess(auth: gateway, authClientFactory: (_) => authClient),
         workbookClientFactory: (_) => workbookClient,
       );
@@ -96,14 +96,14 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final plan = report.activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
@@ -167,14 +167,14 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final plan = report.activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
       );
@@ -212,14 +212,14 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final plan = report.activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
@@ -269,14 +269,14 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final plan = report.activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
@@ -327,14 +327,14 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final plan = report.activeSheet.planSetClear(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         setNumber: 2,
       );
@@ -372,12 +372,12 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final plan = report.activeSheet.planNewHistoryBlock(label: 'Week 2');
 
       final rejected = await service.applyWritePlan(
@@ -413,14 +413,14 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final plan = report.activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
       );
@@ -499,12 +499,12 @@ void main() {
         _workbookSnapshot(updatedActiveRows, updatedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final updated = await service.updateExercise(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
@@ -597,12 +597,12 @@ void main() {
         _workbookSnapshot(updatedActiveRows, reorderedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final reordered = await service.reorderExercises(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
@@ -777,12 +777,12 @@ void main() {
         _workbookSnapshot(reorderedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final reordered = await service.reorderWorkoutExercises(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
@@ -791,7 +791,7 @@ void main() {
       );
       final overview = reordered.activeSheet.buildWorkoutOverview(
         workout: 'Legs',
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
       );
 
       expect(writeClient.operations, isNotEmpty);
@@ -888,20 +888,20 @@ void main() {
         _workbookSnapshot(deletedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final deleted = await service.deleteWorkoutExercise(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
-        primarySheetRowNumber: 3,
+        primaryRow: 3,
       );
       final overview = deleted.activeSheet.buildWorkoutOverview(
         workout: 'Legs',
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
       );
 
       final rowDeletions = writeClient.operations
@@ -947,16 +947,16 @@ void main() {
         _workbookSnapshot(changedRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final rejected = await service.deleteWorkoutExercise(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
-        primarySheetRowNumber: 3,
+        primaryRow: 3,
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -996,12 +996,12 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final rejected = await service.reorderExercises(
         spreadsheetId: 'spreadsheet-id',
         activeSheet: report.activeSheet,
@@ -1057,12 +1057,12 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValidationService(
+      final service = ValSvc(
         readAdapter: SheetsReadAdapter(client: readClient),
         writeAdapter: SheetsWriteAdapter(client: writeClient),
       );
 
-      final report = await service.validateSpreadsheet('spreadsheet-id');
+      final report = await service.validateSheet('spreadsheet-id');
       final selectedExercise = report.activeSheet.canonicalExercises.single;
 
       final rejected = await service.addExerciseToWorkout(

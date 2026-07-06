@@ -8,10 +8,10 @@ void main() {
   test(
     'restores selected sheet, account, picker availability, and fallback',
     () async {
-      final accessState = _MemoryWorkspaceStateOwner(
-        const WorkspaceAccessState(
-          spreadsheetText: 'pasted-spreadsheet-id',
-          selectedSpreadsheet: SelectedSpreadsheet(
+      final accessSt = _MemoryWorkspaceStOwner(
+        const WorkspaceAccessSt(
+          sheetText: 'pasted-spreadsheet-id',
+          selectedSheet: SelectedSheet(
             spreadsheetId: 'selected-spreadsheet-id',
             name: '2026 Workouts',
             drivePath: 'My Drive / Workouts / 2026 Workouts',
@@ -25,20 +25,17 @@ void main() {
         ),
       );
       final accountSession = PickerAuthGateway();
-      final workspace = WorkspaceController(
-        accessStateOwner: accessState,
+      final workspace = WorkspaceCtrl(
+        accessStOwner: accessSt,
         accountSession: accountSession,
         picker: const DisabledPicker(reason: 'Picker is unavailable.'),
       );
 
       final restored = await workspace.restore();
 
+      expect(restored.selectedSheet?.id, 'selected-spreadsheet-id');
       expect(
-        restored.selectedSpreadsheet?.spreadsheetId,
-        'selected-spreadsheet-id',
-      );
-      expect(
-        restored.selectedSpreadsheet?.displayLabel,
+        restored.selectedSheet?.displayLabel,
         'My Drive / Workouts / 2026 Workouts',
       );
       expect(restored.pastedText, 'pasted-spreadsheet-id');
@@ -55,16 +52,16 @@ void main() {
   test(
     'restores pasted sheet fallback when picker choosing is unavailable',
     () async {
-      final workspace = WorkspaceController(
-        accessStateOwner: _MemoryWorkspaceStateOwner(
-          const WorkspaceAccessState(spreadsheetText: 'pasted-spreadsheet-id'),
+      final workspace = WorkspaceCtrl(
+        accessStOwner: _MemoryWorkspaceStOwner(
+          const WorkspaceAccessSt(sheetText: 'pasted-spreadsheet-id'),
         ),
         picker: const DisabledPicker(reason: 'Picker is unavailable.'),
       );
 
       final restored = await workspace.restore();
 
-      expect(restored.selectedSpreadsheet, isNull);
+      expect(restored.selectedSheet, isNull);
       expect(restored.pastedText, 'pasted-spreadsheet-id');
       expect(restored.pickerAvailability.canChoose, isFalse);
       expect(restored.fallbackAvailable, isTrue);
@@ -74,20 +71,18 @@ void main() {
   test(
     'persists selected sheet, pasted sheet text, picker auth, and workout selection',
     () async {
-      final accessState = _MemoryWorkspaceStateOwner(
-        const WorkspaceAccessState(),
-      );
+      final accessSt = _MemoryWorkspaceStOwner(const WorkspaceAccessSt());
       final accountSession = PickerAuthGateway();
-      final picker = _ResolvingSpreadsheetPicker(
-        const SelectedSpreadsheet(
+      final picker = _ResolvingSheetPicker(
+        const SelectedSheet(
           spreadsheetId: 'resolved-spreadsheet-id',
           name: 'Resolved Workouts',
           drivePath: 'My Drive / Resolved Workouts',
           accountEmail: 'athlete@example.com',
         ),
       );
-      final workspace = WorkspaceController(
-        accessStateOwner: accessState,
+      final workspace = WorkspaceCtrl(
+        accessStOwner: accessSt,
         accountSession: accountSession,
         picker: picker,
       );
@@ -97,7 +92,7 @@ void main() {
       );
 
       expect(
-        accessState.value.spreadsheetText,
+        accessSt.value.sheetText,
         'https://docs.google.com/spreadsheets/d/pasted-id/edit',
       );
 
@@ -109,22 +104,22 @@ void main() {
         ),
       );
       final selected = await workspace.resolveSelection(
-        const SelectedSpreadsheet(
+        const SelectedSheet(
           spreadsheetId: 'selected-spreadsheet-id',
           name: 'Original Workouts',
         ),
       );
 
-      expect(selected.spreadsheetId, 'resolved-spreadsheet-id');
-      expect(accessState.value.spreadsheetText, 'resolved-spreadsheet-id');
+      expect(selected.id, 'resolved-spreadsheet-id');
+      expect(accessSt.value.sheetText, 'resolved-spreadsheet-id');
       expect(
-        accessState.value.selectedSpreadsheet?.displayLabel,
+        accessSt.value.selectedSheet?.displayLabel,
         'My Drive / Resolved Workouts',
       );
-      expect(accessState.value.pickerAuth?.accessToken, 'picker-token');
+      expect(accessSt.value.pickerAuth?.accessToken, 'picker-token');
 
       await workspace.persistWorkoutSelection(
-        const WorkoutSelectionState(
+        const WorkoutSelectionSt(
           spreadsheetId: 'resolved-spreadsheet-id',
           workout: 'Legs',
           historyBlock: 'Week 1',
@@ -135,15 +130,15 @@ void main() {
         workspace.workoutSelectionFor('resolved-spreadsheet-id')?.workout,
         'Legs',
       );
-      expect(accessState.value.workoutSelection?.historyBlock, 'Week 1');
+      expect(accessSt.value.workoutSelection?.historyBlock, 'Week 1');
     },
   );
 
   test('switches to pasted sheet text through a workspace command', () async {
-    final accessState = _MemoryWorkspaceStateOwner(
-      const WorkspaceAccessState(
-        spreadsheetText: 'selected-spreadsheet-id',
-        selectedSpreadsheet: SelectedSpreadsheet(
+    final accessSt = _MemoryWorkspaceStOwner(
+      const WorkspaceAccessSt(
+        sheetText: 'selected-spreadsheet-id',
+        selectedSheet: SelectedSheet(
           spreadsheetId: 'selected-spreadsheet-id',
           name: 'Selected Workouts',
         ),
@@ -151,70 +146,59 @@ void main() {
           accessToken: 'picker-token',
           accountEmail: 'athlete@example.com',
         ),
-        workoutSelection: WorkoutSelectionState(
+        workoutSelection: WorkoutSelectionSt(
           spreadsheetId: 'selected-spreadsheet-id',
           workout: 'Legs',
           historyBlock: 'Week 1',
         ),
       ),
     );
-    final workspace = WorkspaceController(accessStateOwner: accessState);
+    final workspace = WorkspaceCtrl(accessStOwner: accessSt);
     await workspace.restore();
 
-    final state = await workspace.usePastedSpreadsheetText(
-      ' pasted-spreadsheet-id ',
-    );
+    final state = await workspace.usePastedSheetText(' pasted-spreadsheet-id ');
 
-    expect(state.selectedSpreadsheet, isNull);
+    expect(state.selectedSheet, isNull);
     expect(state.pastedText, 'pasted-spreadsheet-id');
     expect(state.workoutSelection, isNull);
-    expect(accessState.value.selectedSpreadsheet, isNull);
-    expect(accessState.value.spreadsheetText, 'pasted-spreadsheet-id');
-    expect(accessState.value.pickerAuth?.accessToken, 'picker-token');
-    expect(accessState.value.workoutSelection, isNull);
+    expect(accessSt.value.selectedSheet, isNull);
+    expect(accessSt.value.sheetText, 'pasted-spreadsheet-id');
+    expect(accessSt.value.pickerAuth?.accessToken, 'picker-token');
+    expect(accessSt.value.workoutSelection, isNull);
   });
 
   test(
     'restores and resolves a saved selected sheet in one workspace command',
     () async {
-      final accessState = _MemoryWorkspaceStateOwner(
-        const WorkspaceAccessState(
-          selectedSpreadsheet: SelectedSpreadsheet(
+      final accessSt = _MemoryWorkspaceStOwner(
+        const WorkspaceAccessSt(
+          selectedSheet: SelectedSheet(
             spreadsheetId: 'saved-spreadsheet-id',
             name: 'Saved Workouts',
           ),
         ),
       );
-      final picker = _ResolvingSpreadsheetPicker(
-        const SelectedSpreadsheet(
+      final picker = _ResolvingSheetPicker(
+        const SelectedSheet(
           spreadsheetId: 'resolved-spreadsheet-id',
           name: 'Resolved Workouts',
         ),
       );
-      final workspace = WorkspaceController(
-        accessStateOwner: accessState,
-        picker: picker,
-      );
+      final workspace = WorkspaceCtrl(accessStOwner: accessSt, picker: picker);
 
       final state = await workspace.restoreResolved();
 
-      expect(
-        state.selectedSpreadsheet?.spreadsheetId,
-        'resolved-spreadsheet-id',
-      );
-      expect(accessState.value.spreadsheetText, 'resolved-spreadsheet-id');
-      expect(
-        accessState.value.selectedSpreadsheet?.displayLabel,
-        'Resolved Workouts',
-      );
+      expect(state.selectedSheet?.id, 'resolved-spreadsheet-id');
+      expect(accessSt.value.sheetText, 'resolved-spreadsheet-id');
+      expect(accessSt.value.selectedSheet?.displayLabel, 'Resolved Workouts');
     },
   );
 
   test(
     'chooses and adopts a spreadsheet through the workspace command',
     () async {
-      final accessState = _MemoryWorkspaceStateOwner(
-        const WorkspaceAccessState(spreadsheetText: 'previous-id'),
+      final accessSt = _MemoryWorkspaceStOwner(
+        const WorkspaceAccessSt(sheetText: 'previous-id'),
       );
       final accountSession = PickerAuthGateway();
       accountSession.updatePickerAuth(
@@ -223,101 +207,85 @@ void main() {
           accountEmail: 'athlete@example.com',
         ),
       );
-      final picker = _CommandSpreadsheetPicker(
-        chooseResult: const SelectedSpreadsheet(
+      final picker = _CommandSheetPicker(
+        chooseResult: const SelectedSheet(
           spreadsheetId: 'chosen-spreadsheet-id',
           name: 'Chosen Workouts',
           accountEmail: 'athlete@example.com',
         ),
       );
-      final workspace = WorkspaceController(
-        accessStateOwner: accessState,
+      final workspace = WorkspaceCtrl(
+        accessStOwner: accessSt,
         accountSession: accountSession,
         picker: picker,
       );
 
-      final state = await workspace.chooseSpreadsheet();
+      final state = await workspace.chooseSheet();
 
       expect(picker.chooseCount, 1);
-      expect(state.selectedSpreadsheet?.spreadsheetId, 'chosen-spreadsheet-id');
-      expect(accessState.value.spreadsheetText, 'chosen-spreadsheet-id');
-      expect(
-        accessState.value.selectedSpreadsheet?.displayLabel,
-        'Chosen Workouts',
-      );
-      expect(accessState.value.pickerAuth?.accessToken, 'picker-token');
+      expect(state.selectedSheet?.id, 'chosen-spreadsheet-id');
+      expect(accessSt.value.sheetText, 'chosen-spreadsheet-id');
+      expect(accessSt.value.selectedSheet?.displayLabel, 'Chosen Workouts');
+      expect(accessSt.value.pickerAuth?.accessToken, 'picker-token');
       expect(workspace.state.isCommandInFlight, isFalse);
     },
   );
 
   test('authorizes creation and adopts a created spreadsheet', () async {
-    final accessState = _MemoryWorkspaceStateOwner(
-      const WorkspaceAccessState(),
-    );
-    final picker = _CommandSpreadsheetPicker(
+    final accessSt = _MemoryWorkspaceStOwner(const WorkspaceAccessSt());
+    final picker = _CommandSheetPicker(
       creationAuthorizationResult: true,
-      createResult: const SelectedSpreadsheet(
+      createResult: const SelectedSheet(
         spreadsheetId: 'created-spreadsheet-id',
         name: 'Custom Training Log',
         accountEmail: 'athlete@example.com',
       ),
     );
-    final workspace = WorkspaceController(
-      accessStateOwner: accessState,
-      picker: picker,
-    );
+    final workspace = WorkspaceCtrl(accessStOwner: accessSt, picker: picker);
 
     final authorized = await workspace.authorizeSheetCreation();
-    final state = await workspace.createSpreadsheet(
-      name: 'Custom Training Log',
-    );
+    final state = await workspace.createSheet(name: 'Custom Training Log');
 
     expect(authorized, isTrue);
     expect(picker.creationAuthorizationCount, 1);
     expect(picker.createCount, 1);
     expect(picker.createNames, ['Custom Training Log']);
-    expect(state.selectedSpreadsheet?.spreadsheetId, 'created-spreadsheet-id');
-    expect(accessState.value.spreadsheetText, 'created-spreadsheet-id');
-    expect(
-      accessState.value.selectedSpreadsheet?.displayLabel,
-      'Custom Training Log',
-    );
+    expect(state.selectedSheet?.id, 'created-spreadsheet-id');
+    expect(accessSt.value.sheetText, 'created-spreadsheet-id');
+    expect(accessSt.value.selectedSheet?.displayLabel, 'Custom Training Log');
   });
 
   test('blocks duplicate picker commands while one is in flight', () async {
-    final picker = _CommandSpreadsheetPicker(
-      chooseResult: const SelectedSpreadsheet(
+    final picker = _CommandSheetPicker(
+      chooseResult: const SelectedSheet(
         spreadsheetId: 'chosen-spreadsheet-id',
         name: 'Chosen Workouts',
       ),
     );
-    final chooseCompleter = Completer<SelectedSpreadsheet?>();
+    final chooseCompleter = Completer<SelectedSheet?>();
     picker.chooseFuture = chooseCompleter.future;
-    final workspace = WorkspaceController(picker: picker);
+    final workspace = WorkspaceCtrl(picker: picker);
 
-    final first = workspace.chooseSpreadsheet();
-    final second = workspace.chooseSpreadsheet();
+    final first = workspace.chooseSheet();
+    final second = workspace.chooseSheet();
 
     expect(picker.chooseCount, 1);
     expect(workspace.state.isCommandInFlight, isTrue);
 
     chooseCompleter.complete(picker.chooseResult);
     await first;
-    final duplicateState = await second;
+    final duplicateSt = await second;
 
-    expect(duplicateState.selectedSpreadsheet, isNull);
-    expect(
-      workspace.state.selectedSpreadsheet?.spreadsheetId,
-      'chosen-spreadsheet-id',
-    );
+    expect(duplicateSt.selectedSheet, isNull);
+    expect(workspace.state.selectedSheet?.id, 'chosen-spreadsheet-id');
     expect(workspace.state.isCommandInFlight, isFalse);
   });
 
   test('logs out through workspace cleanup', () async {
-    final accessState = _MemoryWorkspaceStateOwner(
-      const WorkspaceAccessState(
-        spreadsheetText: 'selected-spreadsheet-id',
-        selectedSpreadsheet: SelectedSpreadsheet(
+    final accessSt = _MemoryWorkspaceStOwner(
+      const WorkspaceAccessSt(
+        sheetText: 'selected-spreadsheet-id',
+        selectedSheet: SelectedSheet(
           spreadsheetId: 'selected-spreadsheet-id',
           name: 'Selected Workouts',
         ),
@@ -325,7 +293,7 @@ void main() {
           accessToken: 'picker-token',
           accountEmail: 'athlete@example.com',
         ),
-        workoutSelection: WorkoutSelectionState(
+        workoutSelection: WorkoutSelectionSt(
           spreadsheetId: 'selected-spreadsheet-id',
           workout: 'Legs',
           historyBlock: 'Week 1',
@@ -335,21 +303,21 @@ void main() {
     final accountSession = _RecordingGoogleAccountSession(
       const GoogleAccountProfile(email: 'athlete@example.com'),
     );
-    final workspace = WorkspaceController(
-      accessStateOwner: accessState,
+    final workspace = WorkspaceCtrl(
+      accessStOwner: accessSt,
       accountSession: accountSession,
-      picker: _CommandSpreadsheetPicker(),
+      picker: _CommandSheetPicker(),
     );
     await workspace.restore();
 
     final state = await workspace.signOut();
 
     expect(accountSession.signOutCount, 1);
-    expect(accessState.value.selectedSpreadsheet, isNull);
-    expect(accessState.value.spreadsheetText, isNull);
-    expect(accessState.value.pickerAuth, isNull);
-    expect(accessState.value.workoutSelection, isNull);
-    expect(state.selectedSpreadsheet, isNull);
+    expect(accessSt.value.selectedSheet, isNull);
+    expect(accessSt.value.sheetText, isNull);
+    expect(accessSt.value.pickerAuth, isNull);
+    expect(accessSt.value.workoutSelection, isNull);
+    expect(state.selectedSheet, isNull);
     expect(state.pastedText, isNull);
     expect(state.accountProfile, isNull);
     expect(state.pickerAuthorization, isNull);
@@ -357,39 +325,39 @@ void main() {
   });
 }
 
-class _MemoryWorkspaceStateOwner implements WorkspaceStateOwner {
-  _MemoryWorkspaceStateOwner(this.value);
+class _MemoryWorkspaceStOwner implements WorkspaceStOwner {
+  _MemoryWorkspaceStOwner(this.value);
 
   @override
-  WorkspaceAccessState value;
+  WorkspaceAccessSt value;
 
   @override
   Future<void> clear() async {
-    value = const WorkspaceAccessState();
+    value = const WorkspaceAccessSt();
   }
 
   @override
-  Future<WorkspaceAccessState> restore() async {
+  Future<WorkspaceAccessSt> restore() async {
     return value;
   }
 
   @override
-  Future<WorkspaceAccessState> update(
-    WorkspaceAccessState Function(WorkspaceAccessState current) updateState,
+  Future<WorkspaceAccessSt> update(
+    WorkspaceAccessSt Function(WorkspaceAccessSt current) updateFn,
   ) async {
-    value = updateState(value);
+    value = updateFn(value);
     return value;
   }
 }
 
-class _ResolvingSpreadsheetPicker implements SpreadsheetPicker {
-  const _ResolvingSpreadsheetPicker(this.resolved);
+class _ResolvingSheetPicker implements SheetPicker {
+  const _ResolvingSheetPicker(this.resolved);
 
-  final SelectedSpreadsheet resolved;
+  final SelectedSheet resolved;
 
   @override
-  PickerAvailability get availability {
-    return const PickerAvailability.available();
+  PickerAvail get availability {
+    return const PickerAvail.available();
   }
 
   @override
@@ -398,46 +366,44 @@ class _ResolvingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+  Future<SelectedSheet?> chooseSheet() async {
     return null;
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+  Future<SelectedSheet?> createSheet({String? name}) async {
     return null;
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return resolved;
   }
 }
 
-class _CommandSpreadsheetPicker implements SpreadsheetPicker {
-  _CommandSpreadsheetPicker({
+class _CommandSheetPicker implements SheetPicker {
+  _CommandSheetPicker({
     this.chooseResult,
     this.creationAuthorizationResult = true,
     this.createResult,
   });
 
-  final SelectedSpreadsheet? chooseResult;
+  final SelectedSheet? chooseResult;
   final bool creationAuthorizationResult;
-  final SelectedSpreadsheet? createResult;
-  Future<SelectedSpreadsheet?>? chooseFuture;
+  final SelectedSheet? createResult;
+  Future<SelectedSheet?>? chooseFuture;
   int chooseCount = 0;
   int creationAuthorizationCount = 0;
   int createCount = 0;
   final createNames = <String?>[];
 
   @override
-  PickerAvailability get availability {
-    return const PickerAvailability.available();
+  PickerAvail get availability {
+    return const PickerAvail.available();
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() {
+  Future<SelectedSheet?> chooseSheet() {
     chooseCount += 1;
     return chooseFuture ?? Future.value(chooseResult);
   }
@@ -449,16 +415,14 @@ class _CommandSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+  Future<SelectedSheet?> createSheet({String? name}) async {
     createCount += 1;
     createNames.add(name);
     return createResult;
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return selected;
   }
 }

@@ -6,9 +6,9 @@ import 'package:workout_tracker/app.dart';
 
 void main() {
   test('Google workspace access state groups sheet-adjacent persistence', () {
-    const state = WorkspaceAccessState(
-      spreadsheetText: 'spreadsheet-id',
-      selectedSpreadsheet: SelectedSpreadsheet(
+    const state = WorkspaceAccessSt(
+      sheetText: 'spreadsheet-id',
+      selectedSheet: SelectedSheet(
         spreadsheetId: 'spreadsheet-id',
         name: 'Development Workouts',
         accountEmail: 'user@example.com',
@@ -19,18 +19,18 @@ void main() {
         displayName: 'User Name',
         photoUrl: 'https://example.com/user.png',
       ),
-      workoutSelection: WorkoutSelectionState(
+      workoutSelection: WorkoutSelectionSt(
         spreadsheetId: 'spreadsheet-id',
         workout: 'Legs',
         historyBlock: 'Week 1',
       ),
     );
 
-    final decoded = WorkspaceAccessState.fromJson(state.toJson());
+    final decoded = WorkspaceAccessSt.fromJson(state.toJson());
 
-    expect(decoded.spreadsheetText, 'spreadsheet-id');
-    expect(decoded.selectedSpreadsheet?.name, 'Development Workouts');
-    expect(decoded.selectedSpreadsheet?.accountEmail, 'user@example.com');
+    expect(decoded.sheetText, 'spreadsheet-id');
+    expect(decoded.selectedSheet?.name, 'Development Workouts');
+    expect(decoded.selectedSheet?.accountEmail, 'user@example.com');
     expect(decoded.pickerAuth?.accessToken, 'picker-access-token');
     expect(decoded.pickerAuth?.accountEmail, 'user@example.com');
     expect(decoded.pickerAuth?.displayName, 'User Name');
@@ -40,7 +40,7 @@ void main() {
   });
 
   test('file app state store uses Application Support on macOS', () {
-    final directory = FileAppStateStore.defaultStateDirectory(
+    final directory = FileAppStStore.defaultStDir(
       isWindows: false,
       isMacOS: true,
       environment: {'HOME': '/Users/athlete'},
@@ -69,10 +69,10 @@ void main() {
         await directory.delete(recursive: true);
       }
     });
-    final store = FileAppStateStore(stateDirectory: directory);
-    const state = WorkspaceAccessState(
-      spreadsheetText: 'spreadsheet-id',
-      selectedSpreadsheet: SelectedSpreadsheet(
+    final store = FileAppStStore(stateDirectory: directory);
+    const state = WorkspaceAccessSt(
+      sheetText: 'spreadsheet-id',
+      selectedSheet: SelectedSheet(
         spreadsheetId: 'spreadsheet-id',
         name: 'Development Workouts',
       ),
@@ -82,11 +82,11 @@ void main() {
       ),
     );
 
-    await store.writeWorkspaceState(state);
-    final restored = await store.readWorkspaceState();
+    await store.writeWorkspaceSt(state);
+    final restored = await store.readWorkspaceSt();
 
-    expect(restored.spreadsheetText, 'spreadsheet-id');
-    expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
+    expect(restored.sheetText, 'spreadsheet-id');
+    expect(restored.selectedSheet?.name, 'Development Workouts');
     expect(restored.pickerAuth?.accountEmail, 'athlete@example.com');
   });
 
@@ -99,16 +99,14 @@ void main() {
         await directory.delete(recursive: true);
       }
     });
-    final store = FileAppStateStore(stateDirectory: directory);
-    final controller = WorkspaceStateController(store);
+    final store = FileAppStStore(stateDirectory: directory);
+    final controller = WorkspaceStCtrl(store);
 
     await Future.wait([
-      controller.update(
-        (state) => state.copyWith(spreadsheetText: 'spreadsheet-id'),
-      ),
+      controller.update((state) => state.copyWith(sheetText: 'spreadsheet-id')),
       controller.update(
         (state) => state.copyWith(
-          selectedSpreadsheet: SelectedSpreadsheet(
+          selectedSheet: SelectedSheet(
             spreadsheetId: 'spreadsheet-id',
             name: 'Development Workouts',
           ),
@@ -120,7 +118,7 @@ void main() {
       ),
       controller.update(
         (state) => state.copyWith(
-          workoutSelection: const WorkoutSelectionState(
+          workoutSelection: const WorkoutSelectionSt(
             spreadsheetId: 'spreadsheet-id',
             workout: 'Legs',
             historyBlock: 'Week 1',
@@ -133,9 +131,9 @@ void main() {
     final decoded = jsonDecode(await file.readAsString());
 
     expect(decoded, isA<Map<String, Object?>>());
-    final restored = await store.readWorkspaceState();
-    expect(restored.spreadsheetText, 'spreadsheet-id');
-    expect(restored.selectedSpreadsheet?.name, 'Development Workouts');
+    final restored = await store.readWorkspaceSt();
+    expect(restored.sheetText, 'spreadsheet-id');
+    expect(restored.selectedSheet?.name, 'Development Workouts');
     expect(restored.pickerAuth?.accountEmail, 'athlete@example.com');
     expect(restored.workoutSelection?.workout, 'Legs');
   });
@@ -152,12 +150,12 @@ void main() {
     await File(
       '${directory.path}${Platform.pathSeparator}state.json',
     ).writeAsString('{"googleWorkspaceAccess":{}}{"extra":true}');
-    final store = FileAppStateStore(stateDirectory: directory);
+    final store = FileAppStStore(stateDirectory: directory);
 
-    final restored = await store.readWorkspaceState();
+    final restored = await store.readWorkspaceSt();
 
-    expect(restored.spreadsheetText, isNull);
-    expect(restored.selectedSpreadsheet, isNull);
+    expect(restored.sheetText, isNull);
+    expect(restored.selectedSheet, isNull);
     expect(restored.pickerAuth, isNull);
   });
 }

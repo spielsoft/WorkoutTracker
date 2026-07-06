@@ -158,9 +158,9 @@ class _WorkoutPane extends StatelessWidget {
       return _LogScreen(
         sheetLabel: sheetLabel,
         activeSheet: activeSheet,
-        historyBlockLabel: target.historyBlockLabel,
-        primaryRow: target.primarySheetRowNumber,
-        selectedRow: target.selectedSheetRowNumber,
+        blockLabel: target.blockLabel,
+        primaryRow: target.primaryRow,
+        selectedRow: target.selectedRow,
         onChoiceChanged: onLoggingRowChanged,
         onClose: onCloseExercise,
         onApplyWritePlan: onApplyWritePlan,
@@ -348,10 +348,10 @@ class _WorkoutField extends StatefulWidget {
   final VoidCallback? onAddWorkout;
 
   @override
-  State<_WorkoutField> createState() => _WorkoutFieldState();
+  State<_WorkoutField> createState() => _WorkoutFieldSt();
 }
 
-class _WorkoutFieldState extends State<_WorkoutField> {
+class _WorkoutFieldSt extends State<_WorkoutField> {
   @override
   Widget build(BuildContext context) {
     return _SetupSelectorField(
@@ -391,10 +391,10 @@ class _HistoryField extends StatefulWidget {
   final VoidCallback? onAddHistoryBlock;
 
   @override
-  State<_HistoryField> createState() => _HistoryFieldState();
+  State<_HistoryField> createState() => _HistoryFieldSt();
 }
 
-class _HistoryFieldState extends State<_HistoryField> {
+class _HistoryFieldSt extends State<_HistoryField> {
   @override
   Widget build(BuildContext context) {
     return _SetupSelectorField(
@@ -441,10 +441,10 @@ class _SetupSelectorField extends StatefulWidget {
   final VoidCallback? onAdd;
 
   @override
-  State<_SetupSelectorField> createState() => _SetupSelectorFieldState();
+  State<_SetupSelectorField> createState() => _SetupSelectorFieldSt();
 }
 
-class _SetupSelectorFieldState extends State<_SetupSelectorField> {
+class _SetupSelectorFieldSt extends State<_SetupSelectorField> {
   int _resetEpoch = 0;
 
   void _openAddAfterClose() {
@@ -700,8 +700,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                   ),
                                   if (slot.backups.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    _StateChip(
-                                      state: _WorkoutVisualState.backup,
+                                    _StChip(
+                                      state: _WorkoutVisualSt.backup,
                                       label: backupSummaryLabel,
                                     ),
                                   ],
@@ -749,8 +749,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                   ),
                                   if (slot.backups.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    _StateChip(
-                                      state: _WorkoutVisualState.backup,
+                                    _StChip(
+                                      state: _WorkoutVisualSt.backup,
                                       label: backupSummaryLabel,
                                     ),
                                   ],
@@ -1027,10 +1027,10 @@ class _PlaceForm extends StatefulWidget {
   onSubmitAndAddAnother;
 
   @override
-  State<_PlaceForm> createState() => _PlaceFormState();
+  State<_PlaceForm> createState() => _PlaceFormSt();
 }
 
-class _PlaceFormState extends State<_PlaceForm> {
+class _PlaceFormSt extends State<_PlaceForm> {
   CanonicalExercise? _selectedExercise;
   late final TextEditingController _searchCtrl;
   late final TextEditingController _setsCtrl;

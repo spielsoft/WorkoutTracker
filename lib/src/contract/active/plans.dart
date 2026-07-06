@@ -6,7 +6,7 @@ class ActiveSheetWritePlan {
     Iterable<RowInsertion> rowInsertions = const [],
     Iterable<RowDeletion> rowDeletions = const [],
     Iterable<CellUpdate> cellUpdates = const [],
-    Iterable<WriteExpectation> expectations = const [],
+    Iterable<WriteExpct> expectations = const [],
     this.nextSetPosition,
   }) : columnInsertions = List<HistoryColumnInsertion>.unmodifiable(
          columnInsertions,
@@ -14,13 +14,13 @@ class ActiveSheetWritePlan {
        rowInsertions = List<RowInsertion>.unmodifiable(rowInsertions),
        rowDeletions = List<RowDeletion>.unmodifiable(rowDeletions),
        cellUpdates = List<CellUpdate>.unmodifiable(cellUpdates),
-       expectations = List<WriteExpectation>.unmodifiable(expectations);
+       expectations = List<WriteExpct>.unmodifiable(expectations);
 
   final List<HistoryColumnInsertion> columnInsertions;
   final List<RowInsertion> rowInsertions;
   final List<RowDeletion> rowDeletions;
   final List<CellUpdate> cellUpdates;
-  final List<WriteExpectation> expectations;
+  final List<WriteExpct> expectations;
   final SetPosition? nextSetPosition;
 
   List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
@@ -150,8 +150,8 @@ class ActiveSheetWritePlan {
   }
 }
 
-abstract class WriteExpectation {
-  const WriteExpectation();
+abstract class WriteExpct {
+  const WriteExpct();
 
   List<WriteRejection> writeRejections(ParsedActiveSheet sheet);
 }
@@ -176,8 +176,8 @@ class WriteRejection {
   }
 }
 
-class ExercisesRowExpectation extends WriteExpectation {
-  ExercisesRowExpectation({
+class ExercisesRowExpct extends WriteExpct {
+  ExercisesRowExpct({
     required this.sheetRowNumber,
     required Iterable<String> expectedValues,
   }) : expectedValues = List<String>.unmodifiable(expectedValues);
@@ -203,7 +203,7 @@ class ExercisesRowExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ExercisesRowExpectation &&
+        other is ExercisesRowExpct &&
             sheetRowNumber == other.sheetRowNumber &&
             _listEquals(expectedValues, other.expectedValues);
   }
@@ -214,15 +214,15 @@ class ExercisesRowExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'ExercisesRowExpectation('
+    return 'ExercisesRowExpct('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedValues: $expectedValues'
         ')';
   }
 }
 
-class RowExpectation extends WriteExpectation {
-  const RowExpectation({
+class RowExpct extends WriteExpct {
+  const RowExpct({
     required this.sheetRowNumber,
     required this.exercise,
     required this.workout,
@@ -254,7 +254,7 @@ class RowExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is RowExpectation &&
+        other is RowExpct &&
             sheetRowNumber == other.sheetRowNumber &&
             exercise == other.exercise &&
             workout == other.workout &&
@@ -268,7 +268,7 @@ class RowExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'RowExpectation('
+    return 'RowExpct('
         'sheetRowNumber: $sheetRowNumber, '
         'exercise: $exercise, '
         'workout: $workout, '
@@ -277,8 +277,8 @@ class RowExpectation extends WriteExpectation {
   }
 }
 
-class RowValuesExpectation extends WriteExpectation {
-  RowValuesExpectation({
+class RowValuesExpct extends WriteExpct {
+  RowValuesExpct({
     required this.sheetRowNumber,
     required Iterable<String> expectedValues,
   }) : expectedValues = List<String>.unmodifiable(expectedValues);
@@ -305,7 +305,7 @@ class RowValuesExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is RowValuesExpectation &&
+        other is RowValuesExpct &&
             sheetRowNumber == other.sheetRowNumber &&
             _listEquals(expectedValues, other.expectedValues);
   }
@@ -317,27 +317,27 @@ class RowValuesExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'RowValuesExpectation('
+    return 'RowValuesExpct('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedValues: $expectedValues'
         ')';
   }
 }
 
-class BackupGroupExpectation extends WriteExpectation {
-  BackupGroupExpectation({
-    required this.primarySheetRowNumber,
-    required Iterable<RowExpectation> expectedBackups,
-  }) : expectedBackups = List<RowExpectation>.unmodifiable(expectedBackups);
+class BackupGroupExpct extends WriteExpct {
+  BackupGroupExpct({
+    required this.primaryRow,
+    required Iterable<RowExpct> expectedBackups,
+  }) : expectedBackups = List<RowExpct>.unmodifiable(expectedBackups);
 
-  final int primarySheetRowNumber;
-  final List<RowExpectation> expectedBackups;
+  final int primaryRow;
+  final List<RowExpct> expectedBackups;
 
   @override
   List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     WorkoutSlot? primary;
     for (final slot in sheet.primarySlots) {
-      if (slot.sheetRowNumber == primarySheetRowNumber) {
+      if (slot.sheetRowNumber == primaryRow) {
         primary = slot;
         break;
       }
@@ -345,7 +345,7 @@ class BackupGroupExpectation extends WriteExpectation {
     final actualBackups = [
       if (primary != null)
         for (final backup in primary.backups)
-          RowExpectation(
+          RowExpct(
             sheetRowNumber: backup.sheetRowNumber,
             exercise: backup.exercise,
             workout: backup.workout,
@@ -357,7 +357,7 @@ class BackupGroupExpectation extends WriteExpectation {
     }
     return [
       WriteRejection(
-        'Backup group for row $primarySheetRowNumber no longer matches '
+        'Backup group for row $primaryRow no longer matches '
         'the planned delete.',
       ),
     ];
@@ -366,27 +366,27 @@ class BackupGroupExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is BackupGroupExpectation &&
-            primarySheetRowNumber == other.primarySheetRowNumber &&
+        other is BackupGroupExpct &&
+            primaryRow == other.primaryRow &&
             _listEquals(expectedBackups, other.expectedBackups);
   }
 
   @override
   int get hashCode {
-    return Object.hash(primarySheetRowNumber, Object.hashAll(expectedBackups));
+    return Object.hash(primaryRow, Object.hashAll(expectedBackups));
   }
 
   @override
   String toString() {
-    return 'BackupGroupExpectation('
-        'primarySheetRowNumber: $primarySheetRowNumber, '
+    return 'BackupGroupExpct('
+        'primaryRow: $primaryRow, '
         'expectedBackups: $expectedBackups'
         ')';
   }
 }
 
-class RepairRowExpectation extends WriteExpectation {
-  RepairRowExpectation({
+class RepairRowExpct extends WriteExpct {
+  RepairRowExpct({
     required this.sheetRowNumber,
     required Iterable<String> expectedValues,
   }) : expectedValues = List<String>.unmodifiable(expectedValues);
@@ -413,7 +413,7 @@ class RepairRowExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is RepairRowExpectation &&
+        other is RepairRowExpct &&
             sheetRowNumber == other.sheetRowNumber &&
             _listEquals(expectedValues, other.expectedValues);
   }
@@ -425,15 +425,15 @@ class RepairRowExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'RepairRowExpectation('
+    return 'RepairRowExpct('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedValues: $expectedValues'
         ')';
   }
 }
 
-class CellExpectation extends WriteExpectation {
-  const CellExpectation({
+class CellExpct extends WriteExpct {
+  const CellExpct({
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.expectedValue,
@@ -463,7 +463,7 @@ class CellExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is CellExpectation &&
+        other is CellExpct &&
             sheetRowNumber == other.sheetRowNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
             expectedValue == other.expectedValue;
@@ -476,7 +476,7 @@ class CellExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'CellExpectation('
+    return 'CellExpct('
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedValue: $expectedValue'
@@ -484,8 +484,8 @@ class CellExpectation extends WriteExpectation {
   }
 }
 
-class FormulaExpectation extends WriteExpectation {
-  const FormulaExpectation({
+class FormulaExpct extends WriteExpct {
+  const FormulaExpct({
     required this.sheetRowNumber,
     required this.sheetColumnNumber,
     required this.expectedFormula,
@@ -515,7 +515,7 @@ class FormulaExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is FormulaExpectation &&
+        other is FormulaExpct &&
             sheetRowNumber == other.sheetRowNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
             expectedFormula == other.expectedFormula;
@@ -528,7 +528,7 @@ class FormulaExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'FormulaExpectation('
+    return 'FormulaExpct('
         'sheetRowNumber: $sheetRowNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedFormula: $expectedFormula'
@@ -536,22 +536,22 @@ class FormulaExpectation extends WriteExpectation {
   }
 }
 
-class SetColumnExpectation extends WriteExpectation {
-  const SetColumnExpectation({
-    required this.historyBlockLabel,
+class SetColumnExpct extends WriteExpct {
+  const SetColumnExpct({
+    required this.blockLabel,
     required this.setNumber,
     required this.sheetColumnNumber,
     required this.setLabel,
   });
 
-  final String historyBlockLabel;
+  final String blockLabel;
   final int setNumber;
   final int sheetColumnNumber;
   final String setLabel;
 
   @override
   List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
-    final block = sheet.selectHistoryBlock(historyBlockLabel);
+    final block = sheet.selectHistoryBlock(blockLabel);
     final column =
         block == null || setNumber < 1 || setNumber > block.setColumns.length
         ? null
@@ -563,7 +563,7 @@ class SetColumnExpectation extends WriteExpectation {
     }
     return [
       WriteRejection(
-        'Set column $historyBlockLabel S$setNumber no longer exists at '
+        'Set column $blockLabel S$setNumber no longer exists at '
         'column $sheetColumnNumber.',
       ),
     ];
@@ -572,8 +572,8 @@ class SetColumnExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is SetColumnExpectation &&
-            historyBlockLabel == other.historyBlockLabel &&
+        other is SetColumnExpct &&
+            blockLabel == other.blockLabel &&
             setNumber == other.setNumber &&
             sheetColumnNumber == other.sheetColumnNumber &&
             setLabel == other.setLabel;
@@ -581,18 +581,13 @@ class SetColumnExpectation extends WriteExpectation {
 
   @override
   int get hashCode {
-    return Object.hash(
-      historyBlockLabel,
-      setNumber,
-      sheetColumnNumber,
-      setLabel,
-    );
+    return Object.hash(blockLabel, setNumber, sheetColumnNumber, setLabel);
   }
 
   @override
   String toString() {
-    return 'SetColumnExpectation('
-        'historyBlockLabel: $historyBlockLabel, '
+    return 'SetColumnExpct('
+        'blockLabel: $blockLabel, '
         'setNumber: $setNumber, '
         'sheetColumnNumber: $sheetColumnNumber, '
         'setLabel: $setLabel'
@@ -600,8 +595,8 @@ class SetColumnExpectation extends WriteExpectation {
   }
 }
 
-class InsertExpectation extends WriteExpectation {
-  const InsertExpectation({
+class InsertExpct extends WriteExpct {
+  const InsertExpct({
     required this.sheetColumnNumber,
     required this.expectedHeaderValue,
     required this.expectedSetLabel,
@@ -637,7 +632,7 @@ class InsertExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is InsertExpectation &&
+        other is InsertExpct &&
             sheetColumnNumber == other.sheetColumnNumber &&
             expectedHeaderValue == other.expectedHeaderValue &&
             expectedSetLabel == other.expectedSetLabel;
@@ -654,7 +649,7 @@ class InsertExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'InsertExpectation('
+    return 'InsertExpct('
         'sheetColumnNumber: $sheetColumnNumber, '
         'expectedHeaderValue: $expectedHeaderValue, '
         'expectedSetLabel: $expectedSetLabel'
@@ -662,13 +657,11 @@ class InsertExpectation extends WriteExpectation {
   }
 }
 
-class RowInsertExpectation extends WriteExpectation {
-  RowInsertExpectation({
-    required this.sheetRowNumber,
-    Iterable<String>? expectedRow,
-  }) : expectedRow = expectedRow == null
-           ? null
-           : List<String>.unmodifiable(expectedRow);
+class RowInsertExpct extends WriteExpct {
+  RowInsertExpct({required this.sheetRowNumber, Iterable<String>? expectedRow})
+    : expectedRow = expectedRow == null
+          ? null
+          : List<String>.unmodifiable(expectedRow);
 
   final int sheetRowNumber;
   final List<String>? expectedRow;
@@ -701,7 +694,7 @@ class RowInsertExpectation extends WriteExpectation {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is RowInsertExpectation &&
+        other is RowInsertExpct &&
             sheetRowNumber == other.sheetRowNumber &&
             _nullableListEquals(expectedRow, other.expectedRow);
   }
@@ -716,7 +709,7 @@ class RowInsertExpectation extends WriteExpectation {
 
   @override
   String toString() {
-    return 'RowInsertExpectation('
+    return 'RowInsertExpct('
         'sheetRowNumber: $sheetRowNumber, '
         'expectedRow: $expectedRow'
         ')';
@@ -884,16 +877,16 @@ class ExercisesWritePlan {
     Iterable<ExercisesRowAppend> rowAppends = const [],
     Iterable<ExercisesRowUpdate> rowUpdates = const [],
     Iterable<CellUpdate> formulaUpdates = const [],
-    Iterable<WriteExpectation> expectations = const [],
+    Iterable<WriteExpct> expectations = const [],
   }) : rowAppends = List<ExercisesRowAppend>.unmodifiable(rowAppends),
        rowUpdates = List<ExercisesRowUpdate>.unmodifiable(rowUpdates),
        formulaUpdates = List<CellUpdate>.unmodifiable(formulaUpdates),
-       expectations = List<WriteExpectation>.unmodifiable(expectations);
+       expectations = List<WriteExpct>.unmodifiable(expectations);
 
   final List<ExercisesRowAppend> rowAppends;
   final List<ExercisesRowUpdate> rowUpdates;
   final List<CellUpdate> formulaUpdates;
-  final List<WriteExpectation> expectations;
+  final List<WriteExpct> expectations;
 
   List<WriteRejection> writeRejections(ParsedActiveSheet sheet) {
     return [
@@ -1235,43 +1228,41 @@ class _WritePlanner {
   }
 
   ActiveSheetWritePlan planBackupPlacement({
-    required int primarySheetRowNumber,
+    required int primaryRow,
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
     return _workoutRows.planBackupPlacement(
-      primarySheetRowNumber: primarySheetRowNumber,
+      primaryRow: primaryRow,
       exercise: exercise,
       metadata: metadata,
     );
   }
 
-  ActiveSheetWritePlan planDeletePrimary({required int primarySheetRowNumber}) {
-    return _workoutRows.planDeletePrimary(
-      primarySheetRowNumber: primarySheetRowNumber,
-    );
+  ActiveSheetWritePlan planDeletePrimary({required int primaryRow}) {
+    return _workoutRows.planDeletePrimary(primaryRow: primaryRow);
   }
 
   ActiveSheetWritePlan planSetLoggingWrite({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required Map<String, String> fieldValues,
   }) {
     return _sets.planSetLoggingWrite(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       fieldValues: fieldValues,
     );
   }
 
   ActiveSheetWritePlan planSetEdit({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
     required Map<String, String> fieldValues,
   }) {
     return _sets.planSetEdit(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
       fieldValues: fieldValues,
@@ -1279,13 +1270,13 @@ class _WritePlanner {
   }
 
   ActiveSheetWritePlan planRawSetEdit({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
     required String rawText,
   }) {
     return _sets.planRawSetEdit(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
       rawText: rawText,
@@ -1293,12 +1284,12 @@ class _WritePlanner {
   }
 
   ActiveSheetWritePlan planSetClear({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
   }) {
     return _sets.planSetClear(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
     );

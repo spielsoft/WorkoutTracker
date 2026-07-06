@@ -203,9 +203,9 @@ class _WorkoutReadModelBuilder {
 
   WorkoutOverview buildWorkoutOverview({
     required String workout,
-    required String historyBlockLabel,
+    required String blockLabel,
   }) {
-    final block = sheet.selectHistoryBlock(historyBlockLabel);
+    final block = sheet.selectHistoryBlock(blockLabel);
     return WorkoutOverview(
       workout: workout,
       slots: sheet.primarySlots
@@ -222,16 +222,16 @@ class _WorkoutReadModelBuilder {
   }
 
   ExerciseLoggingContext buildLoggingContext({
-    required int primarySheetRowNumber,
-    required int selectedSheetRowNumber,
-    required String historyBlockLabel,
+    required int primaryRow,
+    required int selectedRow,
+    required String blockLabel,
   }) {
     final primary = sheet.primarySlots.firstWhere(
-      (slot) => slot.sheetRowNumber == primarySheetRowNumber,
+      (slot) => slot.sheetRowNumber == primaryRow,
     );
     final choices = [primary, ...primary.backups];
     final selected = choices.firstWhere(
-      (slot) => slot.sheetRowNumber == selectedSheetRowNumber,
+      (slot) => slot.sheetRowNumber == selectedRow,
       orElse: () => primary,
     );
 
@@ -248,7 +248,7 @@ class _WorkoutReadModelBuilder {
         tempo: selected.tempo,
       ),
       selectedHistory: _rowHistoryBlock(
-        label: historyBlockLabel,
+        label: blockLabel,
         sheetRowNumber: selected.sheetRowNumber,
         logFormat: selected.logFormat,
       ),

@@ -10,10 +10,10 @@ class _GoogleAccountMenu extends StatefulWidget {
   final Future<void> Function() onSignedOut;
 
   @override
-  State<_GoogleAccountMenu> createState() => _GoogleAccountMenuState();
+  State<_GoogleAccountMenu> createState() => _GoogleAccountMenuSt();
 }
 
-class _GoogleAccountMenuState extends State<_GoogleAccountMenu> {
+class _GoogleAccountMenuSt extends State<_GoogleAccountMenu> {
   bool _isBusy = false;
 
   Future<void> _signOut() async {

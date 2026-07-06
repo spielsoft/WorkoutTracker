@@ -1,6 +1,6 @@
 part of 'shell.dart';
 
-enum _WorkoutVisualState { logged, current, backup, warning, error }
+enum _WorkoutVisualSt { logged, current, backup, warning, error }
 
 class _SetProgressStrip extends StatelessWidget {
   const _SetProgressStrip({
@@ -26,20 +26,20 @@ class _SetProgressStrip extends StatelessWidget {
         runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          _StateChip(
-            state: _WorkoutVisualState.logged,
+          _StChip(
+            state: _WorkoutVisualSt.logged,
             label: 'Progress $logged/$total',
             emphasized: true,
           ),
           for (var setNumber = 1; setNumber <= total; setNumber += 1)
             if (loggedSetNumbers.contains(setNumber))
-              _StateChip(
-                state: _WorkoutVisualState.logged,
+              _StChip(
+                state: _WorkoutVisualSt.logged,
                 label: 'Logged S$setNumber',
               )
             else if (setNumber == currentSetNumber)
-              _StateChip(
-                state: _WorkoutVisualState.current,
+              _StChip(
+                state: _WorkoutVisualSt.current,
                 label: 'Current S$setNumber',
                 emphasized: true,
               ),
@@ -49,14 +49,14 @@ class _SetProgressStrip extends StatelessWidget {
   }
 }
 
-class _StateChip extends StatelessWidget {
-  const _StateChip({
+class _StChip extends StatelessWidget {
+  const _StChip({
     required this.state,
     required this.label,
     this.emphasized = false,
   });
 
-  final _WorkoutVisualState state;
+  final _WorkoutVisualSt state;
   final String label;
   final bool emphasized;
 
@@ -108,8 +108,8 @@ class _StateChip extends StatelessWidget {
   }
 }
 
-class _StateCallout extends StatelessWidget {
-  const _StateCallout({
+class _StCallout extends StatelessWidget {
+  const _StCallout({
     required this.state,
     required this.icon,
     required this.title,
@@ -117,7 +117,7 @@ class _StateCallout extends StatelessWidget {
     this.action,
   });
 
-  final _WorkoutVisualState state;
+  final _WorkoutVisualSt state;
   final IconData icon;
   final String title;
   final List<Widget> children;
@@ -142,7 +142,7 @@ class _StateCallout extends StatelessWidget {
               runSpacing: 6,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _StateChip(
+                _StChip(
                   state: state,
                   label: _stateLabel(state),
                   emphasized: true,
@@ -170,55 +170,55 @@ class _StateCallout extends StatelessWidget {
   }
 }
 
-String _stateLabel(_WorkoutVisualState state) {
+String _stateLabel(_WorkoutVisualSt state) {
   switch (state) {
-    case _WorkoutVisualState.logged:
+    case _WorkoutVisualSt.logged:
       return 'Logged';
-    case _WorkoutVisualState.current:
+    case _WorkoutVisualSt.current:
       return 'Current';
-    case _WorkoutVisualState.backup:
+    case _WorkoutVisualSt.backup:
       return 'Backup';
-    case _WorkoutVisualState.warning:
+    case _WorkoutVisualSt.warning:
       return 'Warning';
-    case _WorkoutVisualState.error:
+    case _WorkoutVisualSt.error:
       return 'Error';
   }
 }
 
 ({Color background, Color border, Color foreground, IconData icon}) _stateStyle(
   ColorScheme colorScheme,
-  _WorkoutVisualState state,
+  _WorkoutVisualSt state,
 ) {
   switch (state) {
-    case _WorkoutVisualState.logged:
+    case _WorkoutVisualSt.logged:
       return (
         background: colorScheme.secondaryContainer,
         border: colorScheme.secondary.withValues(alpha: 0.55),
         foreground: colorScheme.onSecondaryContainer,
         icon: Icons.check_circle_outline,
       );
-    case _WorkoutVisualState.current:
+    case _WorkoutVisualSt.current:
       return (
         background: const Color(0xFFE7F0FF),
         border: const Color(0xFF4B74B9),
         foreground: const Color(0xFF173A6A),
         icon: Icons.radio_button_checked,
       );
-    case _WorkoutVisualState.backup:
+    case _WorkoutVisualSt.backup:
       return (
         background: const Color(0xFFF0E9FF),
         border: const Color(0xFF7A5DB5),
         foreground: const Color(0xFF3F2869),
         icon: Icons.alt_route_outlined,
       );
-    case _WorkoutVisualState.warning:
+    case _WorkoutVisualSt.warning:
       return (
         background: const Color(0xFFFFF6D6),
         border: const Color(0xFFB28A00),
         foreground: const Color(0xFF5F4600),
         icon: Icons.warning_amber_outlined,
       );
-    case _WorkoutVisualState.error:
+    case _WorkoutVisualSt.error:
       return (
         background: colorScheme.errorContainer,
         border: colorScheme.error.withValues(alpha: 0.55),

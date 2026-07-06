@@ -5,15 +5,15 @@ import 'package:workout_tracker/contract.dart';
 
 const defaultExerciseAsset = 'assets/exercise_defaults/default_exercises.json';
 
-class Workbook {
-  Workbook({required this.activeSheet, required this.exercisesSheet});
+class Wbk {
+  Wbk({required this.activeSheet, required this.exercisesSheet});
 
-  final WorkbookTab activeSheet;
-  final WorkbookTab exercisesSheet;
+  final WbkTab activeSheet;
+  final WbkTab exercisesSheet;
 }
 
-class WorkbookTab {
-  WorkbookTab({required this.title, required Iterable<Iterable<String>> rows})
+class WbkTab {
+  WbkTab({required this.title, required Iterable<Iterable<String>> rows})
     : rows = List<List<String>>.unmodifiable(
         rows.map((row) => List<String>.unmodifiable(row)),
       );
@@ -32,7 +32,7 @@ class WorkbookTab {
   }
 }
 
-Future<Workbook> loadWorkbookTemplate({
+Future<Wbk> loadWbkTmpl({
   AssetBundle? bundle,
   String exerciseDefaultsAsset = defaultExerciseAsset,
 }) async {
@@ -40,7 +40,7 @@ Future<Workbook> loadWorkbookTemplate({
     bundle: bundle,
     assetPath: exerciseDefaultsAsset,
   );
-  return workbookTemplate(exerciseDefaults: defaults);
+  return wbkTmpl(exerciseDefaults: defaults);
 }
 
 Future<List<ExerciseDef>> loadExerciseDefaults({
@@ -55,18 +55,18 @@ Future<List<ExerciseDef>> loadExerciseDefaults({
   return List<ExerciseDef>.unmodifiable(decoded.map(_exerciseDefaultFromJson));
 }
 
-Workbook workbookTemplate({required Iterable<ExerciseDef> exerciseDefaults}) {
+Wbk wbkTmpl({required Iterable<ExerciseDef> exerciseDefaults}) {
   final sortedExerciseDefaults = [...exerciseDefaults]
     ..sort(_compareExerciseDefaults);
-  final exercisesSheet = WorkbookTab(
+  final exercisesSheet = WbkTab(
     title: 'Exercises',
     rows: [
       exercisesSheetColumns,
       for (final exercise in sortedExerciseDefaults) _exerciseRow(exercise),
     ],
   );
-  return Workbook(
-    activeSheet: WorkbookTab(
+  return Wbk(
+    activeSheet: WbkTab(
       title: 'Active Workout',
       rows: const [activeSheetFixedColumns],
     ),

@@ -1,15 +1,15 @@
 import 'package:workout_tracker/contract.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-abstract class WorkbookService {
-  const WorkbookService();
+abstract class WbkSvc {
+  const WbkSvc();
 
   /// Reads and reparses the active sheet for [spreadsheetId].
   ///
   /// The returned [ParsedActiveSheet] becomes the ordering source for every
   /// later workout, history-block, and row selection passed back through this
   /// Interface.
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId);
+  Future<ValReport> validateSheet(String spreadsheetId);
 
   /// Applies [plan] to the active sheet and rereads the spreadsheet.
   ///
@@ -17,13 +17,13 @@ abstract class WorkbookService {
   /// same [activeSheet] they pass here. The sheet contract Module owns row and
   /// history-block validity; callers should pass row numbers obtained from the
   /// parsed read models rather than inventing them.
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   });
 
-  Future<ValidationReport> createExercise({
+  Future<ValReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ExerciseDef exercise,
@@ -31,7 +31,7 @@ abstract class WorkbookService {
     throw UnsupportedError('Exercise authoring is not supported.');
   }
 
-  Future<ValidationReport> updateExercise({
+  Future<ValReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -40,7 +40,7 @@ abstract class WorkbookService {
     throw UnsupportedError('Exercise authoring is not supported.');
   }
 
-  Future<ValidationReport> addExerciseToWorkout({
+  Future<ValReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -50,7 +50,7 @@ abstract class WorkbookService {
     throw UnsupportedError('Exercise placement is not supported.');
   }
 
-  Future<ValidationReport> reorderExercises({
+  Future<ValReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -58,7 +58,7 @@ abstract class WorkbookService {
     throw UnsupportedError('Exercise reorder is not supported.');
   }
 
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -67,10 +67,10 @@ abstract class WorkbookService {
     throw UnsupportedError('Workout exercise reorder is not supported.');
   }
 
-  Future<ValidationReport> deleteWorkoutExercise({
+  Future<ValReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int primarySheetRowNumber,
+    required int primaryRow,
   }) {
     throw UnsupportedError('Workout exercise deletion is not supported.');
   }
@@ -78,26 +78,26 @@ abstract class WorkbookService {
 
 class ExercisePlacementTarget {
   const ExercisePlacementTarget.primary({required this.workout})
-    : primarySheetRowNumber = null;
+    : primaryRow = null;
 
-  const ExercisePlacementTarget.backup({required this.primarySheetRowNumber})
+  const ExercisePlacementTarget.backup({required this.primaryRow})
     : workout = null;
 
   final String? workout;
-  final int? primarySheetRowNumber;
+  final int? primaryRow;
 
-  bool get isBackup => primarySheetRowNumber != null;
+  bool get isBackup => primaryRow != null;
 }
 
-abstract interface class SpreadsheetOpener {
-  Future<void> openSpreadsheet(String url);
+abstract interface class SheetOpener {
+  Future<void> openSheet(String url);
 }
 
-class UrlSpreadsheetOpener implements SpreadsheetOpener {
-  const UrlSpreadsheetOpener();
+class UrlSheetOpener implements SheetOpener {
+  const UrlSheetOpener();
 
   @override
-  Future<void> openSpreadsheet(String url) async {
+  Future<void> openSheet(String url) async {
     final opened = await launchUrl(
       Uri.parse(url),
       mode: LaunchMode.externalApplication,
@@ -108,19 +108,20 @@ class UrlSpreadsheetOpener implements SpreadsheetOpener {
   }
 }
 
-class ValidationReport {
-  ValidationReport({
-    required this.spreadsheetId,
+class ValReport {
+  ValReport({
+    required String spreadsheetId,
     required this.activeSheet,
     Iterable<WriteRejection> writeRejections = const [],
-  }) : writeRejections = List<WriteRejection>.unmodifiable(writeRejections);
+  }) : sheetId = spreadsheetId,
+       writeRejections = List<WriteRejection>.unmodifiable(writeRejections);
 
-  final String spreadsheetId;
+  final String sheetId;
   final ParsedActiveSheet activeSheet;
   final List<WriteRejection> writeRejections;
 
-  String get spreadsheetUrl {
-    return spreadsheetUrlForId(spreadsheetId);
+  String get sheetUrl {
+    return sheetUrlForId(sheetId);
   }
 
   List<SchemaViolation> get schemaViolations {
@@ -144,8 +145,8 @@ class ValidationReport {
     ];
   }
 
-  List<FormulaHealingIssue> get formulaHealingIssues {
-    return activeSheet.formulaHealingIssues;
+  List<FormulaHealingIssue> get healingIssues {
+    return activeSheet.healingIssues;
   }
 
   bool get hasSchemaDamage {
@@ -154,7 +155,7 @@ class ValidationReport {
 
   bool get hasBlockingIssues {
     return schemaViolations.isNotEmpty ||
-        formulaHealingIssues.isNotEmpty ||
+        healingIssues.isNotEmpty ||
         writeRejections.isNotEmpty;
   }
 }
@@ -179,13 +180,13 @@ class ManualRepairItem {
   }
 }
 
-String spreadsheetIdFromSelection(String input) {
+String sheetIdFromSelection(String input) {
   final trimmed = input.trim();
   final match = RegExp(r'/spreadsheets/d/([A-Za-z0-9_-]+)').firstMatch(trimmed);
   return match?.group(1) ?? trimmed;
 }
 
-String spreadsheetUrlForId(String spreadsheetId) {
+String sheetUrlForId(String spreadsheetId) {
   return 'https://docs.google.com/spreadsheets/d/'
       '$spreadsheetId/edit?gid=0#gid=0';
 }

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'account_session.dart';
 
-typedef AuthClientFactory = http.Client Function(Map<String, String> headers);
+typedef AuthClientFact = http.Client Function(Map<String, String> headers);
 
 abstract interface class ApiAccess {
   Future<T> run<T>({
@@ -14,13 +14,13 @@ abstract interface class ApiAccess {
 }
 
 class ScopedApiAccess implements ApiAccess {
-  ScopedApiAccess({required this.auth, AuthClientFactory? authClientFactory})
+  ScopedApiAccess({required this.auth, AuthClientFact? authClientFactory})
     : authClientFactory =
           authClientFactory ??
           ((headers) => AuthHeadersClient(headers: headers));
 
   final SignInAuthGateway auth;
-  final AuthClientFactory authClientFactory;
+  final AuthClientFact authClientFactory;
 
   @override
   Future<T> run<T>({

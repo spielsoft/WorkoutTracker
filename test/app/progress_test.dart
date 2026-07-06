@@ -9,7 +9,7 @@ void main() {
   testWidgets(
     'logging progress uses a positive integer target set count when present',
     (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Split Squat', '3', '8/side', '8', '90s', '', '', '', 'Legs', '', ''],

@@ -58,8 +58,8 @@ class _ExerciseLibrary extends StatelessWidget {
           Text('Edit exercises', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           if (exercises.isEmpty)
-            const _StateCallout(
-              state: _WorkoutVisualState.current,
+            const _StCallout(
+              state: _WorkoutVisualSt.current,
               icon: Icons.fitness_center_outlined,
               title: 'No exercises in this sheet.',
               children: [Text('The exercise library is empty.')],

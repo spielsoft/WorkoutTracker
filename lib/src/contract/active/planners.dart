@@ -47,10 +47,10 @@ class _WritePlanningContext {
   }
 
   HistorySetColumn? setColumn({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int setNumber,
   }) {
-    final block = sheet.selectHistoryBlock(historyBlockLabel);
+    final block = sheet.selectHistoryBlock(blockLabel);
     if (block == null || setNumber < 1 || setNumber > block.setColumns.length) {
       return null;
     }
@@ -73,28 +73,28 @@ class _WritePlanningContext {
     );
   }
 
-  List<WriteExpectation> exerciseRowExpectations(WorkoutSlot? slot) {
+  List<WriteExpct> exerciseRowExpcts(WorkoutSlot? slot) {
     if (slot == null) {
       return const [];
     }
-    return [rowExpectation(slot), logFormatExpectation(slot)];
+    return [rowExpct(slot), logFormatExpct(slot)];
   }
 
-  List<WriteExpectation> setCellExpectations({
-    required String historyBlockLabel,
+  List<WriteExpct> setCellExpcts({
+    required String blockLabel,
     required int setNumber,
     required int sheetRowNumber,
     required HistorySetColumn column,
   }) {
     return [
-      ...exerciseRowExpectations(slotForRow(sheetRowNumber)),
-      SetColumnExpectation(
-        historyBlockLabel: historyBlockLabel,
+      ...exerciseRowExpcts(slotForRow(sheetRowNumber)),
+      SetColumnExpct(
+        blockLabel: blockLabel,
         setNumber: setNumber,
         sheetColumnNumber: column.sheetColumnNumber,
         setLabel: column.label,
       ),
-      CellExpectation(
+      CellExpct(
         sheetRowNumber: sheetRowNumber,
         sheetColumnNumber: column.sheetColumnNumber,
         expectedValue: _cell(
@@ -105,8 +105,8 @@ class _WritePlanningContext {
     ];
   }
 
-  RowExpectation rowExpectation(WorkoutSlot slot) {
-    return RowExpectation(
+  RowExpct rowExpct(WorkoutSlot slot) {
+    return RowExpct(
       sheetRowNumber: slot.sheetRowNumber,
       exercise: slot.exercise,
       workout: slot.workout,
@@ -114,9 +114,9 @@ class _WritePlanningContext {
     );
   }
 
-  CellExpectation logFormatExpectation(WorkoutSlot slot) {
+  CellExpct logFormatExpct(WorkoutSlot slot) {
     final sheetColumnNumber = activeSheetFixedColumns.indexOf('Log Format') + 1;
-    return CellExpectation(
+    return CellExpct(
       sheetRowNumber: slot.sheetRowNumber,
       sheetColumnNumber: sheetColumnNumber,
       expectedValue: _cell(
@@ -126,17 +126,17 @@ class _WritePlanningContext {
     );
   }
 
-  InsertExpectation insertExpectation(int sheetColumnNumber) {
-    return InsertExpectation(
+  InsertExpct insertExpct(int sheetColumnNumber) {
+    return InsertExpct(
       sheetColumnNumber: sheetColumnNumber,
       expectedHeaderValue: _cell(sheet._sheetRow(1), sheetColumnNumber - 1),
       expectedSetLabel: _cell(sheet._sheetRow(2), sheetColumnNumber - 1),
     );
   }
 
-  RowInsertExpectation rowInsertExpectation(int sheetRowNumber) {
+  RowInsertExpct rowInsertExpct(int sheetRowNumber) {
     final rowIndex = sheetRowNumber - 1;
-    return RowInsertExpectation(
+    return RowInsertExpct(
       sheetRowNumber: sheetRowNumber,
       expectedRow: rowIndex >= 0 && rowIndex < sheet._rows.length
           ? sheet._rows[rowIndex]
@@ -253,15 +253,13 @@ class _WritePlanningContext {
     ];
   }
 
-  List<FormulaExpectation> reorderFormulaExpectations(
-    Map<int, int> oldToNewRows,
-  ) {
+  List<FormulaExpct> reorderFormulaExpcts(Map<int, int> oldToNewRows) {
     return [
       for (final formula in sheet._cellFormulas)
         if (_exerciseRef(formula.formula) case final reference?)
           if (oldToNewRows[reference.rowNumber] case final newRowNumber?)
             if (newRowNumber != reference.rowNumber)
-              FormulaExpectation(
+              FormulaExpct(
                 sheetRowNumber: formula.sheetRowNumber,
                 sheetColumnNumber: formula.sheetColumnNumber,
                 expectedFormula: formula.formula,
@@ -285,7 +283,7 @@ class _BlockWritePlanner {
           setLabels: const ['S1'],
         ),
       ],
-      expectations: [context.insertExpectation(sheetColumnNumber)],
+      expectations: [context.insertExpct(sheetColumnNumber)],
     );
   }
 
@@ -315,13 +313,13 @@ class _BlockWritePlanner {
         ),
       ],
       expectations: [
-        SetColumnExpectation(
-          historyBlockLabel: label,
+        SetColumnExpct(
+          blockLabel: label,
           setNumber: block.setColumns.length,
           sheetColumnNumber: block.setColumns.last.sheetColumnNumber,
           setLabel: block.setColumns.last.label,
         ),
-        context.insertExpectation(block.setColumns.last.sheetColumnNumber + 1),
+        context.insertExpct(block.setColumns.last.sheetColumnNumber + 1),
       ],
     );
   }
@@ -334,7 +332,7 @@ class _SetWritePlanner {
   final _BlockWritePlanner historyBlocks;
 
   ActiveSheetWritePlan planSetLoggingWrite({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required Map<String, String> fieldValues,
   }) {
@@ -347,7 +345,7 @@ class _SetWritePlanner {
       return ActiveSheetWritePlan();
     }
 
-    final block = context.sheet.selectHistoryBlock(historyBlockLabel);
+    final block = context.sheet.selectHistoryBlock(blockLabel);
     if (block == null) {
       return ActiveSheetWritePlan();
     }
@@ -365,8 +363,8 @@ class _SetWritePlanner {
               value: renderedSet,
             ),
           ],
-          expectations: context.setCellExpectations(
-            historyBlockLabel: historyBlockLabel,
+          expectations: context.setCellExpcts(
+            blockLabel: blockLabel,
             setNumber: setNumber,
             sheetRowNumber: sheetRowNumber,
             column: column,
@@ -382,7 +380,7 @@ class _SetWritePlanner {
 
     final newSetNumber = block.setColumns.length + 1;
     final growthPlan = historyBlocks.planHistoryBlockGrowth(
-      label: historyBlockLabel,
+      label: blockLabel,
       throughSetNumber: newSetNumber,
     );
     final newSheetColumnNumber = block.setColumns.isEmpty
@@ -398,7 +396,7 @@ class _SetWritePlanner {
         ),
       ],
       expectations: [
-        ...context.exerciseRowExpectations(slot),
+        ...context.exerciseRowExpcts(slot),
         ...growthPlan.expectations,
       ],
       nextSetPosition: SetPosition(
@@ -410,7 +408,7 @@ class _SetWritePlanner {
   }
 
   ActiveSheetWritePlan planSetEdit({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
     required Map<String, String> fieldValues,
@@ -424,7 +422,7 @@ class _SetWritePlanner {
     }
 
     return _planSetWrite(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
       value: renderedSet,
@@ -432,7 +430,7 @@ class _SetWritePlanner {
   }
 
   ActiveSheetWritePlan planRawSetEdit({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
     required String rawText,
@@ -442,7 +440,7 @@ class _SetWritePlanner {
     }
 
     return _planSetWrite(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
       value: rawText,
@@ -450,7 +448,7 @@ class _SetWritePlanner {
   }
 
   ActiveSheetWritePlan planSetClear({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
   }) {
@@ -459,7 +457,7 @@ class _SetWritePlanner {
     }
 
     return _planSetWrite(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
       value: '',
@@ -467,13 +465,13 @@ class _SetWritePlanner {
   }
 
   ActiveSheetWritePlan _planSetWrite({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
     required String value,
   }) {
     final column = context.setColumn(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       setNumber: setNumber,
     );
     if (column == null) {
@@ -487,8 +485,8 @@ class _SetWritePlanner {
           value: value,
         ),
       ],
-      expectations: context.setCellExpectations(
-        historyBlockLabel: historyBlockLabel,
+      expectations: context.setCellExpcts(
+        blockLabel: blockLabel,
         setNumber: setNumber,
         sheetRowNumber: sheetRowNumber,
         column: column,
@@ -562,11 +560,11 @@ class _ExerciseWritePlanner {
       formulaUpdates: context.reorderFormulaUpdates(oldToNewRows),
       expectations: [
         for (var index = 0; index < exerciseRows.length; index += 1)
-          ExercisesRowExpectation(
+          ExercisesRowExpct(
             sheetRowNumber: index + 2,
             expectedValues: exerciseRows[index],
           ),
-        ...context.reorderFormulaExpectations(oldToNewRows),
+        ...context.reorderFormulaExpcts(oldToNewRows),
       ],
     );
   }
@@ -664,13 +662,13 @@ class _WorkoutRowWritePlanner {
       ],
       expectations: [
         for (final rowNumber in targetRowNumbers)
-          RowValuesExpectation(
+          RowValuesExpct(
             sheetRowNumber: rowNumber,
             expectedValues: context.sheet._sheetRow(rowNumber),
           ),
         for (final formula in context.sheet._cellFormulas)
           if (targetRowNumbers.contains(formula.sheetRowNumber))
-            FormulaExpectation(
+            FormulaExpct(
               sheetRowNumber: formula.sheetRowNumber,
               sheetColumnNumber: formula.sheetColumnNumber,
               expectedFormula: formula.formula,
@@ -698,7 +696,7 @@ class _WorkoutRowWritePlanner {
   }
 
   ActiveSheetWritePlan planBackupPlacement({
-    required int primarySheetRowNumber,
+    required int primaryRow,
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
@@ -706,7 +704,7 @@ class _WorkoutRowWritePlanner {
     if (exercisesSheetRowNumber < 2) {
       return ActiveSheetWritePlan();
     }
-    final primary = context.primarySlotForRow(primarySheetRowNumber);
+    final primary = context.primarySlotForRow(primaryRow);
     if (primary == null) {
       return ActiveSheetWritePlan();
     }
@@ -721,8 +719,8 @@ class _WorkoutRowWritePlanner {
     );
   }
 
-  ActiveSheetWritePlan planDeletePrimary({required int primarySheetRowNumber}) {
-    final primary = context.primarySlotForRow(primarySheetRowNumber);
+  ActiveSheetWritePlan planDeletePrimary({required int primaryRow}) {
+    final primary = context.primarySlotForRow(primaryRow);
     if (primary == null) {
       return ActiveSheetWritePlan();
     }
@@ -732,13 +730,12 @@ class _WorkoutRowWritePlanner {
         for (final backup in primary.backups) backup.sheetRowNumber,
       ]),
       expectations: [
-        context.rowExpectation(primary),
-        for (final backup in primary.backups) context.rowExpectation(backup),
-        BackupGroupExpectation(
-          primarySheetRowNumber: primary.sheetRowNumber,
+        context.rowExpct(primary),
+        for (final backup in primary.backups) context.rowExpct(backup),
+        BackupGroupExpct(
+          primaryRow: primary.sheetRowNumber,
           expectedBackups: [
-            for (final backup in primary.backups)
-              context.rowExpectation(backup),
+            for (final backup in primary.backups) context.rowExpct(backup),
           ],
         ),
       ],
@@ -768,8 +765,8 @@ class _WorkoutRowWritePlanner {
         metadata: metadata,
       ),
       expectations: [
-        if (parentPrimary != null) context.rowExpectation(parentPrimary),
-        context.rowInsertExpectation(sheetRowNumber),
+        if (parentPrimary != null) context.rowExpct(parentPrimary),
+        context.rowInsertExpct(sheetRowNumber),
       ],
     );
   }

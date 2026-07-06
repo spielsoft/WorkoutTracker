@@ -1,12 +1,12 @@
 import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/app.dart';
 
-class TestSpreadsheetValidationService implements WorkbookService {
-  TestSpreadsheetValidationService(ParsedActiveSheet activeSheet)
+class TestValSvc implements WbkSvc {
+  TestValSvc(ParsedActiveSheet activeSheet)
     : _activeSheet = activeSheet,
       _rows = null;
 
-  TestSpreadsheetValidationService.fromRows(List<List<String>> rows)
+  TestValSvc.fromRows(List<List<String>> rows)
     : _activeSheet = parseActiveSheet(ActiveSheetInput(rows: rows)),
       _rows = rows.map((row) => row.toList()).toList();
 
@@ -19,20 +19,20 @@ class TestSpreadsheetValidationService implements WorkbookService {
   ParsedActiveSheet get activeSheet => _activeSheet;
 
   @override
-  Future<ValidationReport> validateSpreadsheet(String spreadsheetId) async {
+  Future<ValReport> validateSheet(String spreadsheetId) async {
     spreadsheetIds.add(spreadsheetId);
     return _report(spreadsheetId);
   }
 
   @override
-  Future<ValidationReport> applyWritePlan({
+  Future<ValReport> applyWritePlan({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ActiveSheetWritePlan plan,
   }) async {
     final writeRejections = plan.writeRejections(_activeSheet);
     if (writeRejections.isNotEmpty) {
-      return ValidationReport(
+      return ValReport(
         spreadsheetId: spreadsheetId,
         activeSheet: _activeSheet,
         writeRejections: writeRejections,
@@ -44,7 +44,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> createExercise({
+  Future<ValReport> createExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ExerciseDef exercise,
@@ -53,7 +53,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> updateExercise({
+  Future<ValReport> updateExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise selectedExercise,
@@ -63,7 +63,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> addExerciseToWorkout({
+  Future<ValReport> addExerciseToWorkout({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required CanonicalExercise exercise,
@@ -74,7 +74,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderExercises({
+  Future<ValReport> reorderExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required ReorderIntent intent,
@@ -83,7 +83,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> reorderWorkoutExercises({
+  Future<ValReport> reorderWorkoutExercises({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
     required String workout,
@@ -93,17 +93,15 @@ class TestSpreadsheetValidationService implements WorkbookService {
   }
 
   @override
-  Future<ValidationReport> deleteWorkoutExercise({
+  Future<ValReport> deleteWorkoutExercise({
     required String spreadsheetId,
     required ParsedActiveSheet activeSheet,
-    required int primarySheetRowNumber,
+    required int primaryRow,
   }) {
     return applyWritePlan(
       spreadsheetId: spreadsheetId,
       activeSheet: activeSheet,
-      plan: activeSheet.planDeletePrimary(
-        primarySheetRowNumber: primarySheetRowNumber,
-      ),
+      plan: activeSheet.planDeletePrimary(primaryRow: primaryRow),
     );
   }
 
@@ -117,10 +115,7 @@ class TestSpreadsheetValidationService implements WorkbookService {
     _activeSheet = parseActiveSheet(ActiveSheetInput(rows: _rows!));
   }
 
-  ValidationReport _report(String spreadsheetId) {
-    return ValidationReport(
-      spreadsheetId: spreadsheetId,
-      activeSheet: _activeSheet,
-    );
+  ValReport _report(String spreadsheetId) {
+    return ValReport(spreadsheetId: spreadsheetId, activeSheet: _activeSheet);
   }
 }

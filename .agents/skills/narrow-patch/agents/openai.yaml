@@ -1,4 +1,0 @@
-interface:
-  display_name: "Narrow Patch"
-  short_description: "Keep code changes small and on the existing path"
-  default_prompt: "Use $narrow-patch to implement this change through the smallest clear existing behavior path."

@@ -11,7 +11,7 @@ void main() {
   test(
     'resets only the known development spreadsheet to a deterministic fixture',
     () async {
-      final initializer = _FakeWorkbookInitializer();
+      final initializer = _FakeWbkInit();
       final harness = DevelopmentSheetResetHarness(initializer: initializer);
 
       await harness.reset();
@@ -64,9 +64,7 @@ void main() {
   );
 
   test('rejects non-development spreadsheet IDs by default', () async {
-    final harness = DevelopmentSheetResetHarness(
-      initializer: _FakeWorkbookInitializer(),
-    );
+    final harness = DevelopmentSheetResetHarness(initializer: _FakeWbkInit());
 
     expect(
       () => harness.reset(spreadsheetId: 'unrelated-spreadsheet'),
@@ -77,7 +75,7 @@ void main() {
   test(
     'plans workbook seeding through workbook operations and keeps formatting requests local',
     () {
-      final tab = WorkbookTab(
+      final tab = WbkTab(
         title: 'Active Workout',
         rows: [
           ['Exercise', 'Tempo', 'History'],
@@ -86,7 +84,7 @@ void main() {
         ],
       );
 
-      final plan = WorkbookTabPlan(sheetId: 42, tab: tab, frozenRowCount: 1);
+      final plan = WbkTabPlan(sheetId: 42, tab: tab, frozenRowCount: 1);
 
       final textFormatRequest = plan.requests.singleWhere(
         (request) =>
@@ -188,14 +186,14 @@ void main() {
   );
 }
 
-class _FakeWorkbookInitializer implements WorkbookInit {
+class _FakeWbkInit implements WbkInit {
   final initializedSpreadsheetIds = <String>[];
-  final workbooks = <Workbook>[];
+  final workbooks = <Wbk>[];
 
   @override
   Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required Workbook workbook,
+    required Wbk workbook,
   }) async {
     initializedSpreadsheetIds.add(spreadsheetId);
     workbooks.add(workbook);

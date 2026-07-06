@@ -11,7 +11,7 @@ void main() {
     'converts one-based row and column deletes into Google dimension requests',
     () async {
       final httpClient = _RecordingHttpClient();
-      final workbook = GoogleApisWorkbookClient(sheets.SheetsApi(httpClient));
+      final workbook = GoogleApisWbkClient(sheets.SheetsApi(httpClient));
       const activeSheet = SheetsSheetIdentity(sheetId: 42, title: 'Workout');
 
       await workbook.applyOperations(
@@ -59,7 +59,7 @@ void main() {
     'converts one-based row and column moves into Google dimension requests',
     () async {
       final httpClient = _RecordingHttpClient();
-      final workbook = GoogleApisWorkbookClient(sheets.SheetsApi(httpClient));
+      final workbook = GoogleApisWbkClient(sheets.SheetsApi(httpClient));
       const activeSheet = SheetsSheetIdentity(sheetId: 42, title: 'Workout');
 
       await workbook.applyOperations(
@@ -107,7 +107,7 @@ void main() {
 
   test('does not call Google for empty operation batches', () async {
     final httpClient = _RecordingHttpClient();
-    final workbook = GoogleApisWorkbookClient(sheets.SheetsApi(httpClient));
+    final workbook = GoogleApisWbkClient(sheets.SheetsApi(httpClient));
 
     await workbook.applyOperations(
       spreadsheetId: 'spreadsheet-id',

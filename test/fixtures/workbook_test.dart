@@ -173,7 +173,7 @@ void main() {
       equals(loadFormulaDamageFixture().toSnapshot()),
     );
     expect(activeSheet.schemaViolations, isEmpty);
-    expect(activeSheet.formulaHealingIssues.single.cells, [
+    expect(activeSheet.healingIssues.single.cells, [
       HealingCellIssue(
         sheetRowNumber: 3,
         sheetColumnNumber: 1,
@@ -194,13 +194,13 @@ void main() {
   test('ambiguous formula repair fixture requires user selection', () {
     final fixture = loadAmbiguousFormulaRepairDamageFixture();
     final activeSheet = _parseWorkbookFixture(fixture);
-    final issue = activeSheet.formulaHealingIssues.single;
+    final issue = activeSheet.healingIssues.single;
 
     expect(
       fixture.toSnapshot(),
       equals(loadAmbiguousFormulaRepairDamageFixture().toSnapshot()),
     );
-    expect(issue.displayedExerciseName, 'Squat');
+    expect(issue.exerciseName, 'Squat');
     expect(issue.needsChoice, isTrue);
     expect(issue.preselectedRow, isNull);
     expect(issue.candidateRows, [2, 3]);
@@ -209,13 +209,13 @@ void main() {
   test('no-exact-match formula repair fixture requires user selection', () {
     final fixture = loadNoExactMatchFormulaRepairDamageFixture();
     final activeSheet = _parseWorkbookFixture(fixture);
-    final issue = activeSheet.formulaHealingIssues.single;
+    final issue = activeSheet.healingIssues.single;
 
     expect(
       fixture.toSnapshot(),
       equals(loadNoExactMatchFormulaRepairDamageFixture().toSnapshot()),
     );
-    expect(issue.displayedExerciseName, 'Front Squat');
+    expect(issue.exerciseName, 'Front Squat');
     expect(issue.needsChoice, isTrue);
     expect(issue.preselectedRow, isNull);
     expect(issue.candidateRows, isEmpty);

@@ -15,10 +15,10 @@ void main() {
         ),
       );
 
-      expect(activeSheet.formulaHealingIssues, [
+      expect(activeSheet.healingIssues, [
         FormulaHealingIssue(
           activeSheetRowNumber: 3,
-          displayedExerciseName: 'Squat',
+          exerciseName: 'Squat',
           preselectedRow: 2,
           needsChoice: false,
           candidateRows: const [2],
@@ -46,7 +46,7 @@ void main() {
       ),
     );
 
-    expect(activeSheet.formulaHealingIssues.single.cells, const [
+    expect(activeSheet.healingIssues.single.cells, const [
       HealingCellIssue(
         sheetRowNumber: 3,
         sheetColumnNumber: 8,
@@ -66,10 +66,10 @@ void main() {
       ),
     );
 
-    expect(activeSheet.formulaHealingIssues, [
+    expect(activeSheet.healingIssues, [
       FormulaHealingIssue(
         activeSheetRowNumber: 3,
-        displayedExerciseName: 'Squat',
+        exerciseName: 'Squat',
         preselectedRow: 2,
         needsChoice: false,
         candidateRows: const [2],
@@ -133,7 +133,7 @@ void main() {
         ),
       );
 
-      final issue = activeSheet.formulaHealingIssues.single;
+      final issue = activeSheet.healingIssues.single;
       expect(issue.needsChoice, isTrue);
       expect(issue.cells.single.columnName, 'Log Format');
       expect(
@@ -189,8 +189,8 @@ void main() {
       ),
     );
 
-    final issue = activeSheet.formulaHealingIssues.single;
-    expect(issue.displayedExerciseName, 'Squat');
+    final issue = activeSheet.healingIssues.single;
+    expect(issue.exerciseName, 'Squat');
     expect(issue.needsChoice, isTrue);
     expect(issue.preselectedRow, isNull);
     expect(issue.candidateRows, [2, 3]);
@@ -229,7 +229,7 @@ void main() {
       ),
     );
 
-    final issue = activeSheet.formulaHealingIssues.single;
+    final issue = activeSheet.healingIssues.single;
     expect(issue.needsChoice, isTrue);
     expect(issue.cells, const [
       HealingCellIssue(
@@ -266,8 +266,8 @@ void main() {
       ),
     );
 
-    final issue = activeSheet.formulaHealingIssues.single;
-    expect(issue.displayedExerciseName, 'Front Squat');
+    final issue = activeSheet.healingIssues.single;
+    expect(issue.exerciseName, 'Front Squat');
     expect(issue.needsChoice, isTrue);
     expect(issue.preselectedRow, isNull);
     expect(issue.candidateRows, isEmpty);
@@ -297,7 +297,7 @@ void main() {
       ),
     );
 
-    final issue = activeSheet.formulaHealingIssues.single;
+    final issue = activeSheet.healingIssues.single;
     expect(issue.needsChoice, isTrue);
     expect(issue.cells, const [
       HealingCellIssue(

@@ -5,7 +5,7 @@ enum HealingIssueReason { missingFormula, brokenFormula }
 class FormulaHealingIssue {
   FormulaHealingIssue({
     required this.activeSheetRowNumber,
-    required this.displayedExerciseName,
+    required this.exerciseName,
     required this.needsChoice,
     required Iterable<int> candidateRows,
     Iterable<HealingChoice> exerciseChoices = const [],
@@ -16,7 +16,7 @@ class FormulaHealingIssue {
        cells = List<HealingCellIssue>.unmodifiable(cells);
 
   final int activeSheetRowNumber;
-  final String displayedExerciseName;
+  final String exerciseName;
   final int? preselectedRow;
   final bool needsChoice;
   final List<int> candidateRows;
@@ -28,7 +28,7 @@ class FormulaHealingIssue {
     return identical(this, other) ||
         other is FormulaHealingIssue &&
             activeSheetRowNumber == other.activeSheetRowNumber &&
-            displayedExerciseName == other.displayedExerciseName &&
+            exerciseName == other.exerciseName &&
             preselectedRow == other.preselectedRow &&
             needsChoice == other.needsChoice &&
             _listEquals(candidateRows, other.candidateRows) &&
@@ -39,7 +39,7 @@ class FormulaHealingIssue {
   @override
   int get hashCode => Object.hash(
     activeSheetRowNumber,
-    displayedExerciseName,
+    exerciseName,
     preselectedRow,
     needsChoice,
     Object.hashAll(candidateRows),
@@ -51,7 +51,7 @@ class FormulaHealingIssue {
   String toString() {
     return 'FormulaHealingIssue('
         'activeSheetRowNumber: $activeSheetRowNumber, '
-        'displayedExerciseName: $displayedExerciseName, '
+        'exerciseName: $exerciseName, '
         'preselectedRow: $preselectedRow, '
         'needsChoice: $needsChoice, '
         'candidateRows: $candidateRows, '
@@ -159,7 +159,7 @@ class _HealingPlanner {
     int? selectedRow,
   }) {
     FormulaHealingIssue? issue;
-    for (final candidate in sheet.formulaHealingIssues) {
+    for (final candidate in sheet.healingIssues) {
       if (candidate.activeSheetRowNumber == activeSheetRowNumber) {
         issue = candidate;
         break;
@@ -191,7 +191,7 @@ class _HealingPlanner {
       ],
       expectations: [
         if (slot != null)
-          RepairRowExpectation(
+          RepairRowExpct(
             sheetRowNumber: activeSheetRowNumber,
             expectedValues: sheet._sheetRow(activeSheetRowNumber),
           ),
@@ -201,8 +201,8 @@ class _HealingPlanner {
 
   ActiveSheetWritePlan planFormulaRepair() {
     final updates = <CellUpdate>[];
-    final expectations = <WriteExpectation>[];
-    for (final issue in sheet.formulaHealingIssues) {
+    final expectations = <WriteExpct>[];
+    for (final issue in sheet.healingIssues) {
       if (issue.needsChoice) {
         continue;
       }
@@ -248,15 +248,15 @@ List<FormulaHealingIssue> _healingIssues(
     }
 
     final row = sheet.rows[rowIndex];
-    final displayedExerciseName = _cell(row, columns.exercise).trim();
-    if (displayedExerciseName.isEmpty) {
+    final exerciseName = _cell(row, columns.exercise).trim();
+    if (exerciseName.isEmpty) {
       continue;
     }
 
     final candidates = _matchingRows(
       sheet.exercisesRows,
       exerciseColumns.exercise,
-      displayedExerciseName,
+      exerciseName,
     );
     final cells = <HealingCellIssue>[];
     for (final formulaColumn in _formulaDrivenColumns(
@@ -302,7 +302,7 @@ List<FormulaHealingIssue> _healingIssues(
     issues.add(
       FormulaHealingIssue(
         activeSheetRowNumber: sheetRowNumber,
-        displayedExerciseName: displayedExerciseName,
+        exerciseName: exerciseName,
         preselectedRow: candidates.length == 1 ? candidates.single : null,
         needsChoice: candidates.length != 1,
         candidateRows: candidates,
@@ -342,12 +342,12 @@ List<HealingChoice> _exerciseChoices(
 List<int> _matchingRows(
   List<List<String>> exercisesRows,
   int exerciseColumnIndex,
-  String displayedExerciseName,
+  String exerciseName,
 ) {
   final matches = <int>[];
   for (var rowIndex = 1; rowIndex < exercisesRows.length; rowIndex += 1) {
     if (_cell(exercisesRows[rowIndex], exerciseColumnIndex).trim() ==
-        displayedExerciseName) {
+        exerciseName) {
       matches.add(rowIndex + 1);
     }
   }

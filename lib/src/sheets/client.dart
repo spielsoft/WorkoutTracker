@@ -194,8 +194,8 @@ class SheetsColumnMove extends SheetsWorkbookOperation {
   final int toColumn;
 }
 
-class GoogleApisWorkbookClient implements SheetsWorkbookClient {
-  GoogleApisWorkbookClient(this._api);
+class GoogleApisWbkClient implements SheetsWorkbookClient {
+  GoogleApisWbkClient(this._api);
 
   final sheets.SheetsApi _api;
 

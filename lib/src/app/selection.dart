@@ -12,19 +12,19 @@ import 'package:workout_tracker/sheets.dart';
 import 'account_session.dart';
 import 'auth_client.dart';
 
-typedef WorkbookInitFactory = WorkbookInit Function(sheets.SheetsApi api);
-typedef CallbackReceiverFactory =
-    Future<PickerCallbackReceiver> Function({
+typedef WbkInitFact = WbkInit Function(sheets.SheetsApi api);
+typedef CbReceiverFact =
+    Future<PickerCbReceiver> Function({
       required String state,
       required Duration timeout,
     });
 
-const defaultPickerConfigAsset = 'assets/google_picker/app_config.json';
-const _callbackStateBytes = 16;
+const defaultPickerCfgAsset = 'assets/google_picker/app_config.json';
+const _callbackStBytes = 16;
 final _sheetIdPattern = RegExp(r'^[A-Za-z0-9_-]+$');
 
-class PickerAppConfig {
-  PickerAppConfig({
+class PickerAppCfg {
+  PickerAppCfg({
     required this.clientId,
     required this.callbackTimeout,
     required this.nativeCallbackScheme,
@@ -42,11 +42,11 @@ class PickerAppConfig {
   final Uri hostedCallbackUri;
   final List<String> pickedIdQueryParameters;
 
-  factory PickerAppConfig.fromJson(Object? value) {
+  factory PickerAppCfg.fromJson(Object? value) {
     if (value is! Map<String, Object?>) {
       throw const FormatException('Google Picker config must be an object.');
     }
-    return PickerAppConfig(
+    return PickerAppCfg(
       clientId: _requiredConfigString(value, 'clientId'),
       callbackTimeout: Duration(
         seconds: _requiredInt(value, 'callbackTimeoutSeconds'),
@@ -99,24 +99,24 @@ List<String> _requiredStrings(Map<String, Object?> json, String key) {
   );
 }
 
-Future<PickerAppConfig> loadPickerAppConfig({
+Future<PickerAppCfg> loadPickerAppCfg({
   AssetBundle? bundle,
-  String assetPath = defaultPickerConfigAsset,
+  String assetPath = defaultPickerCfgAsset,
 }) async {
   final rawJson = await (bundle ?? rootBundle).loadString(assetPath);
-  return PickerAppConfig.fromJson(jsonDecode(rawJson));
+  return PickerAppCfg.fromJson(jsonDecode(rawJson));
 }
 
-class SelectedSpreadsheet {
-  const SelectedSpreadsheet({
-    required this.spreadsheetId,
+class SelectedSheet {
+  const SelectedSheet({
+    required String spreadsheetId,
     required this.name,
     this.drivePath,
     this.webViewLink,
     this.accountEmail,
-  });
+  }) : id = spreadsheetId;
 
-  final String spreadsheetId;
+  final String id;
   final String name;
   final String? drivePath;
   final String? webViewLink;
@@ -128,12 +128,12 @@ class SelectedSpreadsheet {
       return path;
     }
     final trimmedName = name.trim();
-    return trimmedName.isEmpty ? spreadsheetId : trimmedName;
+    return trimmedName.isEmpty ? id : trimmedName;
   }
 
   Map<String, Object?> toJson() {
     return {
-      'spreadsheetId': spreadsheetId,
+      'spreadsheetId': id,
       'name': name,
       if (drivePath != null) 'drivePath': drivePath,
       if (webViewLink != null) 'webViewLink': webViewLink,
@@ -141,12 +141,12 @@ class SelectedSpreadsheet {
     };
   }
 
-  static SelectedSpreadsheet? fromJson(Object? value) {
+  static SelectedSheet? fromJson(Object? value) {
     if (value case <String, Object?>{
       'spreadsheetId': final String spreadsheetId,
       'name': final String name,
     }) {
-      return SelectedSpreadsheet(
+      return SelectedSheet(
         spreadsheetId: spreadsheetId,
         name: name,
         drivePath: value['drivePath'] as String?,
@@ -158,24 +158,22 @@ class SelectedSpreadsheet {
   }
 }
 
-abstract interface class SpreadsheetPicker {
-  PickerAvailability get availability;
+abstract interface class SheetPicker {
+  PickerAvail get availability;
 
-  Future<SelectedSpreadsheet?> chooseSpreadsheet();
+  Future<SelectedSheet?> chooseSheet();
 
   Future<bool> authorizeSheetCreation();
 
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name});
+  Future<SelectedSheet?> createSheet({String? name});
 
-  Future<SelectedSpreadsheet> resolveSelection(SelectedSpreadsheet selected);
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected);
 }
 
-class PickerAvailability {
-  const PickerAvailability.available()
-    : chooseReason = null,
-      createReason = null;
+class PickerAvail {
+  const PickerAvail.available() : chooseReason = null, createReason = null;
 
-  const PickerAvailability.unavailable({this.chooseReason, this.createReason});
+  const PickerAvail.unavailable({this.chooseReason, this.createReason});
 
   final String? chooseReason;
   final String? createReason;
@@ -193,7 +191,7 @@ class PickerAvailability {
   }
 }
 
-class DisabledPicker implements SpreadsheetPicker {
+class DisabledPicker implements SheetPicker {
   const DisabledPicker({
     this.reason =
         'Google Drive sheet selection is temporarily disabled for this build.',
@@ -202,15 +200,12 @@ class DisabledPicker implements SpreadsheetPicker {
   final String reason;
 
   @override
-  PickerAvailability get availability {
-    return PickerAvailability.unavailable(
-      chooseReason: reason,
-      createReason: reason,
-    );
+  PickerAvail get availability {
+    return PickerAvail.unavailable(chooseReason: reason, createReason: reason);
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+  Future<SelectedSheet?> chooseSheet() async {
     throw StateError(reason);
   }
 
@@ -220,65 +215,63 @@ class DisabledPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+  Future<SelectedSheet?> createSheet({String? name}) async {
     throw StateError(reason);
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return selected;
   }
 }
 
-class MobileSpreadsheetPicker implements SpreadsheetPicker {
-  const MobileSpreadsheetPicker({
+class MobileSheetPicker implements SheetPicker {
+  const MobileSheetPicker({
     required this.callbackFactory,
     required this.config,
     this.auth,
     this.authClientFactory,
     this.googleAccess,
-    this.spreadsheetCreator,
+    this.sheetCreator,
   });
 
-  final PickerAppConfig config;
-  final CallbackReceiverFactory callbackFactory;
+  final PickerAppCfg config;
+  final CbReceiverFact callbackFactory;
   final SignInAuthGateway? auth;
-  final AuthClientFactory? authClientFactory;
+  final AuthClientFact? authClientFactory;
   final ApiAccess? googleAccess;
-  final SpreadsheetCreator? spreadsheetCreator;
+  final SheetCreator? sheetCreator;
 
   @override
-  PickerAvailability get availability {
+  PickerAvail get availability {
     final trimmedClientId = config.clientId.trim();
-    return PickerAvailability.unavailable(
+    return PickerAvail.unavailable(
       chooseReason: trimmedClientId.isEmpty
           ? 'Google Drive Picker is missing an OAuth client ID.'
           : null,
-      createReason: spreadsheetCreator == null
+      createReason: sheetCreator == null
           ? 'Google Drive sheet creation is not connected yet.'
           : null,
     );
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+  Future<SelectedSheet?> chooseSheet() async {
     final trimmedClientId = config.clientId.trim();
     if (trimmedClientId.isEmpty) {
       throw StateError('Google Drive Picker is missing an OAuth client ID.');
     }
 
-    final callbackState = _newPickerCallbackState();
+    final callbackSt = _newPickerCbSt();
     final callbackReceiver = await callbackFactory(
-      state: callbackState,
+      state: callbackSt,
       timeout: config.callbackTimeout,
     );
     try {
       final authorizationUrl = pickerAuthorizationUrl(
         clientId: trimmedClientId,
         redirectUri: callbackReceiver.redirectUri,
-        state: callbackState,
+        state: callbackSt,
         loginHint: auth?.currentAccount?.email,
       );
       final launched = await launchUrl(
@@ -293,7 +286,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
         return null;
       }
       _updatePickerAuth(result);
-      final spreadsheetId = result.pickedSpreadsheetIds.firstOrNull;
+      final spreadsheetId = result.pickedSheetIds.firstOrNull;
       if (spreadsheetId == null) {
         return null;
       }
@@ -304,8 +297,8 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
-    final creator = spreadsheetCreator;
+  Future<SelectedSheet?> createSheet({String? name}) async {
+    final creator = sheetCreator;
     if (creator == null) {
       throw StateError('Google Drive sheet creation is not connected yet.');
     }
@@ -319,16 +312,16 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
       throw StateError('Google Drive Picker is missing an OAuth client ID.');
     }
 
-    final callbackState = _newPickerCallbackState();
+    final callbackSt = _newPickerCbSt();
     final callbackReceiver = await callbackFactory(
-      state: callbackState,
+      state: callbackSt,
       timeout: config.callbackTimeout,
     );
     try {
       final authorizationUrl = pickerAuthorizationUrl(
         clientId: trimmedClientId,
         redirectUri: callbackReceiver.redirectUri,
-        state: callbackState,
+        state: callbackSt,
         loginHint: auth?.currentAccount?.email,
         mimetypes: 'application/vnd.google-apps.folder',
         allowFolderSelection: true,
@@ -356,8 +349,8 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(SelectedSpreadsheet selected) {
-    return _pickedSheet(selected.spreadsheetId);
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) {
+    return _pickedSheet(selected.id);
   }
 
   @visibleForTesting
@@ -394,13 +387,13 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
     );
   }
 
-  Future<SelectedSpreadsheet> _pickedSheet(String spreadsheetId) async {
+  Future<SelectedSheet> _pickedSheet(String spreadsheetId) async {
     final auth = this.auth;
     if (auth == null) {
-      return SelectedSpreadsheet(
+      return SelectedSheet(
         spreadsheetId: spreadsheetId,
         name: spreadsheetId,
-        webViewLink: googleSheetsUrl(spreadsheetId),
+        webViewLink: sheetUrl(spreadsheetId),
       );
     }
 
@@ -408,7 +401,7 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
         googleAccess ??
         ScopedApiAccess(auth: auth, authClientFactory: authClientFactory);
     return access.run(
-      scopes: GoogleApisWorkbookClient.writeScopes,
+      scopes: GoogleApisWbkClient.writeScopes,
       action: (resources) async {
         await _restoreProfile(auth: auth, driveApi: resources.driveApi);
         final spreadsheet = await resources.sheetsApi.spreadsheets.get(
@@ -417,18 +410,17 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
           $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
         );
         final title = spreadsheet.properties?.title?.trim();
-        return SelectedSpreadsheet(
+        return SelectedSheet(
           spreadsheetId: spreadsheetId,
           name: title == null || title.isEmpty ? spreadsheetId : title,
-          webViewLink:
-              spreadsheet.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
+          webViewLink: spreadsheet.spreadsheetUrl ?? sheetUrl(spreadsheetId),
           accountEmail: auth.currentAccount?.email,
         );
       },
     );
   }
 
-  void _updatePickerAuth(PickerCallbackResult result) {
+  void _updatePickerAuth(PickerCbResult result) {
     final auth = this.auth;
     if (auth case final PickerAuthStore store) {
       final accessToken = result.accessToken?.trim();
@@ -480,29 +472,29 @@ class MobileSpreadsheetPicker implements SpreadsheetPicker {
   }
 }
 
-class SpreadsheetCreator {
-  SpreadsheetCreator({
+class SheetCreator {
+  SheetCreator({
     required this.auth,
-    AuthClientFactory? authClientFactory,
+    AuthClientFact? authClientFactory,
     ApiAccess? googleAccess,
-    WorkbookInitFactory? initFactory,
+    WbkInitFact? initFactory,
     String Function()? titleFactory,
   }) : googleAccess =
            googleAccess ??
            ScopedApiAccess(auth: auth, authClientFactory: authClientFactory),
-       initFactory = initFactory ?? ((api) => GoogleApisWorkbookInit(api)),
+       initFactory = initFactory ?? ((api) => GoogleApisWbkInit(api)),
        titleFactory = titleFactory ?? defaultSheetTitle;
 
   final SignInAuthGateway auth;
   final ApiAccess googleAccess;
-  final WorkbookInitFactory initFactory;
+  final WbkInitFact initFactory;
   final String Function() titleFactory;
 
-  Future<SelectedSpreadsheet> createSheet({String? name}) async {
+  Future<SelectedSheet> createSheet({String? name}) async {
     final requestedTitle = (name ?? titleFactory()).trim();
     final title = requestedTitle.isEmpty ? defaultSheetTitle() : requestedTitle;
     return googleAccess.run(
-      scopes: GoogleApisWorkbookInit.writeScopes,
+      scopes: GoogleApisWbkInit.writeScopes,
       action: (resources) async {
         final created = await resources.sheetsApi.spreadsheets.create(
           sheets.Spreadsheet(
@@ -515,15 +507,15 @@ class SpreadsheetCreator {
           throw StateError('Google Sheets did not return a spreadsheet ID.');
         }
 
-        final workbook = await loadWorkbookTemplate();
+        final workbook = await loadWbkTmpl();
         await initFactory(
           resources.sheetsApi,
         ).initializeWorkbook(spreadsheetId: spreadsheetId, workbook: workbook);
 
-        return SelectedSpreadsheet(
+        return SelectedSheet(
           spreadsheetId: spreadsheetId,
           name: created.properties?.title ?? title,
-          webViewLink: created.spreadsheetUrl ?? googleSheetsUrl(spreadsheetId),
+          webViewLink: created.spreadsheetUrl ?? sheetUrl(spreadsheetId),
           accountEmail: auth.currentAccount?.email,
         );
       },
@@ -538,35 +530,35 @@ String defaultSheetTitle() {
   return 'WorkoutTracker ${now.year}-$month-$day';
 }
 
-String googleSheetsUrl(String spreadsheetId) {
+String sheetUrl(String spreadsheetId) {
   return 'https://docs.google.com/spreadsheets/d/$spreadsheetId/edit';
 }
 
-String _newPickerCallbackState() {
+String _newPickerCbSt() {
   final random = Random.secure();
   final bytes = List<int>.generate(
-    _callbackStateBytes,
+    _callbackStBytes,
     (_) => random.nextInt(256),
     growable: false,
   );
   return base64UrlEncode(bytes).replaceAll('=', '');
 }
 
-abstract interface class PickerCallbackReceiver {
+abstract interface class PickerCbReceiver {
   Uri get redirectUri;
 
-  Future<PickerCallbackResult> get result;
+  Future<PickerCbResult> get result;
 
   Future<void> close();
 }
 
-final class NativeCallbackReceiver implements PickerCallbackReceiver {
-  NativeCallbackReceiver({
+final class NativeCbReceiver implements PickerCbReceiver {
+  NativeCbReceiver({
     required this.state,
     required this.config,
     required Duration timeout,
     required Stream<Uri> uriLinkStream,
-  }) : _completion = Completer<PickerCallbackResult>() {
+  }) : _completion = Completer<PickerCbResult>() {
     _subscription = uriLinkStream.listen(_handleUri);
     _timeout = Timer(timeout, () {
       if (!_completion.isCompleted) {
@@ -581,8 +573,8 @@ final class NativeCallbackReceiver implements PickerCallbackReceiver {
   }
 
   final String state;
-  final PickerAppConfig config;
-  final Completer<PickerCallbackResult> _completion;
+  final PickerAppCfg config;
+  final Completer<PickerCbResult> _completion;
   late final StreamSubscription<Uri> _subscription;
   late final Timer _timeout;
 
@@ -590,7 +582,7 @@ final class NativeCallbackReceiver implements PickerCallbackReceiver {
   Uri get redirectUri => config.hostedCallbackUri;
 
   @override
-  Future<PickerCallbackResult> get result => _completion.future;
+  Future<PickerCbResult> get result => _completion.future;
 
   @override
   Future<void> close() async {
@@ -603,11 +595,7 @@ final class NativeCallbackReceiver implements PickerCallbackReceiver {
       return;
     }
 
-    final validation = validatePickerCallback(
-      uri,
-      expectedState: state,
-      config: config,
-    );
+    final validation = validatePickerCb(uri, expectedSt: state, config: config);
     final result = validation.result;
     if (result == null) {
       _completion.completeError(
@@ -623,45 +611,44 @@ final class NativeCallbackReceiver implements PickerCallbackReceiver {
   }
 }
 
-bool _isNativeCallbackUri(Uri uri, PickerAppConfig config) {
+bool _isNativeCallbackUri(Uri uri, PickerAppCfg config) {
   return uri.scheme == config.nativeCallbackScheme &&
       uri.host == config.nativeCallbackHost &&
       (uri.path.isEmpty || uri.path == '/');
 }
 
-final class PickerCallbackValidation {
-  const PickerCallbackValidation.accepted(this.result) : errorMessage = null;
+final class PickerCbVal {
+  const PickerCbVal.accepted(this.result) : errorMessage = null;
 
-  const PickerCallbackValidation.rejected({required this.errorMessage})
-    : result = null;
+  const PickerCbVal.rejected({required this.errorMessage}) : result = null;
 
-  final PickerCallbackResult? result;
+  final PickerCbResult? result;
   final String? errorMessage;
 }
 
-PickerCallbackValidation validatePickerCallback(
+PickerCbVal validatePickerCb(
   Uri callbackUri, {
-  required String expectedState,
-  required PickerAppConfig config,
+  required String expectedSt,
+  required PickerAppCfg config,
 }) {
   if (callbackUri.scheme != config.nativeCallbackScheme ||
       callbackUri.host != config.nativeCallbackHost ||
       (callbackUri.path.isNotEmpty && callbackUri.path != '/')) {
-    return PickerCallbackValidation.rejected(
+    return PickerCbVal.rejected(
       errorMessage:
           'Unexpected Google Drive Picker callback URL; expected '
           '${config.nativeCallbackScheme}://${config.nativeCallbackHost}.',
     );
   }
 
-  final returnedState = callbackUri.queryParameters['state'];
-  if (returnedState == null || returnedState.isEmpty) {
-    return const PickerCallbackValidation.rejected(
+  final returnedSt = callbackUri.queryParameters['state'];
+  if (returnedSt == null || returnedSt.isEmpty) {
+    return const PickerCbVal.rejected(
       errorMessage: 'Google Drive Picker callback is missing request state.',
     );
   }
-  if (returnedState != expectedState) {
-    return const PickerCallbackValidation.rejected(
+  if (returnedSt != expectedSt) {
+    return const PickerCbVal.rejected(
       errorMessage:
           'Google Drive Picker callback state did not match the active request.',
     );
@@ -669,25 +656,22 @@ PickerCallbackValidation validatePickerCallback(
 
   final error = callbackUri.queryParameters['error'];
   if (error != null && error.isNotEmpty) {
-    return PickerCallbackValidation.accepted(
-      PickerCallbackResult(pickedSpreadsheetIds: const [], error: error),
+    return PickerCbVal.accepted(
+      PickerCbResult(pickedSheetIds: const [], error: error),
     );
   }
 
-  final pickedSpreadsheetIds = _pickedSpreadsheetIds(
-    callbackUri.queryParameters,
-    config,
-  );
-  if (pickedSpreadsheetIds == null || pickedSpreadsheetIds.isEmpty) {
-    return const PickerCallbackValidation.rejected(
+  final pickedSheetIds = _pickedSheetIds(callbackUri.queryParameters, config);
+  if (pickedSheetIds == null || pickedSheetIds.isEmpty) {
+    return const PickerCbVal.rejected(
       errorMessage:
           'Google Drive Picker callback is missing valid spreadsheet IDs.',
     );
   }
 
-  return PickerCallbackValidation.accepted(
-    PickerCallbackResult(
-      pickedSpreadsheetIds: pickedSpreadsheetIds,
+  return PickerCbVal.accepted(
+    PickerCbResult(
+      pickedSheetIds: pickedSheetIds,
       accessToken: _nonEmptyQueryParameter(callbackUri, 'access_token'),
       accountEmail: _nonEmptyQueryParameter(callbackUri, 'account_email'),
       accountName: _nonEmptyQueryParameter(callbackUri, 'account_name'),
@@ -696,9 +680,9 @@ PickerCallbackValidation validatePickerCallback(
   );
 }
 
-List<String>? _pickedSpreadsheetIds(
+List<String>? _pickedSheetIds(
   Map<String, String> queryParameters,
-  PickerAppConfig config,
+  PickerAppCfg config,
 ) {
   String? pickedFileIds;
   for (final key in config.pickedIdQueryParameters) {
@@ -727,9 +711,9 @@ String? _nonEmptyQueryParameter(Uri uri, String key) {
 }
 
 @visibleForTesting
-class PickerCallbackResult {
-  const PickerCallbackResult({
-    required this.pickedSpreadsheetIds,
+class PickerCbResult {
+  const PickerCbResult({
+    required this.pickedSheetIds,
     this.accessToken,
     this.accountEmail,
     this.accountName,
@@ -737,7 +721,7 @@ class PickerCallbackResult {
     this.error,
   });
 
-  final List<String> pickedSpreadsheetIds;
+  final List<String> pickedSheetIds;
   final String? accessToken;
   final String? accountEmail;
   final String? accountName;

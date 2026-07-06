@@ -193,12 +193,12 @@ void main() {
       );
 
       final structuredSetPlan = activeSheet.planSetLoggingWrite(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         fieldValues: const {'Formula': '=1+1'},
       );
       final rawSetPlan = activeSheet.planRawSetEdit(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         setNumber: 2,
         rawText: '=manual note',
@@ -210,7 +210,7 @@ void main() {
         activeSheetRowNumber: 3,
       );
       final clearPlan = activeSheet.planSetClear(
-        historyBlockLabel: 'Week 1',
+        blockLabel: 'Week 1',
         sheetRowNumber: 3,
         setNumber: 2,
       );

@@ -23,7 +23,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1', ''],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
       [
@@ -79,7 +79,7 @@ void main() {
     await tester.tap(find.byTooltip('Back to workout setup'));
     await tester.pumpAndSettle();
 
-    final inventoryService = TestSpreadsheetValidationService(
+    final inventoryService = TestValSvc(
       exerciseInventoryParsedSheet([
         exerciseRow('Squat', description: 'Back squat'),
         exerciseRow('Leg Press', description: 'Machine press'),
@@ -108,7 +108,7 @@ void main() {
   testWidgets('renders the main logging flow and sends a save to the service', (
     tester,
   ) async {
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
       [
@@ -383,7 +383,7 @@ void main() {
   );
 
   testWidgets('renders compact spreadsheet selection controls', (tester) async {
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -403,7 +403,7 @@ void main() {
   testWidgets('blocks logging with task-first formula repair guidance', (
     tester,
   ) async {
-    final service = TestSpreadsheetValidationService(
+    final service = TestValSvc(
       parseWorkbookFixture(loadFormulaDamageFixture()),
     );
 
@@ -458,9 +458,7 @@ void main() {
     ];
 
     for (final entry in cases) {
-      final service = TestSpreadsheetValidationService(
-        parseWorkbookFixture(entry.fixture),
-      );
+      final service = TestValSvc(parseWorkbookFixture(entry.fixture));
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
@@ -674,8 +672,8 @@ void main() {
     ];
 
     for (final entry in cases) {
-      final opener = RecordingSpreadsheetOpener();
-      final service = RevalidatingSpreadsheetValidationService(
+      final opener = RecordingSheetOpener();
+      final service = RevalidatingValService(
         reports: [
           parseWorkbookFixture(entry.fixture),
           minimalValidParsedSheet(),
@@ -686,7 +684,7 @@ void main() {
         WorkoutTrackerApp(
           key: ValueKey(entry.expectedText),
           svc: service,
-          spreadsheetOpener: opener,
+          sheetOpener: opener,
           initialText: 'spreadsheet-id',
         ),
       );
@@ -739,7 +737,7 @@ void main() {
   testWidgets('lists every current schema issue on the validation screen', (
     tester,
   ) async {
-    final service = TestSpreadsheetValidationService(
+    final service = TestValSvc(
       parseWorkbookFixture(loadMalformedHistoryDamageFixture()),
     );
 
@@ -849,8 +847,8 @@ void main() {
   );
 
   testWidgets('restores and persists the spreadsheet field', (tester) async {
-    final store = MemoryAppStateStore('saved-spreadsheet-id');
-    final service = TestSpreadsheetValidationService.fromRows([
+    final store = MemoryAppStStore('saved-spreadsheet-id');
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -859,7 +857,7 @@ void main() {
     await tester.pumpWidget(
       WorkoutTrackerApp(
         svc: service,
-        appStateStore: store,
+        appStStore: store,
         initialText: 'initial-spreadsheet-id',
       ),
     );
@@ -879,19 +877,16 @@ void main() {
     await tester.enterText(input, 'edited-spreadsheet-id');
     await tester.pump();
 
-    expect(
-      store.accessStateWrites.last.spreadsheetText,
-      'edited-spreadsheet-id',
-    );
-    expect(store.accessStateWrites.last.selectedSpreadsheet, isNull);
-    expect(store.accessStateWrites.last.workoutSelection, isNull);
+    expect(store.accessStWrites.last.sheetText, 'edited-spreadsheet-id');
+    expect(store.accessStWrites.last.selectedSheet, isNull);
+    expect(store.accessStWrites.last.workoutSelection, isNull);
   });
 
   testWidgets('editing the sheet selection preserves Google login', (
     tester,
   ) async {
-    final store = MemoryAppStateStore('saved-spreadsheet-id');
-    final service = TestSpreadsheetValidationService.fromRows([
+    final store = MemoryAppStStore('saved-spreadsheet-id');
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -907,7 +902,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        appStateStore: store,
+        appStStore: store,
       ),
     );
     await tester.pump();
@@ -918,16 +913,16 @@ void main() {
     );
     await tester.pump();
 
-    expect(store.spreadsheetText, 'other-spreadsheet-id');
-    expect(store.selectedSpreadsheet, isNull);
+    expect(store.sheetText, 'other-spreadsheet-id');
+    expect(store.selectedSheet, isNull);
     expect(accountSession.signOutCount, 0);
     expect(accountSession.currentAccount?.email, 'saved@example.com');
   });
 
   testWidgets('restores a selected Google Drive sheet label', (tester) async {
-    final store = MemoryAppStateStore(
+    final store = MemoryAppStStore(
       'saved-spreadsheet-id',
-      selectedSpreadsheet: const SelectedSpreadsheet(
+      selectedSheet: const SelectedSheet(
         spreadsheetId: 'selected-spreadsheet-id',
         name: '2026 Workouts',
         drivePath: 'My Drive / Workouts / 2026 Workouts',
@@ -939,7 +934,7 @@ void main() {
       ),
     );
     final accountSession = PickerAuthGateway();
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -949,7 +944,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        appStateStore: store,
+        appStStore: store,
         picker: const DisabledPicker(
           reason: 'Google Drive Picker is missing an OAuth client ID.',
         ),
@@ -976,20 +971,20 @@ void main() {
     'restores saved workout and history for a selected sheet visibly',
     (tester) async {
       final store =
-          MemoryAppStateStore(
+          MemoryAppStStore(
               null,
-              selectedSpreadsheet: const SelectedSpreadsheet(
+              selectedSheet: const SelectedSheet(
                 spreadsheetId: 'selected-spreadsheet-id',
                 name: '2026 Workouts',
                 accountEmail: 'saved@example.com',
               ),
             )
-            ..workoutSelection = const WorkoutSelectionState(
+            ..workoutSelection = const WorkoutSelectionSt(
               spreadsheetId: 'selected-spreadsheet-id',
               workout: 'Upper',
               historyBlock: 'Week 1',
             );
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
@@ -1012,8 +1007,8 @@ void main() {
       await tester.pumpWidget(
         WorkoutTrackerApp(
           svc: service,
-          appStateStore: store,
-          picker: FakeSpreadsheetPicker(),
+          appStStore: store,
+          picker: FakeSheetPicker(),
         ),
       );
       await tester.pump();
@@ -1039,10 +1034,10 @@ void main() {
   testWidgets(
     'picker sheet selection persists account profile for the avatar',
     (tester) async {
-      final store = MemoryAppStateStore(null);
+      final store = MemoryAppStStore(null);
       final accountSession = PickerAuthGateway();
-      final picker = AuthorizingSpreadsheetPicker(accountSession);
-      final service = TestSpreadsheetValidationService.fromRows([
+      final picker = AuthorizingSheetPicker(accountSession);
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1052,7 +1047,7 @@ void main() {
         WorkoutTrackerApp(
           svc: service,
           accountSession: accountSession,
-          appStateStore: store,
+          appStStore: store,
           picker: picker,
         ),
       );
@@ -1087,8 +1082,8 @@ void main() {
   testWidgets(
     'first-run setup has one primary sheet choice and secondary alternatives',
     (tester) async {
-      final picker = CountingSpreadsheetPicker();
-      final service = TestSpreadsheetValidationService.fromRows([
+      final picker = CountingSheetPicker();
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1119,11 +1114,11 @@ void main() {
   testWidgets(
     'create sheet uses picker authorization before asking for a workbook name',
     (tester) async {
-      final picker = CountingSpreadsheetPicker();
+      final picker = CountingSheetPicker();
       final authorization = Completer<bool>();
       picker.creationAuthorization = authorization.future;
       final accountSession = PickerAuthGateway();
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1173,14 +1168,14 @@ void main() {
   testWidgets('create sheet still opens folder picker when already connected', (
     tester,
   ) async {
-    final picker = CountingSpreadsheetPicker();
+    final picker = CountingSheetPicker();
     final accountSession = PickerAuthGateway(
       initial: const PickerAuth(
         accessToken: 'saved-token',
         accountEmail: 'saved@example.com',
       ),
     );
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1216,16 +1211,16 @@ void main() {
   testWidgets('returning sheet selection keeps loaded state compact', (
     tester,
   ) async {
-    final store = MemoryAppStateStore(
+    final store = MemoryAppStStore(
       null,
-      selectedSpreadsheet: const SelectedSpreadsheet(
+      selectedSheet: const SelectedSheet(
         spreadsheetId: 'selected-spreadsheet-id',
         name: '2026 Workouts',
         drivePath: 'My Drive / Workouts / 2026 Workouts',
         accountEmail: 'saved@example.com',
       ),
     );
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1234,8 +1229,8 @@ void main() {
     await tester.pumpWidget(
       WorkoutTrackerApp(
         svc: service,
-        appStateStore: store,
-        picker: FakeSpreadsheetPicker(),
+        appStStore: store,
+        picker: FakeSheetPicker(),
       ),
     );
     await tester.pump();
@@ -1264,7 +1259,7 @@ void main() {
       const picker = DisabledPicker(
         reason: 'Google Drive Picker is missing an OAuth client ID.',
       );
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1323,8 +1318,8 @@ void main() {
   testWidgets('does not launch duplicate picker actions while choosing', (
     tester,
   ) async {
-    final picker = CompletingSpreadsheetPicker();
-    final service = TestSpreadsheetValidationService.fromRows([
+    final picker = CompletingSheetPicker();
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1342,8 +1337,8 @@ void main() {
   testWidgets('does not launch duplicate create actions while creating', (
     tester,
   ) async {
-    final picker = CompletingSpreadsheetPicker();
-    final service = TestSpreadsheetValidationService.fromRows([
+    final picker = CompletingSheetPicker();
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1381,7 +1376,7 @@ void main() {
         displayName: 'Saved Account',
       ),
     );
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -1406,7 +1401,7 @@ void main() {
   testWidgets(
     'labels workouts with selected-block progress and counts backups with parent',
     (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         [
@@ -1514,7 +1509,7 @@ void main() {
         ],
       ),
     );
-    final service = TestSpreadsheetValidationService(activeSheet);
+    final service = TestValSvc(activeSheet);
 
     await tester.pumpWidget(
       WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -1566,7 +1561,7 @@ void main() {
       ],
       ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
     ];
-    final service = TestSpreadsheetValidationService.fromRows(rows);
+    final service = TestValSvc.fromRows(rows);
     final authoringService = DeletingWorkoutExerciseAuthoringService(rows);
 
     await tester.pumpWidget(
@@ -1634,7 +1629,7 @@ void main() {
       ],
       ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
     ];
-    final service = TestSpreadsheetValidationService.fromRows(rows);
+    final service = TestValSvc.fromRows(rows);
     final authoringService = DeletingWorkoutExerciseAuthoringService(rows);
 
     await tester.pumpWidget(
@@ -1689,7 +1684,7 @@ void main() {
       ],
       ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
     ];
-    final service = TestSpreadsheetValidationService.fromRows(rows);
+    final service = TestValSvc.fromRows(rows);
     final authoringService = DeletingWorkoutExerciseAuthoringService(
       rows,
       rejectDelete: true,
@@ -1733,7 +1728,7 @@ void main() {
   testWidgets(
     'primary exercise menu remains reachable by right-click and long-press',
     (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
@@ -1789,7 +1784,7 @@ void main() {
 
     const longBackupName =
         'Very Long Machine Row Backup Name That Should Not Crowd The Row';
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       [
@@ -1850,7 +1845,7 @@ void main() {
   testWidgets(
     'selecting a workout setup opens the full exercise picker with compact context',
     (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         [
@@ -1929,7 +1924,7 @@ void main() {
         ],
       ),
     );
-    final service = TestSpreadsheetValidationService(activeSheet);
+    final service = TestValSvc(activeSheet);
 
     await tester.pumpWidget(
       WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -2055,16 +2050,16 @@ void main() {
           ],
         ),
       );
-      final store = MemoryAppStateStore(
+      final store = MemoryAppStStore(
         null,
-        selectedSpreadsheet: const SelectedSpreadsheet(
+        selectedSheet: const SelectedSheet(
           spreadsheetId: 'selected-spreadsheet-id',
           name: '2026 Workouts',
           drivePath: 'My Drive / Workouts / 2026 Workouts',
           accountEmail: 'saved@example.com',
         ),
       );
-      final service = TestSpreadsheetValidationService(activeSheet);
+      final service = TestValSvc(activeSheet);
       final authoringService = WorkoutPlacementRecordingService(activeSheet);
 
       await tester.pumpWidget(
@@ -2073,8 +2068,8 @@ void main() {
             validation: service,
             authoring: authoringService,
           ),
-          appStateStore: store,
-          picker: FakeSpreadsheetPicker(),
+          appStStore: store,
+          picker: FakeSheetPicker(),
         ),
       );
       await tester.pump();
@@ -2168,7 +2163,7 @@ void main() {
         [primaryExercise, '3', '8', '8', '90s', '', '', '', 'Legs', '', ''],
         [backupExercise, '3', '8', '8', '90s', '', '', '', 'Legs', 'TRUE', ''],
       ];
-      final service = TestSpreadsheetValidationService.fromRows(rows);
+      final service = TestValSvc.fromRows(rows);
       final authoringService = ReorderingWorkoutExerciseAuthoringService(rows);
 
       await tester.pumpWidget(
@@ -2226,7 +2221,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final service = TestSpreadsheetValidationService(
+    final service = TestValSvc(
       exerciseInventoryParsedSheet([
         exerciseRow('Squat', description: 'Back squat'),
         exerciseRow('Bench Press', description: 'Competition bench'),
@@ -2270,9 +2265,7 @@ void main() {
   testWidgets('shows an empty state for an empty exercise library', (
     tester,
   ) async {
-    final service = TestSpreadsheetValidationService(
-      emptyExerciseInventoryParsedSheet(),
-    );
+    final service = TestValSvc(emptyExerciseInventoryParsedSheet());
 
     await tester.pumpWidget(
       WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -2293,7 +2286,7 @@ void main() {
   testWidgets(
     'adds a canonical exercise from the exercise manager and returns to the updated list',
     (tester) async {
-      final validationService = TestSpreadsheetValidationService(
+      final validationService = TestValSvc(
         exerciseInventoryParsedSheet([
           exerciseRow('Squat', description: 'Back squat'),
         ]),
@@ -2378,7 +2371,7 @@ void main() {
           description: 'Seeded library item $index',
         ),
     ];
-    final validationService = TestSpreadsheetValidationService(
+    final validationService = TestValSvc(
       exerciseInventoryParsedSheet(seededExercises),
     );
     final authoringService = AppendingExerciseAuthoringService(seededExercises);
@@ -2445,7 +2438,7 @@ void main() {
           description: 'Seeded library item $index',
         ),
     ];
-    final validationService = TestSpreadsheetValidationService(
+    final validationService = TestValSvc(
       exerciseInventoryParsedSheet(seededExercises),
     );
     final authoringService = EditingExerciseAuthoringService(seededExercises);
@@ -2497,7 +2490,7 @@ void main() {
   testWidgets(
     'canceling exercise manager add leaves the exercise library unchanged',
     (tester) async {
-      final validationService = TestSpreadsheetValidationService(
+      final validationService = TestValSvc(
         exerciseInventoryParsedSheet([
           exerciseRow('Squat', description: 'Back squat'),
         ]),
@@ -2544,7 +2537,7 @@ void main() {
   testWidgets(
     'edits a canonical exercise from the exercise manager without creating a duplicate',
     (tester) async {
-      final validationService = TestSpreadsheetValidationService(
+      final validationService = TestValSvc(
         exerciseInventoryParsedSheet([
           exerciseRow('Squat', description: 'Back squat'),
           exerciseRow('Bench Press', description: 'Competition bench'),
@@ -2624,7 +2617,7 @@ void main() {
   testWidgets('canceling exercise manager edit leaves the exercise unchanged', (
     tester,
   ) async {
-    final validationService = TestSpreadsheetValidationService(
+    final validationService = TestValSvc(
       exerciseInventoryParsedSheet([
         exerciseRow('Squat', description: 'Back squat'),
         exerciseRow('Bench Press', description: 'Competition bench'),
@@ -2674,7 +2667,7 @@ void main() {
   testWidgets('does not expose delete controls in the exercise manager', (
     tester,
   ) async {
-    final service = TestSpreadsheetValidationService(
+    final service = TestValSvc(
       exerciseInventoryParsedSheet([
         exerciseRow('Squat', description: 'Back squat'),
       ]),
@@ -2714,7 +2707,7 @@ void main() {
       exerciseRow('Bench Press', description: 'Competition bench'),
       exerciseRow('Cable Row', description: 'Seated cable row'),
     ];
-    final validationService = TestSpreadsheetValidationService(
+    final validationService = TestValSvc(
       exerciseInventoryParsedSheet(exercises),
     );
     final authoringService = ReorderingExerciseAuthoringService(exercises);
@@ -2807,7 +2800,7 @@ void main() {
         '',
       ],
     ];
-    final validationService = TestSpreadsheetValidationService.fromRows(rows);
+    final validationService = TestValSvc.fromRows(rows);
     final authoringService = ReorderingWorkoutExerciseAuthoringService(rows);
 
     await tester.pumpWidget(
@@ -2850,7 +2843,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 2', 'Week 1', ''],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1', 'S2'],
       [
@@ -2925,7 +2918,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 2', 'Week 1', ''],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1', 'S2'],
         [
@@ -2998,7 +2991,7 @@ void main() {
       tester.view.resetViewInsets();
     });
 
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       [
@@ -3048,7 +3041,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       [
@@ -3103,7 +3096,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       [
@@ -3158,7 +3151,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
@@ -3186,9 +3179,7 @@ void main() {
   testWidgets(
     'keeps empty workout setup selectors labeled through focus and creation',
     (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
-        activeSheetFixedColumns,
-      ]);
+      final service = TestValSvc.fromRows([activeSheetFixedColumns]);
 
       await tester.pumpWidget(
         WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -3267,7 +3258,7 @@ void main() {
   testWidgets(
     'shows setup creation actions in selectors and selects created values',
     (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -3319,7 +3310,7 @@ void main() {
   testWidgets(
     'name prompts opened from selectors keep focus and dismiss cleanly',
     (tester) async {
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -3432,7 +3423,7 @@ void main() {
         ],
       ),
     );
-    final service = TestSpreadsheetValidationService(activeSheet);
+    final service = TestValSvc(activeSheet);
 
     await tester.pumpWidget(
       WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -3522,7 +3513,7 @@ void main() {
         ],
       ),
     );
-    final service = TestSpreadsheetValidationService(activeSheet);
+    final service = TestValSvc(activeSheet);
 
     await tester.pumpWidget(
       WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -3618,7 +3609,7 @@ void main() {
         ],
       ),
     );
-    final service = TestSpreadsheetValidationService(activeSheet);
+    final service = TestValSvc(activeSheet);
     final authoringService = WorkoutPlacementRecordingService(activeSheet);
 
     await tester.pumpWidget(
@@ -3738,7 +3729,7 @@ void main() {
         ],
       ),
     );
-    final service = TestSpreadsheetValidationService(activeSheet);
+    final service = TestValSvc(activeSheet);
 
     await tester.pumpWidget(
       WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -3817,7 +3808,7 @@ void main() {
         ],
       ),
     );
-    final service = TestSpreadsheetValidationService(activeSheet);
+    final service = TestValSvc(activeSheet);
 
     await tester.pumpWidget(
       WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -3873,7 +3864,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -3940,7 +3931,7 @@ void main() {
   testWidgets(
     'selects default exercise authoring field text on focus for replacement',
     (tester) async {
-      final validationService = TestSpreadsheetValidationService(
+      final validationService = TestValSvc(
         exerciseInventoryParsedSheet([
           exerciseRow('Squat', description: 'Back squat'),
         ]),
@@ -3984,7 +3975,7 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       try {
-        final validationService = TestSpreadsheetValidationService(
+        final validationService = TestValSvc(
           exerciseInventoryParsedSheet([
             exerciseRow('Squat', description: 'Back squat'),
           ]),
@@ -4094,7 +4085,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
       [
@@ -4154,7 +4145,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      final service = TestSpreadsheetValidationService.fromRows([
+      final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         [
@@ -4229,7 +4220,7 @@ void main() {
   testWidgets('shows account summary and logout in the Google Sheets menu', (
     tester,
   ) async {
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -4263,7 +4254,7 @@ void main() {
   });
 
   testWidgets('logs out from the Google Sheets account menu', (tester) async {
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -4302,20 +4293,20 @@ void main() {
     tester,
   ) async {
     final store =
-        MemoryAppStateStore(
+        MemoryAppStStore(
             null,
-            selectedSpreadsheet: const SelectedSpreadsheet(
+            selectedSheet: const SelectedSheet(
               spreadsheetId: 'selected-spreadsheet-id',
               name: 'development',
               accountEmail: 'saved@example.com',
             ),
           )
-          ..workoutSelection = const WorkoutSelectionState(
+          ..workoutSelection = const WorkoutSelectionSt(
             spreadsheetId: 'selected-spreadsheet-id',
             workout: 'Legs',
             historyBlock: 'Week 1',
           );
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -4331,8 +4322,8 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        appStateStore: store,
-        picker: FakeSpreadsheetPicker(),
+        appStStore: store,
+        picker: FakeSheetPicker(),
       ),
     );
     await tester.pump();
@@ -4352,8 +4343,8 @@ void main() {
 
     expect(accountSession.signOutCount, 1);
     expect(store.clearCount, 1);
-    expect(store.selectedSpreadsheet, isNull);
-    expect(store.spreadsheetText, isNull);
+    expect(store.selectedSheet, isNull);
+    expect(store.sheetText, isNull);
     expect(store.workoutSelection, isNull);
     expect(find.text('development'), findsNothing);
     expect(find.text('Return to workout'), findsNothing);
@@ -4361,7 +4352,7 @@ void main() {
   });
 
   testWidgets('shows only the account summary when logged out', (tester) async {
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -4389,7 +4380,7 @@ void main() {
   testWidgets('shows the Google Sheets account menu in picker mode', (
     tester,
   ) async {
-    final service = TestSpreadsheetValidationService.fromRows([
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -4405,7 +4396,7 @@ void main() {
       WorkoutTrackerApp(
         svc: service,
         accountSession: accountSession,
-        picker: FakeSpreadsheetPicker(),
+        picker: FakeSheetPicker(),
       ),
     );
     await tester.pump();

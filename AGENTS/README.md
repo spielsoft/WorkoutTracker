@@ -1,0 +1,1 @@
+`./AGENTS` is a directory to retain persistent artifacts from agentic development

@@ -38,18 +38,18 @@ enum _PlaceKind { primary, backup }
 class _PlaceIntent {
   const _PlaceIntent.primary({required this.workout})
     : kind = _PlaceKind.primary,
-      primarySheetRowNumber = null,
+      primaryRow = null,
       primaryExercise = null;
 
   const _PlaceIntent.backup({
     required this.workout,
-    required this.primarySheetRowNumber,
+    required this.primaryRow,
     required this.primaryExercise,
   }) : kind = _PlaceKind.backup;
 
   final _PlaceKind kind;
   final String workout;
-  final int? primarySheetRowNumber;
+  final int? primaryRow;
   final String? primaryExercise;
 }
 
@@ -57,21 +57,21 @@ class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
     required this.svc,
     this.accountSession,
-    this.appStateStore,
+    this.appStStore,
     this.initialText = '',
     this.initialSelection,
     this.picker,
-    this.spreadsheetOpener = const UrlSpreadsheetOpener(),
+    this.sheetOpener = const UrlSheetOpener(),
     super.key,
   });
 
-  final WorkbookService svc;
+  final WbkSvc svc;
   final GoogleAccountSession? accountSession;
-  final AppStateStore? appStateStore;
+  final AppStStore? appStStore;
   final String initialText;
-  final SelectedSpreadsheet? initialSelection;
-  final SpreadsheetPicker? picker;
-  final SpreadsheetOpener spreadsheetOpener;
+  final SelectedSheet? initialSelection;
+  final SheetPicker? picker;
+  final SheetOpener sheetOpener;
 
   @override
   Widget build(BuildContext context) {
@@ -85,11 +85,11 @@ class WorkoutTrackerApp extends StatelessWidget {
       home: AppShell(
         svc: svc,
         accountSession: accountSession,
-        appStateStore: appStateStore,
+        appStStore: appStStore,
         initialText: initialText,
         initialSelection: initialSelection,
         picker: picker,
-        spreadsheetOpener: spreadsheetOpener,
+        sheetOpener: sheetOpener,
       ),
     );
   }
@@ -112,7 +112,7 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 
 class _SheetPick extends StatelessWidget {
   const _SheetPick({
-    required this.selectedSpreadsheet,
+    required this.selectedSheet,
     required this.availability,
     required this.showAvailabilitySummary,
     required this.isBusy,
@@ -123,8 +123,8 @@ class _SheetPick extends StatelessWidget {
     required this.onCreateSpreadsheet,
   });
 
-  final SelectedSpreadsheet? selectedSpreadsheet;
-  final PickerAvailability availability;
+  final SelectedSheet? selectedSheet;
+  final PickerAvail availability;
   final bool showAvailabilitySummary;
   final bool isBusy;
   final GoogleAccountSession? accountSession;
@@ -135,7 +135,7 @@ class _SheetPick extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected = selectedSpreadsheet;
+    final selected = selectedSheet;
     final colorScheme = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -252,10 +252,10 @@ class _NameDialog extends StatefulWidget {
   final Key? textFieldKey;
 
   @override
-  State<_NameDialog> createState() => _NamePromptDialogState();
+  State<_NameDialog> createState() => _NameDialogSt();
 }
 
-class _NamePromptDialogState extends State<_NameDialog> {
+class _NameDialogSt extends State<_NameDialog> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
 
@@ -409,107 +409,105 @@ class AppShell extends StatefulWidget {
   const AppShell({
     required this.svc,
     this.accountSession,
-    this.appStateStore,
+    this.appStStore,
     required this.initialText,
     this.initialSelection,
     this.picker,
-    required this.spreadsheetOpener,
+    required this.sheetOpener,
     super.key,
   });
 
-  final WorkbookService svc;
+  final WbkSvc svc;
   final GoogleAccountSession? accountSession;
-  final AppStateStore? appStateStore;
+  final AppStStore? appStStore;
   final String initialText;
-  final SelectedSpreadsheet? initialSelection;
-  final SpreadsheetPicker? picker;
-  final SpreadsheetOpener spreadsheetOpener;
+  final SelectedSheet? initialSelection;
+  final SheetPicker? picker;
+  final SheetOpener sheetOpener;
 
   @override
   State<AppShell> createState() {
-    return _AppShellState();
+    return _AppShellSt();
   }
 }
 
-class _AppShellState extends State<AppShell> {
-  late final TextEditingController _spreadsheetController;
-  late final AppController _controller;
+class _AppShellSt extends State<AppShell> {
+  late final TextEditingController _sheetCtrl;
+  late final AppCtrl _controller;
   _AppScreen _screen = _AppScreen.sheetSelection;
   _AppScreen _addReturnScreen = _AppScreen.exercisePicker;
   _PlaceIntent? placementIntent;
   CanonicalExercise? _editingExercise;
   int? _highlightedExerciseRow;
-  WorkspaceStateOwner? _stateCtrl;
-  late final WorkspaceController _workspaceLifecycle;
+  WorkspaceStOwner? _stateCtrl;
+  late final WorkspaceCtrl _workspaceLifecycle;
 
   @override
   void initState() {
     super.initState();
-    _controller = AppController(svc: widget.svc);
-    _spreadsheetController = TextEditingController(
-      text: widget.initialSelection?.spreadsheetId ?? widget.initialText,
+    _controller = AppCtrl(svc: widget.svc);
+    _sheetCtrl = TextEditingController(
+      text: widget.initialSelection?.id ?? widget.initialText,
     );
-    final appStateStore = widget.appStateStore;
-    if (appStateStore != null) {
-      _stateCtrl = WorkspaceStateController(appStateStore);
+    final appStStore = widget.appStStore;
+    if (appStStore != null) {
+      _stateCtrl = WorkspaceStCtrl(appStStore);
     }
-    _workspaceLifecycle = WorkspaceController(
-      accessStateOwner: _stateCtrl,
+    _workspaceLifecycle = WorkspaceCtrl(
+      accessStOwner: _stateCtrl,
       accountSession: widget.accountSession,
       picker: widget.picker,
       initialText: widget.initialText,
       initialSelection: widget.initialSelection,
     );
-    unawaited(_restoreStartupState());
+    unawaited(_restoreStartupSt());
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _workspaceLifecycle.dispose();
-    _spreadsheetController.dispose();
+    _sheetCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _restoreStartupState() async {
-    WorkspaceUiState workspaceState;
+  Future<void> _restoreStartupSt() async {
+    WorkspaceUiSt workspaceSt;
     try {
-      workspaceState = await _workspaceLifecycle.restoreResolved();
+      workspaceSt = await _workspaceLifecycle.restoreResolved();
     } on Object {
       return;
     }
-    await _restoreSelection(workspaceState);
+    await _restoreSelection(workspaceSt);
   }
 
-  Future<void> _restoreSelection(WorkspaceUiState workspaceState) async {
+  Future<void> _restoreSelection(WorkspaceUiSt workspaceSt) async {
     if (!mounted) {
       return;
     }
-    var savedSelection = workspaceState.selectedSpreadsheet;
+    var savedSelection = workspaceSt.selectedSheet;
     if (savedSelection != null) {
       setState(() {
-        _spreadsheetController.text = savedSelection.spreadsheetId;
+        _sheetCtrl.text = savedSelection.id;
       });
       await _validateSelected();
       _restoreWorkout(
         _workspaceLifecycle.workoutSelectionFor(
-          _controller.report?.spreadsheetId ?? savedSelection.spreadsheetId,
+          _controller.report?.sheetId ?? savedSelection.id,
         ),
       );
       return;
     }
-    final savedText = workspaceState.pastedText;
-    if (savedText != null && savedText != _spreadsheetController.text) {
-      _spreadsheetController.text = savedText;
+    final savedText = workspaceSt.pastedText;
+    if (savedText != null && savedText != _sheetCtrl.text) {
+      _sheetCtrl.text = savedText;
     }
   }
 
   void _usePastedText() {
     unawaited(() async {
       try {
-        await _workspaceLifecycle.usePastedSpreadsheetText(
-          _spreadsheetController.text,
-        );
+        await _workspaceLifecycle.usePastedSheetText(_sheetCtrl.text);
       } on Object {
         // Text fallback persistence is best-effort.
       }
@@ -517,10 +515,10 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _validateSelected() async {
-    final selectedSpreadsheet = _workspaceLifecycle.state.selectedSpreadsheet;
-    final selected = selectedSpreadsheet == null
-        ? await _controller.validateSelection(_spreadsheetController.text)
-        : await _controller.validateSelected(selectedSpreadsheet);
+    final selectedSheet = _workspaceLifecycle.state.selectedSheet;
+    final selected = selectedSheet == null
+        ? await _controller.validateSelection(_sheetCtrl.text)
+        : await _controller.validateSelected(selectedSheet);
     final report = _controller.report;
     if (!mounted) {
       return;
@@ -532,16 +530,16 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  Future<void> _chooseSpreadsheet() async {
+  Future<void> _chooseSheet() async {
     try {
-      final workspaceState = await _workspaceLifecycle.chooseSpreadsheet();
-      await _validateSelection(workspaceState);
+      final workspaceSt = await _workspaceLifecycle.chooseSheet();
+      await _validateSelection(workspaceSt);
     } on Object catch (error) {
       _controller.reportSelectionFailure(error);
     }
   }
 
-  Future<void> _createSpreadsheet() async {
+  Future<void> _createSheet() async {
     final hasGoogleAccount = await _authorizeSheetCreation();
     if (!mounted || !hasGoogleAccount) {
       return;
@@ -552,10 +550,8 @@ class _AppShellState extends State<AppShell> {
       return;
     }
     try {
-      final workspaceState = await _workspaceLifecycle.createSpreadsheet(
-        name: name,
-      );
-      await _validateSelection(workspaceState);
+      final workspaceSt = await _workspaceLifecycle.createSheet(name: name);
+      await _validateSelection(workspaceSt);
     } on Object catch (error) {
       _controller.reportSelectionFailure(error);
     }
@@ -574,13 +570,13 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  Future<void> _validateSelection(WorkspaceUiState workspaceState) async {
-    final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
-    if (!mounted || selectedSpreadsheet == null) {
+  Future<void> _validateSelection(WorkspaceUiSt workspaceSt) async {
+    final selectedSheet = workspaceSt.selectedSheet;
+    if (!mounted || selectedSheet == null) {
       return;
     }
     setState(() {
-      _spreadsheetController.text = selectedSpreadsheet.spreadsheetId;
+      _sheetCtrl.text = selectedSheet.id;
     });
     await _validateSelected();
   }
@@ -589,7 +585,7 @@ class _AppShellState extends State<AppShell> {
     await _workspaceLifecycle.signOut();
     _controller.clearSelection();
     setState(() {
-      _spreadsheetController.clear();
+      _sheetCtrl.clear();
       _screen = _AppScreen.sheetSelection;
       _addReturnScreen = _AppScreen.exercisePicker;
       placementIntent = null;
@@ -706,7 +702,7 @@ class _AppShellState extends State<AppShell> {
       return;
     }
     try {
-      await widget.spreadsheetOpener.openSpreadsheet(report.spreadsheetUrl);
+      await widget.sheetOpener.openSheet(report.sheetUrl);
     } on Object catch (error) {
       _controller.reportOpenFailure(error);
     }
@@ -761,8 +757,8 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  void _openExercise(int primarySheetRowNumber) {
-    _controller.openExercise(primarySheetRowNumber);
+  void _openExercise(int primaryRow) {
+    _controller.openExercise(primaryRow);
     setState(() {
       _screen = _AppScreen.exerciseLogging;
     });
@@ -800,7 +796,7 @@ class _AppShellState extends State<AppShell> {
       _addReturnScreen = returnScreen;
       placementIntent = _PlaceIntent.backup(
         workout: workout,
-        primarySheetRowNumber: primarySlot.sheetRowNumber,
+        primaryRow: primarySlot.sheetRowNumber,
         primaryExercise: primarySlot.exercise,
       );
       _screen = _AppScreen.addExercise;
@@ -833,7 +829,7 @@ class _AppShellState extends State<AppShell> {
       return;
     }
     await _controller.deleteWorkoutExercise(
-      primarySheetRowNumber: primarySlot.sheetRowNumber,
+      primaryRow: primarySlot.sheetRowNumber,
     );
   }
 
@@ -875,9 +871,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _saveExerciseDraft(CanonicalExerciseDraft draft) async {
-    final created = await _controller.createExercise(
-      exercise: draft.toDefinition(),
-    );
+    final created = await _controller.createExercise(exercise: draft.toDef());
     if (!mounted || !created) {
       return;
     }
@@ -897,7 +891,7 @@ class _AppShellState extends State<AppShell> {
     }
     final updated = await _controller.updateExercise(
       selectedExercise: selectedExercise,
-      exercise: draft.toDefinition(),
+      exercise: draft.toDef(),
     );
     if (!mounted || !updated) {
       return;
@@ -955,7 +949,7 @@ class _AppShellState extends State<AppShell> {
           workout: intent.workout,
         ),
         _PlaceKind.backup => ExercisePlacementTarget.backup(
-          primarySheetRowNumber: intent.primarySheetRowNumber!,
+          primaryRow: intent.primaryRow!,
         ),
       },
     );
@@ -977,11 +971,11 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  void _restoreWorkout(WorkoutSelectionState? savedSelection) {
+  void _restoreWorkout(WorkoutSelectionSt? savedSelection) {
     final report = _controller.report;
     if (savedSelection == null ||
         report == null ||
-        savedSelection.spreadsheetId != report.spreadsheetId) {
+        savedSelection.sheetId != report.sheetId) {
       return;
     }
     _controller.restoreWorkoutSelection(
@@ -996,8 +990,8 @@ class _AppShellState extends State<AppShell> {
     if (report == null || setup == null) {
       return;
     }
-    final selection = WorkoutSelectionState(
-      spreadsheetId: report.spreadsheetId,
+    final selection = WorkoutSelectionSt(
+      spreadsheetId: report.sheetId,
       workout: setup.selectedWorkout,
       historyBlock: setup.selectedHistoryBlock,
     );
@@ -1021,22 +1015,22 @@ class _AppShellState extends State<AppShell> {
             builder: (context, _) {
               final report = _controller.report;
               final error = _controller.error;
-              final workspaceState = _workspaceLifecycle.state;
+              final workspaceSt = _workspaceLifecycle.state;
               final isBusy =
-                  _controller.isBusy || workspaceState.isCommandInFlight;
+                  _controller.isBusy || workspaceSt.isCommandInFlight;
               final picker = widget.picker;
-              final selectedSpreadsheet = workspaceState.selectedSpreadsheet;
-              final pickerAvailability = workspaceState.pickerAvailability;
+              final selectedSheet = workspaceSt.selectedSheet;
+              final pickerAvailability = workspaceSt.pickerAvailability;
               final hasLoadedWorkout =
                   report != null && !report.hasBlockingIssues;
               final showPickerAvailability =
-                  selectedSpreadsheet == null && picker != null;
+                  selectedSheet == null && picker != null;
               final showSheetSelection =
                   _screen == _AppScreen.sheetSelection ||
                   report == null ||
                   report.hasBlockingIssues;
               final showTextFallback =
-                  picker == null || workspaceState.fallbackAvailable;
+                  picker == null || workspaceSt.fallbackAvailable;
               return ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
@@ -1048,7 +1042,7 @@ class _AppShellState extends State<AppShell> {
                         if (showSheetSelection) ...[
                           if (picker != null) ...[
                             _SheetPick(
-                              selectedSpreadsheet: selectedSpreadsheet,
+                              selectedSheet: selectedSheet,
                               availability: pickerAvailability,
                               showAvailabilitySummary: showPickerAvailability,
                               isBusy: isBusy,
@@ -1057,14 +1051,14 @@ class _AppShellState extends State<AppShell> {
                               onReturnToWorkout: hasLoadedWorkout
                                   ? _returnToLoadedWorkout
                                   : null,
-                              onChooseSpreadsheet: _chooseSpreadsheet,
-                              onCreateSpreadsheet: _createSpreadsheet,
+                              onChooseSpreadsheet: _chooseSheet,
+                              onCreateSpreadsheet: _createSheet,
                             ),
                             if (showTextFallback) const SizedBox(height: 12),
                           ],
                           if (showTextFallback)
                             _SheetTextFallback(
-                              controller: _spreadsheetController,
+                              controller: _sheetCtrl,
                               isBusy: isBusy,
                               accountSession: widget.accountSession,
                               onSignedOut: _handleSignedOut,
@@ -1096,8 +1090,7 @@ class _AppShellState extends State<AppShell> {
                           _WorkoutPane(
                             setup: _controller.workoutSetup!,
                             sheetLabel:
-                                selectedSpreadsheet?.displayLabel ??
-                                report.spreadsheetId,
+                                selectedSheet?.displayLabel ?? report.sheetId,
                             screen: _screen,
                             onBackToSheets: _returnToSheetSelection,
                             onOpenSetup: _selectWorkoutSetup,

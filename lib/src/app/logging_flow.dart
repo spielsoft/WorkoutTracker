@@ -6,24 +6,24 @@ import 'package:workout_tracker/contract.dart';
 class LoggingFlow {
   LoggingFlow({
     required ParsedActiveSheet activeSheet,
-    required String historyBlockLabel,
+    required String blockLabel,
     required int primaryRow,
     required int selectedRow,
   }) : _activeSheet = activeSheet,
-       _historyBlockLabel = historyBlockLabel,
+       _blockLabel = blockLabel,
        _primaryRow = primaryRow,
        _selectedRow = selectedRow {
-    _syncControllers(_context);
+    _syncCtrls(_context);
   }
 
   ParsedActiveSheet _activeSheet;
-  String _historyBlockLabel;
+  String _blockLabel;
   int _primaryRow;
   int _selectedRow;
 
-  final _newSetControllers = <String, TextEditingController>{};
-  final _loggedFieldControllers = <int, Map<String, TextEditingController>>{};
-  final _rawControllers = <int, TextEditingController>{};
+  final _newSetCtrls = <String, TextEditingController>{};
+  final _loggedFieldCtrls = <int, Map<String, TextEditingController>>{};
+  final _rawCtrls = <int, TextEditingController>{};
 
   LoggingVm get viewModel {
     final context = _context;
@@ -32,38 +32,35 @@ class LoggingFlow {
       loggedEntries: _loggedEntries(context),
       nextSetNumber: _nextSetNumber(context.selectedHistory),
       latestHistoryValue: _latestHistoryValue(context),
-      newSetControllers: Map<String, TextEditingController>.unmodifiable(
-        _newSetControllers,
+      newSetCtrls: Map<String, TextEditingController>.unmodifiable(
+        _newSetCtrls,
       ),
-      loggedControllers:
-          Map<int, Map<String, TextEditingController>>.unmodifiable({
-            for (final entry in _loggedFieldControllers.entries)
-              entry.key: Map<String, TextEditingController>.unmodifiable(
-                entry.value,
-              ),
-          }),
-      rawControllers: Map<int, TextEditingController>.unmodifiable(
-        _rawControllers,
-      ),
+      loggedCtrls: Map<int, Map<String, TextEditingController>>.unmodifiable({
+        for (final entry in _loggedFieldCtrls.entries)
+          entry.key: Map<String, TextEditingController>.unmodifiable(
+            entry.value,
+          ),
+      }),
+      rawCtrls: Map<int, TextEditingController>.unmodifiable(_rawCtrls),
     );
   }
 
   void update({
     required ParsedActiveSheet activeSheet,
-    required String historyBlockLabel,
+    required String blockLabel,
     required int primaryRow,
     required int selectedRow,
   }) {
     _activeSheet = activeSheet;
-    _historyBlockLabel = historyBlockLabel;
+    _blockLabel = blockLabel;
     _primaryRow = primaryRow;
     _selectedRow = selectedRow;
-    _syncControllers(_context);
+    _syncCtrls(_context);
   }
 
   ActiveSheetWritePlan? planSetSave() {
     final fieldValues = {
-      for (final entry in _newSetControllers.entries)
+      for (final entry in _newSetCtrls.entries)
         entry.key: entry.value.text.trim(),
     };
     if (fieldValues.values.every((value) => value.isEmpty)) {
@@ -71,20 +68,20 @@ class LoggingFlow {
     }
 
     return _activeSheet.planSetLoggingWrite(
-      historyBlockLabel: _historyBlockLabel,
+      blockLabel: _blockLabel,
       sheetRowNumber: _context.selectedChoice.sheetRowNumber,
       fieldValues: fieldValues,
     );
   }
 
   ActiveSheetWritePlan? planSetEdit(RowHistoryEntry entry) {
-    final controllers = _loggedFieldControllers[entry.setNumber];
+    final controllers = _loggedFieldCtrls[entry.setNumber];
     if (controllers == null) {
       return null;
     }
 
     return _activeSheet.planSetEdit(
-      historyBlockLabel: _historyBlockLabel,
+      blockLabel: _blockLabel,
       sheetRowNumber: _context.selectedChoice.sheetRowNumber,
       setNumber: entry.setNumber,
       fieldValues: {
@@ -96,71 +93,71 @@ class LoggingFlow {
 
   ActiveSheetWritePlan planRawSetEdit(RowHistoryEntry entry) {
     return _activeSheet.planRawSetEdit(
-      historyBlockLabel: _historyBlockLabel,
+      blockLabel: _blockLabel,
       sheetRowNumber: _context.selectedChoice.sheetRowNumber,
       setNumber: entry.setNumber,
-      rawText: _rawControllers[entry.setNumber]?.text ?? '',
+      rawText: _rawCtrls[entry.setNumber]?.text ?? '',
     );
   }
 
   ActiveSheetWritePlan planSetClear(RowHistoryEntry entry) {
     return _activeSheet.planSetClear(
-      historyBlockLabel: _historyBlockLabel,
+      blockLabel: _blockLabel,
       sheetRowNumber: _context.selectedChoice.sheetRowNumber,
       setNumber: entry.setNumber,
     );
   }
 
   void clearNewSets() {
-    for (final controller in _newSetControllers.values) {
+    for (final controller in _newSetCtrls.values) {
       controller.clear();
     }
   }
 
   void dispose() {
-    for (final controller in _newSetControllers.values) {
+    for (final controller in _newSetCtrls.values) {
       controller.dispose();
     }
-    for (final controllers in _loggedFieldControllers.values) {
+    for (final controllers in _loggedFieldCtrls.values) {
       for (final controller in controllers.values) {
         controller.dispose();
       }
     }
-    for (final controller in _rawControllers.values) {
+    for (final controller in _rawCtrls.values) {
       controller.dispose();
     }
   }
 
   ExerciseLoggingContext get _context {
     return _activeSheet.buildLoggingContext(
-      primarySheetRowNumber: _primaryRow,
-      selectedSheetRowNumber: _selectedRow,
-      historyBlockLabel: _historyBlockLabel,
+      primaryRow: _primaryRow,
+      selectedRow: _selectedRow,
+      blockLabel: _blockLabel,
     );
   }
 
-  void _syncControllers(ExerciseLoggingContext context) {
-    _syncNewSetControllers(context);
-    _syncLoggedControllers(context);
+  void _syncCtrls(ExerciseLoggingContext context) {
+    _syncNewSetCtrls(context);
+    _syncLoggedCtrls(context);
   }
 
-  void _syncNewSetControllers(ExerciseLoggingContext context) {
+  void _syncNewSetCtrls(ExerciseLoggingContext context) {
     final labels = switch (context.logFormat) {
       ParsedLogFormat(:final fieldLabels) => fieldLabels.toSet(),
       InvalidLogFormat() => <String>{},
     };
-    final removedLabels = _newSetControllers.keys
+    final removedLabels = _newSetCtrls.keys
         .where((label) => !labels.contains(label))
         .toList();
     for (final label in removedLabels) {
-      _newSetControllers.remove(label)?.dispose();
+      _newSetCtrls.remove(label)?.dispose();
     }
     for (final label in labels) {
-      _newSetControllers.putIfAbsent(label, TextEditingController.new);
+      _newSetCtrls.putIfAbsent(label, TextEditingController.new);
     }
   }
 
-  void _syncLoggedControllers(ExerciseLoggingContext context) {
+  void _syncLoggedCtrls(ExerciseLoggingContext context) {
     final nonEmptyEntries = _nonEmptyEntries(context);
     final activeSetNumbers = {
       for (final entry in nonEmptyEntries) entry.setNumber,
@@ -170,31 +167,31 @@ class LoggingFlow {
         if (entry.logEntry is RawLogEntry) entry.setNumber,
     };
 
-    final removedLoggedSets = _loggedFieldControllers.keys
+    final removedLoggedSets = _loggedFieldCtrls.keys
         .where((setNumber) => !activeSetNumbers.contains(setNumber))
         .toList();
     for (final setNumber in removedLoggedSets) {
-      _disposeSetControllers(setNumber);
+      _disposeSetCtrls(setNumber);
     }
 
-    final removedRawSetNumbers = _rawControllers.keys
+    final removedRawSetNumbers = _rawCtrls.keys
         .where((setNumber) => !rawSetNumbers.contains(setNumber))
         .toList();
     for (final setNumber in removedRawSetNumbers) {
-      _rawControllers.remove(setNumber)?.dispose();
+      _rawCtrls.remove(setNumber)?.dispose();
     }
 
     for (final setNumber in rawSetNumbers) {
-      _disposeSetControllers(setNumber);
+      _disposeSetCtrls(setNumber);
     }
 
     for (final entry in nonEmptyEntries) {
       final logEntry = entry.logEntry;
       if (logEntry is FormattedLogEntry) {
-        _syncSetControllers(entry.setNumber, logEntry);
+        _syncSetCtrls(entry.setNumber, logEntry);
         continue;
       }
-      final controller = _rawControllers.putIfAbsent(
+      final controller = _rawCtrls.putIfAbsent(
         entry.setNumber,
         TextEditingController.new,
       );
@@ -204,9 +201,9 @@ class LoggingFlow {
     }
   }
 
-  void _syncSetControllers(int setNumber, FormattedLogEntry logEntry) {
-    _rawControllers.remove(setNumber)?.dispose();
-    final controllers = _loggedFieldControllers.putIfAbsent(
+  void _syncSetCtrls(int setNumber, FormattedLogEntry logEntry) {
+    _rawCtrls.remove(setNumber)?.dispose();
+    final controllers = _loggedFieldCtrls.putIfAbsent(
       setNumber,
       () => <String, TextEditingController>{},
     );
@@ -229,8 +226,8 @@ class LoggingFlow {
     }
   }
 
-  void _disposeSetControllers(int setNumber) {
-    final controllers = _loggedFieldControllers.remove(setNumber);
+  void _disposeSetCtrls(int setNumber) {
+    final controllers = _loggedFieldCtrls.remove(setNumber);
     if (controllers == null) {
       return;
     }
@@ -277,18 +274,18 @@ class LoggingVm {
     required Iterable<RowHistoryEntry> loggedEntries,
     required this.nextSetNumber,
     required this.latestHistoryValue,
-    required this.newSetControllers,
-    required this.loggedControllers,
-    required this.rawControllers,
+    required this.newSetCtrls,
+    required this.loggedCtrls,
+    required this.rawCtrls,
   }) : loggedEntries = List<RowHistoryEntry>.unmodifiable(loggedEntries);
 
   final ExerciseLoggingContext context;
   final List<RowHistoryEntry> loggedEntries;
   final int nextSetNumber;
   final String? latestHistoryValue;
-  final Map<String, TextEditingController> newSetControllers;
-  final Map<int, Map<String, TextEditingController>> loggedControllers;
-  final Map<int, TextEditingController> rawControllers;
+  final Map<String, TextEditingController> newSetCtrls;
+  final Map<int, Map<String, TextEditingController>> loggedCtrls;
+  final Map<int, TextEditingController> rawCtrls;
 
   WorkoutChoice get selectedChoice => context.selectedChoice;
 }

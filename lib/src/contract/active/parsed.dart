@@ -6,7 +6,7 @@ class ParsedActiveSheet {
     Iterable<HistoryBlock> historyBlocks = const [],
     Iterable<WorkoutSlot> primarySlots = const [],
     Iterable<SchemaViolation> schemaViolations = const [],
-    Iterable<FormulaHealingIssue> formulaHealingIssues = const [],
+    Iterable<FormulaHealingIssue> healingIssues = const [],
     Map<String, int> exerciseFormulaColumns = const {},
     Iterable<Iterable<String>> rows = const [],
     Iterable<Iterable<String>> exercisesRows = const [],
@@ -15,9 +15,7 @@ class ParsedActiveSheet {
        historyBlocks = List<HistoryBlock>.unmodifiable(historyBlocks),
        primarySlots = List<WorkoutSlot>.unmodifiable(primarySlots),
        schemaViolations = List<SchemaViolation>.unmodifiable(schemaViolations),
-       formulaHealingIssues = List<FormulaHealingIssue>.unmodifiable(
-         formulaHealingIssues,
-       ),
+       healingIssues = List<FormulaHealingIssue>.unmodifiable(healingIssues),
        _exerciseFormulaColumns = Map<String, int>.unmodifiable(
          exerciseFormulaColumns,
        ),
@@ -33,7 +31,7 @@ class ParsedActiveSheet {
   final List<HistoryBlock> historyBlocks;
   final List<WorkoutSlot> primarySlots;
   final List<SchemaViolation> schemaViolations;
-  final List<FormulaHealingIssue> formulaHealingIssues;
+  final List<FormulaHealingIssue> healingIssues;
   final Map<String, int> _exerciseFormulaColumns;
   final List<List<String>> _rows;
   final List<List<String>> _exercisesRows;
@@ -59,34 +57,33 @@ class ParsedActiveSheet {
   /// Builds the overview for one workout in parsed active-sheet order.
   ///
   /// Callers should pass a [workout] selected from [selectableWorkouts] and a
-  /// [historyBlockLabel] selected from [historyBlocks]. The returned slot row
+  /// [blockLabel] selected from [historyBlocks]. The returned slot row
   /// numbers are the only supported primary-row inputs for
   /// [buildLoggingContext].
   WorkoutOverview buildWorkoutOverview({
     required String workout,
-    required String historyBlockLabel,
+    required String blockLabel,
   }) {
-    return _WorkoutReadModelBuilder(this).buildWorkoutOverview(
-      workout: workout,
-      historyBlockLabel: historyBlockLabel,
-    );
+    return _WorkoutReadModelBuilder(
+      this,
+    ).buildWorkoutOverview(workout: workout, blockLabel: blockLabel);
   }
 
   /// Builds the row-local logging context for one primary row and choice.
   ///
-  /// [primarySheetRowNumber] must identify a primary row returned by
-  /// [buildWorkoutOverview]. [selectedSheetRowNumber] must be either that same
+  /// [primaryRow] must identify a primary row returned by
+  /// [buildWorkoutOverview]. [selectedRow] must be either that same
   /// primary row or one of the backup row numbers exposed in the returned
   /// logging choices for that primary row.
   ExerciseLoggingContext buildLoggingContext({
-    required int primarySheetRowNumber,
-    required int selectedSheetRowNumber,
-    required String historyBlockLabel,
+    required int primaryRow,
+    required int selectedRow,
+    required String blockLabel,
   }) {
     return _WorkoutReadModelBuilder(this).buildLoggingContext(
-      primarySheetRowNumber: primarySheetRowNumber,
-      selectedSheetRowNumber: selectedSheetRowNumber,
-      historyBlockLabel: historyBlockLabel,
+      primaryRow: primaryRow,
+      selectedRow: selectedRow,
+      blockLabel: blockLabel,
     );
   }
 
@@ -112,12 +109,12 @@ class ParsedActiveSheet {
   /// numbers or missing history blocks return an empty plan instead of leaking
   /// row-validity checks into callers.
   ActiveSheetWritePlan planSetLoggingWrite({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required Map<String, String> fieldValues,
   }) {
     return _WritePlanner(this).planSetLoggingWrite(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       fieldValues: fieldValues,
     );
@@ -125,13 +122,13 @@ class ParsedActiveSheet {
 
   /// Plans an edit for an existing visible set cell on a parsed exercise row.
   ActiveSheetWritePlan planSetEdit({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
     required Map<String, String> fieldValues,
   }) {
     return _WritePlanner(this).planSetEdit(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
       fieldValues: fieldValues,
@@ -140,13 +137,13 @@ class ParsedActiveSheet {
 
   /// Plans a raw-text edit for an existing visible set cell.
   ActiveSheetWritePlan planRawSetEdit({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
     required String rawText,
   }) {
     return _WritePlanner(this).planRawSetEdit(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
       rawText: rawText,
@@ -155,12 +152,12 @@ class ParsedActiveSheet {
 
   /// Plans a clear for an existing visible set cell on a parsed exercise row.
   ActiveSheetWritePlan planSetClear({
-    required String historyBlockLabel,
+    required String blockLabel,
     required int sheetRowNumber,
     required int setNumber,
   }) {
     return _WritePlanner(this).planSetClear(
-      historyBlockLabel: historyBlockLabel,
+      blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
       setNumber: setNumber,
     );
@@ -206,21 +203,19 @@ class ParsedActiveSheet {
   }
 
   ActiveSheetWritePlan planBackupPlacement({
-    required int primarySheetRowNumber,
+    required int primaryRow,
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
     return _WritePlanner(this).planBackupPlacement(
-      primarySheetRowNumber: primarySheetRowNumber,
+      primaryRow: primaryRow,
       exercise: exercise,
       metadata: metadata,
     );
   }
 
-  ActiveSheetWritePlan planDeletePrimary({required int primarySheetRowNumber}) {
-    return _WritePlanner(
-      this,
-    ).planDeletePrimary(primarySheetRowNumber: primarySheetRowNumber);
+  ActiveSheetWritePlan planDeletePrimary({required int primaryRow}) {
+    return _WritePlanner(this).planDeletePrimary(primaryRow: primaryRow);
   }
 
   ActiveSheetWritePlan planFormulaHealing({

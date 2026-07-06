@@ -179,13 +179,13 @@ void main() {
       );
       expect(
         activeSheet
-            .buildWorkoutOverview(workout: 'Legs', historyBlockLabel: 'Week 1')
+            .buildWorkoutOverview(workout: 'Legs', blockLabel: 'Week 1')
             .slots
             .single
             .setCount,
         1,
       );
-      expect(activeSheet.formulaHealingIssues, isEmpty);
+      expect(activeSheet.healingIssues, isEmpty);
     },
   );
 }

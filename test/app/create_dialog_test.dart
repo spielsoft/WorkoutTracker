@@ -9,8 +9,8 @@ void main() {
   testWidgets('create sheet name starts selected so typing replaces default', (
     tester,
   ) async {
-    final picker = _RecordingSpreadsheetPicker();
-    final service = TestSpreadsheetValidationService.fromRows([
+    final picker = _RecordingSheetPicker();
+    final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
       ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
@@ -73,16 +73,16 @@ void _replaceSelectionWithText(
   );
 }
 
-class _RecordingSpreadsheetPicker implements SpreadsheetPicker {
+class _RecordingSheetPicker implements SheetPicker {
   final createNames = <String?>[];
 
   @override
-  PickerAvailability get availability {
-    return const PickerAvailability.available();
+  PickerAvail get availability {
+    return const PickerAvail.available();
   }
 
   @override
-  Future<SelectedSpreadsheet?> chooseSpreadsheet() async {
+  Future<SelectedSheet?> chooseSheet() async {
     return null;
   }
 
@@ -92,15 +92,13 @@ class _RecordingSpreadsheetPicker implements SpreadsheetPicker {
   }
 
   @override
-  Future<SelectedSpreadsheet?> createSpreadsheet({String? name}) async {
+  Future<SelectedSheet?> createSheet({String? name}) async {
     createNames.add(name);
     return null;
   }
 
   @override
-  Future<SelectedSpreadsheet> resolveSelection(
-    SelectedSpreadsheet selected,
-  ) async {
+  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
     return selected;
   }
 }

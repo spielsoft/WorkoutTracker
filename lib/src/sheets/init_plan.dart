@@ -3,10 +3,10 @@ import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'client.dart';
 import 'template.dart';
 
-class WorkbookTabPlan {
-  WorkbookTabPlan({
+class WbkTabPlan {
+  WbkTabPlan({
     required int sheetId,
-    required WorkbookTab tab,
+    required WbkTab tab,
     required int frozenRowCount,
   }) : operations = List<SheetsWorkbookOperation>.unmodifiable(
          _initOps(
@@ -71,7 +71,7 @@ class WorkbookTabPlan {
   final List<SheetsWorkbookOperation> operations;
 }
 
-int usableRowCount(WorkbookTab tab) {
+int usableRowCount(WbkTab tab) {
   final minimumRows = tab.title == 'Exercises' ? 25 : 50;
   return tab.rows.length > minimumRows ? tab.rows.length : minimumRows;
 }

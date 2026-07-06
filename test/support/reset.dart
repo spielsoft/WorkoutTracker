@@ -6,7 +6,7 @@ const workoutTrackerDevelopmentSpreadsheetId =
 class DevelopmentSheetResetHarness {
   DevelopmentSheetResetHarness({required this.initializer});
 
-  final WorkbookInit initializer;
+  final WbkInit initializer;
 
   Future<void> reset({
     String spreadsheetId = workoutTrackerDevelopmentSpreadsheetId,
@@ -19,7 +19,7 @@ class DevelopmentSheetResetHarness {
       );
     }
 
-    final workbook = await loadWorkbookTemplate();
+    final workbook = await loadWbkTmpl();
     await initializer.initializeWorkbook(
       spreadsheetId: spreadsheetId,
       workbook: workbook,

@@ -4,16 +4,16 @@ import 'client.dart';
 import 'init_plan.dart';
 import 'template.dart';
 
-abstract interface class WorkbookInit {
+abstract interface class WbkInit {
   Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required Workbook workbook,
+    required Wbk workbook,
   });
 }
 
-class GoogleApisWorkbookInit implements WorkbookInit {
-  GoogleApisWorkbookInit(this._api, {SheetsWorkbookClient? workbookClient})
-    : _workbookClient = workbookClient ?? GoogleApisWorkbookClient(_api);
+class GoogleApisWbkInit implements WbkInit {
+  GoogleApisWbkInit(this._api, {SheetsWorkbookClient? workbookClient})
+    : _workbookClient = workbookClient ?? GoogleApisWbkClient(_api);
 
   final sheets.SheetsApi _api;
   final SheetsWorkbookClient _workbookClient;
@@ -23,7 +23,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
   @override
   Future<void> initializeWorkbook({
     required String spreadsheetId,
-    required Workbook workbook,
+    required Wbk workbook,
   }) async {
     final targets = await _ensureTargets(spreadsheetId, workbook);
     await _rewriteSheet(
@@ -42,7 +42,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
 
   Future<_InitTargets> _ensureTargets(
     String spreadsheetId,
-    Workbook workbook,
+    Wbk workbook,
   ) async {
     var shape = await _fetchSpreadsheetShape(spreadsheetId);
     if (shape.sheets.isEmpty) {
@@ -111,7 +111,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
   Future<void> _rewriteSheet({
     required String spreadsheetId,
     required _SheetShape target,
-    required WorkbookTab tab,
+    required WbkTab tab,
     required int frozenRowCount,
   }) async {
     await _api.spreadsheets.values.clear(
@@ -121,7 +121,7 @@ class GoogleApisWorkbookInit implements WorkbookInit {
       $fields: 'spreadsheetId,clearedRange',
     );
 
-    final plan = WorkbookTabPlan(
+    final plan = WbkTabPlan(
       sheetId: target.sheetId,
       tab: tab,
       frozenRowCount: frozenRowCount,
