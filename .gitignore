@@ -36,6 +36,9 @@ migrate_working_dir/
 # Local Google credential exports and API keys.
 local_google_credentials/*.json
 
+# Local agent transcript/cache artifacts.
+.subagent-tools/
+
 # Symbolication related
 app.*.symbols
 
