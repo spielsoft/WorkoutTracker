@@ -1,27 +1,25 @@
-part of 'shell.dart';
+import 'package:flutter/material.dart';
+import 'package:workout_tracker/contract.dart';
 
-class _ExerciseLibrary extends StatelessWidget {
-  const _ExerciseLibrary({
-    required this.sheetLabel,
-    required this.exercises,
-    required this.highlightedRow,
-    required this.onBack,
-    required this.onAddExercise,
-    required this.onEditExercise,
-    required this.onReorderExercises,
+import 'ui/flow.dart';
+import 'ui/shared/a11y.dart';
+import 'ui/shared/header.dart';
+import 'ui/shared/status.dart';
+
+class ExerciseLibraryScreen extends StatelessWidget {
+  const ExerciseLibraryScreen({
+    required this.view,
+    required this.run,
+    super.key,
   });
 
-  final String sheetLabel;
-  final List<CanonicalExercise> exercises;
-  final int? highlightedRow;
-  final VoidCallback onBack;
-  final VoidCallback? onAddExercise;
-  final ValueChanged<CanonicalExercise>? onEditExercise;
-  final Future<bool> Function(ReorderIntent intent)? onReorderExercises;
+  final LibraryView view;
+  final Future<CmdResult> Function(ExerciseCmd cmd) run;
 
   @override
   Widget build(BuildContext context) {
-    final highlightedRow = this.highlightedRow;
+    final exercises = view.setup.activeSheet.canonicalExercises;
+    final highlightedRow = view.highlightedRow;
     if (highlightedRow != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final highlightedContext = _highlightedExerciseKey.currentContext;
@@ -34,23 +32,23 @@ class _ExerciseLibrary extends StatelessWidget {
         }
       });
     }
-    return _A11yScreen(
+    return A11yScreen(
       label: 'Edit exercise library',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ScreenHeader(
-            title: sheetLabel,
+          ScreenHeader(
+            title: view.sheetLabel,
             subtitle: 'Edit exercises',
             compactTitle: true,
             backTooltip: 'Back to workout setup',
-            onBack: onBack,
-            trailing: onAddExercise == null
+            onBack: () => run(const CloseLibrary()),
+            trailing: view.isBusy
                 ? null
                 : IconButton.filled(
                     key: const ValueKey('add-canonical-exercise'),
                     tooltip: 'Create exercise',
-                    onPressed: onAddExercise,
+                    onPressed: () => run(const OpenExerciseCreate()),
                     icon: const Icon(Icons.add_outlined),
                   ),
           ),
@@ -58,8 +56,8 @@ class _ExerciseLibrary extends StatelessWidget {
           Text('Edit exercises', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           if (exercises.isEmpty)
-            const _StCallout(
-              state: _WorkoutVisualSt.current,
+            const StCallout(
+              state: VisualSt.current,
               icon: Icons.fitness_center_outlined,
               title: 'No exercises in this sheet.',
               children: [Text('The exercise library is empty.')],
@@ -70,11 +68,13 @@ class _ExerciseLibrary extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: exercises.length,
-              onReorderItem: onReorderExercises == null
+              onReorderItem: view.isBusy
                   ? (_, _) {}
                   : (oldIndex, newIndex) {
-                      onReorderExercises!(
-                        ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
+                      run(
+                        ReorderExercises(
+                          ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
+                        ),
                       );
                     },
               itemBuilder: (context, index) {
@@ -91,10 +91,10 @@ class _ExerciseLibrary extends StatelessWidget {
                     index: index,
                     exercise: exercise,
                     isHighlighted: isHighlighted,
-                    canReorder: onReorderExercises != null,
-                    onTap: onEditExercise == null
+                    canReorder: !view.isBusy,
+                    onTap: view.isBusy
                         ? null
-                        : () => onEditExercise!(exercise),
+                        : () => run(OpenExerciseEdit(exercise)),
                   ),
                 );
               },

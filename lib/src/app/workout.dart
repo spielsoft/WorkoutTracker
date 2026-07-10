@@ -242,17 +242,7 @@ class WorkoutScreens extends StatelessWidget {
 
   Widget _library() {
     final library = view as LibraryView;
-    return _ExerciseLibrary(
-      sheetLabel: view.sheetLabel,
-      exercises: view.setup.activeSheet.canonicalExercises,
-      highlightedRow: library.highlightedRow,
-      onBack: () => run(const BackToSetup()),
-      onAddExercise: view.isBusy ? null : () => run(const OpenExerciseCreate()),
-      onEditExercise: view.isBusy
-          ? null
-          : (exercise) => run(OpenExerciseEdit(exercise)),
-      onReorderExercises: view.isBusy ? null : _reorderExercises,
-    );
+    return ExerciseLibraryScreen(view: library, run: (cmd) => run(cmd));
   }
 
   Widget _create() {
@@ -311,10 +301,6 @@ class WorkoutScreens extends StatelessWidget {
 
   Future<bool> _reorderWorkout(ReorderIntent intent) async {
     return (await run(ReorderWorkout(intent))).ok;
-  }
-
-  Future<bool> _reorderExercises(ReorderIntent intent) async {
-    return (await run(ReorderExercises(intent))).ok;
   }
 
   Future<void> _addWorkout(BuildContext context) async {

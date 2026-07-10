@@ -3,47 +3,32 @@ part of 'shell.dart';
 enum _WorkoutVisualSt { logged, current, backup, warning, error }
 
 class _StChip extends StatelessWidget {
-  const _StChip({
-    required this.state,
-    required this.label,
-    this.emphasized = false,
-  });
+  const _StChip({required this.state, required this.label});
 
   final _WorkoutVisualSt state;
   final String label;
-  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
     final style = _stateStyle(Theme.of(context).colorScheme, state);
-    final textStyle =
-        (emphasized
-                ? Theme.of(context).textTheme.labelLarge
-                : Theme.of(context).textTheme.labelMedium)
-            ?.copyWith(color: style.foreground, fontWeight: FontWeight.w700);
+    final textStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
+      color: style.foreground,
+      fontWeight: FontWeight.w700,
+    );
     return _A11yStatus(
       label: label,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: emphasized
-              ? style.background
-              : style.background.withValues(alpha: 0.55),
+          color: style.background.withValues(alpha: 0.55),
           border: Border.all(color: style.border),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: emphasized ? 10 : 8,
-            vertical: emphasized ? 6 : 5,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                style.icon,
-                size: emphasized ? 16 : 14,
-                color: style.foreground,
-              ),
+              Icon(style.icon, size: 14, color: style.foreground),
               const SizedBox(width: 5),
               Flexible(
                 child: Text(
@@ -58,77 +43,6 @@ class _StChip extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _StCallout extends StatelessWidget {
-  const _StCallout({
-    required this.state,
-    required this.icon,
-    required this.title,
-    required this.children,
-  });
-
-  final _WorkoutVisualSt state;
-  final IconData icon;
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = _stateStyle(Theme.of(context).colorScheme, state);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: style.background,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: style.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                _StChip(
-                  state: state,
-                  label: _stateLabel(state),
-                  emphasized: true,
-                ),
-                Icon(icon, color: style.foreground),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: style.foreground,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-String _stateLabel(_WorkoutVisualSt state) {
-  switch (state) {
-    case _WorkoutVisualSt.logged:
-      return 'Logged';
-    case _WorkoutVisualSt.current:
-      return 'Current';
-    case _WorkoutVisualSt.backup:
-      return 'Backup';
-    case _WorkoutVisualSt.warning:
-      return 'Warning';
-    case _WorkoutVisualSt.error:
-      return 'Error';
   }
 }
 

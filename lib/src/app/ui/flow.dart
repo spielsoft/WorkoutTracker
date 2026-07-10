@@ -339,6 +339,10 @@ sealed class ExerciseCmd extends UiCmd {
   const ExerciseCmd();
 }
 
+final class CloseLibrary extends ExerciseCmd {
+  const CloseLibrary();
+}
+
 final class OpenExerciseCreate extends ExerciseCmd {
   const OpenExerciseCreate();
 }
@@ -558,6 +562,7 @@ class AppFlow extends ChangeNotifier implements UiFlow {
       ),
       SelectLogRow(:final sheetRow) => _selectLogRow(sheetRow),
       ExecuteWbk(:final cmd) => CmdResult._(await _ctrl.execute(cmd), null),
+      CloseLibrary() => _backToSetup(),
       OpenExerciseCreate() => _openExerciseCreate(),
       CloseExerciseCreate() => _closeExerciseCreate(),
       OpenExerciseEdit(:final exercise) => _openExerciseEdit(exercise),

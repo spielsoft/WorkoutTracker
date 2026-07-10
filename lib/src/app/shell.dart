@@ -10,6 +10,7 @@ import 'validation.dart';
 import 'selection.dart';
 import 'controller.dart';
 import 'exercise_form.dart';
+import 'exercise_library.dart';
 import 'logging.dart';
 import 'repair.dart';
 import 'ui/flow.dart';
@@ -17,7 +18,6 @@ import 'ui/sheet.dart';
 import 'ui/shared/name_dialog.dart';
 
 part 'workout.dart';
-part 'exercise_library.dart';
 part 'states.dart';
 part 'a11y.dart';
 
