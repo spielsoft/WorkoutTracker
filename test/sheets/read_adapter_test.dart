@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/sheets.dart';
-import 'package:workout_tracker/format.dart';
 
 void main() {
   test(
@@ -188,6 +188,31 @@ void main() {
       expect(activeSheet.healingIssues, isEmpty);
     },
   );
+
+  test('reports a missing Exercises tab to the contract parser', () async {
+    final adapter = SheetsReadAdapter(
+      client: _FakeSheetsWorkbookClient(
+        SheetsWorkbookSnapshot(
+          sheets: [
+            SheetsGridSnapshot(
+              sheet: const SheetsSheetIdentity(
+                sheetId: 42,
+                title: 'Active Workout',
+              ),
+              rows: [activeSheetFixedColumns],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final parsed = await adapter.readParsedActiveSheet('spreadsheet-id');
+
+    expect(
+      parsed.schemaViolations.map((issue) => issue.message),
+      contains('The Exercises tab is missing.'),
+    );
+  });
 }
 
 class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {

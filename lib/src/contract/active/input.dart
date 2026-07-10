@@ -33,7 +33,8 @@ class ActiveSheetInput {
   ActiveSheetInput({
     required Iterable<Iterable<String>> rows,
     Iterable<CellFormula> cellFormulas = const [],
-    Iterable<Iterable<String>> exercisesRows = const [],
+    Iterable<Iterable<String>> exercisesRows = const [exercisesSheetColumns],
+    this.hasExercisesSheet = true,
     Set<int> mergedFirstColumnRows = const {},
   }) : rows = List<List<String>>.unmodifiable(
          rows.map((row) => List<String>.unmodifiable(row)),
@@ -47,6 +48,7 @@ class ActiveSheetInput {
   final List<List<String>> rows;
   final List<CellFormula> cellFormulas;
   final List<List<String>> exercisesRows;
+  final bool hasExercisesSheet;
 
   /// 1-based sheet row numbers whose first display cell is merged for humans.
   final Set<int> mergedFirstColumnRows;

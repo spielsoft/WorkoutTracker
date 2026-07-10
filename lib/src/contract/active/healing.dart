@@ -451,11 +451,11 @@ List<_FormulaDrivenColumn> _formulaDrivenColumns(
       activeSheetColumnIndex: active.exercise,
       exerciseColumnIndex: exercises.exercise,
     ),
-    if (active.logFormat != null && exercises.logFormat != null)
+    if (active.logFormat != null)
       _FormulaDrivenColumn(
         activeColumnName: 'Log Format',
         activeSheetColumnIndex: active.logFormat!,
-        exerciseColumnIndex: exercises.logFormat!,
+        exerciseColumnIndex: exercises.logFormat,
       ),
   ];
 }

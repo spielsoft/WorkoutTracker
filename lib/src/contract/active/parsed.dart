@@ -8,6 +8,7 @@ class ParsedActiveSheet {
     Iterable<SchemaViolation> schemaViolations = const [],
     Iterable<FormulaHealingIssue> healingIssues = const [],
     Map<String, int> exerciseFormulaColumns = const {},
+    this._exerciseColumns,
     Iterable<Iterable<String>> rows = const [],
     Iterable<Iterable<String>> exercisesRows = const [],
     Iterable<CellFormula> cellFormulas = const [],
@@ -33,6 +34,7 @@ class ParsedActiveSheet {
   final List<SchemaViolation> schemaViolations;
   final List<FormulaHealingIssue> healingIssues;
   final Map<String, int> _exerciseFormulaColumns;
+  final _ExercisesColumnIndexes? _exerciseColumns;
   final List<List<String>> _rows;
   final List<List<String>> _exercisesRows;
   final List<CellFormula> _cellFormulas;

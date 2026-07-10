@@ -570,11 +570,9 @@ class _ExerciseWritePlanner {
   }
 
   List<String> _exerciseValues(ExerciseDef exercise) {
-    final header = context.sheet._exercisesRows.isEmpty
-        ? exercisesSheetColumns
-        : context.sheet._exercisesRows.first;
-    final columns = _ExercisesColumnIndexes.fromHeader(header);
-    final logFormatColumn = columns.logFormat ?? 8;
+    final header = context.sheet._exercisesRows.first;
+    final columns = context.sheet._exerciseColumns!;
+    final logFormatColumn = columns.logFormat;
     final row = List.filled(_exerciseRowWidth(header, logFormatColumn), '');
     _setRowValue(row, columns.exercise, exercise.exercise);
     _setRowValue(row, columns.description, exercise.description);

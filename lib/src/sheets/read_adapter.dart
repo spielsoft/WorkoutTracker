@@ -34,6 +34,7 @@ class SheetsReadAdapter {
         ),
       ),
       exercisesRows: _sheetByTitle(workbook, 'Exercises')?.rows ?? const [],
+      hasExercisesSheet: exercisesSheetMetadata != null,
       mergedFirstColumnRows: activeSheet.mergedFirstColumnRows,
     );
   }

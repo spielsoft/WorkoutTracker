@@ -1186,6 +1186,8 @@ class _WritePlanner {
 
   final _WritePlanningContext _context;
 
+  bool get _blocked => _context.sheet.schemaViolations.isNotEmpty;
+
   late final _BlockWritePlanner _historyBlocks = _BlockWritePlanner(_context);
   late final _ExerciseWritePlanner _canonicalExercises = _ExerciseWritePlanner(
     _context,
@@ -1199,6 +1201,7 @@ class _WritePlanner {
   );
 
   ActiveSheetWritePlan planNewHistoryBlock({required String label}) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _historyBlocks.planNewHistoryBlock(label: label);
   }
 
@@ -1206,6 +1209,7 @@ class _WritePlanner {
     required String label,
     required int throughSetNumber,
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _historyBlocks.planHistoryBlockGrowth(
       label: label,
       throughSetNumber: throughSetNumber,
@@ -1213,6 +1217,7 @@ class _WritePlanner {
   }
 
   ExercisesWritePlan planCanonicalAppend(ExerciseDef exercise) {
+    if (_blocked) return ExercisesWritePlan();
     return _canonicalExercises.planCanonicalAppend(exercise);
   }
 
@@ -1220,6 +1225,7 @@ class _WritePlanner {
     required CanonicalExercise selectedExercise,
     required ExerciseDef exercise,
   }) {
+    if (_blocked) return ExercisesWritePlan();
     return _canonicalExercises.planCanonicalUpdate(
       selectedExercise: selectedExercise,
       exercise: exercise,
@@ -1227,6 +1233,7 @@ class _WritePlanner {
   }
 
   ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
+    if (_blocked) return ExercisesWritePlan();
     return _canonicalExercises.planCanonicalReorder(intent);
   }
 
@@ -1234,6 +1241,7 @@ class _WritePlanner {
     required String workout,
     required ReorderIntent intent,
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _workoutRows.planExerciseReorder(workout: workout, intent: intent);
   }
 
@@ -1242,6 +1250,7 @@ class _WritePlanner {
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _workoutRows.planPrimaryPlacement(
       exercise: exercise,
       workout: workout,
@@ -1254,6 +1263,7 @@ class _WritePlanner {
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _workoutRows.planBackupPlacement(
       primaryRow: primaryRow,
       exercise: exercise,
@@ -1262,6 +1272,7 @@ class _WritePlanner {
   }
 
   ActiveSheetWritePlan planDeletePrimary({required int primaryRow}) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _workoutRows.planDeletePrimary(primaryRow: primaryRow);
   }
 
@@ -1270,6 +1281,7 @@ class _WritePlanner {
     required int sheetRowNumber,
     required Map<String, String> fieldValues,
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _sets.planSetLoggingWrite(
       blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
@@ -1283,6 +1295,7 @@ class _WritePlanner {
     required int setNumber,
     required Map<String, String> fieldValues,
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _sets.planSetEdit(
       blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
@@ -1297,6 +1310,7 @@ class _WritePlanner {
     required int setNumber,
     required String rawText,
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _sets.planRawSetEdit(
       blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,
@@ -1310,6 +1324,7 @@ class _WritePlanner {
     required int sheetRowNumber,
     required int setNumber,
   }) {
+    if (_blocked) return ActiveSheetWritePlan();
     return _sets.planSetClear(
       blockLabel: blockLabel,
       sheetRowNumber: sheetRowNumber,

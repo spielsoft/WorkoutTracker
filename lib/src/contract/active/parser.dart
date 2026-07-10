@@ -1,13 +1,32 @@
 part of '../active.dart';
 
 ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
+  final exerciseViolations = _exerciseColumnViolations(sheet);
+  final exerciseColumns = exerciseViolations.isEmpty
+      ? _ExercisesColumnIndexes.fromHeader(sheet.exercisesRows.first)
+      : null;
   if (sheet.rows.isEmpty) {
-    return ParsedActiveSheet._(slots: const []);
+    return ParsedActiveSheet._(
+      slots: const [],
+      schemaViolations: [
+        const SchemaViolation(
+          sheetRowNumber: 1,
+          workout: defaultWorkoutName,
+          message: 'The active sheet is empty and has no header row.',
+        ),
+        ...exerciseViolations,
+      ],
+      exerciseColumns: exerciseColumns,
+      rows: sheet.rows,
+      exercisesRows: sheet.exercisesRows,
+      cellFormulas: sheet.cellFormulas,
+    );
   }
 
   final columns = _FixedColumnIndexes.fromHeader(sheet.rows.first);
   final schemaViolations = <SchemaViolation>[
     ..._fixedColumnViolations(sheet.rows.first),
+    ...exerciseViolations,
     ..._historyBlockViolations(
       header: sheet.rows.first,
       setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
@@ -92,20 +111,71 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     primarySlots: primarySlotBuilders.map((builder) => builder.toSlot()),
     schemaViolations: schemaViolations,
     healingIssues: _healingIssues(sheet, columns),
-    exerciseFormulaColumns: sheet.exercisesRows.isEmpty
+    exerciseFormulaColumns: exerciseColumns == null
         ? const {}
         : {
             for (final formulaColumn in _formulaDrivenColumns(
               columns,
-              _ExercisesColumnIndexes.fromHeader(sheet.exercisesRows.first),
+              exerciseColumns,
             ))
               formulaColumn.activeColumnName:
                   formulaColumn.exerciseColumnIndex + 1,
           },
+    exerciseColumns: exerciseColumns,
     rows: sheet.rows,
     exercisesRows: sheet.exercisesRows,
     cellFormulas: sheet.cellFormulas,
   );
+}
+
+List<SchemaViolation> _exerciseColumnViolations(ActiveSheetInput sheet) {
+  if (!sheet.hasExercisesSheet) {
+    return const [
+      SchemaViolation(
+        sheetRowNumber: 1,
+        workout: defaultWorkoutName,
+        message: 'The Exercises tab is missing.',
+      ),
+    ];
+  }
+  if (sheet.exercisesRows.isEmpty) {
+    return const [
+      SchemaViolation(
+        sheetRowNumber: 1,
+        workout: defaultWorkoutName,
+        message: 'The Exercises tab is empty and has no header row.',
+      ),
+    ];
+  }
+
+  final header = sheet.exercisesRows.first;
+  final violations = <SchemaViolation>[];
+  for (var i = 0; i < exercisesSheetColumns.length; i += 1) {
+    final expected = exercisesSheetColumns[i];
+    if (_cell(header, i) == expected) {
+      continue;
+    }
+    violations.add(
+      SchemaViolation(
+        sheetRowNumber: 1,
+        workout: defaultWorkoutName,
+        message: 'Exercises column ${i + 1} must be "$expected".',
+      ),
+    );
+  }
+  for (var i = exercisesSheetColumns.length; i < header.length; i += 1) {
+    if (_cell(header, i).trim().isEmpty) {
+      continue;
+    }
+    violations.add(
+      SchemaViolation(
+        sheetRowNumber: 1,
+        workout: defaultWorkoutName,
+        message: 'Exercises has an unsupported column "${header[i]}".',
+      ),
+    );
+  }
+  return violations;
 }
 
 List<SchemaViolation> _fixedColumnViolations(List<String> header) {
@@ -333,7 +403,7 @@ class _ExercisesColumnIndexes {
       defaultRest: indexes['Default Rest'] ?? 5,
       defaultTempo: indexes['Default Tempo'] ?? 6,
       notes: indexes['Notes'] ?? 7,
-      logFormat: indexes['Log Format'],
+      logFormat: indexes['Log Format']!,
     );
   }
 
@@ -345,5 +415,5 @@ class _ExercisesColumnIndexes {
   final int defaultRest;
   final int defaultTempo;
   final int notes;
-  final int? logFormat;
+  final int logFormat;
 }

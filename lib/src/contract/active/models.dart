@@ -150,12 +150,10 @@ class _WorkoutReadModelBuilder {
   }
 
   List<CanonicalExercise> get canonicalExercises {
-    if (sheet._exercisesRows.length < 2) {
+    final columns = sheet._exerciseColumns;
+    if (columns == null || sheet._exercisesRows.length < 2) {
       return const [];
     }
-    final columns = _ExercisesColumnIndexes.fromHeader(
-      sheet._exercisesRows.first,
-    );
     return [
       for (
         var rowIndex = 1;
@@ -194,9 +192,7 @@ class _WorkoutReadModelBuilder {
               columns.defaultTempo,
             ),
             notes: _cell(sheet._exercisesRows[rowIndex], columns.notes),
-            logFormat: columns.logFormat == null
-                ? defaultExerciseLogFormat
-                : _cell(sheet._exercisesRows[rowIndex], columns.logFormat!),
+            logFormat: _cell(sheet._exercisesRows[rowIndex], columns.logFormat),
           ),
     ];
   }

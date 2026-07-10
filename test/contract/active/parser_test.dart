@@ -360,4 +360,64 @@ void main() {
       ]);
     },
   );
+
+  test('rejects an empty active sheet', () {
+    final sheet = parseActiveSheet(ActiveSheetInput(rows: const []));
+
+    expect(
+      sheet.schemaViolations.map((issue) => issue.message),
+      contains('The active sheet is empty and has no header row.'),
+    );
+  });
+
+  test('rejects missing, empty, and malformed Exercises tabs', () {
+    final missing = parseActiveSheet(
+      ActiveSheetInput(
+        rows: const [activeSheetFixedColumns],
+        exercisesRows: const [],
+        hasExercisesSheet: false,
+      ),
+    );
+    final empty = parseActiveSheet(
+      ActiveSheetInput(
+        rows: const [activeSheetFixedColumns],
+        exercisesRows: const [],
+      ),
+    );
+    final malformed = parseActiveSheet(
+      ActiveSheetInput(
+        rows: const [activeSheetFixedColumns],
+        exercisesRows: const [
+          [
+            'Description',
+            'Exercise',
+            'Default Sets',
+            'Default Reps',
+            'Default RPE',
+            'Default Rest',
+            'Default Tempo',
+            'Notes',
+            'Log Format',
+          ],
+        ],
+      ),
+    );
+
+    expect(
+      missing.schemaViolations.map((issue) => issue.message),
+      contains('The Exercises tab is missing.'),
+    );
+    expect(
+      empty.schemaViolations.map((issue) => issue.message),
+      contains('The Exercises tab is empty and has no header row.'),
+    );
+    expect(malformed.schemaViolations, hasLength(2));
+    expect(malformed.canonicalExercises, isEmpty);
+    expect(
+      malformed
+          .planCanonicalAppend(const ExerciseDef(exercise: 'Squat'))
+          .rowAppends,
+      isEmpty,
+    );
+  });
 }
