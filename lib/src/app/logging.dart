@@ -9,7 +9,7 @@ class _LogScreen extends StatefulWidget {
     required this.selectedRow,
     required this.onChoiceChanged,
     required this.onClose,
-    required this.onApplyWritePlan,
+    required this.onExecute,
   });
 
   final String sheetLabel;
@@ -19,7 +19,7 @@ class _LogScreen extends StatefulWidget {
   final int selectedRow;
   final ValueChanged<int> onChoiceChanged;
   final VoidCallback onClose;
-  final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
+  final Future<bool> Function(WbkCmd cmd) onExecute;
 
   @override
   State<_LogScreen> createState() => _LogScreenSt();
@@ -77,7 +77,7 @@ class _LogScreenSt extends State<_LogScreen> {
     }
 
     await _runWrite(() async {
-      final saved = await widget.onApplyWritePlan(plan);
+      final saved = await widget.onExecute(plan);
       if (!saved) {
         return false;
       }
@@ -112,7 +112,7 @@ class _LogScreenSt extends State<_LogScreen> {
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
     await _runWrite(() async {
-      return widget.onApplyWritePlan(_flow.planRawSetEdit(entry));
+      return widget.onExecute(_flow.planRawSetEdit(entry));
     });
   }
 
@@ -125,13 +125,13 @@ class _LogScreenSt extends State<_LogScreen> {
       return;
     }
     await _runWrite(() async {
-      return widget.onApplyWritePlan(plan);
+      return widget.onExecute(plan);
     });
   }
 
   Future<void> _clearSet(RowHistoryEntry entry) async {
     await _runWrite(() async {
-      return widget.onApplyWritePlan(_flow.planSetClear(entry));
+      return widget.onExecute(_flow.planSetClear(entry));
     });
   }
 

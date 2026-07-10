@@ -30,6 +30,28 @@ class ActiveSheetWritePlan {
     ];
   }
 
+  bool retainsLoggedSetWrite(ParsedActiveSheet sheet) {
+    final next = nextSetPosition;
+    if (next == null) {
+      return true;
+    }
+    final savedSetNumber = next.setNumber - 1;
+    if (savedSetNumber < 1) {
+      return true;
+    }
+    for (final update in cellUpdates) {
+      if (update.sheetRowNumber == next.sheetRowNumber &&
+          update.valueKind == CellUpdateValueKind.literalText) {
+        return _cell(
+              sheet._sheetRow(update.sheetRowNumber),
+              update.sheetColumnNumber - 1,
+            ).trim() ==
+            update.value.trim();
+      }
+    }
+    return false;
+  }
+
   List<List<String>> previewRowsAfterApplying(Iterable<Iterable<String>> rows) {
     final preview = rows.map((row) => row.toList()).toList();
     final sortedRowInsertions = [...rowInsertions]

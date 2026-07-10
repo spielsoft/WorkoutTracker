@@ -66,7 +66,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     super.key,
   });
 
-  final WbkSvc svc;
+  final WbkAccess svc;
   final GlobalKey<NavigatorState>? navigatorKey;
   final GoogleAccountSession? accountSession;
   final AppStStore? appStStore;
@@ -421,7 +421,7 @@ class AppShell extends StatefulWidget {
     super.key,
   });
 
-  final WbkSvc svc;
+  final WbkAccess svc;
   final GoogleAccountSession? accountSession;
   final AppStStore? appStStore;
   final String initialText;
@@ -1132,7 +1132,7 @@ class _AppShellSt extends State<AppShell> {
                             onSubmitAndAddAnother: _placeAndKeepAdding,
                             onCloseExercise: _closeExercise,
                             onLoggingRowChanged: _controller.selectLoggingRow,
-                            onApplyWritePlan: _controller.applyWritePlan,
+                            onExecute: _controller.execute,
                           ),
                       ],
                     ),

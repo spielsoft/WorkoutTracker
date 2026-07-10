@@ -1,79 +1,133 @@
 import 'package:workout_tracker/contract.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-abstract class WbkSvc {
-  const WbkSvc();
+abstract interface class WbkAccess {
+  WbkSess open(String sheetId);
+}
 
-  /// Reads and reparses the active sheet for [spreadsheetId].
-  ///
-  /// The returned [ParsedActiveSheet] becomes the ordering source for every
-  /// later workout, history-block, and row selection passed back through this
-  /// Interface.
-  Future<ValReport> validateSheet(String spreadsheetId);
+abstract interface class WbkSess {
+  String get sheetId;
 
-  /// Applies [plan] to the active sheet and rereads the spreadsheet.
-  ///
-  /// Callers should treat [plan] as row-order-sensitive and build it from the
-  /// same [activeSheet] they pass here. The sheet contract Module owns row and
-  /// history-block validity; callers should pass row numbers obtained from the
-  /// parsed read models rather than inventing them.
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
+  Future<ValReport> read();
+
+  Future<ValReport> execute(WbkCmd cmd);
+}
+
+sealed class WbkCmd {
+  const WbkCmd();
+}
+
+class NewHistoryCmd extends WbkCmd {
+  const NewHistoryCmd(this.label);
+
+  final String label;
+}
+
+class RepairAllCmd extends WbkCmd {
+  const RepairAllCmd();
+}
+
+class RepairOneCmd extends WbkCmd {
+  const RepairOneCmd({required this.activeRow, required this.exerciseRow});
+
+  final int activeRow;
+  final int exerciseRow;
+}
+
+class SaveSetCmd extends WbkCmd {
+  SaveSetCmd({
+    required this.blockLabel,
+    required this.sheetRow,
+    required Map<String, String> fields,
+  }) : fields = Map<String, String>.unmodifiable(fields);
+
+  final String blockLabel;
+  final int sheetRow;
+  final Map<String, String> fields;
+}
+
+class EditSetCmd extends WbkCmd {
+  EditSetCmd({
+    required this.blockLabel,
+    required this.sheetRow,
+    required this.setNumber,
+    required Map<String, String> fields,
+  }) : fields = Map<String, String>.unmodifiable(fields);
+
+  final String blockLabel;
+  final int sheetRow;
+  final int setNumber;
+  final Map<String, String> fields;
+}
+
+class EditRawSetCmd extends WbkCmd {
+  const EditRawSetCmd({
+    required this.blockLabel,
+    required this.sheetRow,
+    required this.setNumber,
+    required this.rawText,
   });
 
-  Future<ValReport> createExercise({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ExerciseDef exercise,
-  }) {
-    throw UnsupportedError('Exercise authoring is not supported.');
-  }
+  final String blockLabel;
+  final int sheetRow;
+  final int setNumber;
+  final String rawText;
+}
 
-  Future<ValReport> updateExercise({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required CanonicalExercise selectedExercise,
-    required ExerciseDef exercise,
-  }) {
-    throw UnsupportedError('Exercise authoring is not supported.');
-  }
+class ClearSetCmd extends WbkCmd {
+  const ClearSetCmd({
+    required this.blockLabel,
+    required this.sheetRow,
+    required this.setNumber,
+  });
 
-  Future<ValReport> addExerciseToWorkout({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required CanonicalExercise exercise,
-    required WorkoutPlacementMetadata metadata,
-    required ExercisePlacementTarget placement,
-  }) {
-    throw UnsupportedError('Exercise placement is not supported.');
-  }
+  final String blockLabel;
+  final int sheetRow;
+  final int setNumber;
+}
 
-  Future<ValReport> reorderExercises({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ReorderIntent intent,
-  }) {
-    throw UnsupportedError('Exercise reorder is not supported.');
-  }
+class CreateExeCmd extends WbkCmd {
+  const CreateExeCmd(this.exercise);
 
-  Future<ValReport> reorderWorkoutExercises({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required String workout,
-    required ReorderIntent intent,
-  }) {
-    throw UnsupportedError('Workout exercise reorder is not supported.');
-  }
+  final ExerciseDef exercise;
+}
 
-  Future<ValReport> deleteWorkoutExercise({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required int primaryRow,
-  }) {
-    throw UnsupportedError('Workout exercise deletion is not supported.');
-  }
+class UpdateExeCmd extends WbkCmd {
+  const UpdateExeCmd({required this.selected, required this.exercise});
+
+  final CanonicalExercise selected;
+  final ExerciseDef exercise;
+}
+
+class PlaceExeCmd extends WbkCmd {
+  const PlaceExeCmd({
+    required this.exercise,
+    required this.metadata,
+    required this.placement,
+  });
+
+  final CanonicalExercise exercise;
+  final WorkoutPlacementMetadata metadata;
+  final ExercisePlacementTarget placement;
+}
+
+class ReorderExesCmd extends WbkCmd {
+  const ReorderExesCmd(this.intent);
+
+  final ReorderIntent intent;
+}
+
+class ReorderWorkoutCmd extends WbkCmd {
+  const ReorderWorkoutCmd({required this.workout, required this.intent});
+
+  final String workout;
+  final ReorderIntent intent;
+}
+
+class DeleteWorkoutExeCmd extends WbkCmd {
+  const DeleteWorkoutExeCmd(this.primaryRow);
+
+  final int primaryRow;
 }
 
 class ExercisePlacementTarget {

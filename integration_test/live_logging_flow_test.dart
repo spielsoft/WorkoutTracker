@@ -25,7 +25,7 @@ void main() {
   http.Client? client;
   late DevelopmentSheetResetHarness resetHarness;
   late SheetsReadAdapter readAdapter;
-  late WbkSvc svc;
+  late WbkAccess svc;
 
   setUpAll(() async {
     if (!runLiveGoogleTests) {

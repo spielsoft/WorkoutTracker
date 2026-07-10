@@ -16,17 +16,26 @@ void main() {
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ];
-      final authClient = _CloseTrackingAuthClient();
+      final authClients = <_CloseTrackingAuthClient>[];
+      final workbookClient = _CloseTrackingWorkbookClient(
+        () => authClients.last,
+        [_snapshot(rows)],
+      );
       final service = SheetAccess(
-        ScopedApiAccess(auth: gateway, authClientFactory: (_) => authClient),
-        workbookClientFactory: (_) =>
-            _CloseTrackingWorkbookClient(authClient, [_snapshot(rows)]),
+        ScopedApiAccess(
+          auth: gateway,
+          authClientFactory: (_) {
+            final client = _CloseTrackingAuthClient();
+            authClients.add(client);
+            return client;
+          },
+        ),
+        clientFactory: (_) => workbookClient,
       );
 
-      final report = await service.validateSheet('spreadsheet-id');
+      final report = await service.open('spreadsheet-id').read();
 
-      expect(authClient.closedDuringAction, isFalse);
-      expect(authClient.closed, isTrue);
+      expect(authClients, everyElement(hasClosedCleanly));
       expect(gateway.requestedScopes.single, [
         sheets.SheetsApi.spreadsheetsScope,
       ]);
@@ -48,28 +57,36 @@ void main() {
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
       ];
-      final activeSheet = parseActiveSheet(ActiveSheetInput(rows: activeRows));
-      final authClient = _CloseTrackingAuthClient();
-      final workbookClient = _CloseTrackingWorkbookClient(authClient, [
-        _snapshot(activeRows),
-        _snapshot(refreshedRows),
-      ]);
+      final authClients = <_CloseTrackingAuthClient>[];
+      final workbookClient = _CloseTrackingWorkbookClient(
+        () => authClients.last,
+        [
+          _snapshot(activeRows),
+          _snapshot(activeRows),
+          _snapshot(refreshedRows),
+        ],
+      );
       final service = SheetAccess(
-        ScopedApiAccess(auth: gateway, authClientFactory: (_) => authClient),
-        workbookClientFactory: (_) => workbookClient,
+        ScopedApiAccess(
+          auth: gateway,
+          authClientFactory: (_) {
+            final client = _CloseTrackingAuthClient();
+            authClients.add(client);
+            return client;
+          },
+        ),
+        clientFactory: (_) => workbookClient,
       );
 
-      final report = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: activeSheet,
-        plan: activeSheet.planNewHistoryBlock(label: 'Week 2'),
-      );
+      final sess = service.open('spreadsheet-id');
+      await sess.read();
+      final report = await sess.execute(const NewHistoryCmd('Week 2'));
 
-      expect(authClient.closedDuringAction, isFalse);
-      expect(authClient.closed, isTrue);
-      expect(gateway.requestedScopes.single, [
-        sheets.SheetsApi.spreadsheetsScope,
-      ]);
+      expect(authClients, everyElement(hasClosedCleanly));
+      expect(
+        gateway.requestedScopes,
+        everyElement([sheets.SheetsApi.spreadsheetsScope]),
+      );
       expect(workbookClient.operations, isNotEmpty);
       expect(report.activeSheet.historyBlocks.map((block) => block.label), [
         'Week 1',
@@ -96,22 +113,15 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final plan = report.activeSheet.planSetLoggingWrite(
-        blockLabel: 'Week 1',
-        sheetRowNumber: 3,
-        fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
-      );
-
-      final rejected = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        plan: plan,
+      await service.read();
+      final rejected = await service.execute(
+        SaveSetCmd(
+          blockLabel: 'Week 1',
+          sheetRow: 3,
+          fields: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+        ),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -167,22 +177,15 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final plan = report.activeSheet.planSetLoggingWrite(
-        blockLabel: 'Week 1',
-        sheetRowNumber: 3,
-        fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
-      );
-
-      final rejected = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        plan: plan,
+      await service.read();
+      final rejected = await service.execute(
+        SaveSetCmd(
+          blockLabel: 'Week 1',
+          sheetRow: 3,
+          fields: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
+        ),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -212,22 +215,15 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final plan = report.activeSheet.planSetLoggingWrite(
-        blockLabel: 'Week 1',
-        sheetRowNumber: 3,
-        fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
-      );
-
-      final rejected = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        plan: plan,
+      await service.read();
+      final rejected = await service.execute(
+        SaveSetCmd(
+          blockLabel: 'Week 1',
+          sheetRow: 3,
+          fields: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+        ),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -269,22 +265,15 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final plan = report.activeSheet.planSetLoggingWrite(
-        blockLabel: 'Week 1',
-        sheetRowNumber: 3,
-        fieldValues: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
-      );
-
-      final rejected = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        plan: plan,
+      await service.read();
+      final rejected = await service.execute(
+        SaveSetCmd(
+          blockLabel: 'Week 1',
+          sheetRow: 3,
+          fields: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+        ),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -327,22 +316,11 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final plan = report.activeSheet.planSetClear(
-        blockLabel: 'Week 1',
-        sheetRowNumber: 3,
-        setNumber: 2,
-      );
-
-      final rejected = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        plan: plan,
+      await service.read();
+      final rejected = await service.execute(
+        const ClearSetCmd(blockLabel: 'Week 1', sheetRow: 3, setNumber: 2),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -372,19 +350,10 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final plan = report.activeSheet.planNewHistoryBlock(label: 'Week 2');
-
-      final rejected = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        plan: plan,
-      );
+      await service.read();
+      final rejected = await service.execute(const NewHistoryCmd('Week 2'));
 
       expect(rejected.hasBlockingIssues, isTrue);
       expect(
@@ -413,22 +382,15 @@ void main() {
         _snapshot(changedRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final plan = report.activeSheet.planSetLoggingWrite(
-        blockLabel: 'Week 1',
-        sheetRowNumber: 3,
-        fieldValues: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
-      );
-
-      final rejected = await service.applyWritePlan(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        plan: plan,
+      await service.read();
+      final rejected = await service.execute(
+        SaveSetCmd(
+          blockLabel: 'Week 1',
+          sheetRow: 3,
+          fields: const {'Weight': '230', 'Reps': '5', 'RPE': '8'},
+        ),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -499,24 +461,21 @@ void main() {
         _workbookSnapshot(updatedActiveRows, updatedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final updated = await service.updateExercise(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        selectedExercise: report.activeSheet.canonicalExercises.first,
-        exercise: const ExerciseDef(
-          exercise: 'High Bar Squat',
-          description: 'High bar back squat',
-          defaultSets: '3',
-          defaultReps: '5',
-          defaultRpe: '8',
-          defaultRest: '3 min',
-          logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+      final report = await service.read();
+      final updated = await service.execute(
+        UpdateExeCmd(
+          selected: report.activeSheet.canonicalExercises.first,
+          exercise: const ExerciseDef(
+            exercise: 'High Bar Squat',
+            description: 'High bar back squat',
+            defaultSets: '3',
+            defaultReps: '5',
+            defaultRpe: '8',
+            defaultRest: '3 min',
+            logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+          ),
         ),
       );
 
@@ -597,16 +556,11 @@ void main() {
         _workbookSnapshot(updatedActiveRows, reorderedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final reordered = await service.reorderExercises(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        intent: const ReorderIntent(fromIndex: 0, toIndex: 2),
+      await service.read();
+      final reordered = await service.execute(
+        const ReorderExesCmd(ReorderIntent(fromIndex: 0, toIndex: 2)),
       );
 
       expect(writeClient.operations, isNotEmpty);
@@ -777,17 +731,14 @@ void main() {
         _workbookSnapshot(reorderedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final reordered = await service.reorderWorkoutExercises(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        workout: 'Legs',
-        intent: const ReorderIntent(fromIndex: 0, toIndex: 1),
+      await service.read();
+      final reordered = await service.execute(
+        const ReorderWorkoutCmd(
+          workout: 'Legs',
+          intent: ReorderIntent(fromIndex: 0, toIndex: 1),
+        ),
       );
       final overview = reordered.activeSheet.buildWorkoutOverview(
         workout: 'Legs',
@@ -888,17 +839,10 @@ void main() {
         _workbookSnapshot(deletedActiveRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final deleted = await service.deleteWorkoutExercise(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        primaryRow: 3,
-      );
+      await service.read();
+      final deleted = await service.execute(const DeleteWorkoutExeCmd(3));
       final overview = deleted.activeSheet.buildWorkoutOverview(
         workout: 'Legs',
         blockLabel: 'Week 1',
@@ -947,17 +891,10 @@ void main() {
         _workbookSnapshot(changedRows, exercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final rejected = await service.deleteWorkoutExercise(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        primaryRow: 3,
-      );
+      await service.read();
+      final rejected = await service.execute(const DeleteWorkoutExeCmd(3));
 
       expect(rejected.hasBlockingIssues, isTrue);
       expect(
@@ -996,16 +933,11 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
-      final rejected = await service.reorderExercises(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        intent: const ReorderIntent(fromIndex: 0, toIndex: 2),
+      await service.read();
+      final rejected = await service.execute(
+        const ReorderExesCmd(ReorderIntent(fromIndex: 0, toIndex: 2)),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -1057,20 +989,17 @@ void main() {
         _workbookSnapshot(activeRows, changedExercisesRows),
       ]);
       final writeClient = _RecordingWriteClient();
-      final service = ValSvc(
-        readAdapter: SheetsReadAdapter(client: readClient),
-        writeAdapter: SheetsWriteAdapter(client: writeClient),
-      );
+      final service = _session(readClient, writeClient);
 
-      final report = await service.validateSheet('spreadsheet-id');
+      final report = await service.read();
       final selectedExercise = report.activeSheet.canonicalExercises.single;
 
-      final rejected = await service.addExerciseToWorkout(
-        spreadsheetId: 'spreadsheet-id',
-        activeSheet: report.activeSheet,
-        exercise: selectedExercise,
-        metadata: const WorkoutPlacementMetadata(),
-        placement: const ExercisePlacementTarget.primary(workout: 'Legs'),
+      final rejected = await service.execute(
+        PlaceExeCmd(
+          exercise: selectedExercise,
+          metadata: const WorkoutPlacementMetadata(),
+          placement: const ExercisePlacementTarget.primary(workout: 'Legs'),
+        ),
       );
 
       expect(rejected.hasBlockingIssues, isTrue);
@@ -1080,6 +1009,20 @@ void main() {
       );
       expect(writeClient.operations, isEmpty);
     },
+  );
+}
+
+ValSess _session(
+  SheetsWorkbookClient readClient,
+  SheetsWorkbookClient writeClient,
+) {
+  return ValSess(
+    sheetId: 'spreadsheet-id',
+    io: AdapterWbkIo(
+      sheetId: 'spreadsheet-id',
+      readAdapter: SheetsReadAdapter(client: readClient),
+      writeAdapter: SheetsWriteAdapter(client: writeClient),
+    ),
   );
 }
 
@@ -1195,7 +1138,7 @@ class _RecordingWriteClient implements SheetsWorkbookClient {
 class _CloseTrackingWorkbookClient implements SheetsWorkbookClient {
   _CloseTrackingWorkbookClient(this.client, this.snapshots);
 
-  final _CloseTrackingAuthClient client;
+  final _CloseTrackingAuthClient Function() client;
   final List<SheetsWorkbookSnapshot> snapshots;
   final operations = <SheetsWorkbookOperation>[];
   var _nextSnapshot = 0;
@@ -1234,11 +1177,19 @@ class _CloseTrackingWorkbookClient implements SheetsWorkbookClient {
 
   Future<void> _expectClientStillOpen() async {
     await Future<void>.delayed(Duration.zero);
-    if (client.closed) {
-      client.closedDuringAction = true;
+    if (client().closed) {
+      client().closedDuringAction = true;
     }
   }
 }
+
+final hasClosedCleanly = isA<_CloseTrackingAuthClient>()
+    .having(
+      (client) => client.closedDuringAction,
+      'closed during action',
+      false,
+    )
+    .having((client) => client.closed, 'closed after action', true);
 
 class _CloseTrackingAuthClient extends http.BaseClient {
   bool closed = false;

@@ -13,11 +13,10 @@ import 'selection.dart';
 class AppCtrl extends ChangeNotifier {
   AppCtrl({required this.svc});
 
-  static const int _readRetries = 6;
-
-  final WbkSvc svc;
+  final WbkAccess svc;
 
   ValReport? _report;
+  WbkSess? _sess;
   String? _error;
   String? _selectedWorkout;
   String? _selectedHistoryBlock;
@@ -94,7 +93,9 @@ class AppCtrl extends ChangeNotifier {
       clearReport: true,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
-        final report = await svc.validateSheet(spreadsheetId);
+        final sess = svc.open(spreadsheetId);
+        final report = await sess.read();
+        _sess = sess;
         _adoptReport(report);
       },
     );
@@ -105,7 +106,9 @@ class AppCtrl extends ChangeNotifier {
       clearReport: true,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
-        final report = await svc.validateSheet(selection.id);
+        final sess = svc.open(selection.id);
+        final report = await sess.read();
+        _sess = sess;
         _adoptReport(report);
       },
     );
@@ -113,6 +116,7 @@ class AppCtrl extends ChangeNotifier {
 
   void clearSelection() {
     _report = null;
+    _sess = null;
     _error = null;
     _selectedWorkout = null;
     _selectedHistoryBlock = null;
@@ -140,11 +144,7 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create history block',
       action: () async {
-        final updatedReport = await svc.applyWritePlan(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          plan: report.activeSheet.planNewHistoryBlock(label: trimmedLabel),
-        );
+        final updatedReport = await _execute(NewHistoryCmd(trimmedLabel));
         _report = updatedReport;
         _error = null;
         _selectedHistoryBlock = trimmedLabel;
@@ -191,13 +191,7 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to repair formulas',
       action: () async {
-        _adoptReport(
-          await svc.applyWritePlan(
-            spreadsheetId: report.sheetId,
-            activeSheet: report.activeSheet,
-            plan: report.activeSheet.planFormulaRepair(),
-          ),
-        );
+        _adoptReport(await _execute(const RepairAllCmd()));
       },
     );
   }
@@ -215,12 +209,10 @@ class AppCtrl extends ChangeNotifier {
       failurePrefix: 'Unable to repair formula',
       action: () async {
         _adoptReport(
-          await svc.applyWritePlan(
-            spreadsheetId: report.sheetId,
-            activeSheet: report.activeSheet,
-            plan: report.activeSheet.planFormulaHealing(
-              activeSheetRowNumber: activeSheetRowNumber,
-              selectedRow: selectedRow,
+          await _execute(
+            RepairOneCmd(
+              activeRow: activeSheetRowNumber,
+              exerciseRow: selectedRow,
             ),
           ),
         );
@@ -228,7 +220,7 @@ class AppCtrl extends ChangeNotifier {
     );
   }
 
-  Future<bool> applyWritePlan(ActiveSheetWritePlan plan) async {
+  Future<bool> execute(WbkCmd cmd) async {
     final report = _report;
     if (report == null) {
       return false;
@@ -237,12 +229,7 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to save set',
       action: () async {
-        final updatedReport = await svc.applyWritePlan(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          plan: plan,
-        );
-        await _confirmWriteReport(plan: plan, firstReport: updatedReport);
+        _report = await _execute(cmd);
         _error = null;
       },
     );
@@ -259,11 +246,7 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to create exercise',
       action: () async {
-        _report = await svc.createExercise(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          exercise: exercise,
-        );
+        _report = await _execute(CreateExeCmd(exercise));
         _error = null;
         _clearLoggingSelection();
       },
@@ -284,11 +267,8 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to update exercise',
       action: () async {
-        _report = await svc.updateExercise(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          selectedExercise: selectedExercise,
-          exercise: exercise,
+        _report = await _execute(
+          UpdateExeCmd(selected: selectedExercise, exercise: exercise),
         );
         _error = null;
         _clearLoggingSelection();
@@ -311,12 +291,12 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to add exercise',
       action: () async {
-        _report = await svc.addExerciseToWorkout(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          exercise: exercise,
-          metadata: metadata,
-          placement: placement,
+        _report = await _execute(
+          PlaceExeCmd(
+            exercise: exercise,
+            metadata: metadata,
+            placement: placement,
+          ),
         );
         _error = null;
         _prunePendingWorkouts(_report!.activeSheet);
@@ -348,11 +328,7 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to reorder exercises',
       action: () async {
-        _report = await svc.reorderExercises(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          intent: intent,
-        );
+        _report = await _execute(ReorderExesCmd(intent));
         _error = null;
         _clearLoggingSelection();
       },
@@ -371,11 +347,8 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to reorder workout exercises',
       action: () async {
-        _report = await svc.reorderWorkoutExercises(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          workout: workout,
-          intent: intent,
+        _report = await _execute(
+          ReorderWorkoutCmd(workout: workout, intent: intent),
         );
         _error = null;
         _clearLoggingSelection();
@@ -396,11 +369,7 @@ class AppCtrl extends ChangeNotifier {
     return _runServiceAction(
       failurePrefix: 'Unable to delete exercise',
       action: () async {
-        final deleteReport = await svc.deleteWorkoutExercise(
-          spreadsheetId: report.sheetId,
-          activeSheet: report.activeSheet,
-          primaryRow: primaryRow,
-        );
+        final deleteReport = await _execute(DeleteWorkoutExeCmd(primaryRow));
         if (deleteReport.writeRejections.isNotEmpty) {
           _error =
               'Unable to delete exercise: '
@@ -515,6 +484,14 @@ class AppCtrl extends ChangeNotifier {
     }
   }
 
+  Future<ValReport> _execute(WbkCmd cmd) {
+    final sess = _sess;
+    if (sess == null) {
+      throw StateError('Validate a spreadsheet before changing it.');
+    }
+    return sess.execute(cmd);
+  }
+
   void _adoptReport(ValReport report) {
     _report = report;
     _error = null;
@@ -566,84 +543,6 @@ class AppCtrl extends ChangeNotifier {
   void _clearLoggingSelection() {
     _loggingPrimaryRow = null;
     _selectedLoggingRow = null;
-  }
-
-  Future<void> _confirmWriteReport({
-    required ActiveSheetWritePlan plan,
-    required ValReport firstReport,
-  }) async {
-    final lastConfirmedReport = _report;
-    var latestReport = firstReport;
-    _report = latestReport;
-    if (latestReport.writeRejections.isNotEmpty ||
-        _retainsLoggedSetWrite(plan, latestReport.activeSheet)) {
-      return;
-    }
-
-    for (var readCount = 0; readCount < _readRetries; readCount += 1) {
-      latestReport = await svc.validateSheet(firstReport.sheetId);
-      _report = latestReport;
-      if (_retainsLoggedSetWrite(plan, latestReport.activeSheet)) {
-        return;
-      }
-    }
-
-    _report = lastConfirmedReport;
-    throw const _SaveFail('saved set was not visible after refresh.');
-  }
-
-  bool _retainsLoggedSetWrite(
-    ActiveSheetWritePlan plan,
-    ParsedActiveSheet activeSheet,
-  ) {
-    final nextSetPosition = plan.nextSetPosition;
-    if (nextSetPosition == null) {
-      return true;
-    }
-
-    final blockLabel = _selectedHistoryBlock;
-    final primaryRow = _loggingPrimaryRow;
-    if (blockLabel == null || primaryRow == null) {
-      return true;
-    }
-
-    final savedSetNumber = nextSetPosition.setNumber - 1;
-    if (savedSetNumber < 1) {
-      return true;
-    }
-    final savedSetValue = _plannedSavedSetValue(plan, nextSetPosition);
-    if (savedSetValue == null) {
-      return false;
-    }
-
-    try {
-      final context = activeSheet.buildLoggingContext(
-        primaryRow: primaryRow,
-        selectedRow: nextSetPosition.sheetRowNumber,
-        blockLabel: blockLabel,
-      );
-      for (final entry in context.selectedHistory.entries) {
-        if (entry.setNumber == savedSetNumber) {
-          return entry.rawValue.trim() == savedSetValue.trim();
-        }
-      }
-      return false;
-    } on Object {
-      return false;
-    }
-  }
-
-  String? _plannedSavedSetValue(
-    ActiveSheetWritePlan plan,
-    SetPosition nextSetPosition,
-  ) {
-    for (final update in plan.cellUpdates) {
-      if (update.sheetRowNumber == nextSetPosition.sheetRowNumber &&
-          update.valueKind == CellUpdateValueKind.literalText) {
-        return update.value;
-      }
-    }
-    return null;
   }
 
   WorkoutLoggingTarget? _loggingTarget({
@@ -721,17 +620,6 @@ class AppCtrl extends ChangeNotifier {
           'propagate the change, then retry: $enableUrl';
     }
     return '$failurePrefix: $message';
-  }
-}
-
-class _SaveFail {
-  const _SaveFail(this.message);
-
-  final String message;
-
-  @override
-  String toString() {
-    return message;
   }
 }
 

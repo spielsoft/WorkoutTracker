@@ -107,7 +107,7 @@ class _WorkoutPane extends StatelessWidget {
     required this.onSubmitAndAddAnother,
     required this.onCloseExercise,
     required this.onLoggingRowChanged,
-    required this.onApplyWritePlan,
+    required this.onExecute,
   });
 
   final WorkoutSetupReadModel setup;
@@ -142,7 +142,7 @@ class _WorkoutPane extends StatelessWidget {
   onSubmitAndAddAnother;
   final VoidCallback onCloseExercise;
   final ValueChanged<int> onLoggingRowChanged;
-  final Future<bool> Function(ActiveSheetWritePlan plan) onApplyWritePlan;
+  final Future<bool> Function(WbkCmd cmd) onExecute;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +163,7 @@ class _WorkoutPane extends StatelessWidget {
         selectedRow: target.selectedRow,
         onChoiceChanged: onLoggingRowChanged,
         onClose: onCloseExercise,
-        onApplyWritePlan: onApplyWritePlan,
+        onExecute: onExecute,
       );
     }
 

@@ -3,6 +3,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:workout_tracker/contract.dart';
 
+import 'validation_core.dart';
+
 class LoggingFlow {
   LoggingFlow({
     required ParsedActiveSheet activeSheet,
@@ -58,7 +60,7 @@ class LoggingFlow {
     _syncCtrls(_context);
   }
 
-  ActiveSheetWritePlan? planSetSave() {
+  SaveSetCmd? planSetSave() {
     final fieldValues = {
       for (final entry in _newSetCtrls.entries)
         entry.key: entry.value.text.trim(),
@@ -67,43 +69,43 @@ class LoggingFlow {
       return null;
     }
 
-    return _activeSheet.planSetLoggingWrite(
+    return SaveSetCmd(
       blockLabel: _blockLabel,
-      sheetRowNumber: _context.selectedChoice.sheetRowNumber,
-      fieldValues: fieldValues,
+      sheetRow: _context.selectedChoice.sheetRowNumber,
+      fields: fieldValues,
     );
   }
 
-  ActiveSheetWritePlan? planSetEdit(RowHistoryEntry entry) {
+  EditSetCmd? planSetEdit(RowHistoryEntry entry) {
     final controllers = _loggedFieldCtrls[entry.setNumber];
     if (controllers == null) {
       return null;
     }
 
-    return _activeSheet.planSetEdit(
+    return EditSetCmd(
       blockLabel: _blockLabel,
-      sheetRowNumber: _context.selectedChoice.sheetRowNumber,
+      sheetRow: _context.selectedChoice.sheetRowNumber,
       setNumber: entry.setNumber,
-      fieldValues: {
+      fields: {
         for (final controllerEntry in controllers.entries)
           controllerEntry.key: controllerEntry.value.text.trim(),
       },
     );
   }
 
-  ActiveSheetWritePlan planRawSetEdit(RowHistoryEntry entry) {
-    return _activeSheet.planRawSetEdit(
+  EditRawSetCmd planRawSetEdit(RowHistoryEntry entry) {
+    return EditRawSetCmd(
       blockLabel: _blockLabel,
-      sheetRowNumber: _context.selectedChoice.sheetRowNumber,
+      sheetRow: _context.selectedChoice.sheetRowNumber,
       setNumber: entry.setNumber,
       rawText: _rawCtrls[entry.setNumber]?.text ?? '',
     );
   }
 
-  ActiveSheetWritePlan planSetClear(RowHistoryEntry entry) {
-    return _activeSheet.planSetClear(
+  ClearSetCmd planSetClear(RowHistoryEntry entry) {
+    return ClearSetCmd(
       blockLabel: _blockLabel,
-      sheetRowNumber: _context.selectedChoice.sheetRowNumber,
+      sheetRow: _context.selectedChoice.sheetRowNumber,
       setNumber: entry.setNumber,
     );
   }

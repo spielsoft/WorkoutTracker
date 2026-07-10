@@ -222,117 +222,83 @@ class CompletingSheetPicker implements SheetPicker {
   }
 }
 
-class CompositeWorkbookCommandService implements WbkSvc {
+class CompositeWorkbookCommandService implements WbkAccess {
   const CompositeWorkbookCommandService({
     required this.validation,
     required this.authoring,
   });
 
-  final WbkSvc validation;
+  final WbkAccess validation;
   final AppendingExerciseAuthoringService authoring;
 
   @override
-  Future<ValReport> validateSheet(String spreadsheetId) {
-    return validation.validateSheet(spreadsheetId);
+  WbkSess open(String sheetId) {
+    return _CompositeSess(
+      validation: validation.open(sheetId),
+      authoring: authoring,
+    );
+  }
+}
+
+class _CompositeSess implements WbkSess {
+  _CompositeSess({required this.validation, required this.authoring});
+
+  final WbkSess validation;
+  final AppendingExerciseAuthoringService authoring;
+  ValReport? _report;
+
+  @override
+  String get sheetId => validation.sheetId;
+
+  @override
+  Future<ValReport> read() async {
+    return _report = await validation.read();
   }
 
   @override
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) {
-    return validation.applyWritePlan(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      plan: plan,
-    );
-  }
-
-  @override
-  Future<ValReport> createExercise({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ExerciseDef exercise,
-  }) {
-    return authoring.createExercise(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      exercise: exercise,
-    );
-  }
-
-  @override
-  Future<ValReport> updateExercise({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required CanonicalExercise selectedExercise,
-    required ExerciseDef exercise,
-  }) {
-    return authoring.updateExercise(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      selectedExercise: selectedExercise,
-      exercise: exercise,
-    );
-  }
-
-  @override
-  Future<ValReport> addExerciseToWorkout({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required CanonicalExercise exercise,
-    required WorkoutPlacementMetadata metadata,
-    required ExercisePlacementTarget placement,
-  }) {
-    return authoring.addExerciseToWorkout(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      exercise: exercise,
-      metadata: metadata,
-      placement: placement,
-    );
-  }
-
-  @override
-  Future<ValReport> reorderExercises({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ReorderIntent intent,
-  }) {
-    return authoring.reorderExercises(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      intent: intent,
-    );
-  }
-
-  @override
-  Future<ValReport> reorderWorkoutExercises({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required String workout,
-    required ReorderIntent intent,
-  }) {
-    return authoring.reorderWorkoutExercises(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      workout: workout,
-      intent: intent,
-    );
-  }
-
-  @override
-  Future<ValReport> deleteWorkoutExercise({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required int primaryRow,
-  }) {
-    return authoring.deleteWorkoutExercise(
-      spreadsheetId: spreadsheetId,
-      activeSheet: activeSheet,
-      primaryRow: primaryRow,
-    );
+  Future<ValReport> execute(WbkCmd cmd) async {
+    final active = (_report ?? await read()).activeSheet;
+    final report = switch (cmd) {
+      CreateExeCmd(:final exercise) => authoring.createExercise(
+        spreadsheetId: sheetId,
+        activeSheet: active,
+        exercise: exercise,
+      ),
+      UpdateExeCmd(:final selected, :final exercise) =>
+        authoring.updateExercise(
+          spreadsheetId: sheetId,
+          activeSheet: active,
+          selectedExercise: selected,
+          exercise: exercise,
+        ),
+      PlaceExeCmd(:final exercise, :final metadata, :final placement) =>
+        authoring.addExerciseToWorkout(
+          spreadsheetId: sheetId,
+          activeSheet: active,
+          exercise: exercise,
+          metadata: metadata,
+          placement: placement,
+        ),
+      ReorderExesCmd(:final intent) => authoring.reorderExercises(
+        spreadsheetId: sheetId,
+        activeSheet: active,
+        intent: intent,
+      ),
+      ReorderWorkoutCmd(:final workout, :final intent) =>
+        authoring.reorderWorkoutExercises(
+          spreadsheetId: sheetId,
+          activeSheet: active,
+          workout: workout,
+          intent: intent,
+        ),
+      DeleteWorkoutExeCmd(:final primaryRow) => authoring.deleteWorkoutExercise(
+        spreadsheetId: sheetId,
+        activeSheet: active,
+        primaryRow: primaryRow,
+      ),
+      _ => validation.execute(cmd),
+    };
+    return _report = await report;
   }
 }
 
@@ -660,27 +626,50 @@ class RecordingSheetOpener implements SheetOpener {
   }
 }
 
-class RevalidatingValService extends WbkSvc {
-  RevalidatingValService({required this.reports});
+class _IoAccess implements WbkAccess {
+  _IoAccess(
+    Iterable<ParsedActiveSheet> sheets, {
+    Future<void> Function(ActiveSheetWritePlan plan)? onActiveWrite,
+  }) : _io = _TestWbkIo(sheets, onActiveWrite: onActiveWrite);
 
-  final List<ParsedActiveSheet> reports;
-  int _reportIndex = 0;
+  final _TestWbkIo _io;
+
+  List<ActiveSheetWritePlan> get appliedPlans => _io.appliedPlans;
 
   @override
-  Future<ValReport> validateSheet(String spreadsheetId) async {
-    final index = _reportIndex.clamp(0, reports.length - 1);
-    _reportIndex += 1;
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: reports[index]);
+  WbkSess open(String sheetId) => ValSess(sheetId: sheetId, io: _io);
+}
+
+class _TestWbkIo implements WbkIo {
+  _TestWbkIo(Iterable<ParsedActiveSheet> sheets, {this.onActiveWrite})
+    : _sheets = sheets.toList();
+
+  final List<ParsedActiveSheet> _sheets;
+  final Future<void> Function(ActiveSheetWritePlan plan)? onActiveWrite;
+  final appliedPlans = <ActiveSheetWritePlan>[];
+  var _readIndex = 0;
+
+  @override
+  Future<ParsedActiveSheet> read() async {
+    final i = _readIndex++;
+    return i < _sheets.length ? _sheets[i] : _sheets.last;
   }
 
   @override
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) {
+  Future<void> writeActive(ActiveSheetWritePlan plan) async {
+    appliedPlans.add(plan);
+    await onActiveWrite?.call(plan);
+  }
+
+  @override
+  Future<void> writeExercises(ExercisesWritePlan plan) async {
     throw UnimplementedError();
   }
+}
+
+class RevalidatingValService extends _IoAccess {
+  RevalidatingValService({required List<ParsedActiveSheet> reports})
+    : super(reports);
 }
 
 ParsedActiveSheet minimalValidParsedSheet() {
@@ -796,52 +785,23 @@ List<String> exerciseRow(
   ];
 }
 
-class CompletingWriteValidationService extends WbkSvc {
-  CompletingWriteValidationService(this.validSheet);
-
-  final ParsedActiveSheet validSheet;
-  final appliedPlans = <ActiveSheetWritePlan>[];
-  final writeCompleter = Completer<ValReport>();
-
-  @override
-  Future<ValReport> validateSheet(String spreadsheetId) async {
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: validSheet);
-  }
-
-  @override
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) {
-    appliedPlans.add(plan);
-    return writeCompleter.future;
-  }
+class CompletingWriteValidationService extends _IoAccess {
+  CompletingWriteValidationService(ParsedActiveSheet validSheet)
+    : super([
+        validSheet,
+        validSheet,
+      ], onActiveWrite: (_) => Completer<void>().future);
 }
 
-class FailingWriteValidationService extends WbkSvc {
-  FailingWriteValidationService(this.validSheet);
-
-  final ParsedActiveSheet validSheet;
-  final appliedPlans = <ActiveSheetWritePlan>[];
-
-  @override
-  Future<ValReport> validateSheet(String spreadsheetId) async {
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: validSheet);
-  }
-
-  @override
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) async {
-    appliedPlans.add(plan);
-    throw StateError('network unavailable');
-  }
+class FailingWriteValidationService extends _IoAccess {
+  FailingWriteValidationService(ParsedActiveSheet validSheet)
+    : super([
+        validSheet,
+        validSheet,
+      ], onActiveWrite: (_) => Future.error(StateError('network unavailable')));
 }
 
-class RecoverableConfirmationFailureService extends WbkSvc {
+class RecoverableConfirmationFailureService implements WbkAccess {
   RecoverableConfirmationFailureService()
     : initialSheet = twoSetLoggingSheet(s2Value: ''),
       conflictingSheet = twoSetLoggingSheet(s2Value: '95x10@7'),
@@ -850,82 +810,34 @@ class RecoverableConfirmationFailureService extends WbkSvc {
   final ParsedActiveSheet initialSheet;
   final ParsedActiveSheet conflictingSheet;
   final ParsedActiveSheet savedSheet;
-  final appliedPlans = <ActiveSheetWritePlan>[];
+  late final _IoAccess _delegate = _IoAccess([
+    initialSheet,
+    initialSheet,
+    ...List.filled(7, conflictingSheet),
+    initialSheet,
+    savedSheet,
+  ]);
+
+  List<ActiveSheetWritePlan> get appliedPlans => _delegate.appliedPlans;
 
   @override
-  Future<ValReport> validateSheet(String spreadsheetId) async {
-    final activeSheet = switch (appliedPlans.length) {
-      0 => initialSheet,
-      1 => conflictingSheet,
-      _ => savedSheet,
-    };
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: activeSheet);
-  }
-
-  @override
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) async {
-    appliedPlans.add(plan);
-    final activeSheet = appliedPlans.length == 1
-        ? conflictingSheet
-        : savedSheet;
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: activeSheet);
+  WbkSess open(String sheetId) {
+    return _delegate.open(sheetId);
   }
 }
 
-class DamageAfterSaveValidationService extends WbkSvc {
+class DamageAfterSaveValidationService extends _IoAccess {
   DamageAfterSaveValidationService({
-    required this.validSheet,
-    required this.damagedSheet,
-  });
-
-  final ParsedActiveSheet validSheet;
-  final ParsedActiveSheet damagedSheet;
-  final appliedPlans = <ActiveSheetWritePlan>[];
-
-  @override
-  Future<ValReport> validateSheet(String spreadsheetId) async {
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: validSheet);
-  }
-
-  @override
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) async {
-    appliedPlans.add(plan);
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: damagedSheet);
-  }
+    required ParsedActiveSheet validSheet,
+    required ParsedActiveSheet damagedSheet,
+  }) : super([validSheet, validSheet, damagedSheet]);
 }
 
-class FormulaRepairValidationService extends WbkSvc {
+class FormulaRepairValidationService extends _IoAccess {
   FormulaRepairValidationService({
-    required this.initialSheet,
-    required this.repairedSheet,
-  });
-
-  final ParsedActiveSheet initialSheet;
-  final ParsedActiveSheet repairedSheet;
-  final List<ActiveSheetWritePlan> appliedPlans = [];
-
-  @override
-  Future<ValReport> validateSheet(String spreadsheetId) async {
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: initialSheet);
-  }
-
-  @override
-  Future<ValReport> applyWritePlan({
-    required String spreadsheetId,
-    required ParsedActiveSheet activeSheet,
-    required ActiveSheetWritePlan plan,
-  }) async {
-    appliedPlans.add(plan);
-    return ValReport(spreadsheetId: spreadsheetId, activeSheet: repairedSheet);
-  }
+    required ParsedActiveSheet initialSheet,
+    required ParsedActiveSheet repairedSheet,
+  }) : super([initialSheet, initialSheet, repairedSheet]);
 }
 
 ParsedActiveSheet parseWorkbookFixture(WorkoutWorkbookFixture fixture) {

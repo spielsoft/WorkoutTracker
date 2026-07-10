@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 
 import 'service_fake.dart';
@@ -13,7 +14,8 @@ void main() {
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
 
-      final firstReport = await service.validateSheet('spreadsheet-id');
+      final sess = service.open('spreadsheet-id');
+      final firstReport = await sess.read();
       final overview = firstReport.activeSheet.buildWorkoutOverview(
         workout: 'Legs',
         blockLabel: 'Week 1',
@@ -24,10 +26,12 @@ void main() {
         fieldValues: {'Weight': '225', 'Reps': '5', 'RPE': '8'},
       );
 
-      final updatedReport = await service.applyWritePlan(
-        spreadsheetId: firstReport.sheetId,
-        activeSheet: firstReport.activeSheet,
-        plan: plan,
+      final updatedReport = await sess.execute(
+        SaveSetCmd(
+          blockLabel: 'Week 1',
+          sheetRow: overview.slots.single.sheetRowNumber,
+          fields: const {'Weight': '225', 'Reps': '5', 'RPE': '8'},
+        ),
       );
 
       expect(service.spreadsheetIds, ['spreadsheet-id']);
