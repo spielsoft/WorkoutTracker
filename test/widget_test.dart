@@ -2899,7 +2899,7 @@ void main() {
     expect(find.text('Rest: 90s'), findsOneWidget);
     expect(find.text('Tempo: Smooth'), findsOneWidget);
     expect(find.text('Notes: Stay tall.'), findsOneWidget);
-    expect(find.text('Latest history: 30@7'), findsOneWidget);
+    expect(find.text('Latest history: 35@8'), findsOneWidget);
 
     await tester.tap(find.text('Recent history'));
     await tester.pumpAndSettle();

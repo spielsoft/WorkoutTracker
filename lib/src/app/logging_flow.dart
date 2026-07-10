@@ -33,7 +33,6 @@ class LoggingFlow {
       context: context,
       loggedEntries: _loggedEntries(context),
       nextSetNumber: _nextSetNumber(context.selectedHistory),
-      latestHistoryValue: _latestHistoryValue(context),
       newSetCtrls: Map<String, TextEditingController>.unmodifiable(
         _newSetCtrls,
       ),
@@ -257,17 +256,6 @@ class LoggingFlow {
     }
     return block.entries.length + 1;
   }
-
-  String? _latestHistoryValue(ExerciseLoggingContext context) {
-    for (final block in context.recentHistoryBlocks) {
-      for (final entry in block.entries) {
-        if (entry.rawValue.trim().isNotEmpty) {
-          return entry.rawValue;
-        }
-      }
-    }
-    return null;
-  }
 }
 
 class LoggingVm {
@@ -275,7 +263,6 @@ class LoggingVm {
     required this.context,
     required Iterable<RowHistoryEntry> loggedEntries,
     required this.nextSetNumber,
-    required this.latestHistoryValue,
     required this.newSetCtrls,
     required this.loggedCtrls,
     required this.rawCtrls,
@@ -284,7 +271,6 @@ class LoggingVm {
   final ExerciseLoggingContext context;
   final List<RowHistoryEntry> loggedEntries;
   final int nextSetNumber;
-  final String? latestHistoryValue;
   final Map<String, TextEditingController> newSetCtrls;
   final Map<int, Map<String, TextEditingController>> loggedCtrls;
   final Map<int, TextEditingController> rawCtrls;

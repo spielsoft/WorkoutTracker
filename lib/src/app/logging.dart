@@ -300,7 +300,7 @@ class _LogScreenSt extends State<_LogScreen> {
 
 String? _latestHistoryValue(List<RowHistoryBlock> blocks) {
   for (final block in blocks) {
-    for (final entry in block.entries) {
+    for (final entry in block.entries.reversed) {
       if (entry.rawValue.trim().isNotEmpty) {
         return entry.rawValue;
       }
