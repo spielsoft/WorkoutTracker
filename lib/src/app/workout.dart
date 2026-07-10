@@ -74,199 +74,57 @@ class _ScreenHeader extends StatelessWidget {
   }
 }
 
-class _WorkoutPane extends StatelessWidget {
-  const _WorkoutPane({
-    required this.setup,
-    required this.sheetLabel,
-    required this.screen,
-    required this.onBackToSheets,
-    required this.onOpenSetup,
-    required this.onBackToSetup,
-    required this.onOpenLibrary,
-    required this.editingExercise,
-    required this.onWorkoutChanged,
-    required this.onHistoryBlockChanged,
-    required this.onAddWorkout,
-    required this.onAddHistoryBlock,
-    required this.onCreateExercise,
-    required this.onEditExercise,
-    required this.highlightedExerciseRow,
-    required this.onReorderExercises,
-    required this.onReorderWorkout,
-    required this.onOpenExercise,
-    required this.onAddPrimary,
-    required this.onAddBackup,
-    required this.onDeleteExercise,
-    required this.addReturnScreen,
-    required this.addIntent,
-    required this.onCloseExerciseAdd,
-    required this.onSubmitExercise,
-    required this.onSubmitExerciseEdit,
-    required this.onCloseExerciseEdit,
-    required this.onSubmitPlacement,
-    required this.onSubmitAndAddAnother,
-    required this.onCloseExercise,
-    required this.onLoggingRowChanged,
-    required this.onExecute,
-  });
+class WorkoutScreens extends StatelessWidget {
+  const WorkoutScreens({required this.view, required this.run, super.key});
 
-  final WorkoutSetupReadModel setup;
-  final String sheetLabel;
-  final _AppScreen screen;
-  final VoidCallback onBackToSheets;
-  final VoidCallback onOpenSetup;
-  final VoidCallback onBackToSetup;
-  final VoidCallback onOpenLibrary;
-  final CanonicalExercise? editingExercise;
-  final ValueChanged<String?> onWorkoutChanged;
-  final ValueChanged<String?> onHistoryBlockChanged;
-  final VoidCallback? onAddWorkout;
-  final VoidCallback? onAddHistoryBlock;
-  final VoidCallback? onCreateExercise;
-  final ValueChanged<CanonicalExercise>? onEditExercise;
-  final int? highlightedExerciseRow;
-  final Future<bool> Function(ReorderIntent intent)? onReorderExercises;
-  final Future<bool> Function(ReorderIntent intent)? onReorderWorkout;
-  final ValueChanged<int> onOpenExercise;
-  final ValueChanged<String> onAddPrimary;
-  final ValueChanged<WorkoutOverviewSlot> onAddBackup;
-  final ValueChanged<WorkoutOverviewSlot>? onDeleteExercise;
-  final _AppScreen addReturnScreen;
-  final _PlaceIntent? addIntent;
-  final VoidCallback onCloseExerciseAdd;
-  final ValueChanged<CanonicalExerciseDraft> onSubmitExercise;
-  final ValueChanged<CanonicalExerciseDraft> onSubmitExerciseEdit;
-  final VoidCallback onCloseExerciseEdit;
-  final ValueChanged<_ExercisePlacementDraft> onSubmitPlacement;
-  final Future<bool> Function(_ExercisePlacementDraft draft)
-  onSubmitAndAddAnother;
-  final VoidCallback onCloseExercise;
-  final ValueChanged<int> onLoggingRowChanged;
-  final Future<bool> Function(WbkCmd cmd) onExecute;
+  final LoadedView view;
+  final Future<CmdResult> Function(UiCmd cmd) run;
 
   @override
   Widget build(BuildContext context) {
-    final activeSheet = setup.activeSheet;
-    final workouts = setup.workouts;
-    final historyBlocks = setup.historyBlocks;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (view.error case final error?) ...[
+          IssuePanel(
+            icon: Icons.error_outline,
+            title: 'Connection or validation failed',
+            lines: [error],
+            tone: IssueTone.error,
+          ),
+          const SizedBox(height: 16),
+        ],
+        switch (view) {
+          SetupView() => _setup(context),
+          WorkoutView() => _workout(context),
+          LibraryView() => _library(),
+          CreateExerciseView() => _create(),
+          EditExerciseView() => _edit(),
+          PlacementView() => _placement(),
+          LogView() => _log(),
+        },
+      ],
+    );
+  }
+
+  Widget _setup(BuildContext context) {
+    final setup = view.setup;
     final selectedWorkout = setup.selectedWorkout;
-    final selectedHistoryBlock = setup.selectedHistoryBlock;
     final overview = setup.overview;
-
-    if (screen == _AppScreen.exerciseLogging && setup.loggingTarget != null) {
-      final target = setup.loggingTarget!;
-      return LogScreen(
-        view: LogView(
-          isBusy: false,
-          setup: setup,
-          sheetLabel: sheetLabel,
-          target: target,
-        ),
-        run: _runLog,
-      );
-    }
-
-    if (screen == _AppScreen.addExercise) {
-      final intent = addIntent;
-      if (intent != null) {
-        final backTooltip = addReturnScreen == _AppScreen.workoutSetup
-            ? 'Back to workout setup'
-            : 'Back to exercises';
-        return _PlaceExerciseScreen(
-          sheetLabel: sheetLabel,
-          intent: intent,
-          exercises: activeSheet.canonicalExercises,
-          backTooltip: backTooltip,
-          onBack: onCloseExerciseAdd,
-          onSubmit: onSubmitPlacement,
-          onSubmitAndAddAnother: onSubmitAndAddAnother,
-        );
-      }
-      return _CreateExerciseScreen(
-        sheetLabel: sheetLabel,
-        backTooltip: addReturnScreen == _AppScreen.exerciseManager
-            ? 'Back to edit exercises'
-            : 'Back to workout setup',
-        onBack: onCloseExerciseAdd,
-        onSubmit: onSubmitExercise,
-      );
-    }
-
-    if (screen == _AppScreen.editExercise && editingExercise != null) {
-      return _EditExerciseScreen(
-        sheetLabel: sheetLabel,
-        exercise: editingExercise!,
-        onBack: onCloseExerciseEdit,
-        onSubmit: onSubmitExerciseEdit,
-      );
-    }
-
-    if (screen == _AppScreen.exerciseManager) {
-      return _ExerciseLibrary(
-        sheetLabel: sheetLabel,
-        exercises: activeSheet.canonicalExercises,
-        onBack: onBackToSetup,
-        onAddExercise: onCreateExercise,
-        onEditExercise: onEditExercise,
-        onReorderExercises: onReorderExercises,
-        highlightedRow: highlightedExerciseRow,
-      );
-    }
-
-    if (screen == _AppScreen.exercisePicker) {
-      final title = selectedWorkout == null || selectedHistoryBlock == null
-          ? 'Exercises'
-          : '$selectedWorkout - $selectedHistoryBlock';
-      return _A11yScreen(
-        label: '$title exercise list',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _ScreenHeader(
-              title: sheetLabel,
-              subtitle: title,
-              compactTitle: true,
-              backTooltip: 'Back to workout setup',
-              onBack: onBackToSetup,
-              trailing: selectedWorkout == null
-                  ? null
-                  : IconButton.filled(
-                      key: const ValueKey('add-primary-exercise'),
-                      tooltip: 'Add to workout',
-                      onPressed: () => onAddPrimary(selectedWorkout),
-                      icon: const Icon(Icons.add_outlined),
-                    ),
-            ),
-            const SizedBox(height: 12),
-            if (overview != null)
-              _WorkoutOverviewList(
-                key: const ValueKey('full-workout-overview'),
-                overview: overview,
-                onOpenExercise: onOpenExercise,
-                onAddBackup: onAddBackup,
-                onDeleteExercise: onDeleteExercise,
-                onReorderExercises: onReorderWorkout,
-                showTitle: false,
-              ),
-          ],
-        ),
-      );
-    }
-
     return _A11yScreen(
       label: 'Workout setup',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ScreenHeader(
-            title: sheetLabel,
+            title: view.sheetLabel,
             compactTitle: true,
             backTooltip: 'Back to sheet selection',
-            onBack: onBackToSheets,
+            onBack: () => run(const ReturnToSheet()),
             trailing: IconButton.filledTonal(
               key: const ValueKey('open-exercise-manager'),
               tooltip: 'Edit exercise library',
-              onPressed: onOpenLibrary,
+              onPressed: () => run(const OpenLibrary()),
               icon: const Icon(Icons.fitness_center_outlined),
             ),
           ),
@@ -284,20 +142,25 @@ class _WorkoutPane extends StatelessWidget {
                   SizedBox(
                     width: fieldWidth,
                     child: _WorkoutField(
-                      workouts: workouts,
+                      workouts: setup.workouts,
                       selectedWorkout: selectedWorkout,
                       progressByWorkout: setup.progressByWorkout,
-                      onWorkoutChanged: onWorkoutChanged,
-                      onAddWorkout: onAddWorkout,
+                      onWorkoutChanged: (value) => run(SelectWorkout(value)),
+                      onAddWorkout: view.isBusy
+                          ? null
+                          : () => _addWorkout(context),
                     ),
                   ),
                   SizedBox(
                     width: fieldWidth,
                     child: _HistoryField(
-                      historyBlocks: historyBlocks,
-                      selectedHistoryBlock: selectedHistoryBlock,
-                      onHistoryBlockChanged: onHistoryBlockChanged,
-                      onAddHistoryBlock: onAddHistoryBlock,
+                      historyBlocks: setup.historyBlocks,
+                      selectedHistoryBlock: setup.selectedHistoryBlock,
+                      onHistoryBlockChanged: (value) =>
+                          run(SelectHistory(value)),
+                      onAddHistoryBlock: view.isBusy
+                          ? null
+                          : () => _addHistory(context),
                     ),
                   ),
                 ],
@@ -307,7 +170,7 @@ class _WorkoutPane extends StatelessWidget {
           const SizedBox(height: 24),
           FilledButton.icon(
             key: const ValueKey('select-workout-setup'),
-            onPressed: overview == null ? null : onOpenSetup,
+            onPressed: overview == null ? null : () => run(const OpenWorkout()),
             icon: const Icon(Icons.check_circle_outline),
             label: const Text('Select'),
           ),
@@ -316,13 +179,15 @@ class _WorkoutPane extends StatelessWidget {
             _WorkoutOverviewList(
               key: const ValueKey('compact-workout-overview'),
               overview: overview,
-              onOpenExercise: onOpenExercise,
+              onOpenExercise: (row) => run(OpenLog(row)),
               onAddPrimary: selectedWorkout == null
                   ? null
-                  : () => onAddPrimary(selectedWorkout),
-              onAddBackup: onAddBackup,
-              onDeleteExercise: onDeleteExercise,
-              onReorderExercises: onReorderWorkout,
+                  : () => run(AddPrimary(selectedWorkout)),
+              onAddBackup: (slot) => run(AddBackup(slot)),
+              onDeleteExercise: view.isBusy
+                  ? null
+                  : (slot) => _delete(context, slot),
+              onReorderExercises: view.isBusy ? null : _reorderWorkout,
               compact: true,
             ),
         ],
@@ -330,127 +195,126 @@ class _WorkoutPane extends StatelessWidget {
     );
   }
 
-  Future<CmdResult> _runLog(LogCmd cmd) async {
-    return switch (cmd) {
-      CloseLog() => _closeLog(),
-      SelectLogRow(:final sheetRow) => _selectLogRow(sheetRow),
-      ExecuteWbk(:final cmd) => await _executeWbk(cmd),
-    };
-  }
-
-  CmdResult _closeLog() {
-    onCloseExercise();
-    return const CmdResult.done();
-  }
-
-  CmdResult _selectLogRow(int sheetRow) {
-    onLoggingRowChanged(sheetRow);
-    return const CmdResult.done();
-  }
-
-  Future<CmdResult> _executeWbk(WbkCmd cmd) async {
-    return await onExecute(cmd)
-        ? const CmdResult.done()
-        : const CmdResult.failed();
-  }
-}
-
-class _RoutedPane extends StatelessWidget {
-  const _RoutedPane({required this.view, required this.run});
-
-  final LoadedView view;
-  final Future<CmdResult> Function(UiCmd cmd) run;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _workout(BuildContext context) {
     final setup = view.setup;
-    final route = switch (view) {
-      SetupView() => _AppScreen.workoutSetup,
-      WorkoutView() => _AppScreen.exercisePicker,
-      LibraryView() => _AppScreen.exerciseManager,
-      CreateExerciseView() || PlacementView() => _AppScreen.addExercise,
-      EditExerciseView() => _AppScreen.editExercise,
-      LogView() => _AppScreen.exerciseLogging,
-    };
-    final placement = view is PlacementView ? view as PlacementView : null;
-    final edit = view is EditExerciseView ? view as EditExerciseView : null;
-    final library = view is LibraryView ? view as LibraryView : null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (view.error case final error?) ...[
-          IssuePanel(
-            icon: Icons.error_outline,
-            title: 'Connection or validation failed',
-            lines: [error],
-            tone: IssueTone.error,
+    final selectedWorkout = setup.selectedWorkout;
+    final selectedHistory = setup.selectedHistoryBlock;
+    final title = selectedWorkout == null || selectedHistory == null
+        ? 'Exercises'
+        : '$selectedWorkout - $selectedHistory';
+    return _A11yScreen(
+      label: '$title exercise list',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ScreenHeader(
+            title: view.sheetLabel,
+            subtitle: title,
+            compactTitle: true,
+            backTooltip: 'Back to workout setup',
+            onBack: () => run(const BackToSetup()),
+            trailing: selectedWorkout == null
+                ? null
+                : IconButton.filled(
+                    key: const ValueKey('add-primary-exercise'),
+                    tooltip: 'Add to workout',
+                    onPressed: () => run(AddPrimary(selectedWorkout)),
+                    icon: const Icon(Icons.add_outlined),
+                  ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          if (setup.overview case final overview?)
+            _WorkoutOverviewList(
+              key: const ValueKey('full-workout-overview'),
+              overview: overview,
+              onOpenExercise: (row) => run(OpenLog(row)),
+              onAddBackup: (slot) => run(AddBackup(slot)),
+              onDeleteExercise: view.isBusy
+                  ? null
+                  : (slot) => _delete(context, slot),
+              onReorderExercises: view.isBusy ? null : _reorderWorkout,
+              showTitle: false,
+            ),
         ],
-        _WorkoutPane(
-          setup: setup,
-          sheetLabel: view.sheetLabel,
-          screen: route,
-          onBackToSheets: () => run(const ReturnToSheet()),
-          onOpenSetup: () => run(const OpenWorkout()),
-          onBackToSetup: () => run(const BackToSetup()),
-          onOpenLibrary: () => run(const OpenLibrary()),
-          editingExercise: edit?.exercise,
-          onWorkoutChanged: (value) => run(SelectWorkout(value)),
-          onHistoryBlockChanged: (value) => run(SelectHistory(value)),
-          onAddWorkout: view.isBusy ? null : () => _addWorkout(context),
-          onAddHistoryBlock: view.isBusy ? null : () => _addHistory(context),
-          onCreateExercise: view.isBusy
-              ? null
-              : () => run(const OpenExerciseCreate()),
-          onEditExercise: view.isBusy
-              ? null
-              : (exercise) => run(OpenExerciseEdit(exercise)),
-          highlightedExerciseRow: library?.highlightedRow,
-          onReorderExercises: view.isBusy
-              ? null
-              : (intent) async => (await run(ReorderExercises(intent))).ok,
-          onReorderWorkout: view.isBusy
-              ? null
-              : (intent) async => (await run(ReorderWorkout(intent))).ok,
-          onOpenExercise: (row) => run(OpenLog(row)),
-          onAddPrimary: (workout) => run(AddPrimary(workout)),
-          onAddBackup: (slot) => run(AddBackup(slot)),
-          onDeleteExercise: view.isBusy
-              ? null
-              : (slot) => _delete(context, slot),
-          addReturnScreen: _oldRoute(
-            placement?.returnRoute ??
-                (view is CreateExerciseView
-                    ? (view as CreateExerciseView).returnRoute
-                    : AppRoute.workout),
-          ),
-          addIntent: placement == null ? null : _oldIntent(placement.intent),
-          onCloseExerciseAdd: () => run(const CloseExerciseCreate()),
-          onSubmitExercise: (draft) => run(
-            SaveExercise(
-              exercise: draft.toDef(),
-              name: draft.normalized().exerciseName,
-            ),
-          ),
-          onSubmitExerciseEdit: (draft) => run(SaveExerciseEdit(draft.toDef())),
-          onCloseExerciseEdit: () => run(const CloseExerciseEdit()),
-          onSubmitPlacement: (draft) => run(
-            SavePlacement(exercise: draft.exercise, metadata: draft.metadata),
-          ),
-          onSubmitAndAddAnother: (draft) async => (await run(
-            SavePlacement(
-              exercise: draft.exercise,
-              metadata: draft.metadata,
-              keepAdding: true,
-            ),
-          )).ok,
-          onCloseExercise: () => run(const CloseLog()),
-          onLoggingRowChanged: (row) => run(SelectLogRow(row)),
-          onExecute: (cmd) async => (await run(ExecuteWbk(cmd))).ok,
-        ),
-      ],
+      ),
     );
+  }
+
+  Widget _library() {
+    final library = view as LibraryView;
+    return _ExerciseLibrary(
+      sheetLabel: view.sheetLabel,
+      exercises: view.setup.activeSheet.canonicalExercises,
+      highlightedRow: library.highlightedRow,
+      onBack: () => run(const BackToSetup()),
+      onAddExercise: view.isBusy ? null : () => run(const OpenExerciseCreate()),
+      onEditExercise: view.isBusy
+          ? null
+          : (exercise) => run(OpenExerciseEdit(exercise)),
+      onReorderExercises: view.isBusy ? null : _reorderExercises,
+    );
+  }
+
+  Widget _create() {
+    final create = view as CreateExerciseView;
+    return _CreateExerciseScreen(
+      sheetLabel: view.sheetLabel,
+      backTooltip: create.returnRoute == AppRoute.library
+          ? 'Back to edit exercises'
+          : 'Back to workout setup',
+      onBack: () => run(const CloseExerciseCreate()),
+      onSubmit: (draft) => run(
+        SaveExercise(
+          exercise: draft.toDef(),
+          name: draft.normalized().exerciseName,
+        ),
+      ),
+    );
+  }
+
+  Widget _edit() {
+    final edit = view as EditExerciseView;
+    return _EditExerciseScreen(
+      sheetLabel: view.sheetLabel,
+      exercise: edit.exercise,
+      onBack: () => run(const CloseExerciseEdit()),
+      onSubmit: (draft) => run(SaveExerciseEdit(draft.toDef())),
+    );
+  }
+
+  Widget _placement() {
+    final placement = view as PlacementView;
+    return _PlaceExerciseScreen(
+      sheetLabel: view.sheetLabel,
+      intent: placement.intent,
+      exercises: view.setup.activeSheet.canonicalExercises,
+      backTooltip: placement.returnRoute == AppRoute.setup
+          ? 'Back to workout setup'
+          : 'Back to exercises',
+      onBack: () => run(const CloseExerciseCreate()),
+      onSubmit: (draft) => run(
+        SavePlacement(exercise: draft.exercise, metadata: draft.metadata),
+      ),
+      onSubmitAndAddAnother: (draft) async => (await run(
+        SavePlacement(
+          exercise: draft.exercise,
+          metadata: draft.metadata,
+          keepAdding: true,
+        ),
+      )).ok,
+    );
+  }
+
+  Widget _log() {
+    return LogScreen(view: view as LogView, run: (cmd) => run(cmd));
+  }
+
+  Future<bool> _reorderWorkout(ReorderIntent intent) async {
+    return (await run(ReorderWorkout(intent))).ok;
+  }
+
+  Future<bool> _reorderExercises(ReorderIntent intent) async {
+    return (await run(ReorderExercises(intent))).ok;
   }
 
   Future<void> _addWorkout(BuildContext context) async {
@@ -509,25 +373,6 @@ class _RoutedPane extends StatelessWidget {
     if (confirmed == true) {
       await run(DeleteWorkoutExercise(slot.sheetRowNumber));
     }
-  }
-
-  _AppScreen _oldRoute(AppRoute route) {
-    return switch (route) {
-      AppRoute.setup => _AppScreen.workoutSetup,
-      AppRoute.library => _AppScreen.exerciseManager,
-      _ => _AppScreen.exercisePicker,
-    };
-  }
-
-  _PlaceIntent _oldIntent(PlaceIntent intent) {
-    return switch (intent.kind) {
-      PlaceKind.primary => _PlaceIntent.primary(workout: intent.workout),
-      PlaceKind.backup => _PlaceIntent.backup(
-        workout: intent.workout,
-        primaryRow: intent.primaryRow!,
-        primaryExercise: intent.primaryExercise!,
-      ),
-    };
   }
 }
 
@@ -1175,7 +1020,7 @@ class _PlaceExerciseScreen extends StatelessWidget {
   });
 
   final String sheetLabel;
-  final _PlaceIntent intent;
+  final PlaceIntent intent;
   final List<CanonicalExercise> exercises;
   final String backTooltip;
   final VoidCallback onBack;
@@ -1185,7 +1030,7 @@ class _PlaceExerciseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBackup = intent.kind == _PlaceKind.backup;
+    final isBackup = intent.kind == PlaceKind.backup;
     return _A11yScreen(
       label: isBackup ? 'Add backup exercise' : 'Add exercise to workout',
       child: Column(

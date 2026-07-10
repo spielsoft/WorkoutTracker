@@ -21,35 +21,6 @@ part 'exercise_library.dart';
 part 'states.dart';
 part 'a11y.dart';
 
-enum _AppScreen {
-  workoutSetup,
-  exerciseManager,
-  exercisePicker,
-  addExercise,
-  editExercise,
-  exerciseLogging,
-}
-
-enum _PlaceKind { primary, backup }
-
-class _PlaceIntent {
-  const _PlaceIntent.primary({required this.workout})
-    : kind = _PlaceKind.primary,
-      primaryRow = null,
-      primaryExercise = null;
-
-  const _PlaceIntent.backup({
-    required this.workout,
-    required this.primaryRow,
-    required this.primaryExercise,
-  }) : kind = _PlaceKind.backup;
-
-  final _PlaceKind kind;
-  final String workout;
-  final int? primaryRow;
-  final String? primaryExercise;
-}
-
 class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
     required this.svc,
@@ -181,7 +152,10 @@ class _AppShellSt extends State<AppShell> {
                         view: view,
                         run: (cmd) => _flow.run(cmd),
                       ),
-                      LoadedView() => _RoutedPane(view: view, run: _flow.run),
+                      LoadedView() => WorkoutScreens(
+                        view: view,
+                        run: _flow.run,
+                      ),
                     },
                   ),
                 ],
