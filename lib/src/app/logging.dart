@@ -1,31 +1,25 @@
-part of 'shell.dart';
+import 'package:flutter/material.dart';
+import 'package:workout_tracker/contract.dart';
 
-class _LogScreen extends StatefulWidget {
-  const _LogScreen({
-    required this.sheetLabel,
-    required this.activeSheet,
-    required this.blockLabel,
-    required this.primaryRow,
-    required this.selectedRow,
-    required this.onChoiceChanged,
-    required this.onClose,
-    required this.onExecute,
-  });
+import 'logging_flow.dart';
+import 'ui/flow.dart';
+import 'ui/shared/a11y.dart';
+import 'ui/shared/header.dart';
+import 'ui/shared/status.dart';
 
-  final String sheetLabel;
-  final ParsedActiveSheet activeSheet;
-  final String blockLabel;
-  final int primaryRow;
-  final int selectedRow;
-  final ValueChanged<int> onChoiceChanged;
-  final VoidCallback onClose;
-  final Future<bool> Function(WbkCmd cmd) onExecute;
+const _segmentRadius = 8.0;
+
+class LogScreen extends StatefulWidget {
+  const LogScreen({required this.view, required this.run, super.key});
+
+  final LogView view;
+  final Future<CmdResult> Function(LogCmd cmd) run;
 
   @override
-  State<_LogScreen> createState() => _LogScreenSt();
+  State<LogScreen> createState() => _LogScreenSt();
 }
 
-class _LogScreenSt extends State<_LogScreen> {
+class _LogScreenSt extends State<LogScreen> {
   late final LoggingFlow _flow;
   bool _isWriting = false;
   String? _writeError;
@@ -37,17 +31,19 @@ class _LogScreenSt extends State<_LogScreen> {
   }
 
   @override
-  void didUpdateWidget(_LogScreen oldWidget) {
+  void didUpdateWidget(LogScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedRow != widget.selectedRow ||
-        oldWidget.blockLabel != widget.blockLabel ||
-        oldWidget.primaryRow != widget.primaryRow ||
-        oldWidget.activeSheet != widget.activeSheet) {
+    final old = oldWidget.view;
+    final next = widget.view;
+    if (old.target.selectedRow != next.target.selectedRow ||
+        old.target.blockLabel != next.target.blockLabel ||
+        old.target.primaryRow != next.target.primaryRow ||
+        old.setup.activeSheet != next.setup.activeSheet) {
       _flow.update(
-        activeSheet: widget.activeSheet,
-        blockLabel: widget.blockLabel,
-        primaryRow: widget.primaryRow,
-        selectedRow: widget.selectedRow,
+        activeSheet: next.setup.activeSheet,
+        blockLabel: next.target.blockLabel,
+        primaryRow: next.target.primaryRow,
+        selectedRow: next.target.selectedRow,
       );
     }
   }
@@ -59,11 +55,12 @@ class _LogScreenSt extends State<_LogScreen> {
   }
 
   LoggingFlow _createFlow() {
+    final view = widget.view;
     return LoggingFlow(
-      activeSheet: widget.activeSheet,
-      blockLabel: widget.blockLabel,
-      primaryRow: widget.primaryRow,
-      selectedRow: widget.selectedRow,
+      activeSheet: view.setup.activeSheet,
+      blockLabel: view.target.blockLabel,
+      primaryRow: view.target.primaryRow,
+      selectedRow: view.target.selectedRow,
     );
   }
 
@@ -77,7 +74,7 @@ class _LogScreenSt extends State<_LogScreen> {
     }
 
     await _runWrite(() async {
-      final saved = await widget.onExecute(plan);
+      final saved = (await widget.run(ExecuteWbk(plan))).ok;
       if (!saved) {
         return false;
       }
@@ -112,7 +109,7 @@ class _LogScreenSt extends State<_LogScreen> {
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
     await _runWrite(() async {
-      return widget.onExecute(_flow.planRawSetEdit(entry));
+      return (await widget.run(ExecuteWbk(_flow.planRawSetEdit(entry)))).ok;
     });
   }
 
@@ -125,13 +122,13 @@ class _LogScreenSt extends State<_LogScreen> {
       return;
     }
     await _runWrite(() async {
-      return widget.onExecute(plan);
+      return (await widget.run(ExecuteWbk(plan))).ok;
     });
   }
 
   Future<void> _clearSet(RowHistoryEntry entry) async {
     await _runWrite(() async {
-      return widget.onExecute(_flow.planSetClear(entry));
+      return (await widget.run(ExecuteWbk(_flow.planSetClear(entry)))).ok;
     });
   }
 
@@ -154,17 +151,17 @@ class _LogScreenSt extends State<_LogScreen> {
         ? viewModel.nextSetNumber
         : visibleSetCount;
 
-    return _A11yScreen(
+    return A11yScreen(
       label: 'Log ${selectedChoice.exercise}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ScreenHeader(
-            title: widget.sheetLabel,
+          ScreenHeader(
+            title: widget.view.sheetLabel,
             subtitle: selectedChoice.exercise,
             compactTitle: true,
             backTooltip: 'Back to exercises',
-            onBack: widget.onClose,
+            onBack: () => widget.run(const CloseLog()),
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
@@ -178,7 +175,7 @@ class _LogScreenSt extends State<_LogScreen> {
                   shape: WidgetStatePropertyAll(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.all(
-                        Radius.circular(_compactSegmentedButtonRadius),
+                        Radius.circular(_segmentRadius),
                       ),
                     ),
                   ),
@@ -198,8 +195,8 @@ class _LogScreenSt extends State<_LogScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (choice.isBackup)
-                            const _StChip(
-                              state: _WorkoutVisualSt.backup,
+                            const StChip(
+                              state: VisualSt.backup,
                               label: 'Backup',
                             ),
                         ],
@@ -213,7 +210,7 @@ class _LogScreenSt extends State<_LogScreen> {
                 ],
                 selected: {selectedChoice.sheetRowNumber},
                 onSelectionChanged: (selection) {
-                  widget.onChoiceChanged(selection.single);
+                  widget.run(SelectLogRow(selection.single));
                 },
               );
             },
@@ -236,7 +233,7 @@ class _LogScreenSt extends State<_LogScreen> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               if (selectedChoice.isBackup)
-                const _StChip(state: _WorkoutVisualSt.backup, label: 'Backup'),
+                const StChip(state: VisualSt.backup, label: 'Backup'),
             ],
           ),
           const SizedBox(height: 8),
@@ -256,7 +253,7 @@ class _LogScreenSt extends State<_LogScreen> {
             _InlineLoggingError(message: _writeError!),
           ],
           const SizedBox(height: 16),
-          _SetProgressStrip(
+          SetProgressStrip(
             loggedSetNumbers: loggedSetNumbers,
             currentSetNumber: viewModel.nextSetNumber,
             totalSetCount: totalSetCount,
@@ -554,7 +551,7 @@ class _StructuredSetEditor extends StatelessWidget {
     }
 
     Widget accessibleField(String label) {
-      return _A11yTextField(
+      return A11yTextField(
         label: 'New set $label',
         valueListenable: controllers[label],
         child: field(label),
@@ -634,7 +631,7 @@ class _LoggedSetEditor extends StatelessWidget {
         children: [
           SizedBox(width: 36, child: Text(entry.setLabel)),
           Expanded(
-            child: _A11yTextField(
+            child: A11yTextField(
               label: '${entry.setLabel} raw set text',
               valueListenable: controller,
               child: TextField(
@@ -686,7 +683,7 @@ class _LoggedSetFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget field(String label) {
-      return _A11yTextField(
+      return A11yTextField(
         label: '${entry.setLabel} $label',
         valueListenable: controllers[label],
         child: TextField(

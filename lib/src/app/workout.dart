@@ -155,15 +155,14 @@ class _WorkoutPane extends StatelessWidget {
 
     if (screen == _AppScreen.exerciseLogging && setup.loggingTarget != null) {
       final target = setup.loggingTarget!;
-      return _LogScreen(
-        sheetLabel: sheetLabel,
-        activeSheet: activeSheet,
-        blockLabel: target.blockLabel,
-        primaryRow: target.primaryRow,
-        selectedRow: target.selectedRow,
-        onChoiceChanged: onLoggingRowChanged,
-        onClose: onCloseExercise,
-        onExecute: onExecute,
+      return LogScreen(
+        view: LogView(
+          isBusy: false,
+          setup: setup,
+          sheetLabel: sheetLabel,
+          target: target,
+        ),
+        run: _runLog,
       );
     }
 
@@ -329,6 +328,30 @@ class _WorkoutPane extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<CmdResult> _runLog(LogCmd cmd) async {
+    return switch (cmd) {
+      CloseLog() => _closeLog(),
+      SelectLogRow(:final sheetRow) => _selectLogRow(sheetRow),
+      ExecuteWbk(:final cmd) => await _executeWbk(cmd),
+    };
+  }
+
+  CmdResult _closeLog() {
+    onCloseExercise();
+    return const CmdResult.done();
+  }
+
+  CmdResult _selectLogRow(int sheetRow) {
+    onLoggingRowChanged(sheetRow);
+    return const CmdResult.done();
+  }
+
+  Future<CmdResult> _executeWbk(WbkCmd cmd) async {
+    return await onExecute(cmd)
+        ? const CmdResult.done()
+        : const CmdResult.failed();
   }
 }
 

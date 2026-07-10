@@ -6,22 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
 import 'state_store.dart';
-import 'logging_flow.dart';
 import 'workspace.dart';
 import 'validation.dart';
 import 'selection.dart';
 import 'controller.dart';
+import 'logging.dart';
+import 'ui/flow.dart';
 
 part 'account.dart';
 part 'workout.dart';
 part 'exercise_form.dart';
 part 'exercise_library.dart';
 part 'states.dart';
-part 'logging.dart';
 part 'repair.dart';
 part 'a11y.dart';
-
-const _compactSegmentedButtonRadius = 8.0;
 
 enum _AppScreen {
   sheetSelection,

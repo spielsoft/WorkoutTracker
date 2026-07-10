@@ -285,7 +285,11 @@ final class OpenLog extends WorkoutCmd {
   final int primaryRow;
 }
 
-final class CloseLog extends WorkoutCmd {
+sealed class LogCmd extends UiCmd {
+  const LogCmd();
+}
+
+final class CloseLog extends LogCmd {
   const CloseLog();
 }
 
@@ -313,13 +317,13 @@ final class ReorderWorkout extends WorkoutCmd {
   final ReorderIntent intent;
 }
 
-final class SelectLogRow extends WorkoutCmd {
+final class SelectLogRow extends LogCmd {
   const SelectLogRow(this.sheetRow);
 
   final int sheetRow;
 }
 
-final class ExecuteWbk extends WorkoutCmd {
+final class ExecuteWbk extends LogCmd {
   const ExecuteWbk(this.cmd);
 
   final WbkCmd cmd;

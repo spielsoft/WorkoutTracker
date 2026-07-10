@@ -2,53 +2,6 @@ part of 'shell.dart';
 
 enum _WorkoutVisualSt { logged, current, backup, warning, error }
 
-class _SetProgressStrip extends StatelessWidget {
-  const _SetProgressStrip({
-    required this.loggedSetNumbers,
-    required this.currentSetNumber,
-    required this.totalSetCount,
-  });
-
-  final Set<int> loggedSetNumbers;
-  final int currentSetNumber;
-  final int totalSetCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = totalSetCount < currentSetNumber
-        ? currentSetNumber
-        : totalSetCount;
-    final logged = loggedSetNumbers.length;
-    return _A11yStatus(
-      label: 'Workout progress: $logged of $total sets logged.',
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          _StChip(
-            state: _WorkoutVisualSt.logged,
-            label: 'Progress $logged/$total',
-            emphasized: true,
-          ),
-          for (var setNumber = 1; setNumber <= total; setNumber += 1)
-            if (loggedSetNumbers.contains(setNumber))
-              _StChip(
-                state: _WorkoutVisualSt.logged,
-                label: 'Logged S$setNumber',
-              )
-            else if (setNumber == currentSetNumber)
-              _StChip(
-                state: _WorkoutVisualSt.current,
-                label: 'Current S$setNumber',
-                emphasized: true,
-              ),
-        ],
-      ),
-    );
-  }
-}
-
 class _StChip extends StatelessWidget {
   const _StChip({
     required this.state,
