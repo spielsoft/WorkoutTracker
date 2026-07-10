@@ -1,4 +1,7 @@
-part of 'shell.dart';
+import 'package:flutter/material.dart';
+import 'package:workout_tracker/contract.dart';
+
+import 'ui/shared/a11y.dart';
 
 enum ExerciseAuthoringContext { canonicalExercise, workoutPlacement }
 
@@ -294,7 +297,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             ],
           ),
           const SizedBox(height: 16),
-          _A11yTextField(
+          A11yTextField(
             identifier: 'exercise-authoring-name',
             label: 'Exercise name',
             valueListenable: _nameCtrl,
@@ -317,7 +320,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             ),
           ),
           const SizedBox(height: 12),
-          _A11yTextField(
+          A11yTextField(
             identifier: 'exercise-authoring-description',
             label: 'Description',
             valueListenable: _descCtrl,
@@ -423,7 +426,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             },
           ),
           const SizedBox(height: 12),
-          _A11yTextField(
+          A11yTextField(
             identifier: 'exercise-authoring-notes',
             label: 'Notes',
             valueListenable: _notesCtrl,
@@ -530,7 +533,7 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
 
   @override
   Widget build(BuildContext context) {
-    return _A11yTextField(
+    return A11yTextField(
       identifier: widget.semanticsIdentifier,
       label: widget.labelText,
       valueListenable: widget.controller,

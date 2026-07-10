@@ -33,12 +33,10 @@ class _A11yTextField extends StatelessWidget {
   const _A11yTextField({
     required this.label,
     required this.child,
-    this.identifier,
     this.valueListenable,
   });
 
   final String label;
-  final String? identifier;
   final ValueListenable<TextEditingValue>? valueListenable;
   final Widget child;
 
@@ -60,7 +58,6 @@ class _A11yTextField extends StatelessWidget {
 
   Widget _build({required String? value, Widget? child}) {
     return Semantics(
-      identifier: identifier,
       textField: true,
       label: label,
       value: value,
