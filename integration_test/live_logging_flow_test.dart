@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
-import 'package:workout_tracker/google_sheets.dart';
-import 'package:workout_tracker/sheet_contract.dart';
-import 'package:workout_tracker/workout_tracker_app.dart';
+import 'package:workout_tracker/app.dart';
+import 'package:workout_tracker/contract.dart';
+import 'package:workout_tracker/sheets.dart';
 
-import '../test/support/development_sheet_reset.dart'
+import '../test/support/reset.dart'
     show DevelopmentSheetResetHarness, workoutTrackerDevelopmentSpreadsheetId;
 
 void main() {
@@ -24,32 +24,26 @@ void main() {
 
   http.Client? client;
   late DevelopmentSheetResetHarness resetHarness;
-  late GoogleSheetsReadAdapter readAdapter;
-  late WorkbookCommandService workbookCommands;
+  late SheetsReadAdapter readAdapter;
+  late WbkSvc svc;
 
   setUpAll(() async {
     if (!runLiveGoogleTests) {
       return;
     }
 
-    final authorizationGateway = NativeGoogleSignInAuthorizationGateway();
-    final headers = await authorizationGateway.authorizationHeaders(
-      GoogleApisSheetsWorkbookClient.writeScopes,
+    final auth = NativeSignInAuthGateway();
+    final headers = await auth.authorizationHeaders(
+      GoogleApisWbkClient.writeScopes,
     );
-    final authenticatedClient = GoogleAuthorizationHeadersClient(
-      headers: headers,
-    );
+    final authenticatedClient = AuthHeadersClient(headers: headers);
     client = authenticatedClient;
     final api = sheets.SheetsApi(authenticatedClient);
     resetHarness = DevelopmentSheetResetHarness(
-      initializer: GoogleApisWorkoutTrackerWorkbookInitializer(api),
+      initializer: GoogleApisWbkInit(api),
     );
-    readAdapter = GoogleSheetsReadAdapter(
-      client: GoogleApisSheetsWorkbookClient(api),
-    );
-    workbookCommands = GoogleSpreadsheetWorkbookAccess(
-      GoogleScopedApiAccess(authorizationGateway: authorizationGateway),
-    );
+    readAdapter = SheetsReadAdapter(client: GoogleApisWbkClient(api));
+    svc = SheetAccess(ScopedApiAccess(auth: auth));
   });
 
   tearDownAll(() {
@@ -67,8 +61,8 @@ void main() {
 
       await tester.pumpWidget(
         WorkoutTrackerApp(
-          workbookCommands: workbookCommands,
-          initialSpreadsheetText: workoutTrackerDevelopmentSpreadsheetUrl,
+          svc: svc,
+          initialText: workoutTrackerDevelopmentSpreadsheetUrl,
         ),
       );
 
@@ -102,10 +96,10 @@ void main() {
         selectedSheetRowNumber: 3,
         expectedValue: '80x8@8',
       );
-      var primaryContext = activeSheet.buildExerciseLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 3,
-        historyBlockLabel: 'Week 2',
+      var primaryContext = activeSheet.buildLoggingContext(
+        primaryRow: 3,
+        selectedRow: 3,
+        blockLabel: 'Week 2',
       );
       expect(primaryContext.selectedHistory.entries.first.rawValue, '80x8@8');
 
@@ -126,10 +120,10 @@ void main() {
         selectedSheetRowNumber: 3,
         expectedValue: '82.5x8@8',
       );
-      primaryContext = activeSheet.buildExerciseLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 3,
-        historyBlockLabel: 'Week 2',
+      primaryContext = activeSheet.buildLoggingContext(
+        primaryRow: 3,
+        selectedRow: 3,
+        blockLabel: 'Week 2',
       );
       expect(primaryContext.selectedHistory.entries.first.rawValue, '82.5x8@8');
 
@@ -142,10 +136,10 @@ void main() {
         selectedSheetRowNumber: 3,
         expectedValue: '',
       );
-      primaryContext = activeSheet.buildExerciseLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 3,
-        historyBlockLabel: 'Week 2',
+      primaryContext = activeSheet.buildLoggingContext(
+        primaryRow: 3,
+        selectedRow: 3,
+        blockLabel: 'Week 2',
       );
       expect(primaryContext.selectedHistory.entries.first.rawValue, isEmpty);
 
@@ -174,10 +168,10 @@ void main() {
         selectedSheetRowNumber: 4,
         expectedValue: '25x10@8,',
       );
-      final backupContext = activeSheet.buildExerciseLoggingContext(
-        primarySheetRowNumber: 3,
-        selectedSheetRowNumber: 4,
-        historyBlockLabel: 'Week 2',
+      final backupContext = activeSheet.buildLoggingContext(
+        primaryRow: 3,
+        selectedRow: 4,
+        blockLabel: 'Week 2',
       );
       expect(backupContext.selectedHistory.entries.first.rawValue, '25x10@8,');
 
@@ -189,7 +183,7 @@ void main() {
       );
       final overview = activeSheet.buildWorkoutOverview(
         workout: 'Legs',
-        historyBlockLabel: 'Week 2',
+        blockLabel: 'Week 2',
       );
       expect(overview.slots.first.setCount, 1);
 
@@ -258,7 +252,7 @@ Future<void> _waitForTextFieldValue(
 }
 
 Future<ParsedActiveSheet> _waitForLoggedSetValue({
-  required GoogleSheetsReadAdapter readAdapter,
+  required SheetsReadAdapter readAdapter,
   required int primarySheetRowNumber,
   required int selectedSheetRowNumber,
   required String expectedValue,
@@ -270,10 +264,10 @@ Future<ParsedActiveSheet> _waitForLoggedSetValue({
     lastRead = await readAdapter.readParsedActiveSheet(
       workoutTrackerDevelopmentSpreadsheetId,
     );
-    final context = lastRead.buildExerciseLoggingContext(
-      primarySheetRowNumber: primarySheetRowNumber,
-      selectedSheetRowNumber: selectedSheetRowNumber,
-      historyBlockLabel: 'Week 2',
+    final context = lastRead.buildLoggingContext(
+      primaryRow: primarySheetRowNumber,
+      selectedRow: selectedSheetRowNumber,
+      blockLabel: 'Week 2',
     );
     if (context.selectedHistory.entries.first.rawValue == expectedValue) {
       return lastRead;
@@ -281,10 +275,10 @@ Future<ParsedActiveSheet> _waitForLoggedSetValue({
     await Future<void>.delayed(const Duration(milliseconds: 250));
   }
   final lastValue = lastRead
-      ?.buildExerciseLoggingContext(
-        primarySheetRowNumber: primarySheetRowNumber,
-        selectedSheetRowNumber: selectedSheetRowNumber,
-        historyBlockLabel: 'Week 2',
+      ?.buildLoggingContext(
+        primaryRow: primarySheetRowNumber,
+        selectedRow: selectedSheetRowNumber,
+        blockLabel: 'Week 2',
       )
       .selectedHistory
       .entries
@@ -296,7 +290,7 @@ Future<ParsedActiveSheet> _waitForLoggedSetValue({
 }
 
 Future<ParsedActiveSheet> _waitForHistoryBlock({
-  required GoogleSheetsReadAdapter readAdapter,
+  required SheetsReadAdapter readAdapter,
   required String label,
   Duration timeout = const Duration(seconds: 60),
 }) async {

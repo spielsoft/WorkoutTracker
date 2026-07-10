@@ -1,11 +1,31 @@
 # Google Sheets App Auth
 
-WorkoutTracker uses native Google Sign-In for runnable iOS and macOS apps.
-When the user taps Validate, creates a history block, or saves a set, the app
-requests the needed Google Sheets scope through the platform account-picker
-flow.
+WorkoutTracker now uses one runtime Google account model on iOS and macOS:
 
-## OAuth Configuration
+- Native `google_sign_in` owns account restore, sign-in, sign-out, and scoped
+  token refresh.
+- Existing sheet selection runs through the Drive API and a Flutter-native
+  chooser screen.
+- The chooser does not launch its own web OAuth flow or embed Google Picker in
+  a WebView.
+
+This keeps account state under the app's control while matching Google's
+current desktop/mobile Picker guidance.
+
+## Runtime flow
+
+1. App startup restores the native Google session when the platform still has
+   one.
+2. Choosing a sheet requests Drive metadata scope through native Google
+   Sign-In if the scope is not already granted.
+3. The app opens a Flutter-native chooser and lists recent or searched Google
+   Sheets through `files.list`.
+4. Selecting a sheet persists the chosen spreadsheet and uses the native
+   account for later Sheets API work.
+5. Sheet creation uses the same native session and writable Sheets scope, but
+   stays in Flutter rather than using Picker-owned auth state.
+
+## Native OAuth configuration
 
 Create iOS and macOS OAuth client configuration in Firebase or Google Cloud for
 the app bundle identifier:
@@ -22,8 +42,8 @@ ios/Flutter/GoogleSignIn.xcconfig
 macos/Runner/Configs/AppInfo.xcconfig
 ```
 
-The platform `Info.plist` files expose those values to the `google_sign_in`
-plugin as `GIDClientID` and `CFBundleURLTypes`.
+The platform `Info.plist` files expose those values to `google_sign_in` as
+`GIDClientID` and `CFBundleURLTypes`.
 
 Current OAuth clients in the `workouttracker-16285` Google Cloud project:
 
@@ -31,188 +51,141 @@ Current OAuth clients in the `workouttracker-16285` Google Cloud project:
   `657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk.apps.googleusercontent.com`
 - Web client:
   `657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com`
-- MacOS Desktop client:
+- macOS desktop client:
   `657151291920-lro68joadl4o0m3h1c537tm94t30eonq.apps.googleusercontent.com`
 
-The exported Desktop OAuth JSON includes a client secret, so local credential
-exports and API keys are stored only in visible, git-ignored JSON files under:
+Local credential exports stay git-ignored under:
 
 ```text
 local_google_credentials/
 ```
 
-See `local_google_credentials/README.md` for the current file layout.
-
-Enable the Google Sheets API in the same Google Cloud project as the OAuth
-client:
+The local Dart defines file should still hold any native sign-in values needed
+for your environment:
 
 ```text
-https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=657151291920
+local_google_credentials/flutter_dart_defines.json
 ```
 
-Google Drive Picker is used for choosing an existing spreadsheet and for the
-OAuth authorization that backs later Google Sheets API calls. Google-backed
-sheet creation also uses this Picker authorization path to choose a destination
-folder before it asks for a sheet name and initializes a new WorkoutTracker
-spreadsheet in Drive. The Picker callback forwards the access token and Google
-account profile used by the app's account menu and persisted launch state.
-Normal Picker launches keep the OnePick-compatible URL shape:
-`scope=https://www.googleapis.com/auth/drive.file`,
-`prompt=consent`, and `trigger_onepick=true`. Adding OpenID profile scopes to
-that URL can complete OAuth without opening Picker, leaving the callback with no
-selected spreadsheet.
-Picker selection uses the checked-in web OAuth client ID for the
-`workouttracker-16285` Google Cloud project:
+Current native auth defines:
 
 ```text
-657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com
+WORKOUT_TRACKER_GOOGLE_CLIENT_ID
+WORKOUT_TRACKER_GOOGLE_SERVER_CLIENT_ID
 ```
 
-## Firebase Hosting Picker Callback
+## Google Cloud and Firebase setup
 
-Firebase Hosting is a durable release dependency for support/privacy pages and
-for the Google Picker browser-to-native handoff. It is a static site, not an
-app backend, and it does not store workout data. The durable data artifact
-remains the user-owned Google Sheet.
-
-The repo-root Firebase config points at the existing Firebase project:
+Use the same Google Cloud project for native auth, Sheets API, and Drive API:
 
 ```text
-workouttracker-16285
+657151291920
 ```
 
-The configured production Hosting origins, after live deploy, are:
+Enable:
+
+- Google Sheets API
+- Google Drive API
+
+Firebase Hosting remains a static-site dependency for support/privacy pages. It
+is not an app backend and it does not store workout data.
+
+Production Hosting origins:
 
 ```text
 https://workouttracker-16285.web.app
 https://workouttracker-16285.firebaseapp.com
 ```
 
-The Google Picker OAuth redirect/callback URL to deploy and register is:
-
-```text
-https://workouttracker-16285.firebaseapp.com/google-picker-callback/
-```
-
-This URI must match the Web OAuth client's Authorized redirect URI exactly.
-Using the alternate `web.app` hosting origin for this OAuth redirect causes
-Google to return `Error 400: redirect_uri_mismatch`.
-
-The hosted callback page preserves Google Picker result parameters and returns
-them to the native Flutter app through this app-owned URL scheme:
-
-```text
-workouttracker://google-picker-callback
-```
-
-Before relying on the hosted callback, deploy Firebase Hosting to the live
-channel and confirm the callback URL returns HTTP 200. The Web OAuth client must
-then list the exact hosted callback URL above under Authorized redirect URIs.
-The OAuth consent screen should also use the hosted support and privacy URLs:
+Support and privacy URLs for the OAuth consent screen:
 
 ```text
 https://workouttracker-16285.web.app/
 https://workouttracker-16285.web.app/privacy.html
 ```
 
-Production app startup injects the native callback receiver, so Picker
-authorization always uses the hosted HTTPS callback. The app no longer supports
-a local loopback Picker callback path.
+## Scopes
 
-The macOS Release app is sandboxed, so `HOME` resolves to the app container's
-`Data` directory. Persisted sheet/account state uses the standard
-home-relative Application Support path:
+Choosing a sheet uses:
 
 ```text
-$HOME/Library/Application Support/WorkoutTracker/state.json
+https://www.googleapis.com/auth/drive.metadata.readonly
 ```
 
-## Sheets Scopes
-
-Validation, history block creation, set logging, exercise authoring, and app
-spreadsheet initialization all request the writable Sheets spreadsheet scope:
+Validation, workbook initialization, history writes, set logging, and sheet
+creation use:
 
 ```text
 https://www.googleapis.com/auth/spreadsheets
 ```
 
-Future Google Drive sheet selection or creation work may need the Drive file
-scope:
+The MVP does not request full-drive read/write access.
 
-```text
-https://www.googleapis.com/auth/drive.file
-```
+## Local test boundaries
 
-The app does not request full-drive access for the MVP sheet contract.
+Local tests may verify app-owned contracts such as:
 
-## Test Boundaries
+- requested scopes
+- chooser query inputs
+- selected-sheet persistence
+- API adapter inputs
+- planned sheet writes
 
-Default local tests may use fake Google-facing collaborators only to verify this
-app's interface contracts, such as requested scopes, generated OAuth URLs,
-accepted callback parameters, and adapter write plans. Those tests do not prove
-Google Sign-In, OAuth, Picker, Sheets, Drive, or Firebase Hosting behavior. Do
-not add canned Google HTTP responses or simulated Picker success flows as
-behavior tests. When real Google behavior matters, use explicit opt-in live
-validation against the development sheet and report any required user
-authorization or sheet writes.
+They do not prove Google Sign-In, Drive API, Sheets, or Firebase Hosting
+behavior. When external behavior matters, use opt-in live validation and
+document the HITL step explicitly.
 
-## macOS GUI validation
+## macOS validation
 
-For macOS native Google Sign-In, open `macos/Runner.xcworkspace` in Xcode,
-select the `Runner` target, and choose a development team under Signing &
-Capabilities. The plugin requires keychain sharing, which cannot be used by an
-unsigned macOS target. Picker selection should use the hosted HTTPS callback
-and app-owned URL scheme above for release validation.
+For macOS native sign-in, open `macos/Runner.xcworkspace` in Xcode, select the
+`Runner` target, and choose a development team under Signing & Capabilities.
+The plugin requires keychain sharing, which will not work on an unsigned macOS
+target.
 
-Build the macOS bundle:
+Build the app:
 
 ```sh
 flutter build macos
 ```
 
-Run the app and use Choose workout sheet or Create sheet. A browser Picker flow
-should appear when Google authorization is needed:
+Run it:
 
 ```sh
 open build/macos/Build/Products/Release/workout_tracker.app
 ```
 
-## iOS device and simulator validation
+Expected validation flow:
 
-Use a physical iPhone or iPad for release-facing validation:
+1. Sign in with Google once.
+2. Tap Choose workout sheet.
+3. Confirm the Flutter chooser opens inside the app.
+4. Search for or pick a recent spreadsheet and confirm the app returns with the
+   chosen sheet.
+5. Restart the app and confirm the account restores without reselecting the
+   sheet.
+
+## iOS validation
+
+Use a physical device for release-facing validation:
 
 ```sh
 flutter devices
 flutter run --release -d <device-id>
 ```
 
-Use profile mode only when you need limited runtime observability:
-
-```sh
-flutter run --profile -d <device-id>
-```
-
-Boot an available simulator and run the app through Flutter so the simulator
-installs and launches the bundle. Simulator runs are layout/basic-flow checks,
-not release-equivalent validation:
-
-```sh
-flutter devices
-flutter run -d <simulator-id>
-```
-
-The iOS simulator build can be checked without live Google access:
+Simulator checks are useful for layout and basic flow only:
 
 ```sh
 flutter build ios --simulator
+flutter run -d <simulator-id>
 ```
 
-Press Validate in the launched simulator app. The Google account-picker flow
-should appear when authorization is needed.
+Expected validation flow matches macOS: one native sign-in, then an in-app
+Flutter sheet chooser, then persisted sheet selection on later launches.
 
-## Development Spreadsheet
+## Development spreadsheet
 
-The development spreadsheet for Google integration validation is:
+The development spreadsheet for live Google validation is:
 
 ```text
 https://docs.google.com/spreadsheets/d/1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E/edit?gid=0#gid=0

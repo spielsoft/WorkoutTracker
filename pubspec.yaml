@@ -62,7 +62,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/exercise_defaults/default_exercises.json
-    - assets/google_picker/app_config.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

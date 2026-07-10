@@ -1,19 +1,4 @@
 {
-  "clientId": "657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com",
-  "callbackTimeoutSeconds": 300,
-  "nativeCallbackScheme": "workouttracker",
-  "nativeCallbackHost": "google-picker-callback",
-  "hostedCallbackUri": "https://workouttracker-16285.firebaseapp.com/google-picker-callback/",
-  "pickedIdQueryParameters": [
-    "picked_file_ids",
-    "picked_file_id",
-    "picked_folder_ids",
-    "picked_folder_id",
-    "file_ids",
-    "file_id",
-    "folder_ids",
-    "folder_id",
-    "ids",
-    "id"
-  ]
+  "appId": "657151291920",
+  "pageUri": "https://workouttracker-16285.web.app/google-picker/"
 }

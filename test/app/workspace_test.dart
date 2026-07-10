@@ -163,9 +163,41 @@ void main() {
     expect(state.workoutSelection, isNull);
     expect(accessSt.value.selectedSheet, isNull);
     expect(accessSt.value.sheetText, 'pasted-spreadsheet-id');
-    expect(accessSt.value.pickerAuth?.accessToken, 'picker-token');
+    expect(accessSt.value.pickerAuth, isNull);
     expect(accessSt.value.workoutSelection, isNull);
   });
+
+  test(
+    'restore clears legacy picker auth when the runtime session is not picker-backed',
+    () async {
+      final accessSt = _MemoryWorkspaceStOwner(
+        const WorkspaceAccessSt(
+          sheetText: 'selected-spreadsheet-id',
+          selectedSheet: SelectedSheet(
+            spreadsheetId: 'selected-spreadsheet-id',
+            name: 'Selected Workouts',
+          ),
+          pickerAuth: PickerAuth(
+            accessToken: 'picker-token',
+            accountEmail: 'athlete@example.com',
+          ),
+        ),
+      );
+      final workspace = WorkspaceCtrl(
+        accessStOwner: accessSt,
+        accountSession: _RecordingGoogleAccountSession(
+          const GoogleAccountProfile(email: 'athlete@example.com'),
+        ),
+      );
+
+      final state = await workspace.restore();
+
+      expect(state.selectedSheet?.id, 'selected-spreadsheet-id');
+      expect(state.accountProfile?.email, 'athlete@example.com');
+      expect(state.pickerAuthorization, isNull);
+      expect(accessSt.value.pickerAuth, isNull);
+    },
+  );
 
   test(
     'restores and resolves a saved selected sheet in one workspace command',

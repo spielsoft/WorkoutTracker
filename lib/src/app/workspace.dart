@@ -96,7 +96,19 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   @override
   Future<WorkspaceUiSt> restore() async {
     await _restoreAccount();
-    final restoredAccessSt = await _restoreAccessSt();
+    var restoredAccessSt = await _restoreAccessSt();
+    if (restoredAccessSt != null && !_storesPickerAuth(_accountSession)) {
+      restoredAccessSt =
+          await _updateSt(
+            (_) => WorkspaceAccessSt(
+              sheetText: restoredAccessSt!.sheetText,
+              selectedSheet: restoredAccessSt.selectedSheet,
+              pickerAuth: null,
+              workoutSelection: restoredAccessSt.workoutSelection,
+            ),
+          ) ??
+          restoredAccessSt.copyWith(pickerAuth: null);
+    }
     final accessSt = restoredAccessSt ?? const WorkspaceAccessSt();
     if (restoredAccessSt != null) {
       _restoreAuth(accessSt.pickerAuth);
@@ -133,7 +145,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       (accessSt) => WorkspaceAccessSt(
         sheetText: persistedText,
         selectedSheet: accessSt.selectedSheet,
-        pickerAuth: accessSt.pickerAuth,
+        pickerAuth: _persistedAuth(_accountSession, accessSt),
         workoutSelection: accessSt.workoutSelection,
       ),
     );
@@ -154,7 +166,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       (accessSt) => WorkspaceAccessSt(
         sheetText: persistedText,
         selectedSheet: null,
-        pickerAuth: accessSt.pickerAuth,
+        pickerAuth: _persistedAuth(_accountSession, accessSt),
         workoutSelection: null,
       ),
     );
@@ -177,7 +189,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       (accessSt) => WorkspaceAccessSt(
         sheetText: selected.id,
         selectedSheet: selected,
-        pickerAuth: authorization ?? accessSt.pickerAuth,
+        pickerAuth: authorization ?? _persistedAuth(_accountSession, accessSt),
         workoutSelection: accessSt.workoutSelection,
       ),
     );
@@ -271,7 +283,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       (accessSt) => WorkspaceAccessSt(
         sheetText: accessSt.sheetText,
         selectedSheet: accessSt.selectedSheet,
-        pickerAuth: accessSt.pickerAuth,
+        pickerAuth: _persistedAuth(_accountSession, accessSt),
         workoutSelection: selection,
       ),
     );
@@ -437,4 +449,15 @@ PickerAuth? _currentAuth(GoogleAccountSession? accountSession) {
 String? _trimmedOrNull(String? value) {
   final trimmed = value?.trim();
   return trimmed == null || trimmed.isEmpty ? null : trimmed;
+}
+
+bool _storesPickerAuth(GoogleAccountSession? accountSession) {
+  return accountSession is PickerAuthStore;
+}
+
+PickerAuth? _persistedAuth(
+  GoogleAccountSession? accountSession,
+  WorkspaceAccessSt accessSt,
+) {
+  return _storesPickerAuth(accountSession) ? accessSt.pickerAuth : null;
 }

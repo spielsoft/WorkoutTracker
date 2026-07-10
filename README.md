@@ -124,8 +124,8 @@ complete before UI code depends on it.
 Mocks and fakes in this repository are interface checks, not evidence of
 third-party behavior. A canned Google, Firebase, OAuth, Picker, or app-store
 response must not be described as a behavior test. Use local tests to lock the
-app-owned contract such as requested scopes, generated URLs, accepted callback
-parameters, adapter inputs, and planned sheet writes. Use opt-in live
+app-owned contract such as requested scopes, hosted Picker page inputs, JS
+bridge messages, adapter inputs, and planned sheet writes. Use opt-in live
 integration only when the real external service behavior matters.
 
 Use the narrowest test tier that matches the change:
@@ -160,12 +160,10 @@ Integration slices may write to this sheet, but they must include reset and clea
 
 ## Spreadsheet Selection
 
-Google Drive Picker is used as the shared path for account discovery,
-authorization, choosing an existing sheet, and choosing the target folder for a
-new sheet.
-Native Google Sign-In remains wired for runnable iOS and macOS apps.
-The Picker callback provides the access token and account profile that the app
-persists for later launches. Google-backed sheet creation opens the folder
-picker first, then asks for the sheet name, creates a new spreadsheet,
-initializes it with the WorkoutTracker contract, selects it, and persists that
-selection for later launches.
+Native Google Sign-In is the single runtime account authority for iOS and
+macOS. Existing sheet selection now uses the Drive API directly from Flutter:
+the app signs in natively, requests Drive metadata access, and shows an
+in-app Flutter chooser for recent/searchable Google Sheets. Google-backed sheet
+creation stays on the native session path, creates the spreadsheet through the
+Sheets API, initializes it with the WorkoutTracker contract, selects it, and
+persists that selection for later launches.

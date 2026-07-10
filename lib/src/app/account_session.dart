@@ -34,6 +34,11 @@ abstract interface class GoogleAccountSession implements Listenable {
 }
 
 abstract interface class SignInAuthGateway implements GoogleAccountSession {
+  Future<String?> authorizationToken(
+    List<String> scopes, {
+    bool promptIfNecessary = false,
+  });
+
   Future<Map<String, String>> authorizationHeaders(List<String> scopes);
 }
 
@@ -137,6 +142,18 @@ class PickerAuthGateway extends ChangeNotifier
   }
 
   @override
+  Future<String?> authorizationToken(
+    List<String> scopes, {
+    bool promptIfNecessary = false,
+  }) async {
+    final accessToken = _authorization?.accessToken.trim();
+    if (accessToken == null || accessToken.isEmpty) {
+      return null;
+    }
+    return accessToken;
+  }
+
+  @override
   Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
     final accessToken = _authorization?.accessToken.trim();
     if (accessToken == null || accessToken.isEmpty) {
@@ -186,17 +203,41 @@ class NativeSignInAuthGateway extends ChangeNotifier
   }
 
   @override
-  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
+  Future<String?> authorizationToken(
+    List<String> scopes, {
+    bool promptIfNecessary = false,
+  }) async {
     await _ensureInitialized();
-    final account = await _currentAccount(scopes);
-    final headers = await account.authorizationClient.authorizationHeaders(
+    try {
+      final account = await _currentAccount(scopes);
+      final auth =
+          await account.authorizationClient.authorizationForScopes(scopes) ??
+          (promptIfNecessary
+              ? await account.authorizationClient.authorizeScopes(scopes)
+              : null);
+      return auth?.accessToken;
+    } on GoogleSignInException catch (error) {
+      switch (error.code) {
+        case GoogleSignInExceptionCode.canceled:
+        case GoogleSignInExceptionCode.interrupted:
+        case GoogleSignInExceptionCode.uiUnavailable:
+          return null;
+        default:
+          rethrow;
+      }
+    }
+  }
+
+  @override
+  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
+    final accessToken = await authorizationToken(
       scopes,
       promptIfNecessary: true,
     );
-    if (headers == null) {
+    if (accessToken == null || accessToken.trim().isEmpty) {
       throw StateError('Google authorization did not return Sheets headers.');
     }
-    return headers;
+    return {'Authorization': 'Bearer $accessToken', 'X-Goog-AuthUser': '0'};
   }
 
   @override

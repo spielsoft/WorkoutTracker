@@ -1,30 +1,29 @@
-import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/app.dart';
 
+import 'src/app/sheet_picker_page.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final appLinks = AppLinks();
-  final googlePickerConfig = await loadPickerAppCfg();
-  final googleSignInGateway = PickerAuthGateway();
-  final sheetSvc = SheetAccess(ScopedApiAccess(auth: googleSignInGateway));
+  final navigatorKey = GlobalKey<NavigatorState>();
+  final googleAuth = NativeSignInAuthGateway();
+  final sheetSvc = SheetAccess(ScopedApiAccess(auth: googleAuth));
   runApp(
     WorkoutTrackerApp(
       svc: sheetSvc,
-      accountSession: googleSignInGateway,
+      navigatorKey: navigatorKey,
+      accountSession: googleAuth,
       appStStore: const FileAppStStore(),
-      picker: MobileSheetPicker(
-        config: googlePickerConfig,
-        auth: googleSignInGateway,
-        callbackFactory: ({required state, required timeout}) async {
-          return NativeCbReceiver(
-            state: state,
-            config: googlePickerConfig,
-            timeout: timeout,
-            uriLinkStream: appLinks.uriLinkStream,
-          );
+      picker: DriveSheetPicker(
+        auth: googleAuth,
+        showPicker: (req) async {
+          final context = navigatorKey.currentContext;
+          if (context == null) {
+            throw StateError('Unable to show the Google Drive sheet chooser.');
+          }
+          return showSheetPickerPage(context, req);
         },
-        sheetCreator: SheetCreator(auth: googleSignInGateway),
+        sheetCreator: SheetCreator(auth: googleAuth),
       ),
     ),
   );

@@ -56,6 +56,7 @@ class _PlaceIntent {
 class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
     required this.svc,
+    this.navigatorKey,
     this.accountSession,
     this.appStStore,
     this.initialText = '',
@@ -66,6 +67,7 @@ class WorkoutTrackerApp extends StatelessWidget {
   });
 
   final WbkSvc svc;
+  final GlobalKey<NavigatorState>? navigatorKey;
   final GoogleAccountSession? accountSession;
   final AppStStore? appStStore;
   final String initialText;
@@ -77,8 +79,10 @@ class WorkoutTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'WorkoutTracker',
+      navigatorKey: navigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7C66)),
+        splashFactory: InkRipple.splashFactory,
         useMaterial3: true,
       ),
       scrollBehavior: const AppScrollBehavior(),

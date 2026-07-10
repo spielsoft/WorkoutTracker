@@ -1,28 +1,14 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:http/http.dart' as http;
-import 'package:workout_tracker/sheets.dart';
 import 'package:workout_tracker/app.dart';
+import 'package:workout_tracker/sheets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  test('loads Google Picker app config from the bundled JSON asset', () async {
-    final config = await loadPickerAppCfg();
-
-    expect(config.clientId, isNotEmpty);
-    expect(config.callbackTimeout, const Duration(minutes: 5));
-    expect(
-      config.hostedCallbackUri.toString(),
-      'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
-    );
-    expect(config.nativeCallbackScheme, 'workouttracker');
-    expect(config.nativeCallbackHost, 'google-picker-callback');
-  });
 
   test(
     'disabled spreadsheet picker reports both actions unavailable',
@@ -37,242 +23,146 @@ void main() {
     },
   );
 
-  test('production picker client ID enables app builds', () {
-    final config = _testGooglePickerConfig();
+  test('drive picker keeps sheet choice available without sheet creation', () {
+    final picker = DriveSheetPicker(
+      auth: _FakeAuthGateway(nextToken: 'native-token'),
+      googleAccess: _RecordingApiAccess(_DriveListClient(files: const [])),
+      showPicker: (_) async => null,
+    );
 
-    expect(config.clientId, isNotEmpty);
+    expect(picker.availability.canChoose, isTrue);
+    expect(picker.availability.canCreate, isFalse);
     expect(
-      MobileSheetPicker(
-        config: config,
-        callbackFactory: _unusedCallbackReceiverFactory,
-      ).availability.canChoose,
-      isTrue,
+      picker.availability.createReason,
+      'Google Drive sheet creation is not connected yet.',
     );
   });
 
   test(
-    'Google Picker authorization URL carries the app callback path and request state',
-    () {
-      final config = _testGooglePickerConfig();
-
-      expect(
-        config.hostedCallbackUri.toString(),
-        'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
+    'drive picker searches Google Sheets through Drive metadata scope',
+    () async {
+      final auth = _FakeAuthGateway(
+        currentAccount: const GoogleAccountProfile(
+          email: 'athlete@example.com',
+        ),
+        nextToken: 'native-token',
+      );
+      final client = _DriveListClient(
+        files: const [
+          {
+            'id': 'spreadsheet-id',
+            'name': 'Morning Log',
+            'webViewLink':
+                'https://docs.google.com/spreadsheets/d/spreadsheet-id/edit',
+            'owners': [
+              {'displayName': 'Athlete', 'emailAddress': 'athlete@example.com'},
+            ],
+            'modifiedTime': '2026-07-06T10:00:00.000Z',
+            'viewedByMeTime': '2026-07-06T11:00:00.000Z',
+          },
+        ],
+      );
+      final access = _RecordingApiAccess(client);
+      SheetViewReq? req;
+      final picker = DriveSheetPicker(
+        auth: auth,
+        googleAccess: access,
+        showPicker: (pickedReq) async {
+          req = pickedReq;
+          final matches = await pickedReq.load('morning log');
+          expect(matches.single.name, 'Morning Log');
+          return matches.single;
+        },
       );
 
-      final authorizationUrl = MobileSheetPicker.pickerAuthorizationUrl(
-        clientId: 'client-id.apps.googleusercontent.com',
-        redirectUri: config.hostedCallbackUri,
-        state: 'request-state',
-        loginHint: 'athlete@example.com',
-      );
+      final selected = await picker.chooseSheet();
 
-      expect(authorizationUrl.host, 'accounts.google.com');
+      expect(auth.tokenRequests.single.scopes, const [driveMetaScope]);
+      expect(auth.tokenRequests.single.promptIfNecessary, isTrue);
+      expect(req?.accountEmail, 'athlete@example.com');
+      expect(access.requestedScopes.single, [driveMetaScope]);
       expect(
-        authorizationUrl.queryParameters['client_id'],
-        'client-id.apps.googleusercontent.com',
+        client.requests.single.queryParameters['q'],
+        "mimeType = 'application/vnd.google-apps.spreadsheet' and "
+        "trashed = false and "
+        "name contains 'morning' and "
+        "name contains 'log'",
       );
-      expect(
-        authorizationUrl.queryParameters['redirect_uri'],
-        config.hostedCallbackUri.toString(),
-      );
-      expect(authorizationUrl.queryParameters['response_type'], 'token');
-      expect(authorizationUrl.queryParameters['state'], 'request-state');
-      expect(
-        authorizationUrl.queryParameters['scope'],
-        'https://www.googleapis.com/auth/drive.file',
-      );
-      expect(authorizationUrl.queryParameters['prompt'], 'consent');
-      expect(
-        authorizationUrl.queryParameters['include_granted_scopes'],
-        isNull,
-      );
-      expect(authorizationUrl.queryParameters['trigger_onepick'], 'true');
-      expect(
-        authorizationUrl.queryParameters['mimetypes'],
-        'application/vnd.google-apps.spreadsheet',
-      );
-      expect(
-        authorizationUrl.queryParameters['login_hint'],
-        'athlete@example.com',
-      );
+      expect(client.requests.single.queryParameters['orderBy'], 'name_natural');
+      expect(client.requests.single.queryParameters['pageSize'], '50');
+      expect(selected?.id, 'spreadsheet-id');
+      expect(selected?.name, 'Morning Log');
+      expect(selected?.accountEmail, 'athlete@example.com');
     },
   );
+
+  test('drive picker loads recent Google Sheets for an empty query', () async {
+    final client = _DriveListClient(
+      files: const [
+        {
+          'id': 'recent-sheet-id',
+          'name': 'Training Log',
+          'webViewLink':
+              'https://docs.google.com/spreadsheets/d/recent-sheet-id/edit',
+        },
+      ],
+    );
+    final access = _RecordingApiAccess(client);
+    final picker = DriveSheetPicker(
+      auth: _FakeAuthGateway(nextToken: 'native-token'),
+      googleAccess: access,
+      showPicker: (req) async {
+        final recent = await req.load('');
+        expect(recent.single.name, 'Training Log');
+        return null;
+      },
+    );
+
+    final selected = await picker.chooseSheet();
+
+    expect(selected, isNull);
+    expect(access.requestedScopes.single, [driveMetaScope]);
+    expect(
+      client.requests.single.queryParameters['q'],
+      "mimeType = 'application/vnd.google-apps.spreadsheet' and "
+      'trashed = false',
+    );
+    expect(
+      client.requests.single.queryParameters['orderBy'],
+      'viewedByMeTime desc,modifiedTime desc,name_natural',
+    );
+    expect(client.requests.single.queryParameters['pageSize'], '25');
+  });
 
   test(
-    'native Google Picker callback parser accepts only app-owned results',
-    () {
-      final config = _testGooglePickerConfig();
-
-      final success = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?state=request-state&picked_file_ids=first_sheet,second-sheet',
-        ),
-        expectedSt: 'request-state',
-        config: config,
+    'drive picker returns null when native authorization is cancelled',
+    () async {
+      final auth = _FakeAuthGateway(nextToken: null);
+      var showPickerCalled = false;
+      final picker = DriveSheetPicker(
+        auth: auth,
+        googleAccess: _RecordingApiAccess(_DriveListClient(files: const [])),
+        showPicker: (_) async {
+          showPickerCalled = true;
+          return null;
+        },
       );
 
-      expect(success.result?.pickedSheetIds, ['first_sheet', 'second-sheet']);
-      expect(success.errorMessage, isNull);
+      final selected = await picker.chooseSheet();
 
-      final successWithToken = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?state=request-state&picked_file_ids=spreadsheet-id'
-          '&access_token=oauth-token'
-          '&account_email=athlete%40example.com'
-          '&account_name=Athlete%20Name'
-          '&account_photo=https%3A%2F%2Fexample.com%2Fathlete.png',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(successWithToken.result?.pickedSheetIds, ['spreadsheet-id']);
-      expect(successWithToken.result?.accessToken, 'oauth-token');
-      expect(successWithToken.result?.accountEmail, 'athlete@example.com');
-      expect(successWithToken.result?.accountName, 'Athlete Name');
-      expect(
-        successWithToken.result?.accountPhotoUrl,
-        'https://example.com/athlete.png',
-      );
-
-      for (final alias in [
-        'picked_file_ids',
-        'picked_file_id',
-        'picked_folder_ids',
-        'picked_folder_id',
-        'file_ids',
-        'file_id',
-        'folder_ids',
-        'folder_id',
-        'ids',
-        'id',
-      ]) {
-        final aliasSuccess = validatePickerCb(
-          Uri.parse(
-            'workouttracker://google-picker-callback'
-            '?state=request-state&$alias=spreadsheet-id',
-          ),
-          expectedSt: 'request-state',
-          config: config,
-        );
-        expect(
-          aliasSuccess.result?.pickedSheetIds,
-          ['spreadsheet-id'],
-          reason: 'callback ID alias $alias should be accepted',
-        );
-      }
-
-      final cancelled = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?state=request-state&error=access_denied',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(cancelled.result?.cancelled, isTrue);
-
-      final pickerError = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?state=request-state&error=server_error',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(pickerError.result?.error, 'server_error');
-
-      final missingSt = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?picked_file_ids=spreadsheet-id',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(missingSt.result, isNull);
-      expect(missingSt.errorMessage, contains('missing request state'));
-
-      final wrongSt = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?state=other-state&picked_file_ids=spreadsheet-id',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(wrongSt.result, isNull);
-      expect(wrongSt.errorMessage, contains('state'));
-
-      final malformedSpreadsheetId = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?state=request-state&picked_file_ids=spreadsheet.id',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(malformedSpreadsheetId.result, isNull);
-      expect(malformedSpreadsheetId.errorMessage, contains('spreadsheet ID'));
-
-      final tokenWithoutSelection = validatePickerCb(
-        Uri.parse(
-          'workouttracker://google-picker-callback'
-          '?state=request-state&access_token=oauth-token',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(tokenWithoutSelection.result, isNull);
-      expect(tokenWithoutSelection.errorMessage, contains('spreadsheet IDs'));
-
-      final unrelated = validatePickerCb(
-        Uri.parse(
-          'com.googleusercontent.apps.client:/oauth2redirect'
-          '?state=request-state&picked_file_ids=spreadsheet-id',
-        ),
-        expectedSt: 'request-state',
-        config: config,
-      );
-      expect(unrelated.result, isNull);
-      expect(unrelated.errorMessage, contains('workouttracker'));
+      expect(selected, isNull);
+      expect(showPickerCalled, isFalse);
     },
   );
-
-  test('native google picker callback scheme is app-owned', () {
-    final iosInfoPlist = File('ios/Runner/Info.plist').readAsStringSync();
-    final macosInfoPlist = File('macos/Runner/Info.plist').readAsStringSync();
-    final androidManifest = File(
-      'android/app/src/main/AndroidManifest.xml',
-    ).readAsStringSync();
-
-    expect(iosInfoPlist, contains('<string>workouttracker</string>'));
-    expect(macosInfoPlist, contains('<string>workouttracker</string>'));
-    expect(androidManifest, contains('android:scheme="workouttracker"'));
-    expect(
-      iosInfoPlist,
-      contains(
-        '<string>\$(WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID)</string>',
-      ),
-    );
-    expect(
-      macosInfoPlist,
-      contains(
-        '<string>\$(WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID)</string>',
-      ),
-    );
-  });
 
   test(
     'Google Sheets creator runs workbook creation through scoped Sheets access',
     () async {
       final client = _SheetsCreateClient();
-      final access = _RecordingScopedGoogleApiAccess(client);
+      final access = _RecordingApiAccess(client);
       final initializer = _RecordingWbkInit(client);
       final creator = SheetCreator(
-        auth: _UnusedSignInAuthGateway(),
+        auth: _FakeAuthGateway(),
         googleAccess: access,
         initFactory: (_) => initializer,
         titleFactory: () => 'Workout Log',
@@ -292,40 +182,8 @@ void main() {
   );
 }
 
-PickerAppCfg _testGooglePickerConfig() {
-  return PickerAppCfg(
-    clientId:
-        '657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com',
-    callbackTimeout: const Duration(minutes: 5),
-    nativeCallbackScheme: 'workouttracker',
-    nativeCallbackHost: 'google-picker-callback',
-    hostedCallbackUri: Uri.parse(
-      'https://workouttracker-16285.firebaseapp.com/google-picker-callback/',
-    ),
-    pickedIdQueryParameters: const [
-      'picked_file_ids',
-      'picked_file_id',
-      'picked_folder_ids',
-      'picked_folder_id',
-      'file_ids',
-      'file_id',
-      'folder_ids',
-      'folder_id',
-      'ids',
-      'id',
-    ],
-  );
-}
-
-Future<PickerCbReceiver> _unusedCallbackReceiverFactory({
-  required String state,
-  required Duration timeout,
-}) async {
-  throw StateError('Spreadsheet picker callback receiver was not expected.');
-}
-
-class _RecordingScopedGoogleApiAccess implements ApiAccess {
-  _RecordingScopedGoogleApiAccess(this.client);
+class _RecordingApiAccess implements ApiAccess {
+  _RecordingApiAccess(this.client);
 
   final http.Client client;
   final List<List<String>> requestedScopes = [];
@@ -341,6 +199,33 @@ class _RecordingScopedGoogleApiAccess implements ApiAccess {
     } finally {
       client.close();
     }
+  }
+}
+
+class _DriveListClient extends http.BaseClient {
+  _DriveListClient({required this.files});
+
+  final List<Map<String, Object?>> files;
+  final List<Uri> requests = [];
+  bool closed = false;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (closed) {
+      throw StateError('Client was closed before the Drive action finished.');
+    }
+    requests.add(request.url);
+    return http.StreamedResponse(
+      Stream.value(utf8.encode(jsonEncode({'files': files}))),
+      200,
+      headers: {'content-type': 'application/json'},
+    );
+  }
+
+  @override
+  void close() {
+    closed = true;
+    super.close();
   }
 }
 
@@ -364,13 +249,14 @@ class _SheetsCreateClient extends http.BaseClient {
         ),
       ),
       200,
-      headers: const {'content-type': 'application/json'},
+      headers: {'content-type': 'application/json'},
     );
   }
 
   @override
   void close() {
     closed = true;
+    super.close();
   }
 }
 
@@ -391,13 +277,43 @@ class _RecordingWbkInit implements WbkInit {
   }
 }
 
-class _UnusedSignInAuthGateway implements SignInAuthGateway {
-  @override
-  GoogleAccountProfile? get currentAccount => null;
+class _TokenReq {
+  const _TokenReq({required this.scopes, required this.promptIfNecessary});
+
+  final List<String> scopes;
+  final bool promptIfNecessary;
+}
+
+class _FakeAuthGateway extends ChangeNotifier implements SignInAuthGateway {
+  _FakeAuthGateway({this.currentAccount, this.nextToken});
 
   @override
-  Future<Map<String, String>> authorizationHeaders(List<String> scopes) {
-    throw StateError('Creator should use injected scoped access.');
+  GoogleAccountProfile? currentAccount;
+
+  final String? nextToken;
+  final List<_TokenReq> tokenRequests = [];
+
+  @override
+  Future<String?> authorizationToken(
+    List<String> scopes, {
+    bool promptIfNecessary = false,
+  }) async {
+    tokenRequests.add(
+      _TokenReq(
+        scopes: List<String>.from(scopes),
+        promptIfNecessary: promptIfNecessary,
+      ),
+    );
+    return nextToken;
+  }
+
+  @override
+  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
+    final token = await authorizationToken(scopes, promptIfNecessary: true);
+    if (token == null || token.isEmpty) {
+      throw StateError('Google authorization did not return Sheets headers.');
+    }
+    return {'Authorization': 'Bearer $token'};
   }
 
   @override
@@ -408,10 +324,4 @@ class _UnusedSignInAuthGateway implements SignInAuthGateway {
 
   @override
   Future<void> switchAccount({List<String> scopes = const []}) async {}
-
-  @override
-  void addListener(VoidCallback listener) {}
-
-  @override
-  void removeListener(VoidCallback listener) {}
 }

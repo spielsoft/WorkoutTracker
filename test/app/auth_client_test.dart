@@ -86,6 +86,15 @@ class _RecordingSignInAuthGateway extends ChangeNotifier
   GoogleAccountProfile? get currentAccount => null;
 
   @override
+  Future<String?> authorizationToken(
+    List<String> scopes, {
+    bool promptIfNecessary = false,
+  }) async {
+    requestedScopes.add(scopes);
+    return 'test-token';
+  }
+
+  @override
   Future<void> restoreAccount() async {}
 
   @override
@@ -96,7 +105,7 @@ class _RecordingSignInAuthGateway extends ChangeNotifier
 
   @override
   Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
-    requestedScopes.add(scopes);
-    return const {'Authorization': 'Bearer test-token'};
+    final token = await authorizationToken(scopes, promptIfNecessary: true);
+    return {'Authorization': 'Bearer $token'};
   }
 }
