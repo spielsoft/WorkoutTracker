@@ -1,78 +1,19 @@
-part of 'shell.dart';
+import 'package:flutter/material.dart';
+import 'package:workout_tracker/contract.dart';
+
+import 'controller.dart';
+import 'exercise_form.dart';
+import 'exercise_library.dart';
+import 'logging.dart';
+import 'repair.dart';
+import 'ui/flow.dart';
+import 'ui/shared/a11y.dart';
+import 'ui/shared/header.dart';
+import 'ui/shared/name_dialog.dart';
+import 'ui/shared/status.dart';
 
 const _addWorkoutMenuValue = '__workout_tracker_add_workout__';
 const _addBlockMenuValue = '__workout_tracker_add_history_block__';
-
-class _ScreenHeader extends StatelessWidget {
-  const _ScreenHeader({
-    required this.title,
-    required this.backTooltip,
-    required this.onBack,
-    this.subtitle,
-    this.compactTitle = false,
-    this.trailing,
-  });
-
-  final String title;
-  final String backTooltip;
-  final VoidCallback onBack;
-  final String? subtitle;
-  final bool compactTitle;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final subtitle = this.subtitle;
-    return Row(
-      children: [
-        IconButton(
-          tooltip: backTooltip,
-          onPressed: onBack,
-          icon: const Icon(Icons.arrow_back_outlined),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _A11yHeader(
-                label: subtitle == null ? title : '$title, $subtitle',
-                child: Text(
-                  title,
-                  key: compactTitle
-                      ? const ValueKey('current-workout-sheet-label')
-                      : null,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: compactTitle
-                      ? Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        )
-                      : Theme.of(context).textTheme.headlineSmall,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-      ],
-    );
-  }
-}
 
 class WorkoutScreens extends StatelessWidget {
   const WorkoutScreens({required this.view, required this.run, super.key});
@@ -111,12 +52,12 @@ class WorkoutScreens extends StatelessWidget {
     final setup = view.setup;
     final selectedWorkout = setup.selectedWorkout;
     final overview = setup.overview;
-    return _A11yScreen(
+    return A11yScreen(
       label: 'Workout setup',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ScreenHeader(
+          ScreenHeader(
             title: view.sheetLabel,
             compactTitle: true,
             backTooltip: 'Back to sheet selection',
@@ -202,12 +143,12 @@ class WorkoutScreens extends StatelessWidget {
     final title = selectedWorkout == null || selectedHistory == null
         ? 'Exercises'
         : '$selectedWorkout - $selectedHistory';
-    return _A11yScreen(
+    return A11yScreen(
       label: '$title exercise list',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ScreenHeader(
+          ScreenHeader(
             title: view.sheetLabel,
             subtitle: title,
             compactTitle: true,
@@ -563,7 +504,7 @@ class _WorkoutOverviewList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _A11yScreen(
+    return A11yScreen(
       label: '${overview.workout} exercises',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -730,8 +671,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                   ),
                                   if (slot.backups.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    _StChip(
-                                      state: _WorkoutVisualSt.backup,
+                                    StChip(
+                                      state: VisualSt.backup,
                                       label: backupSummaryLabel,
                                     ),
                                   ],
@@ -779,8 +720,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                   ),
                                   if (slot.backups.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    _StChip(
-                                      state: _WorkoutVisualSt.backup,
+                                    StChip(
+                                      state: VisualSt.backup,
                                       label: backupSummaryLabel,
                                     ),
                                   ],
@@ -1017,12 +958,12 @@ class _PlaceExerciseScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBackup = intent.kind == PlaceKind.backup;
-    return _A11yScreen(
+    return A11yScreen(
       label: isBackup ? 'Add backup exercise' : 'Add exercise to workout',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ScreenHeader(
+          ScreenHeader(
             title: sheetLabel,
             subtitle: isBackup ? 'Add backup exercise' : 'Add to workout',
             compactTitle: true,
@@ -1158,7 +1099,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _A11yTextField(
+        A11yTextField(
           label: 'Search exercises',
           valueListenable: _searchCtrl,
           child: TextField(
@@ -1339,7 +1280,7 @@ class _MetaField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _A11yTextField(
+    return A11yTextField(
       label: labelText,
       valueListenable: controller,
       child: TextField(
@@ -1370,12 +1311,12 @@ class _CreateExerciseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _A11yScreen(
+    return A11yScreen(
       label: 'New exercise',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ScreenHeader(
+          ScreenHeader(
             title: sheetLabel,
             subtitle: 'New exercise',
             compactTitle: true,
@@ -1409,12 +1350,12 @@ class _EditExerciseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _A11yScreen(
+    return A11yScreen(
       label: 'Edit exercise ${exercise.displayName}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ScreenHeader(
+          ScreenHeader(
             title: sheetLabel,
             subtitle: 'Edit exercise',
             compactTitle: true,

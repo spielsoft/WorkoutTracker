@@ -1,25 +1,15 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:workout_tracker/contract.dart';
 
 import 'state_store.dart';
 import 'validation.dart';
 import 'selection.dart';
-import 'controller.dart';
-import 'exercise_form.dart';
-import 'exercise_library.dart';
-import 'logging.dart';
-import 'repair.dart';
+import 'workout.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
-import 'ui/shared/name_dialog.dart';
-
-part 'workout.dart';
-part 'states.dart';
-part 'a11y.dart';
+import 'ui/shared/a11y.dart';
 
 class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
@@ -135,7 +125,7 @@ class _AppShellSt extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _A11yScreen(
+      body: A11yScreen(
         label: 'WorkoutTracker',
         child: SafeArea(
           child: ListenableBuilder(
