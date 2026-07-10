@@ -24,21 +24,15 @@ TestFlight are the release gates.
   xcconfig.
 - The app currently requests writable Google Sheets authorization for normal
   sheet use.
-- Google Drive Picker choosing uses the Firebase-hosted HTTPS callback and the
-  checked-in web OAuth client ID:
-  `657151291920-la859t7i7i8b0kjs1f4cn6c09kd72376.apps.googleusercontent.com`.
+- Native Google Sign-In is the single runtime account authority.
+- Existing sheet selection requests Drive metadata access and uses the in-app
+  Flutter chooser.
 - Firebase project ID: `workouttracker-16285`.
 - Configured production support URL, after live Firebase deploy:
   `https://workouttracker-16285.web.app/`.
 - Configured production privacy URL, after live Firebase deploy:
   `https://workouttracker-16285.web.app/privacy.html`.
-- Configured production Google Picker callback URL, after live Firebase deploy:
-  `https://workouttracker-16285.firebaseapp.com/google-picker-callback/`.
-- App-owned Picker return URL scheme:
-  `workouttracker://google-picker-callback`.
-- Google Picker OAuth is the shared authorization path for selecting sheets and
-  obtaining the access token used by Google Sheets API calls.
-- Firebase Hosting is a static support/privacy/callback surface. It is not a
+- Firebase Hosting is a static support/privacy surface. It is not a
   Workout Tracker account server and does not store workout data.
 
 Do not change the bundle identifier once App Store Connect, Google OAuth,
@@ -89,7 +83,7 @@ Use a production Google Cloud project before public release. A development
 project is acceptable for local testing, but the App Store build should point at
 the production OAuth consent screen and production OAuth clients.
 
-1. Enable the Google Sheets API.
+1. Enable the Google Sheets API and Google Drive API.
 2. Configure the OAuth consent screen:
    - user type: External;
    - app name: `Workout Tracker`;
@@ -100,10 +94,11 @@ the production OAuth consent screen and production OAuth clients.
      `https://workouttracker-16285.web.app/privacy.html`;
    - authorized domain: the Firebase Hosting domain accepted by Google for
      those URLs.
-3. Add exactly the scopes used by the app. Current normal use requires writable
-   Sheets access:
+3. Add exactly the scopes used by the app. Sheet selection requires Drive
+   metadata access, and normal sheet use requires writable Sheets access:
 
 ```text
+https://www.googleapis.com/auth/drive.metadata.readonly
 https://www.googleapis.com/auth/spreadsheets
 ```
 
@@ -111,28 +106,12 @@ https://www.googleapis.com/auth/spreadsheets
    automatically.
 5. Create an iOS OAuth client with bundle ID
    `com.spielman.workouttracker`.
-6. Confirm the checked-in Web OAuth client for Google Drive Picker belongs to
-   the production Google Cloud project.
-7. Add this exact URL to the Web OAuth client's Authorized redirect URIs:
-
-```text
-https://workouttracker-16285.firebaseapp.com/google-picker-callback/
-```
-
-8. Confirm this value matches character-for-character. The alternate
-   `https://workouttracker-16285.web.app/google-picker-callback/` origin is not
-   interchangeable unless it is also explicitly registered on the Web OAuth
-   client.
-9. Confirm the hosted callback page hands Picker results back to the native app
-   through:
-
-```text
-workouttracker://google-picker-callback
-```
-
-10. Update `ios/Flutter/GoogleSignIn.xcconfig` if the production client differs
+6. Create or confirm a macOS OAuth client for
+   `com.spielman.workouttracker`.
+7. Update `ios/Flutter/GoogleSignIn.xcconfig` and
+   `macos/Runner/Configs/AppInfo.xcconfig` if the production clients differ
    from the current development client.
-11. Keep secret JSON exports and API keys out of source control. Public mobile
+8. Keep secret JSON exports and API keys out of source control. Public mobile
    OAuth client IDs are embedded in app config; client secrets are not app
    secrets in an installed mobile binary.
 

@@ -2,32 +2,27 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'account_session.dart';
 import 'selection.dart';
 
 class WorkspaceAccessSt {
   const WorkspaceAccessSt({
     this.sheetText,
     this.selectedSheet,
-    this.pickerAuth,
     this.workoutSelection,
   });
 
   final String? sheetText;
   final SelectedSheet? selectedSheet;
-  final PickerAuth? pickerAuth;
   final WorkoutSelectionSt? workoutSelection;
 
   WorkspaceAccessSt copyWith({
     String? sheetText,
     SelectedSheet? selectedSheet,
-    PickerAuth? pickerAuth,
     WorkoutSelectionSt? workoutSelection,
   }) {
     return WorkspaceAccessSt(
       sheetText: sheetText ?? this.sheetText,
       selectedSheet: selectedSheet ?? this.selectedSheet,
-      pickerAuth: pickerAuth ?? this.pickerAuth,
       workoutSelection: workoutSelection ?? this.workoutSelection,
     );
   }
@@ -36,7 +31,6 @@ class WorkspaceAccessSt {
     return {
       if (sheetText != null) 'sheetText': sheetText,
       if (selectedSheet != null) 'selectedSheet': selectedSheet!.toJson(),
-      if (pickerAuth != null) 'pickerAuth': pickerAuth!.toJson(),
       if (workoutSelection != null)
         'workoutSelection': workoutSelection!.toJson(),
     };
@@ -47,7 +41,6 @@ class WorkspaceAccessSt {
       return WorkspaceAccessSt(
         sheetText: sheetText,
         selectedSheet: SelectedSheet.fromJson(value['selectedSheet']),
-        pickerAuth: _pickerAuthFromJson(value),
         workoutSelection: WorkoutSelectionSt.fromJson(
           value['workoutSelection'],
         ),
@@ -56,19 +49,12 @@ class WorkspaceAccessSt {
     if (value is Map<String, Object?>) {
       return WorkspaceAccessSt(
         selectedSheet: SelectedSheet.fromJson(value['selectedSheet']),
-        pickerAuth: _pickerAuthFromJson(value),
         workoutSelection: WorkoutSelectionSt.fromJson(
           value['workoutSelection'],
         ),
       );
     }
     return const WorkspaceAccessSt();
-  }
-
-  static PickerAuth? _pickerAuthFromJson(Map<String, Object?> json) {
-    return PickerAuth.fromJson(
-      json['pickerAuth'] ?? json['googleAuthorization'],
-    );
   }
 }
 

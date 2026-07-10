@@ -9,8 +9,8 @@ WorkoutTracker now uses one runtime Google account model on iOS and macOS:
 - The chooser does not launch its own web OAuth flow or embed Google Picker in
   a WebView.
 
-This keeps account state under the app's control while matching Google's
-current desktop/mobile Picker guidance.
+This keeps account state under the app's control without a separate browser
+authorization session.
 
 ## Runtime flow
 
@@ -22,8 +22,7 @@ current desktop/mobile Picker guidance.
    Sheets through `files.list`.
 4. Selecting a sheet persists the chosen spreadsheet and uses the native
    account for later Sheets API work.
-5. Sheet creation uses the same native session and writable Sheets scope, but
-   stays in Flutter rather than using Picker-owned auth state.
+5. Sheet creation uses the same native session and writable Sheets scope.
 
 ## Native OAuth configuration
 

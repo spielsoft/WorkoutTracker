@@ -6,7 +6,7 @@ import 'package:workout_tracker/app.dart';
 
 void main() {
   test(
-    'restores selected sheet, account, picker availability, and fallback',
+    'restores selected sheet, native account, picker availability, and fallback',
     () async {
       final accessSt = _MemoryWorkspaceStOwner(
         const WorkspaceAccessSt(
@@ -17,14 +17,14 @@ void main() {
             drivePath: 'My Drive / Workouts / 2026 Workouts',
             accountEmail: 'athlete@example.com',
           ),
-          pickerAuth: PickerAuth(
-            accessToken: 'picker-access-token',
-            accountEmail: 'athlete@example.com',
-            displayName: 'Athlete Name',
-          ),
         ),
       );
-      final accountSession = PickerAuthGateway();
+      final accountSession = _RecordingGoogleAccountSession(
+        const GoogleAccountProfile(
+          email: 'athlete@example.com',
+          displayName: 'Athlete Name',
+        ),
+      );
       final workspace = WorkspaceCtrl(
         accessStOwner: accessSt,
         accountSession: accountSession,
@@ -41,7 +41,6 @@ void main() {
       expect(restored.pastedText, 'pasted-spreadsheet-id');
       expect(restored.accountProfile?.email, 'athlete@example.com');
       expect(restored.accountProfile?.displayName, 'Athlete Name');
-      expect(restored.pickerAuthorization?.accessToken, 'picker-access-token');
       expect(restored.workoutSelection?.workout, isNull);
       expect(restored.pickerAvailability.canChoose, isFalse);
       expect(restored.fallbackAvailable, isFalse);
@@ -69,10 +68,9 @@ void main() {
   );
 
   test(
-    'persists selected sheet, pasted sheet text, picker auth, and workout selection',
+    'persists selected sheet, pasted sheet text, and workout selection',
     () async {
       final accessSt = _MemoryWorkspaceStOwner(const WorkspaceAccessSt());
-      final accountSession = PickerAuthGateway();
       final picker = _ResolvingSheetPicker(
         const SelectedSheet(
           spreadsheetId: 'resolved-spreadsheet-id',
@@ -81,11 +79,7 @@ void main() {
           accountEmail: 'athlete@example.com',
         ),
       );
-      final workspace = WorkspaceCtrl(
-        accessStOwner: accessSt,
-        accountSession: accountSession,
-        picker: picker,
-      );
+      final workspace = WorkspaceCtrl(accessStOwner: accessSt, picker: picker);
 
       await workspace.persistPastedText(
         ' https://docs.google.com/spreadsheets/d/pasted-id/edit ',
@@ -96,13 +90,6 @@ void main() {
         'https://docs.google.com/spreadsheets/d/pasted-id/edit',
       );
 
-      accountSession.updatePickerAuth(
-        const PickerAuth(
-          accessToken: 'picker-token',
-          accountEmail: 'athlete@example.com',
-          displayName: 'Athlete Name',
-        ),
-      );
       final selected = await workspace.resolveSelection(
         const SelectedSheet(
           spreadsheetId: 'selected-spreadsheet-id',
@@ -116,8 +103,6 @@ void main() {
         accessSt.value.selectedSheet?.displayLabel,
         'My Drive / Resolved Workouts',
       );
-      expect(accessSt.value.pickerAuth?.accessToken, 'picker-token');
-
       await workspace.persistWorkoutSelection(
         const WorkoutSelectionSt(
           spreadsheetId: 'resolved-spreadsheet-id',
@@ -142,10 +127,6 @@ void main() {
           spreadsheetId: 'selected-spreadsheet-id',
           name: 'Selected Workouts',
         ),
-        pickerAuth: PickerAuth(
-          accessToken: 'picker-token',
-          accountEmail: 'athlete@example.com',
-        ),
         workoutSelection: WorkoutSelectionSt(
           spreadsheetId: 'selected-spreadsheet-id',
           workout: 'Legs',
@@ -163,41 +144,8 @@ void main() {
     expect(state.workoutSelection, isNull);
     expect(accessSt.value.selectedSheet, isNull);
     expect(accessSt.value.sheetText, 'pasted-spreadsheet-id');
-    expect(accessSt.value.pickerAuth, isNull);
     expect(accessSt.value.workoutSelection, isNull);
   });
-
-  test(
-    'restore clears legacy picker auth when the runtime session is not picker-backed',
-    () async {
-      final accessSt = _MemoryWorkspaceStOwner(
-        const WorkspaceAccessSt(
-          sheetText: 'selected-spreadsheet-id',
-          selectedSheet: SelectedSheet(
-            spreadsheetId: 'selected-spreadsheet-id',
-            name: 'Selected Workouts',
-          ),
-          pickerAuth: PickerAuth(
-            accessToken: 'picker-token',
-            accountEmail: 'athlete@example.com',
-          ),
-        ),
-      );
-      final workspace = WorkspaceCtrl(
-        accessStOwner: accessSt,
-        accountSession: _RecordingGoogleAccountSession(
-          const GoogleAccountProfile(email: 'athlete@example.com'),
-        ),
-      );
-
-      final state = await workspace.restore();
-
-      expect(state.selectedSheet?.id, 'selected-spreadsheet-id');
-      expect(state.accountProfile?.email, 'athlete@example.com');
-      expect(state.pickerAuthorization, isNull);
-      expect(accessSt.value.pickerAuth, isNull);
-    },
-  );
 
   test(
     'restores and resolves a saved selected sheet in one workspace command',
@@ -232,13 +180,6 @@ void main() {
       final accessSt = _MemoryWorkspaceStOwner(
         const WorkspaceAccessSt(sheetText: 'previous-id'),
       );
-      final accountSession = PickerAuthGateway();
-      accountSession.updatePickerAuth(
-        const PickerAuth(
-          accessToken: 'picker-token',
-          accountEmail: 'athlete@example.com',
-        ),
-      );
       final picker = _CommandSheetPicker(
         chooseResult: const SelectedSheet(
           spreadsheetId: 'chosen-spreadsheet-id',
@@ -246,11 +187,7 @@ void main() {
           accountEmail: 'athlete@example.com',
         ),
       );
-      final workspace = WorkspaceCtrl(
-        accessStOwner: accessSt,
-        accountSession: accountSession,
-        picker: picker,
-      );
+      final workspace = WorkspaceCtrl(accessStOwner: accessSt, picker: picker);
 
       final state = await workspace.chooseSheet();
 
@@ -258,7 +195,6 @@ void main() {
       expect(state.selectedSheet?.id, 'chosen-spreadsheet-id');
       expect(accessSt.value.sheetText, 'chosen-spreadsheet-id');
       expect(accessSt.value.selectedSheet?.displayLabel, 'Chosen Workouts');
-      expect(accessSt.value.pickerAuth?.accessToken, 'picker-token');
       expect(workspace.state.isCommandInFlight, isFalse);
     },
   );
@@ -321,10 +257,6 @@ void main() {
           spreadsheetId: 'selected-spreadsheet-id',
           name: 'Selected Workouts',
         ),
-        pickerAuth: PickerAuth(
-          accessToken: 'picker-token',
-          accountEmail: 'athlete@example.com',
-        ),
         workoutSelection: WorkoutSelectionSt(
           spreadsheetId: 'selected-spreadsheet-id',
           workout: 'Legs',
@@ -347,12 +279,10 @@ void main() {
     expect(accountSession.signOutCount, 1);
     expect(accessSt.value.selectedSheet, isNull);
     expect(accessSt.value.sheetText, isNull);
-    expect(accessSt.value.pickerAuth, isNull);
     expect(accessSt.value.workoutSelection, isNull);
     expect(state.selectedSheet, isNull);
     expect(state.pastedText, isNull);
     expect(state.accountProfile, isNull);
-    expect(state.pickerAuthorization, isNull);
     expect(state.workoutSelection, isNull);
   });
 }

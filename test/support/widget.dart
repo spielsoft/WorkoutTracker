@@ -79,11 +79,10 @@ Future<void> expectFlutterAccessibilityGuidelines(WidgetTester tester) async {
 }
 
 class MemoryAppStStore implements AppStStore {
-  MemoryAppStStore(this.sheetText, {this.selectedSheet, this.pickerAuth});
+  MemoryAppStStore(this.sheetText, {this.selectedSheet});
 
   String? sheetText;
   SelectedSheet? selectedSheet;
-  PickerAuth? pickerAuth;
   WorkoutSelectionSt? workoutSelection;
   final accessStWrites = <WorkspaceAccessSt>[];
   int clearCount = 0;
@@ -93,7 +92,6 @@ class MemoryAppStStore implements AppStStore {
     return WorkspaceAccessSt(
       sheetText: sheetText,
       selectedSheet: selectedSheet,
-      pickerAuth: pickerAuth,
       workoutSelection: workoutSelection,
     );
   }
@@ -102,7 +100,6 @@ class MemoryAppStStore implements AppStStore {
   Future<void> writeWorkspaceSt(WorkspaceAccessSt value) async {
     sheetText = value.sheetText;
     selectedSheet = value.selectedSheet;
-    pickerAuth = value.pickerAuth;
     workoutSelection = value.workoutSelection;
     accessStWrites.add(value);
   }
@@ -112,7 +109,6 @@ class MemoryAppStStore implements AppStStore {
     clearCount += 1;
     sheetText = null;
     selectedSheet = null;
-    pickerAuth = null;
     workoutSelection = null;
   }
 }
@@ -144,11 +140,7 @@ class FakeSheetPicker implements SheetPicker {
   }
 }
 
-class AuthorizingSheetPicker implements SheetPicker {
-  AuthorizingSheetPicker(this.authorizationStore);
-
-  final PickerAuthStore authorizationStore;
-
+class SelectingSheetPicker implements SheetPicker {
   @override
   PickerAvail get availability {
     return const PickerAvail.available();
@@ -156,13 +148,6 @@ class AuthorizingSheetPicker implements SheetPicker {
 
   @override
   Future<SelectedSheet?> chooseSheet() async {
-    authorizationStore.updatePickerAuth(
-      const PickerAuth(
-        accessToken: 'picker-token',
-        accountEmail: 'athlete@example.com',
-        displayName: 'Athlete Name',
-      ),
-    );
     return const SelectedSheet(
       spreadsheetId: 'selected-spreadsheet-id',
       name: 'Development Workouts',

@@ -81,7 +81,7 @@ void main() {
 
       expect(
         publishedFiles,
-        containsAll({'public/index.html', 'public/privacy.html'}),
+        {'public/index.html', 'public/privacy.html'},
       );
     });
   });

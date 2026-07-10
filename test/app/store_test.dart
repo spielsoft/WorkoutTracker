@@ -13,12 +13,6 @@ void main() {
         name: 'Development Workouts',
         accountEmail: 'user@example.com',
       ),
-      pickerAuth: PickerAuth(
-        accessToken: 'picker-access-token',
-        accountEmail: 'user@example.com',
-        displayName: 'User Name',
-        photoUrl: 'https://example.com/user.png',
-      ),
       workoutSelection: WorkoutSelectionSt(
         spreadsheetId: 'spreadsheet-id',
         workout: 'Legs',
@@ -31,10 +25,6 @@ void main() {
     expect(decoded.sheetText, 'spreadsheet-id');
     expect(decoded.selectedSheet?.name, 'Development Workouts');
     expect(decoded.selectedSheet?.accountEmail, 'user@example.com');
-    expect(decoded.pickerAuth?.accessToken, 'picker-access-token');
-    expect(decoded.pickerAuth?.accountEmail, 'user@example.com');
-    expect(decoded.pickerAuth?.displayName, 'User Name');
-    expect(decoded.pickerAuth?.photoUrl, 'https://example.com/user.png');
     expect(decoded.workoutSelection?.workout, 'Legs');
     expect(decoded.workoutSelection?.historyBlock, 'Week 1');
   });
@@ -76,10 +66,6 @@ void main() {
         spreadsheetId: 'spreadsheet-id',
         name: 'Development Workouts',
       ),
-      pickerAuth: PickerAuth(
-        accessToken: 'picker-access-token',
-        accountEmail: 'athlete@example.com',
-      ),
     );
 
     await store.writeWorkspaceSt(state);
@@ -87,7 +73,6 @@ void main() {
 
     expect(restored.sheetText, 'spreadsheet-id');
     expect(restored.selectedSheet?.name, 'Development Workouts');
-    expect(restored.pickerAuth?.accountEmail, 'athlete@example.com');
   });
 
   test('state controller preserves overlapping workspace updates', () async {
@@ -110,10 +95,6 @@ void main() {
             spreadsheetId: 'spreadsheet-id',
             name: 'Development Workouts',
           ),
-          pickerAuth: PickerAuth(
-            accessToken: 'picker-access-token',
-            accountEmail: 'athlete@example.com',
-          ),
         ),
       ),
       controller.update(
@@ -134,7 +115,6 @@ void main() {
     final restored = await store.readWorkspaceSt();
     expect(restored.sheetText, 'spreadsheet-id');
     expect(restored.selectedSheet?.name, 'Development Workouts');
-    expect(restored.pickerAuth?.accountEmail, 'athlete@example.com');
     expect(restored.workoutSelection?.workout, 'Legs');
   });
 
@@ -156,6 +136,19 @@ void main() {
 
     expect(restored.sheetText, isNull);
     expect(restored.selectedSheet, isNull);
-    expect(restored.pickerAuth, isNull);
+  });
+
+  test('ignores retired picker authorization in existing state', () {
+    final restored = WorkspaceAccessSt.fromJson({
+      'sheetText': 'spreadsheet-id',
+      'pickerAuth': {
+        'accessToken': 'retired-token',
+        'accountEmail': 'old@example.com',
+      },
+      'googleAuthorization': {'accessToken': 'older-token'},
+    });
+
+    expect(restored.sheetText, 'spreadsheet-id');
+    expect(restored.toJson(), {'sheetText': 'spreadsheet-id'});
   });
 }

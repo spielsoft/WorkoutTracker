@@ -6,14 +6,13 @@ import 'account_session.dart';
 import 'selection.dart';
 
 const _pickerConfigReason =
-    'Google Drive Picker is not configured for this build.';
+    'Google Drive sheet selection is not configured for this build.';
 
 class WorkspaceUiSt {
   const WorkspaceUiSt({
     this.selectedSheet,
     this.pastedText,
     this.accountProfile,
-    this.pickerAuthorization,
     this.workoutSelection,
     this.isCommandInFlight = false,
     required this.pickerAvailability,
@@ -22,7 +21,6 @@ class WorkspaceUiSt {
   final SelectedSheet? selectedSheet;
   final String? pastedText;
   final GoogleAccountProfile? accountProfile;
-  final PickerAuth? pickerAuthorization;
   final WorkoutSelectionSt? workoutSelection;
   final bool isCommandInFlight;
   final PickerAvail pickerAvailability;
@@ -76,7 +74,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
          selectedSheet: initialSelection,
          pastedText: _trimmedOrNull(initialText),
          accountProfile: accountSession?.currentAccount,
-         pickerAuthorization: _currentAuth(accountSession),
          workoutSelection: null,
          isCommandInFlight: false,
          pickerAvailability: _availabilityFor(picker),
@@ -96,29 +93,13 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   @override
   Future<WorkspaceUiSt> restore() async {
     await _restoreAccount();
-    var restoredAccessSt = await _restoreAccessSt();
-    if (restoredAccessSt != null && !_storesPickerAuth(_accountSession)) {
-      restoredAccessSt =
-          await _updateSt(
-            (_) => WorkspaceAccessSt(
-              sheetText: restoredAccessSt!.sheetText,
-              selectedSheet: restoredAccessSt.selectedSheet,
-              pickerAuth: null,
-              workoutSelection: restoredAccessSt.workoutSelection,
-            ),
-          ) ??
-          restoredAccessSt.copyWith(pickerAuth: null);
-    }
+    final restoredAccessSt = await _restoreAccessSt();
     final accessSt = restoredAccessSt ?? const WorkspaceAccessSt();
-    if (restoredAccessSt != null) {
-      _restoreAuth(accessSt.pickerAuth);
-    }
     _state = WorkspaceUiSt(
       selectedSheet: accessSt.selectedSheet ?? _initialSelection,
       pastedText:
           _trimmedOrNull(accessSt.sheetText) ?? _trimmedOrNull(_initialText),
       accountProfile: _accountSession?.currentAccount,
-      pickerAuthorization: _currentAuth(_accountSession),
       workoutSelection: accessSt.workoutSelection,
       isCommandInFlight: _isCommandInFlight,
       pickerAvailability: _availabilityFor(_picker),
@@ -145,7 +126,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       (accessSt) => WorkspaceAccessSt(
         sheetText: persistedText,
         selectedSheet: accessSt.selectedSheet,
-        pickerAuth: _persistedAuth(_accountSession, accessSt),
         workoutSelection: accessSt.workoutSelection,
       ),
     );
@@ -162,11 +142,10 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   @override
   Future<WorkspaceUiSt> usePastedSheetText(String text) async {
     final persistedText = _trimmedOrNull(text);
-    final updatedAccessSt = await _updateSt(
+    await _updateSt(
       (accessSt) => WorkspaceAccessSt(
         sheetText: persistedText,
         selectedSheet: null,
-        pickerAuth: _persistedAuth(_accountSession, accessSt),
         workoutSelection: null,
       ),
     );
@@ -174,8 +153,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       _stateWith(
         selectedSheet: null,
         pastedText: persistedText,
-        pickerAuthorization:
-            updatedAccessSt?.pickerAuth ?? _state.pickerAuthorization,
         workoutSelection: null,
       ),
     );
@@ -184,12 +161,10 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
 
   @override
   Future<WorkspaceUiSt> adoptSelection(SelectedSheet selected) async {
-    final authorization = _currentAuth(_accountSession);
     final updatedAccessSt = await _updateSt(
       (accessSt) => WorkspaceAccessSt(
         sheetText: selected.id,
         selectedSheet: selected,
-        pickerAuth: authorization ?? _persistedAuth(_accountSession, accessSt),
         workoutSelection: accessSt.workoutSelection,
       ),
     );
@@ -197,7 +172,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       _stateWith(
         selectedSheet: selected,
         pastedText: selected.id,
-        pickerAuthorization: authorization ?? updatedAccessSt?.pickerAuth,
         workoutSelection:
             updatedAccessSt?.workoutSelection ?? _state.workoutSelection,
       ),
@@ -279,11 +253,10 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   Future<WorkspaceUiSt> persistWorkoutSelection(
     WorkoutSelectionSt selection,
   ) async {
-    final updatedAccessSt = await _updateSt(
+    await _updateSt(
       (accessSt) => WorkspaceAccessSt(
         sheetText: accessSt.sheetText,
         selectedSheet: accessSt.selectedSheet,
-        pickerAuth: _persistedAuth(_accountSession, accessSt),
         workoutSelection: selection,
       ),
     );
@@ -291,8 +264,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       _stateWith(
         selectedSheet: _state.selectedSheet,
         pastedText: _state.pastedText,
-        pickerAuthorization:
-            updatedAccessSt?.pickerAuth ?? _state.pickerAuthorization,
         workoutSelection: selection,
       ),
     );
@@ -322,7 +293,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
           selectedSheet: null,
           pastedText: null,
           accountProfile: _accountSession?.currentAccount,
-          pickerAuthorization: _currentAuth(_accountSession),
           workoutSelection: null,
           isCommandInFlight: _isCommandInFlight,
           pickerAvailability: _availabilityFor(_picker),
@@ -347,13 +317,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       return await _accessSt?.restore();
     } on Object {
       return null;
-    }
-  }
-
-  void _restoreAuth(PickerAuth? authorization) {
-    final accountSession = _accountSession;
-    if (accountSession case final PickerAuthStore store) {
-      store.restorePickerAuth(authorization);
     }
   }
 
@@ -392,7 +355,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       _stateWith(
         selectedSheet: _state.selectedSheet,
         pastedText: _state.pastedText,
-        pickerAuthorization: _state.pickerAuthorization,
         workoutSelection: _state.workoutSelection,
         isCommandInFlight: true,
       ),
@@ -405,7 +367,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       _stateWith(
         selectedSheet: _state.selectedSheet,
         pastedText: _state.pastedText,
-        pickerAuthorization: _state.pickerAuthorization,
         workoutSelection: _state.workoutSelection,
         isCommandInFlight: false,
       ),
@@ -415,7 +376,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   WorkspaceUiSt _stateWith({
     required SelectedSheet? selectedSheet,
     required String? pastedText,
-    PickerAuth? pickerAuthorization,
     required WorkoutSelectionSt? workoutSelection,
     bool? isCommandInFlight,
   }) {
@@ -423,7 +383,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       selectedSheet: selectedSheet,
       pastedText: pastedText,
       accountProfile: _accountSession?.currentAccount,
-      pickerAuthorization: pickerAuthorization ?? _currentAuth(_accountSession),
       workoutSelection: workoutSelection,
       isCommandInFlight: isCommandInFlight ?? _state.isCommandInFlight,
       pickerAvailability: _availabilityFor(_picker),
@@ -439,25 +398,7 @@ PickerAvail _availabilityFor(SheetPicker? picker) {
       );
 }
 
-PickerAuth? _currentAuth(GoogleAccountSession? accountSession) {
-  if (accountSession case final PickerAuthStore store) {
-    return store.currentAuthorization;
-  }
-  return null;
-}
-
 String? _trimmedOrNull(String? value) {
   final trimmed = value?.trim();
   return trimmed == null || trimmed.isEmpty ? null : trimmed;
-}
-
-bool _storesPickerAuth(GoogleAccountSession? accountSession) {
-  return accountSession is PickerAuthStore;
-}
-
-PickerAuth? _persistedAuth(
-  GoogleAccountSession? accountSession,
-  WorkspaceAccessSt accessSt,
-) {
-  return _storesPickerAuth(accountSession) ? accessSt.pickerAuth : null;
 }

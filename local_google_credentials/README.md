@@ -12,9 +12,8 @@ The JSON files in this directory are ignored by git:
 - `oauth_macos_desktop_client.json`
 - `flutter_dart_defines.json`
 
-The native-sign-in plus in-app Picker flow currently expects at least these
-local Dart defines when the values are not already supplied by platform config:
+Native Google Sign-In expects these local Dart defines when the values are not
+already supplied by platform config:
 
-- `WORKOUT_TRACKER_GOOGLE_PICKER_API_KEY`
 - `WORKOUT_TRACKER_GOOGLE_CLIENT_ID`
 - `WORKOUT_TRACKER_GOOGLE_SERVER_CLIENT_ID`

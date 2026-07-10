@@ -928,12 +928,10 @@ void main() {
         drivePath: 'My Drive / Workouts / 2026 Workouts',
         accountEmail: 'saved@example.com',
       ),
-      pickerAuth: const PickerAuth(
-        accessToken: 'restored-picker-token',
-        accountEmail: 'saved@example.com',
-      ),
     );
-    final accountSession = PickerAuthGateway();
+    final accountSession = FakeGoogleAccountSession(
+      const GoogleAccountProfile(email: 'saved@example.com'),
+    );
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -946,17 +944,13 @@ void main() {
         accountSession: accountSession,
         appStStore: store,
         picker: const DisabledPicker(
-          reason: 'Google Drive Picker is missing an OAuth client ID.',
+          reason: 'Google Drive sheet selection is unavailable.',
         ),
       ),
     );
     await tester.pump();
 
     expect(find.text('My Drive / Workouts / 2026 Workouts'), findsOneWidget);
-    expect(
-      accountSession.currentAuthorization?.accessToken,
-      'restored-picker-token',
-    );
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
@@ -1032,11 +1026,16 @@ void main() {
   );
 
   testWidgets(
-    'picker sheet selection persists account profile for the avatar',
+    'sheet selection keeps the native account profile for the avatar',
     (tester) async {
       final store = MemoryAppStStore(null);
-      final accountSession = PickerAuthGateway();
-      final picker = AuthorizingSheetPicker(accountSession);
+      final accountSession = FakeGoogleAccountSession(
+        const GoogleAccountProfile(
+          email: 'athlete@example.com',
+          displayName: 'Athlete Name',
+        ),
+      );
+      final picker = SelectingSheetPicker();
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -1057,9 +1056,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(store.pickerAuth?.accessToken, 'picker-token');
-      expect(store.pickerAuth?.accountEmail, 'athlete@example.com');
-      expect(store.pickerAuth?.displayName, 'Athlete Name');
+      expect(store.selectedSheet?.accountEmail, 'athlete@example.com');
 
       await tester.tap(find.byTooltip('Back to sheet selection'));
       await tester.pumpAndSettle();
@@ -1112,25 +1109,18 @@ void main() {
   );
 
   testWidgets(
-    'create sheet uses picker authorization before asking for a workbook name',
+    'create sheet authorizes access before asking for a workbook name',
     (tester) async {
       final picker = CountingSheetPicker();
       final authorization = Completer<bool>();
       picker.creationAuthorization = authorization.future;
-      final accountSession = PickerAuthGateway();
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
         ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
       ]);
 
-      await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: service,
-          accountSession: accountSession,
-          picker: picker,
-        ),
-      );
+      await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
       await tester.pump();
 
       await tester.tap(find.text('Create sheet'));
@@ -1165,15 +1155,12 @@ void main() {
     },
   );
 
-  testWidgets('create sheet still opens folder picker when already connected', (
+  testWidgets('create sheet still authorizes access when already connected', (
     tester,
   ) async {
     final picker = CountingSheetPicker();
-    final accountSession = PickerAuthGateway(
-      initial: const PickerAuth(
-        accessToken: 'saved-token',
-        accountEmail: 'saved@example.com',
-      ),
+    final accountSession = FakeGoogleAccountSession(
+      const GoogleAccountProfile(email: 'saved@example.com'),
     );
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
@@ -1244,7 +1231,7 @@ void main() {
     expect(find.text('Return to workout'), findsOneWidget);
     expect(find.text('Change sheet'), findsOneWidget);
     expect(
-      find.text('Google Drive Picker is missing an OAuth client ID.'),
+      find.text('Google Drive sheet selection is unavailable.'),
       findsNothing,
     );
     expect(
@@ -1257,7 +1244,7 @@ void main() {
     'exposes pasted sheet validation when picker choosing is unavailable',
     (tester) async {
       const picker = DisabledPicker(
-        reason: 'Google Drive Picker is missing an OAuth client ID.',
+        reason: 'Google Drive sheet selection is unavailable.',
       );
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
@@ -1295,7 +1282,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('Google Drive Picker is missing an OAuth client ID.'),
+        find.text('Google Drive sheet selection is unavailable.'),
         findsOneWidget,
       );
 

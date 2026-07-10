@@ -122,10 +122,10 @@ complete before UI code depends on it.
 ## Testing
 
 Mocks and fakes in this repository are interface checks, not evidence of
-third-party behavior. A canned Google, Firebase, OAuth, Picker, or app-store
+third-party behavior. A canned Google, Firebase, OAuth, Drive, or app-store
 response must not be described as a behavior test. Use local tests to lock the
-app-owned contract such as requested scopes, hosted Picker page inputs, JS
-bridge messages, adapter inputs, and planned sheet writes. Use opt-in live
+app-owned contract such as requested scopes, Drive query inputs, chooser
+results, adapter inputs, and planned sheet writes. Use opt-in live
 integration only when the real external service behavior matters.
 
 Use the narrowest test tier that matches the change:
