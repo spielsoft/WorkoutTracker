@@ -5,4 +5,5 @@ export 'src/app/validation.dart';
 export 'src/app/controller.dart';
 export 'src/app/logging.dart';
 export 'src/app/ui/flow.dart';
+export 'src/app/ui/sheet.dart';
 export 'src/app/shell.dart';

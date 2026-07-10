@@ -11,14 +11,15 @@ import 'validation.dart';
 import 'selection.dart';
 import 'controller.dart';
 import 'logging.dart';
+import 'repair.dart';
 import 'ui/flow.dart';
+import 'ui/sheet.dart';
+import 'ui/shared/name_dialog.dart';
 
-part 'account.dart';
 part 'workout.dart';
 part 'exercise_form.dart';
 part 'exercise_library.dart';
 part 'states.dart';
-part 'repair.dart';
 part 'a11y.dart';
 
 enum _AppScreen {
@@ -109,301 +110,6 @@ class AppScrollBehavior extends MaterialScrollBehavior {
       PointerDeviceKind.invertedStylus,
       PointerDeviceKind.trackpad,
     };
-  }
-}
-
-class _SheetPick extends StatelessWidget {
-  const _SheetPick({
-    required this.selectedSheet,
-    required this.availability,
-    required this.showAvailabilitySummary,
-    required this.isBusy,
-    this.accountSession,
-    required this.onSignedOut,
-    this.onReturnToWorkout,
-    required this.onChooseSpreadsheet,
-    required this.onCreateSpreadsheet,
-  });
-
-  final SelectedSheet? selectedSheet;
-  final PickerAvail availability;
-  final bool showAvailabilitySummary;
-  final bool isBusy;
-  final GoogleAccountSession? accountSession;
-  final Future<void> Function() onSignedOut;
-  final VoidCallback? onReturnToWorkout;
-  final Future<void> Function() onChooseSpreadsheet;
-  final Future<void> Function() onCreateSpreadsheet;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = selectedSheet;
-    final colorScheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.table_chart_outlined, color: colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    selected?.displayLabel ?? 'No workout sheet selected',
-                    key: const ValueKey('selected-spreadsheet-label'),
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                if (accountSession != null) ...[
-                  const SizedBox(width: 8),
-                  _GoogleAccountMenu(
-                    accountSession: accountSession!,
-                    onSignedOut: onSignedOut,
-                  ),
-                ],
-              ],
-            ),
-            if (selected?.accountEmail != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                selected!.accountEmail!,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-            const SizedBox(height: 12),
-            if (selected != null && onReturnToWorkout != null)
-              FilledButton.tonalIcon(
-                key: const ValueKey('return-to-selected-workout'),
-                onPressed: isBusy ? null : onReturnToWorkout,
-                icon: const Icon(Icons.fitness_center_outlined),
-                label: const Text('Return to workout'),
-              )
-            else
-              FilledButton.icon(
-                key: const ValueKey('choose-google-spreadsheet'),
-                onPressed: isBusy || !availability.canChoose
-                    ? null
-                    : onChooseSpreadsheet,
-                icon: const Icon(Icons.drive_folder_upload_outlined),
-                label: Text(
-                  selected == null ? 'Choose workout sheet' : 'Change sheet',
-                ),
-              ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (selected != null && onReturnToWorkout != null)
-                  OutlinedButton.icon(
-                    key: const ValueKey('choose-google-spreadsheet'),
-                    onPressed: isBusy || !availability.canChoose
-                        ? null
-                        : onChooseSpreadsheet,
-                    icon: const Icon(Icons.drive_folder_upload_outlined),
-                    label: const Text('Change sheet'),
-                  ),
-                OutlinedButton.icon(
-                  key: const ValueKey('create-google-spreadsheet'),
-                  onPressed: isBusy || !availability.canCreate
-                      ? null
-                      : onCreateSpreadsheet,
-                  icon: const Icon(Icons.add_to_drive_outlined),
-                  label: const Text('Create sheet'),
-                ),
-              ],
-            ),
-            if (showAvailabilitySummary && availability.summary != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                availability.summary!,
-                key: const ValueKey('spreadsheet-picker-availability'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NameDialog extends StatefulWidget {
-  const _NameDialog({
-    required this.title,
-    required this.label,
-    this.initialValue,
-    this.submitLabel = 'Add',
-    this.textFieldKey,
-  });
-
-  final String title;
-  final String label;
-  final String? initialValue;
-  final String submitLabel;
-  final Key? textFieldKey;
-
-  @override
-  State<_NameDialog> createState() => _NameDialogSt();
-}
-
-class _NameDialogSt extends State<_NameDialog> {
-  late final TextEditingController _controller;
-  late final FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
-    _controller.selection = TextSelection(
-      baseOffset: 0,
-      extentOffset: _controller.text.length,
-    );
-    _focusNode = FocusNode();
-    _focusNode.addListener(_selectTextAfterFocus);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focusNode.requestFocus();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_selectTextAfterFocus);
-    _focusNode.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _selectTextAfterFocus() {
-    if (!_focusNode.hasFocus) {
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_focusNode.hasFocus) {
-        return;
-      }
-      _controller.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _controller.text.length,
-      );
-    });
-  }
-
-  void _submit() {
-    Navigator.of(context).pop(_controller.text);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      content: _A11yTextField(
-        label: widget.label,
-        valueListenable: _controller,
-        child: TextField(
-          key: widget.textFieldKey,
-          controller: _controller,
-          focusNode: _focusNode,
-          autofocus: true,
-          decoration: InputDecoration(labelText: widget.label),
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
-          selectAllOnFocus: true,
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: Text(widget.submitLabel)),
-      ],
-    );
-  }
-}
-
-class _SheetTextFallback extends StatelessWidget {
-  const _SheetTextFallback({
-    required this.controller,
-    required this.isBusy,
-    required this.onChanged,
-    required this.onSubmitted,
-    required this.onValidate,
-    required this.onSignedOut,
-    this.accountSession,
-  });
-
-  final TextEditingController controller;
-  final bool isBusy;
-  final VoidCallback onChanged;
-  final VoidCallback onSubmitted;
-  final Future<void> Function() onValidate;
-  final Future<void> Function() onSignedOut;
-  final GoogleAccountSession? accountSession;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const ValueKey('spreadsheet-url-fallback'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _A11yTextField(
-                label: 'Google Sheets URL or ID',
-                valueListenable: controller,
-                hint: 'Paste a Google Sheets URL or spreadsheet ID.',
-                child: TextField(
-                  key: const ValueKey('spreadsheet-selection-input'),
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Paste Google Sheets URL or ID',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.table_chart_outlined),
-                  ),
-                  onChanged: (_) => onChanged(),
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => onSubmitted(),
-                ),
-              ),
-            ),
-            if (accountSession != null) ...[
-              const SizedBox(width: 8),
-              _GoogleAccountMenu(
-                accountSession: accountSession!,
-                onSignedOut: onSignedOut,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 12),
-        FilledButton.icon(
-          key: const ValueKey('validate-spreadsheet'),
-          onPressed: isBusy ? null : onValidate,
-          icon: isBusy
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.verified_outlined),
-          label: const Text('Select'),
-        ),
-      ],
-    );
   }
 }
 
@@ -541,16 +247,7 @@ class _AppShellSt extends State<AppShell> {
     }
   }
 
-  Future<void> _createSheet() async {
-    final hasGoogleAccount = await _authorizeSheetCreation();
-    if (!mounted || !hasGoogleAccount) {
-      return;
-    }
-    final defaultName = defaultSheetTitle();
-    final name = await _promptForSheetName(defaultName);
-    if (!mounted || name == null) {
-      return;
-    }
+  Future<void> _createSheet(String name) async {
     try {
       final workspaceSt = await _workspaceLifecycle.createSheet(name: name);
       await _validateSelection(workspaceSt);
@@ -605,7 +302,7 @@ class _AppShellSt extends State<AppShell> {
     final value = await showDialog<String>(
       context: context,
       builder: (context) {
-        return _NameDialog(
+        return NameDialog(
           title: title,
           label: label,
           initialValue: initialValue,
@@ -616,26 +313,6 @@ class _AppShellSt extends State<AppShell> {
     );
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
-  }
-
-  Future<String?> _promptForSheetName(String defaultName) async {
-    final value = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return _NameDialog(
-          title: 'Create sheet',
-          label: 'Sheet name',
-          initialValue: defaultName,
-          submitLabel: 'Create',
-          textFieldKey: const ValueKey('create-spreadsheet-name'),
-        );
-      },
-    );
-    if (value == null) {
-      return null;
-    }
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? defaultName : trimmed;
   }
 
   Future<void> _promptForNewWorkout() async {
@@ -1006,6 +683,50 @@ class _AppShellSt extends State<AppShell> {
     }());
   }
 
+  Future<CmdResult> _runSheet(SheetCmd cmd) async {
+    return switch (cmd) {
+      SetSheetText(:final text) => _setSheetText(text),
+      ValidateSheet() => await _runSheetAction(_validateSelected),
+      ChooseSheet() => await _runSheetAction(_chooseSheet),
+      AuthorizeCreate() =>
+        await _authorizeSheetCreation()
+            ? const CmdResult.done()
+            : const CmdResult.failed(),
+      CreateSheet(:final name) => await _runSheetAction(
+        () => _createSheet(name),
+      ),
+      SignOut() => await _runSheetAction(_handleSignedOut),
+      ReturnToSheet() => _runSheetSync(_returnToSheetSelection),
+      ReturnToWorkout() => _runSheetSync(_returnToLoadedWorkout),
+      RepairAll() => await _runSheetAction(_repairFormulas),
+      RepairOne(:final activeRow, :final exerciseRow) => await _runSheetAction(
+        () => _repairFormulaIssue(
+          activeSheetRowNumber: activeRow,
+          selectedRow: exerciseRow,
+        ),
+      ),
+      OpenSheet() => await _runSheetAction(_openSheet),
+    };
+  }
+
+  CmdResult _setSheetText(String text) {
+    if (_sheetCtrl.text != text) {
+      _sheetCtrl.text = text;
+    }
+    _usePastedText();
+    return const CmdResult.done();
+  }
+
+  CmdResult _runSheetSync(VoidCallback action) {
+    action();
+    return const CmdResult.done();
+  }
+
+  Future<CmdResult> _runSheetAction(Future<void> Function() action) async {
+    await action();
+    return const CmdResult.done();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1041,53 +762,33 @@ class _AppShellSt extends State<AppShell> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (showSheetSelection) ...[
-                          if (picker != null) ...[
-                            _SheetPick(
+                        if (showSheetSelection)
+                          SheetScreen(
+                            view: SheetView(
+                              isBusy: isBusy,
+                              error: error,
+                              sheetText: _sheetCtrl.text,
                               selectedSheet: selectedSheet,
                               availability: pickerAvailability,
-                              showAvailabilitySummary: showPickerAvailability,
-                              isBusy: isBusy,
-                              accountSession: widget.accountSession,
-                              onSignedOut: _handleSignedOut,
-                              onReturnToWorkout: hasLoadedWorkout
-                                  ? _returnToLoadedWorkout
-                                  : null,
-                              onChooseSpreadsheet: _chooseSheet,
-                              onCreateSpreadsheet: _createSheet,
+                              showAvailability: showPickerAvailability,
+                              showTextFallback: showTextFallback,
+                              hasLoadedWorkout: hasLoadedWorkout,
+                              report: report,
+                              account: widget.accountSession?.currentAccount,
+                              hasPicker: picker != null,
+                              showAccount: widget.accountSession != null,
                             ),
-                            if (showTextFallback) const SizedBox(height: 12),
-                          ],
-                          if (showTextFallback)
-                            _SheetTextFallback(
-                              controller: _sheetCtrl,
-                              isBusy: isBusy,
-                              accountSession: widget.accountSession,
-                              onSignedOut: _handleSignedOut,
-                              onChanged: _usePastedText,
-                              onSubmitted: _validateSelected,
-                              onValidate: _validateSelected,
-                            ),
-                          const SizedBox(height: 24),
-                        ],
-                        if (error != null) ...[
-                          _IssuePanel(
+                            run: _runSheet,
+                          ),
+                        if (!showSheetSelection && error != null) ...[
+                          IssuePanel(
                             icon: Icons.error_outline,
                             title: 'Connection or validation failed',
                             lines: [error],
-                            tone: _IssueTone.error,
+                            tone: IssueTone.error,
                           ),
                           const SizedBox(height: 16),
                         ],
-                        if (showSheetSelection && report != null)
-                          _ValidationSummary(
-                            report: report,
-                            onRepairFormulas: isBusy ? null : _repairFormulas,
-                            onRepairFormulaIssue: isBusy
-                                ? null
-                                : _repairFormulaIssue,
-                            onOpenSpreadsheet: isBusy ? null : _openSheet,
-                          ),
                         if (!showSheetSelection)
                           _WorkoutPane(
                             setup: _controller.workoutSetup!,

@@ -1,19 +1,19 @@
-part of 'shell.dart';
+import 'package:flutter/material.dart';
 
-class _GoogleAccountMenu extends StatefulWidget {
-  const _GoogleAccountMenu({
-    required this.accountSession,
-    required this.onSignedOut,
-  });
+import 'account_session.dart';
+import 'ui/flow.dart';
 
-  final GoogleAccountSession accountSession;
-  final Future<void> Function() onSignedOut;
+class AccountMenu extends StatefulWidget {
+  const AccountMenu({required this.account, required this.run, super.key});
+
+  final GoogleAccountProfile? account;
+  final Future<CmdResult> Function(SheetCmd cmd) run;
 
   @override
-  State<_GoogleAccountMenu> createState() => _GoogleAccountMenuSt();
+  State<AccountMenu> createState() => _AccountMenuSt();
 }
 
-class _GoogleAccountMenuSt extends State<_GoogleAccountMenu> {
+class _AccountMenuSt extends State<AccountMenu> {
   bool _isBusy = false;
 
   Future<void> _signOut() async {
@@ -21,7 +21,7 @@ class _GoogleAccountMenuSt extends State<_GoogleAccountMenu> {
       _isBusy = true;
     });
     try {
-      await widget.onSignedOut();
+      await widget.run(const SignOut());
     } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -39,46 +39,41 @@ class _GoogleAccountMenuSt extends State<_GoogleAccountMenu> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: widget.accountSession,
-      builder: (context, _) {
-        final account = widget.accountSession.currentAccount;
-        return PopupMenuButton<_GoogleAccountAction>(
-          tooltip: account == null
-              ? 'Connect Google Sheets'
-              : 'Google Sheets account: ${account.email}',
-          enabled: !_isBusy,
-          icon: _GoogleAccountAvatar(account: account, isBusy: _isBusy),
-          onSelected: (action) {
-            switch (action) {
-              case _GoogleAccountAction.signOut:
-                _signOut();
-            }
-          },
-          itemBuilder: (context) {
-            final summaryItem = PopupMenuItem<_GoogleAccountAction>(
-              enabled: false,
-              child: _GoogleAccountSummary(account: account),
-            );
-            if (account == null) {
-              return [summaryItem];
-            }
-            return [
-              summaryItem,
-              const PopupMenuDivider(),
-              PopupMenuItem<_GoogleAccountAction>(
-                value: _GoogleAccountAction.signOut,
-                child: Row(
-                  children: const [
-                    Icon(Icons.logout),
-                    SizedBox(width: 12),
-                    Flexible(child: Text('Log out')),
-                  ],
-                ),
-              ),
-            ];
-          },
+    final account = widget.account;
+    return PopupMenuButton<_GoogleAccountAction>(
+      tooltip: account == null
+          ? 'Connect Google Sheets'
+          : 'Google Sheets account: ${account.email}',
+      enabled: !_isBusy,
+      icon: _GoogleAccountAvatar(account: account, isBusy: _isBusy),
+      onSelected: (action) {
+        switch (action) {
+          case _GoogleAccountAction.signOut:
+            _signOut();
+        }
+      },
+      itemBuilder: (context) {
+        final summaryItem = PopupMenuItem<_GoogleAccountAction>(
+          enabled: false,
+          child: _GoogleAccountSummary(account: account),
         );
+        if (account == null) {
+          return [summaryItem];
+        }
+        return [
+          summaryItem,
+          const PopupMenuDivider(),
+          PopupMenuItem<_GoogleAccountAction>(
+            value: _GoogleAccountAction.signOut,
+            child: Row(
+              children: const [
+                Icon(Icons.logout),
+                SizedBox(width: 12),
+                Flexible(child: Text('Log out')),
+              ],
+            ),
+          ),
+        ];
       },
     );
   }

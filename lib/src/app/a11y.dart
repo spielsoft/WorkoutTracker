@@ -35,12 +35,10 @@ class _A11yTextField extends StatelessWidget {
     required this.child,
     this.identifier,
     this.valueListenable,
-    this.hint,
   });
 
   final String label;
   final String? identifier;
-  final String? hint;
   final ValueListenable<TextEditingValue>? valueListenable;
   final Widget child;
 
@@ -66,7 +64,6 @@ class _A11yTextField extends StatelessWidget {
       textField: true,
       label: label,
       value: value,
-      hint: hint,
       child: child ?? this.child,
     );
   }

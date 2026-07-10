@@ -45,6 +45,9 @@ final class SheetView extends AppView {
     required this.showTextFallback,
     required this.hasLoadedWorkout,
     required this.report,
+    required this.account,
+    required this.hasPicker,
+    required this.showAccount,
     super.error,
   });
 
@@ -55,6 +58,9 @@ final class SheetView extends AppView {
   final bool showTextFallback;
   final bool hasLoadedWorkout;
   final ValReport? report;
+  final GoogleAccountProfile? account;
+  final bool hasPicker;
+  final bool showAccount;
 }
 
 sealed class LoadedView extends AppView {
@@ -438,6 +444,9 @@ class AppFlow extends ChangeNotifier implements UiFlow {
         showTextFallback: _picker == null || workspace.fallbackAvailable,
         hasLoadedWorkout: report != null && !report.hasBlockingIssues,
         report: report,
+        account: _accountSession?.currentAccount,
+        hasPicker: _picker != null,
+        showAccount: _accountSession != null,
       );
     }
     final setup = _ctrl.workoutSetup!;

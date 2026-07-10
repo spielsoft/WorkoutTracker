@@ -67,14 +67,12 @@ class _StCallout extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.children,
-    this.action,
   });
 
   final _WorkoutVisualSt state;
   final IconData icon;
   final String title;
   final List<Widget> children;
-  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -112,10 +110,6 @@ class _StCallout extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             ...children,
-            if (action != null) ...[
-              const SizedBox(height: 6),
-              Align(alignment: Alignment.centerLeft, child: action),
-            ],
           ],
         ),
       ),

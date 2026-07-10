@@ -1,11 +1,18 @@
-part of 'shell.dart';
+import 'dart:async';
 
-class _ValidationSummary extends StatelessWidget {
-  const _ValidationSummary({
+import 'package:flutter/material.dart';
+import 'package:workout_tracker/contract.dart';
+
+import 'validation.dart';
+import 'ui/shared/status.dart';
+
+class ValidationSummary extends StatelessWidget {
+  const ValidationSummary({
     required this.report,
     this.onRepairFormulas,
     this.onRepairFormulaIssue,
     this.onOpenSpreadsheet,
+    super.key,
   });
 
   final ValReport report;
@@ -27,7 +34,7 @@ class _ValidationSummary extends StatelessWidget {
     );
     final panels = <Widget>[
       if (report.hasSchemaDamage)
-        _IssuePanel(
+        IssuePanel(
           icon: Icons.report_problem_outlined,
           title: 'Fix the active sheet structure',
           lines: [
@@ -44,10 +51,10 @@ class _ValidationSummary extends StatelessWidget {
             icon: const Icon(Icons.open_in_new_outlined),
             label: const Text('Open in Google Sheets'),
           ),
-          tone: _IssueTone.error,
+          tone: IssueTone.error,
         ),
       if (!report.hasSchemaDamage && report.healingIssues.isNotEmpty)
-        _IssuePanel(
+        IssuePanel(
           icon: Icons.build_outlined,
           title: 'Reconnect exercises to logging rows',
           lines: unambiguousFormulaIssues.expand(_issueLines).toList(),
@@ -71,7 +78,7 @@ class _ValidationSummary extends StatelessWidget {
                 onRepairFormulaIssue: onRepairFormulaIssue,
               ),
           ],
-          tone: _IssueTone.warning,
+          tone: IssueTone.warning,
         ),
     ];
 
@@ -121,9 +128,9 @@ class _RepairChoiceItemSt extends State<_RepairChoiceItem> {
   @override
   Widget build(BuildContext context) {
     final issue = widget.issue;
-    final warningStyle = _stateStyle(
+    final warningStyle = stateStyle(
       Theme.of(context).colorScheme,
-      _WorkoutVisualSt.warning,
+      VisualSt.warning,
     );
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -240,22 +247,23 @@ String _formulaReasonLabel(HealingIssueReason reason) {
   }
 }
 
-enum _IssueTone { error, warning }
+enum IssueTone { error, warning }
 
-class _IssuePanel extends StatelessWidget {
-  const _IssuePanel({
+class IssuePanel extends StatelessWidget {
+  const IssuePanel({
     required this.icon,
     required this.title,
     required this.lines,
     required this.tone,
     this.action,
     this.extraContent = const [],
+    super.key,
   });
 
   final IconData icon;
   final String title;
   final List<String> lines;
-  final _IssueTone tone;
+  final IssueTone tone;
   final Widget? action;
   final List<Widget> extraContent;
 
@@ -285,10 +293,10 @@ class _IssuePanel extends StatelessWidget {
       }
     }
 
-    return _StCallout(
+    return StCallout(
       state: switch (tone) {
-        _IssueTone.error => _WorkoutVisualSt.error,
-        _IssueTone.warning => _WorkoutVisualSt.warning,
+        IssueTone.error => VisualSt.error,
+        IssueTone.warning => VisualSt.warning,
       },
       icon: icon,
       title: title,

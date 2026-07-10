@@ -109,6 +109,79 @@ class StChip extends StatelessWidget {
   }
 }
 
+class StCallout extends StatelessWidget {
+  const StCallout({
+    required this.state,
+    required this.icon,
+    required this.title,
+    required this.children,
+    this.action,
+    super.key,
+  });
+
+  final VisualSt state;
+  final IconData icon;
+  final String title;
+  final List<Widget> children;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = stateStyle(Theme.of(context).colorScheme, state);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: style.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: style.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                StChip(
+                  state: state,
+                  label: _stateLabel(state),
+                  emphasized: true,
+                ),
+                Icon(icon, color: style.foreground),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: style.foreground,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...children,
+            if (action != null) ...[
+              const SizedBox(height: 6),
+              Align(alignment: Alignment.centerLeft, child: action),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _stateLabel(VisualSt state) {
+  return switch (state) {
+    VisualSt.logged => 'Logged',
+    VisualSt.current => 'Current',
+    VisualSt.backup => 'Backup',
+    VisualSt.warning => 'Warning',
+    VisualSt.error => 'Error',
+  };
+}
+
 ({Color background, Color border, Color foreground, IconData icon}) stateStyle(
   ColorScheme colors,
   VisualSt state,
