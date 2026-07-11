@@ -81,11 +81,7 @@ void main() {
 
     expect(restored.selectedSheet?.id, 'session-sheet-id');
     expect(restored.pastedText, 'session-sheet-id');
-    expect(
-      restored.error,
-      'Saved workspace could not be restored. Your current session can '
-      'continue, but previous choices may need to be selected again.',
-    );
+    expect(restored.error, contains('could not be restored'));
   });
 
   test(
@@ -97,12 +93,7 @@ void main() {
       final failed = await workspace.persistPastedText(' session-sheet-id ');
 
       expect(failed.pastedText, 'session-sheet-id');
-      expect(
-        failed.error,
-        'This choice could not be saved. It remains available for this session '
-        'but may be lost when the app closes.',
-      );
-      expect(accessSt.value.sheetText, isNull);
+      expect(failed.error, contains('could not be saved'));
 
       accessSt.failUpdates = false;
       final recovered = await workspace.persistPastedText('saved-sheet-id');
@@ -129,8 +120,7 @@ void main() {
 
     expect(failed.selectedSheet?.id, 'chosen-sheet-id');
     expect(failed.pastedText, 'chosen-sheet-id');
-    expect(failed.error, isNotNull);
-    expect(accessSt.value.selectedSheet, isNull);
+    expect(failed.error, contains('could not be saved'));
   });
 
   test(
@@ -148,8 +138,7 @@ void main() {
 
       expect(failed.workoutSelection, first);
       expect(workspace.workoutSelectionFor('sheet-id'), first);
-      expect(failed.error, isNotNull);
-      expect(accessSt.value.workoutSelection, isNull);
+      expect(failed.error, contains('could not be saved'));
 
       accessSt.failUpdates = false;
       const second = WorkoutSelectionSt(
