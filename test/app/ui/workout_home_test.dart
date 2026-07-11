@@ -56,16 +56,10 @@ void main() {
       await tester.pump();
 
       expect(service.spreadsheetIds, ['selected-spreadsheet-id']);
-      expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
-      final selectors = find.byType(DropdownButtonFormField<String>);
-      expect(
-        tester.state<FormFieldState<String>>(selectors.first).value,
-        'Upper',
-      );
-      expect(
-        tester.state<FormFieldState<String>>(selectors.last).value,
-        'Week 1',
-      );
+      expect(find.text('Upper exercises'), findsOneWidget);
+      expect(find.text('Bench Press'), findsOneWidget);
+      expect(find.text('Squat'), findsNothing);
+      expect(find.text('Week 1'), findsOneWidget);
     },
   );
 
@@ -600,11 +594,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(service.appliedPlans, hasLength(1));
-      final historyField = find.byType(DropdownButtonFormField<String>).last;
-      expect(
-        tester.state<FormFieldState<String>>(historyField).value,
-        'Week 2',
-      );
+      expect(find.text('Week 2'), findsOneWidget);
     },
   );
 }

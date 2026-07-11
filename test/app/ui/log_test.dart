@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
@@ -193,24 +195,9 @@ void main() {
       _app(actions: _LogActions(), view: _viewState(view, isBusy: true)),
     );
 
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save set'))
-          .onPressed,
-      isNull,
-    );
-    expect(
-      tester
-          .widget<IconButton>(find.byKey(const ValueKey('edit-S1')))
-          .onPressed,
-      isNull,
-    );
-    expect(
-      tester
-          .widget<IconButton>(find.byKey(const ValueKey('clear-S1')))
-          .onPressed,
-      isNull,
-    );
+    _expectDisabled(tester, find.widgetWithText(FilledButton, 'Save set'));
+    _expectDisabled(tester, find.byTooltip('Edit S1'));
+    _expectDisabled(tester, find.byTooltip('Clear set'));
   });
 
   testWidgets('shows formatted and raw sets as compact summaries', (
@@ -230,8 +217,8 @@ void main() {
 
     expect(find.text('225x5@8'), findsOneWidget);
     expect(find.text('manual note'), findsOneWidget);
-    expect(find.byKey(const ValueKey('logged-S1-field-Weight')), findsNothing);
-    expect(find.byKey(const ValueKey('raw-S2')), findsNothing);
+    expect(find.bySemanticsLabel('S1 Weight'), findsNothing);
+    expect(find.bySemanticsLabel('S2 raw set text'), findsNothing);
   });
 
   testWidgets('expands one saved set and save or cancel collapses it', (
@@ -250,32 +237,26 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('edit-S1')));
+    await tester.tap(find.byTooltip('Edit S1'));
     await tester.pump();
-    expect(
-      find.byKey(const ValueKey('logged-S1-field-Weight')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel('S1 Weight'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('edit-S2')));
+    await tester.tap(find.byTooltip('Edit S2'));
     await tester.pump();
-    expect(find.byKey(const ValueKey('logged-S1-field-Weight')), findsNothing);
-    expect(find.byKey(const ValueKey('raw-S2')), findsOneWidget);
+    expect(find.bySemanticsLabel('S1 Weight'), findsNothing);
+    expect(find.bySemanticsLabel('S2 raw set text'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('cancel-S2')));
+    await tester.tap(find.byTooltip('Cancel set edit'));
     await tester.pump();
-    expect(find.byKey(const ValueKey('raw-S2')), findsNothing);
+    expect(find.bySemanticsLabel('S2 raw set text'), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('edit-S1')));
+    await tester.tap(find.byTooltip('Edit S1'));
     await tester.pump();
-    await tester.enterText(
-      find.byKey(const ValueKey('logged-S1-field-Weight')),
-      '230',
-    );
-    await tester.tap(find.byKey(const ValueKey('save-S1')));
+    await tester.enterText(find.bySemanticsLabel('S1 Weight'), '230');
+    await tester.tap(find.byTooltip('Save structured set'));
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('logged-S1-field-Weight')), findsNothing);
+    expect(find.bySemanticsLabel('S1 Weight'), findsNothing);
     expect(actions.cmds.single, isA<EditSetCmd>());
   });
 
@@ -296,16 +277,13 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('edit-S1')));
+    await tester.tap(find.byTooltip('Edit S1'));
     await tester.pump();
-    final cue = find.byKey(const ValueKey('logged-S1-field-Cue'));
+    final cue = find.bySemanticsLabel('S1 Cue');
 
-    await tester.enterText(
-      find.byKey(const ValueKey('logged-S1-field-Load')),
-      '103.25',
-    );
+    await tester.enterText(find.bySemanticsLabel('S1 Load'), '103.25');
     await tester.enterText(cue, 'grindy today');
-    await tester.tap(find.byKey(const ValueKey('save-S1')));
+    await tester.tap(find.byTooltip('Save structured set'));
     await tester.pump();
 
     final edit = actions.cmds.single as EditSetCmd;
@@ -338,7 +316,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.tap(find.byTooltip('Clear set'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -368,7 +346,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.tap(find.byTooltip('Clear set'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Undo'), findsOneWidget);
@@ -396,7 +374,7 @@ void main() {
     );
     await tester.pumpWidget(_app(actions: failedClear, view: view));
 
-    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.tap(find.byTooltip('Clear set'));
     await tester.pump();
 
     expect(find.text('S1 was not cleared.'), findsOneWidget);
@@ -404,7 +382,7 @@ void main() {
 
     final failedUndo = _LogActions(outcomes: const [true, false]);
     await tester.pumpWidget(_app(actions: failedUndo, view: view));
-    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.tap(find.byTooltip('Clear set'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('Undo'));
@@ -691,4 +669,9 @@ Finder _field(String label) {
 
 Finder _editable(Finder field) {
   return find.descendant(of: field, matching: find.byType(EditableText));
+}
+
+void _expectDisabled(WidgetTester tester, Finder control) {
+  final semantics = tester.getSemantics(control.first).getSemanticsData();
+  expect(semantics.hasAction(SemanticsAction.tap), isFalse);
 }

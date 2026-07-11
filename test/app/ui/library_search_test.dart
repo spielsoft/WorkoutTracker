@@ -114,7 +114,6 @@ void main() {
     await tester.pump();
 
     expect(find.byTooltip('Reorder Bench Press'), findsNothing);
-    expect(find.byIcon(Icons.drag_handle_outlined), findsNothing);
     await tester.drag(find.text('Bench Press'), const Offset(0, 120));
     await tester.pumpAndSettle();
     expect(actions.reorders, isEmpty);

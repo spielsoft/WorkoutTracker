@@ -95,7 +95,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Choose workout sheet'), findsOneWidget);
-    expect(find.byType(SearchBar), findsOneWidget);
+    expect(find.text('Search Google Sheets'), findsOneWidget);
   });
 }
 

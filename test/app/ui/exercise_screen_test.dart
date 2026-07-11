@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
@@ -36,34 +38,28 @@ void main() {
     expect(find.text('New exercise'), findsNothing);
   });
 
-  testWidgets('exercise creation blocks changes while saving', (tester) async {
-    await tester.pumpWidget(
-      _app(
-        CreateExerciseScreen(
-          view: const CreateExerciseView(isBusy: true, sheetLabel: 'Training'),
-          actions: _CreateActions(),
-        ),
+  testWidgets('exercise forms expose saving state and disable changes', (
+    tester,
+  ) async {
+    final screens = <Widget>[
+      CreateExerciseScreen(
+        view: const CreateExerciseView(isBusy: true, sheetLabel: 'Training'),
+        actions: _CreateActions(),
       ),
-    );
-
-    _expectPending(tester);
-  });
-
-  testWidgets('exercise editing blocks changes while saving', (tester) async {
-    await tester.pumpWidget(
-      _app(
-        EditExerciseScreen(
-          view: const EditExerciseView(
-            isBusy: true,
-            sheetLabel: 'Training',
-            exercise: CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat'),
-          ),
-          actions: _EditActions(),
+      EditExerciseScreen(
+        view: const EditExerciseView(
+          isBusy: true,
+          sheetLabel: 'Training',
+          exercise: CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat'),
         ),
+        actions: _EditActions(),
       ),
-    );
+    ];
 
-    _expectPending(tester);
+    for (final screen in screens) {
+      await tester.pumpWidget(_app(screen));
+      _expectPending(tester);
+    }
   });
 
   testWidgets('valid formats show syntax help and a representative preview', (
@@ -232,46 +228,18 @@ void main() {
       expect(changed.closed, isFalse);
     },
   );
-
-  testWidgets('native back protects a changed draft', (tester) async {
-    final actions = _CreateActions();
-    await tester.pumpWidget(
-      _app(
-        CreateExerciseScreen(
-          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
-          actions: actions,
-        ),
-      ),
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('exercise-authoring-name')),
-      'Draft exercise',
-    );
-    await tester.pump();
-
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-
-    expect(find.text('Discard changes?'), findsOneWidget);
-    expect(actions.closed, isFalse);
-  });
 }
 
 void _expectPending(WidgetTester tester) {
-  final name = tester.widget<TextFormField>(
-    find.byKey(const ValueKey('exercise-authoring-name')),
-  );
-  final cancel = tester.widget<OutlinedButton>(
-    find.widgetWithText(OutlinedButton, 'Cancel'),
-  );
-  final save = tester.widget<FilledButton>(
-    find.widgetWithText(FilledButton, 'Save exercise'),
-  );
-
-  expect(name.enabled, isFalse);
-  expect(cancel.onPressed, isNull);
-  expect(save.onPressed, isNull);
+  _expectDisabled(tester, find.bySemanticsLabel('Exercise name'));
+  _expectDisabled(tester, find.widgetWithText(OutlinedButton, 'Cancel'));
+  _expectDisabled(tester, find.widgetWithText(FilledButton, 'Save exercise'));
   expect(find.byType(CircularProgressIndicator), findsOneWidget);
+}
+
+void _expectDisabled(WidgetTester tester, Finder control) {
+  final semantics = tester.getSemantics(control.first).getSemanticsData();
+  expect(semantics.hasAction(SemanticsAction.tap), isFalse);
 }
 
 Widget _app(Widget child) {

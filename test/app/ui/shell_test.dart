@@ -24,7 +24,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        Theme.of(tester.element(find.byType(AppShell))).brightness,
+        Theme.of(tester.element(find.byType(Scaffold).first)).brightness,
         brightness,
       );
     }

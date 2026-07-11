@@ -67,17 +67,13 @@ void main() {
     await tester.tap(find.text('Squat'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(LogScreen), findsOneWidget);
-    expect(
-      Navigator.of(tester.element(find.byType(LogScreen))).canPop(),
-      isTrue,
-    );
+    expect(find.text('Next set S1'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Legs exercises'), findsOneWidget);
-    expect(find.byType(LogScreen), findsNothing);
+    expect(find.text('Next set S1'), findsNothing);
   });
 
   testWidgets('native back returns the exercise library to workout home', (
@@ -88,16 +84,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Edit exercises'), findsWidgets);
-    expect(
-      Navigator.of(tester.element(find.byType(ExerciseLibraryScreen))).canPop(),
-      isTrue,
-    );
+    expect(find.bySemanticsLabel('Search exercises'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Legs exercises'), findsOneWidget);
-    expect(find.byType(ExerciseLibraryScreen), findsNothing);
+    expect(find.bySemanticsLabel('Search exercises'), findsNothing);
   });
 
   testWidgets('feature history preserves library as create origin', (
@@ -110,16 +103,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('New exercise'), findsWidgets);
-    expect(
-      Navigator.of(tester.element(find.byType(CreateExerciseScreen))).canPop(),
-      isTrue,
-    );
+    expect(find.text('Save exercise'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Edit exercises'), findsWidgets);
-    expect(find.byType(CreateExerciseScreen), findsNothing);
+    expect(find.text('Save exercise'), findsNothing);
   });
 
   testWidgets(
@@ -140,13 +130,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Discard changes?'), findsOneWidget);
-      expect(find.byType(CreateExerciseScreen), findsOneWidget);
+      expect(find.text('Save exercise'), findsOneWidget);
 
       await tester.tap(find.text('Discard'));
       await tester.pumpAndSettle();
 
       expect(find.text('Edit exercises'), findsWidgets);
-      expect(find.byType(CreateExerciseScreen), findsNothing);
+      expect(find.text('Save exercise'), findsNothing);
     },
   );
 
@@ -160,16 +150,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Edit exercise'), findsWidgets);
-    expect(
-      Navigator.of(tester.element(find.byType(EditExerciseScreen))).canPop(),
-      isTrue,
-    );
+    expect(find.text('Save exercise'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Edit exercises'), findsWidgets);
-    expect(find.byType(EditExerciseScreen), findsNothing);
+    expect(find.text('Save exercise'), findsNothing);
   });
 
   testWidgets('native back returns placement to the launching workout home', (
@@ -180,16 +167,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add to workout'), findsWidgets);
-    expect(
-      Navigator.of(tester.element(find.byType(PlacementScreen))).canPop(),
-      isTrue,
-    );
+    expect(find.text('Choose exercise'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Legs exercises'), findsOneWidget);
-    expect(find.byType(PlacementScreen), findsNothing);
+    expect(find.text('Choose exercise'), findsNothing);
   });
 
   testWidgets('sheet selection is the workout home parent', (tester) async {

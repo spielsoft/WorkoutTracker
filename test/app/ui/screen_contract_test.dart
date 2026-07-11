@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
@@ -409,22 +411,11 @@ void main() {
 
     await tester.pumpWidget(_app(screen(true)));
 
-    expect(
-      tester
-          .widget<FilledButton>(
-            find.byKey(const ValueKey('place-existing-exercise')),
-          )
-          .onPressed,
-      isNull,
+    _expectDisabled(
+      tester,
+      find.widgetWithText(FilledButton, 'Add to workout'),
     );
-    expect(
-      tester
-          .widget<OutlinedButton>(
-            find.byKey(const ValueKey('place-existing-exercise-add-another')),
-          )
-          .onPressed,
-      isNull,
-    );
+    _expectDisabled(tester, find.widgetWithText(OutlinedButton, 'Add another'));
   });
 
   testWidgets('core feature actions wrap at narrow width with large text', (
@@ -583,6 +574,11 @@ final class _HomeActions implements WorkoutHomeActions {
 
   @override
   Future<bool> reorder(ReorderIntent intent) async => true;
+}
+
+void _expectDisabled(WidgetTester tester, Finder control) {
+  final semantics = tester.getSemantics(control.first).getSemanticsData();
+  expect(semantics.hasAction(SemanticsAction.tap), isFalse);
 }
 
 Widget _app(Widget child) {

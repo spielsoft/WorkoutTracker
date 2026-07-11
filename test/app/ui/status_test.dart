@@ -42,7 +42,7 @@ Future<Map<VisualSt, _Style>> _styles(
         body: ListView(
           children: [
             for (final state in VisualSt.values)
-              StChip(key: ValueKey(state), state: state, label: state.name),
+              StChip(key: ValueKey(state), state: state, label: _label(state)),
           ],
         ),
       ),
@@ -54,18 +54,26 @@ Future<Map<VisualSt, _Style>> _styles(
   final styles = <VisualSt, _Style>{};
   for (final state in VisualSt.values) {
     final chip = find.byKey(ValueKey(state));
-    expect(
-      find.descendant(of: chip, matching: find.text(state.name)),
-      findsOne,
-    );
+    final label = find.descendant(of: chip, matching: find.text(_label(state)));
+    expect(label, findsOne);
     expect(find.descendant(of: chip, matching: find.byType(Icon)), findsOne);
-    final colors = Theme.of(tester.element(chip)).colorScheme;
-    expect(colors.brightness, brightness);
-    final style = stateStyle(colors, state);
-    styles[state] = _Style(style.background, style.foreground);
+    final box = tester.widget<DecoratedBox>(
+      find.descendant(of: chip, matching: find.byType(DecoratedBox)),
+    );
+    final decoration = box.decoration as BoxDecoration;
+    final text = tester.widget<Text>(label);
+    styles[state] = _Style(decoration.color!, text.style!.color!);
   }
   return styles;
 }
+
+String _label(VisualSt state) => switch (state) {
+  VisualSt.logged => 'Logged',
+  VisualSt.current => 'Current',
+  VisualSt.backup => 'Backup',
+  VisualSt.warning => 'Warning',
+  VisualSt.error => 'Error',
+};
 
 double _contrast(_Style style) {
   final lighter =

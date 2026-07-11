@@ -13,7 +13,7 @@ intentionally excluded.
 - [x] Slice 5: Make logged-set editing compact and recoverable
 - [x] Slice 6: Add scalable exercise-library search
 - [x] Slice 7: Complete responsive light and dark visual polish
-- [ ] Slice 8: Clean up tests and run the release gate
+- [x] Slice 8: Clean up tests and run the release gate
 
 ## Slice 1: Make exercise log-format authoring safe and understandable
 
@@ -282,17 +282,17 @@ static, test, accessibility, and clean release-build gate.
 
 ### Acceptance criteria
 
-- [ ] The `test-cleanup` skill is used for this slice.
-- [ ] Tests assert public screen behavior, command contracts, or workbook plans
+- [x] The `test-cleanup` skill is used for this slice.
+- [x] Tests assert public screen behavior, command contracts, or workbook plans
       rather than private helpers and widget-tree trivia.
-- [ ] Redundant TDD-only cases are removed or consolidated.
-- [ ] Safety coverage remains for invalid-format rejection, command
+- [x] Redundant TDD-only cases are removed or consolidated.
+- [x] Safety coverage remains for invalid-format rejection, command
       serialization, navigation/back behavior, set clear/undo, and filtered
       reorder protection.
-- [ ] The complete Flutter test suite passes.
-- [ ] Static analysis and diff checks pass.
-- [ ] A clean macOS release build passes.
-- [ ] A clean unsigned iOS release build passes.
+- [x] The complete Flutter test suite passes.
+- [x] Static analysis and diff checks pass.
+- [x] A clean macOS release build passes.
+- [x] A clean unsigned iOS release build passes.
 
 ### Blocked by
 
