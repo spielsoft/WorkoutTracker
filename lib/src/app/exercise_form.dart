@@ -92,7 +92,7 @@ class _AuthoringScreenSt extends State<ExerciseAuthoringScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope<Object?>(
-      canPop: false,
+      canPop: !_dirty,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
           _close();

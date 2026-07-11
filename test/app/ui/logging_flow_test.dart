@@ -45,7 +45,7 @@ void main() {
     await tester.pump();
 
     expect(service.spreadsheetIds, ['spreadsheet-id']);
-    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
+    expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
     expect(find.byTooltip('Back to sheet selection'), findsOneWidget);
     expect(find.text('Workout'), findsOneWidget);
     expect(find.text('History block'), findsOneWidget);
@@ -65,7 +65,7 @@ void main() {
 
     expect(find.text('Upper exercises'), findsOneWidget);
     expect(find.text('Bench Press'), findsOneWidget);
-    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
+    expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
 
     await tester.tap(find.text('Bench Press'));
     await tester.pumpAndSettle();

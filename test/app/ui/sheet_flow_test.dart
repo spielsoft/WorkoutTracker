@@ -44,7 +44,7 @@ void main() {
     expect(find.text('Exercise: missing formula'), findsOneWidget);
     expect(find.text('Log Format: broken formula'), findsOneWidget);
     expect(find.text('Workout setup'), findsNothing);
-    expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
+    expect(find.byKey(const ValueKey('workout-home')), findsNothing);
     expect(find.text('Save set'), findsNothing);
   });
 
@@ -88,7 +88,7 @@ void main() {
       ),
     ]);
     expect(find.text('Reconnect exercises to logging rows'), findsNothing);
-    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
+    expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
   });
 
   testWidgets('shows duplicate formula repairs as individual row choices', (
@@ -225,10 +225,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Fix the active sheet structure'), findsNothing);
-      expect(
-        find.byKey(const ValueKey('select-workout-setup')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
     }
   });
 
@@ -397,10 +394,7 @@ void main() {
       await tester.pump();
 
       expect(service.spreadsheetIds, ['pasted-spreadsheet-id']);
-      expect(
-        find.byKey(const ValueKey('select-workout-setup')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
     },
   );
 

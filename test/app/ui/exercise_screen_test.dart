@@ -10,11 +10,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: const CreateExerciseView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
           actions: _CreateActions(),
         ),
       ),
@@ -44,11 +40,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: const CreateExerciseView(
-            isBusy: true,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: const CreateExerciseView(isBusy: true, sheetLabel: 'Training'),
           actions: _CreateActions(),
         ),
       ),
@@ -80,11 +72,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: const CreateExerciseView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
           actions: _CreateActions(),
         ),
       ),
@@ -109,11 +97,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: const CreateExerciseView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
           actions: actions,
         ),
       ),
@@ -186,11 +170,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: const CreateExerciseView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
           actions: actions,
         ),
       ),
@@ -200,7 +180,7 @@ void main() {
       find.byKey(const ValueKey('exercise-authoring-name')),
       'Draft exercise',
     );
-    await tester.tap(find.byTooltip('Back to edit exercises'));
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
 
     expect(find.text('Discard changes?'), findsOneWidget);
@@ -209,7 +189,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(actions.closed, isFalse);
 
-    await tester.tap(find.byTooltip('Back to edit exercises'));
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Discard'));
     await tester.pumpAndSettle();
@@ -258,11 +238,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: const CreateExerciseView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
           actions: actions,
         ),
       ),
@@ -271,6 +247,7 @@ void main() {
       find.byKey(const ValueKey('exercise-authoring-name')),
       'Draft exercise',
     );
+    await tester.pump();
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();

@@ -180,7 +180,7 @@ class _LibraryHeader extends StatelessWidget {
           title: view.sheetLabel,
           subtitle: 'Edit exercises',
           compactTitle: true,
-          backTooltip: 'Back to workout setup',
+          backTooltip: 'Back to workout',
           onBack: onClose,
           trailing: view.isBusy
               ? null

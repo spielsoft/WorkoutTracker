@@ -24,39 +24,25 @@ void main() {
       expect(flow.view, isA<SheetView>());
 
       expect((await flow.run(const ValidateSheet())).ok, isTrue);
-      final setup = flow.view as SetupView;
+      final setup = flow.view as WorkoutHomeView;
       expect(setup.sheetLabel, 'Workout sheet');
       expect(setup.setup.selectedWorkout, 'Legs');
       expect(setup.setup.selectedHistoryBlock, 'Week 1');
 
-      await flow.loaded.setup(const OpenSelectedWorkout());
-      expect(flow.view, isA<WorkoutView>());
-
-      await flow.loaded.workout(const OpenWorkoutLog(3));
+      await flow.loaded.home(const OpenWorkoutLog(3));
       final log = flow.view as LogView;
       expect(log.target.primaryRow, 3);
       expect(log.target.selectedRow, 3);
 
       await flow.loaded.close();
-      expect(flow.view, isA<WorkoutView>());
+      expect(flow.view, isA<WorkoutHomeView>());
 
-      await flow.loaded.workout(const AddWorkoutPrimary('Legs'));
+      await flow.loaded.home(const AddWorkoutPrimary('Legs'));
       final workoutPlacement = flow.view as PlacementView;
       expect(workoutPlacement.intent.workout, 'Legs');
-      expect(workoutPlacement.origin, PlaceOrigin.workout);
 
       await flow.loaded.close();
-      expect(flow.view, isA<WorkoutView>());
-
-      await flow.loaded.workout(const BackToWorkoutSetup());
-      await flow.loaded.setup(const AddSetupPrimary('Legs'));
-      final placement = flow.view as PlacementView;
-      expect(placement.intent.kind, PlaceKind.primary);
-      expect(placement.intent.workout, 'Legs');
-      expect(placement.origin, PlaceOrigin.setup);
-
-      await flow.loaded.close();
-      expect(flow.view, isA<SetupView>());
+      expect(flow.view, isA<WorkoutHomeView>());
     },
   );
 
@@ -77,12 +63,11 @@ void main() {
       expect((flow.view as SheetView).sheetText, ' spreadsheet-id ');
       await flow.run(const ValidateSheet());
 
-      await flow.loaded.setup(const OpenExerciseLibrary());
+      await flow.loaded.home(const OpenExerciseLibrary());
       expect(flow.view, isA<LibraryView>());
 
       await flow.loaded.create();
-      final create = flow.view as CreateExerciseView;
-      expect(create.origin, CreateOrigin.library);
+      expect(flow.view, isA<CreateExerciseView>());
 
       await flow.loaded.close();
       expect(flow.view, isA<LibraryView>());
@@ -92,7 +77,7 @@ void main() {
       expect(sheet.hasLoadedWorkout, isTrue);
 
       await flow.run(const ReturnToWorkout());
-      expect(flow.view, isA<SetupView>());
+      expect(flow.view, isA<WorkoutHomeView>());
     },
   );
 
@@ -107,10 +92,10 @@ void main() {
       final firstWrite = access.blockNext();
       final first = flow.loaded.execute(const RepairAllCmd());
 
-      expect(flow.view, isA<SetupView>());
+      expect(flow.view, isA<WorkoutHomeView>());
       expect(flow.view.isBusy, isTrue);
 
-      await flow.loaded.setup(const OpenExerciseLibrary());
+      await flow.loaded.home(const OpenExerciseLibrary());
       expect(flow.view, isA<LibraryView>());
       expect(flow.view.isBusy, isTrue);
 

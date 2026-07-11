@@ -4,14 +4,12 @@ import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 
 void main() {
-  testWidgets('workout setup emits its typed selection command', (
-    tester,
-  ) async {
-    final actions = _SetupActions();
+  testWidgets('workout home emits its typed logging command', (tester) async {
+    final actions = _HomeActions();
     await tester.pumpWidget(
       _boundedApp(
-        SetupScreen(
-          view: SetupView(
+        WorkoutHomeScreen(
+          view: WorkoutHomeView(
             isBusy: false,
             setup: _setup(),
             sheetLabel: 'Training',
@@ -21,17 +19,17 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Select'));
+    await tester.tap(find.text('Squat'));
 
-    expect(actions.seen.single, const OpenSelectedWorkout());
+    expect((actions.seen.single as OpenWorkoutLog).primaryRow, 3);
   });
 
   testWidgets('workout execution emits only its typed actions', (tester) async {
-    final actions = _WorkoutActions();
+    final actions = _HomeActions();
     await tester.pumpWidget(
       _boundedApp(
-        WorkoutScreen(
-          view: WorkoutView(
+        WorkoutHomeScreen(
+          view: WorkoutHomeView(
             isBusy: false,
             setup: _setup(),
             sheetLabel: 'Training',
@@ -58,19 +56,19 @@ void main() {
     });
     await tester.pumpWidget(
       _boundedApp(
-        WorkoutScreen(
-          view: WorkoutView(
+        WorkoutHomeScreen(
+          view: WorkoutHomeView(
             isBusy: false,
             setup: _longSetup(),
             sheetLabel: 'Training',
           ),
-          actions: _WorkoutActions(),
+          actions: _HomeActions(),
         ),
       ),
     );
 
     final scrollable = find.descendant(
-      of: find.byType(WorkoutScreen),
+      of: find.byType(WorkoutHomeScreen),
       matching: find.byType(Scrollable),
     );
     final position = tester.state<ScrollableState>(scrollable).position;
@@ -146,11 +144,11 @@ void main() {
   testWidgets('workout execution exposes typed backup and back actions', (
     tester,
   ) async {
-    final actions = _WorkoutActions();
+    final actions = _HomeActions();
     await tester.pumpWidget(
       _boundedApp(
-        WorkoutScreen(
-          view: WorkoutView(
+        WorkoutHomeScreen(
+          view: WorkoutHomeView(
             isBusy: false,
             setup: _setup(),
             sheetLabel: 'Training',
@@ -168,9 +166,9 @@ void main() {
     expect((actions.seen.single as AddWorkoutBackup).slot.exercise, 'Squat');
 
     actions.seen.clear();
-    await tester.tap(find.byTooltip('Back to workout setup'));
+    await tester.tap(find.byTooltip('Back to sheet selection'));
 
-    expect(actions.seen.single, const BackToWorkoutSetup());
+    expect(actions.seen.single, const BackToSheets());
   });
 
   testWidgets('exercise library exposes only library actions', (tester) async {
@@ -192,7 +190,7 @@ void main() {
     await tester.tap(find.text('Squat'));
     expect(actions.edited.single.exercise, 'Squat');
 
-    await tester.tap(find.byTooltip('Back to workout setup'));
+    await tester.tap(find.byTooltip('Back to workout'));
     expect(actions.closed, isTrue);
 
     await tester.tap(find.byTooltip('Create exercise'));
@@ -204,11 +202,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: CreateExerciseView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
           actions: actions,
         ),
       ),
@@ -236,11 +230,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
-          view: const CreateExerciseView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            origin: CreateOrigin.library,
-          ),
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
           actions: _CreateActions(),
         ),
       ),
@@ -302,7 +292,6 @@ void main() {
             exercises: _setup().activeSheet.canonicalExercises,
             sheetLabel: 'Training',
             intent: const PlaceIntent.primary(workout: 'Legs'),
-            origin: PlaceOrigin.workout,
           ),
           actions: actions,
         ),
@@ -342,7 +331,6 @@ void main() {
               primaryRow: 3,
               primaryExercise: 'Squat',
             ),
-            origin: PlaceOrigin.workout,
           ),
           actions: _PlacementActions(),
         ),
@@ -351,7 +339,7 @@ void main() {
 
     expect(find.text('Backup for Squat'), findsOneWidget);
     expect(find.text('Legs workout'), findsOneWidget);
-    expect(find.byTooltip('Back to workout'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsOneWidget);
   });
 
   testWidgets('typed pending state disables loaded mutation launch controls', (
@@ -361,34 +349,17 @@ void main() {
 
     await tester.pumpWidget(
       _boundedApp(
-        SetupScreen(
-          view: SetupView(isBusy: true, setup: setup, sheetLabel: 'Training'),
-          actions: _SetupActions(),
+        WorkoutHomeScreen(
+          view: WorkoutHomeView(
+            isBusy: true,
+            setup: setup,
+            sheetLabel: 'Training',
+          ),
+          actions: _HomeActions(),
         ),
       ),
     );
-    expect(
-      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
-      findsNothing,
-    );
-    expect(find.byTooltip('Exercise actions for Squat'), findsNothing);
-
-    await tester.pumpWidget(
-      _boundedApp(
-        WorkoutScreen(
-          view: WorkoutView(isBusy: true, setup: setup, sheetLabel: 'Training'),
-          actions: _WorkoutActions(),
-        ),
-      ),
-    );
-    expect(
-      tester
-          .widget<IconButton>(
-            find.byKey(const ValueKey('add-primary-exercise')),
-          )
-          .onPressed,
-      isNull,
-    );
+    expect(find.byKey(const ValueKey('add-primary-exercise')), findsNothing);
     expect(find.byTooltip('Exercise actions for Squat'), findsNothing);
 
     await tester.pumpWidget(
@@ -418,7 +389,6 @@ void main() {
         exercises: exercises,
         sheetLabel: 'Training',
         intent: const PlaceIntent.primary(workout: 'Legs'),
-        origin: PlaceOrigin.workout,
       ),
       actions: actions,
     );
@@ -518,23 +488,11 @@ final class _PlacementActions implements PlacementActions {
   }
 }
 
-final class _SetupActions implements SetupActions {
-  final seen = <SetupAction>[];
+final class _HomeActions implements WorkoutHomeActions {
+  final seen = <WorkoutHomeAction>[];
 
   @override
-  Future<void> setup(SetupAction action) async {
-    seen.add(action);
-  }
-
-  @override
-  Future<bool> reorder(ReorderIntent intent) async => true;
-}
-
-final class _WorkoutActions implements WorkoutActions {
-  final seen = <WorkoutAction>[];
-
-  @override
-  Future<void> workout(WorkoutAction action) async {
+  Future<void> home(WorkoutHomeAction action) async {
     seen.add(action);
   }
 

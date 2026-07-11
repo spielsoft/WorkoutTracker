@@ -56,10 +56,7 @@ void main() {
       await tester.pump();
 
       expect(service.spreadsheetIds, ['selected-spreadsheet-id']);
-      expect(
-        find.byKey(const ValueKey('select-workout-setup')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
       final selectors = find.byType(DropdownButtonFormField<String>);
       expect(
         tester.state<FormFieldState<String>>(selectors.first).value,
@@ -205,7 +202,7 @@ void main() {
     await tester.tap(find.text('Add backup exercise'));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsOneWidget);
     expect(find.text('Add backup exercise'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('existing-exercise-selector')),
@@ -251,10 +248,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Upper - Week 1'), findsOneWidget);
+    expect(find.text('Upper exercises'), findsOneWidget);
     expect(find.text('Pull Up'), findsOneWidget);
     expect(find.text('Lat Pulldown'), findsOneWidget);
 
@@ -319,9 +313,6 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
-    await tester.pumpAndSettle();
-
     await tester.tap(find.byTooltip('Exercise actions for Pull Up'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete exercise'));
@@ -363,9 +354,6 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
       await tester.pump();
       await tester.pump();
-      await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
-      await tester.pumpAndSettle();
-
       final tileCenter = tester.getCenter(find.text('Pull Up').first);
       await tester.tapAt(tileCenter, buttons: kSecondaryMouseButton);
       await tester.pumpAndSettle();
@@ -383,49 +371,40 @@ void main() {
     },
   );
 
-  testWidgets(
-    'selecting a workout setup opens the full exercise picker with compact context',
-    (tester) async {
-      final service = TestValSvc.fromRows([
-        [...activeSheetFixedColumns, 'Week 1'],
-        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        [
-          'Bulgarian Split Squat',
-          '3',
-          '8',
-          '8',
-          '90s',
-          '',
-          '',
-          '',
-          'Legs',
-          '',
-          '',
-        ],
-        ['Reverse Lunge', '3', '8', '8', '90s', '', '', '', 'Legs', 'TRUE', ''],
-      ]);
+  testWidgets('workout home combines selection and the full exercise list', (
+    tester,
+  ) async {
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Bulgarian Split Squat',
+        '3',
+        '8',
+        '8',
+        '90s',
+        '',
+        '',
+        '',
+        'Legs',
+        '',
+        '',
+      ],
+      ['Reverse Lunge', '3', '8', '8', '90s', '', '', '', 'Legs', 'TRUE', ''],
+    ]);
 
-      await tester.pumpWidget(
-        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
-      );
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
 
-      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-      await tester.pump();
-      await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
 
-      expect(find.text('Legs - Week 1'), findsNothing);
-      expect(find.text('Legs exercises'), findsOneWidget);
-
-      await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
-      await tester.pumpAndSettle();
-
-      expect(find.byTooltip('Back to workout setup'), findsOneWidget);
-      expect(find.text('Legs - Week 1'), findsOneWidget);
-      expect(find.text('Legs exercises'), findsNothing);
-      expect(find.text('Bulgarian Split Squat'), findsOneWidget);
-      expect(find.text('Reverse Lunge'), findsOneWidget);
-    },
-  );
+    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Bulgarian Split Squat'), findsOneWidget);
+    expect(find.text('Reverse Lunge'), findsOneWidget);
+  });
 
   testWidgets('back from adding to a selected workout returns to workout', (
     tester,
@@ -474,19 +453,17 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
     await tester.pumpAndSettle();
 
     expect(find.text('Add to workout'), findsWidgets);
-    expect(find.byTooltip('Back to workout'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back to workout'));
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
-    expect(find.text('Legs - Week 1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
+    expect(find.text('Legs exercises'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
@@ -580,7 +557,7 @@ void main() {
   });
 
   testWidgets(
-    'shows setup creation actions in selectors and selects created values',
+    'shows creation actions in selectors and selects created values',
     (tester) async {
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],

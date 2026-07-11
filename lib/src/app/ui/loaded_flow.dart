@@ -9,23 +9,51 @@ import '../exercise_edit_screen.dart';
 import '../exercise_library.dart';
 import '../logging.dart';
 import '../placement_screen.dart';
-import '../setup.dart';
+import '../workout_home.dart';
 import '../state_store.dart';
-import '../workout_screen.dart';
 import '../workspace.dart';
 import '../validation_core.dart';
 import 'view.dart';
 
-enum _Route { setup, workout, library, create, edit, placement, log }
+sealed class _Page {
+  const _Page();
+}
 
-/// Owns every route and transient state after a workbook is loaded.
+final class _Home extends _Page {
+  const _Home();
+}
+
+final class _Library extends _Page {
+  const _Library();
+}
+
+final class _Create extends _Page {
+  const _Create();
+}
+
+final class _Edit extends _Page {
+  const _Edit(this.exercise);
+
+  final CanonicalExercise exercise;
+}
+
+final class _Placement extends _Page {
+  const _Placement(this.intent);
+
+  final PlaceIntent intent;
+}
+
+final class _Log extends _Page {
+  const _Log();
+}
+
+/// Owns typed page history and transient state after a workbook is loaded.
 ///
-/// Screens see only their narrow action interfaces. The application flow sees
-/// one loaded-workout module and does not interpret feature commands.
+/// Screens see narrow action interfaces. Returning from a feature pops the
+/// page that launched it, so no feature needs an origin flag.
 final class LoadedFlow
     implements
-        SetupActions,
-        WorkoutActions,
+        WorkoutHomeActions,
         LibraryActions,
         CreateExerciseActions,
         EditExerciseActions,
@@ -38,60 +66,69 @@ final class LoadedFlow
   final VoidCallback _showSheet;
   final VoidCallback _changed;
 
-  _Route _route = _Route.setup;
-  CreateOrigin _createOrigin = CreateOrigin.setup;
-  PlaceOrigin _placeOrigin = PlaceOrigin.workout;
-  PlaceIntent? _placeIntent;
-  CanonicalExercise? _editing;
+  final List<_Page> _pages = [const _Home()];
   int? _highlightedRow;
+
+  List<AppPage> pages({
+    required bool busy,
+    required String sheetLabel,
+    String? error,
+  }) {
+    return [
+      for (final page in _pages)
+        AppPage(
+          id: page,
+          view: _view(page, busy: busy, sheetLabel: sheetLabel, error: error),
+        ),
+    ];
+  }
 
   AppView view({
     required bool busy,
     required String sheetLabel,
     String? error,
+  }) => pages(busy: busy, sheetLabel: sheetLabel, error: error).last.view;
+
+  AppView _view(
+    _Page page, {
+    required bool busy,
+    required String sheetLabel,
+    String? error,
   }) {
     final setup = _ctrl.workoutSetup!;
-    return switch (_route) {
-      _Route.setup => SetupView(
+    return switch (page) {
+      _Home() => WorkoutHomeView(
         isBusy: busy,
         error: _ctrl.error ?? error,
         setup: setup,
         sheetLabel: sheetLabel,
       ),
-      _Route.workout => WorkoutView(
-        isBusy: busy,
-        error: _ctrl.error ?? error,
-        setup: setup,
-        sheetLabel: sheetLabel,
-      ),
-      _Route.library => LibraryView(
+      _Library() => LibraryView(
         isBusy: busy,
         error: _ctrl.error ?? error,
         exercises: setup.activeSheet.canonicalExercises,
         sheetLabel: sheetLabel,
         highlightedRow: _highlightedRow,
       ),
-      _Route.create => CreateExerciseView(
+      _Create() => CreateExerciseView(
         isBusy: busy,
         error: _ctrl.error ?? error,
         sheetLabel: sheetLabel,
-        origin: _createOrigin,
       ),
-      _Route.edit => EditExerciseView(
+      _Edit(:final exercise) => EditExerciseView(
         isBusy: busy,
         error: _ctrl.error ?? error,
         sheetLabel: sheetLabel,
-        exercise: _editing!,
+        exercise: exercise,
       ),
-      _Route.placement => PlacementView(
+      _Placement(:final intent) => PlacementView(
         isBusy: busy,
         error: _ctrl.error ?? error,
         exercises: setup.activeSheet.canonicalExercises,
         sheetLabel: sheetLabel,
-        intent: _placeIntent!,
-        origin: _placeOrigin,
+        intent: intent,
       ),
-      _Route.log => LogView(
+      _Log() => LogView(
         isBusy: busy,
         error: _ctrl.error ?? error,
         activeSheet: setup.activeSheet,
@@ -101,16 +138,19 @@ final class LoadedFlow
     };
   }
 
-  void showSetup() {
-    _clearTransient();
-    _route = _Route.setup;
+  void showHome() {
+    _ctrl.closeExercise();
+    _pages
+      ..clear()
+      ..add(const _Home());
     _changed();
   }
 
   void reset() {
     _ctrl.closeExercise();
-    _clearTransient();
-    _route = _Route.setup;
+    _pages
+      ..clear()
+      ..add(const _Home());
   }
 
   void restoreWorkout(WorkoutSelectionSt? saved) {
@@ -124,145 +164,97 @@ final class LoadedFlow
     );
   }
 
+  bool owns(Object id) => _pages.contains(id);
+
+  bool didPop(Object id) {
+    if (!identical(_pages.last, id)) return false;
+    if (_pages.length == 1) return false;
+    _leave(_pages.removeLast());
+    _changed();
+    return true;
+  }
+
   @override
-  Future<void> setup(SetupAction action) async {
+  Future<void> home(WorkoutHomeAction action) async {
     switch (action) {
       case BackToSheets():
         _ctrl.closeExercise();
-        _clearTransient();
         _showSheet();
       case OpenExerciseLibrary():
         _ctrl.closeExercise();
-        _clearTransient();
         _highlightedRow = null;
-        _route = _Route.library;
+        _push(const _Library());
       case ChooseWorkout(:final workout):
         _ctrl.selectWorkout(workout);
         _saveSelection();
-        _route = _Route.setup;
       case ChooseHistory(:final block):
         _ctrl.selectHistoryBlock(block);
         _saveSelection();
-        _route = _Route.setup;
       case CreateWorkout(:final name):
         if (_ctrl.createWorkout(name)) _saveSelection();
       case CreateHistory(:final label):
         if (await _ctrl.createHistoryBlock(label)) _saveSelection();
-      case OpenSelectedWorkout():
-        _clearTransient();
-        _route = _Route.workout;
-      case OpenSetupLog(:final primaryRow):
-        _openLog(primaryRow);
-      case AddSetupPrimary(:final workout):
-        _openPrimary(workout, PlaceOrigin.setup);
-      case AddSetupBackup(:final slot):
-        _openBackup(slot, PlaceOrigin.setup);
-      case DeleteSetupExercise(:final primaryRow):
-        await _ctrl.deleteWorkoutExercise(primaryRow: primaryRow);
-    }
-    _changed();
-  }
-
-  @override
-  Future<void> workout(WorkoutAction action) async {
-    switch (action) {
-      case BackToWorkoutSetup():
-        showSetup();
-        return;
-      case AddWorkoutPrimary(:final workout):
-        _openPrimary(workout, PlaceOrigin.workout);
       case OpenWorkoutLog(:final primaryRow):
-        _openLog(primaryRow);
+        _ctrl.openExercise(primaryRow);
+        _push(const _Log());
+      case AddWorkoutPrimary(:final workout):
+        _openPrimary(workout);
       case AddWorkoutBackup(:final slot):
-        _openBackup(slot, PlaceOrigin.workout);
-      case DeleteWorkoutRow(:final primaryRow):
+        _openBackup(slot);
+      case DeleteWorkoutExercise(:final primaryRow):
         await _ctrl.deleteWorkoutExercise(primaryRow: primaryRow);
     }
     _changed();
   }
 
   @override
-  Future<bool> reorder(ReorderIntent intent) => _route == _Route.library
+  Future<bool> reorder(ReorderIntent intent) => _pages.last is _Library
       ? _ctrl.reorderExercises(intent)
       : _ctrl.reorderWorkoutExercises(intent);
 
   @override
   Future<void> close() async {
-    switch (_route) {
-      case _Route.library:
-        showSetup();
-      case _Route.create:
-        _route = _createOrigin == CreateOrigin.library
-            ? _Route.library
-            : _Route.setup;
-        _changed();
-      case _Route.edit:
-        _editing = null;
-        _route = _Route.library;
-        _changed();
-      case _Route.placement:
-        _placeIntent = null;
-        _route = _placeOrigin == PlaceOrigin.setup
-            ? _Route.setup
-            : _Route.workout;
-        _changed();
-      case _Route.log:
-        _ctrl.closeExercise();
-        _route = _Route.workout;
-        _changed();
-      case _Route.setup || _Route.workout:
-        return;
-    }
+    if (_pages.length == 1) return;
+    _leave(_pages.removeLast());
+    _changed();
   }
 
   @override
   Future<void> create() async {
     _ctrl.closeExercise();
-    _editing = null;
-    _createOrigin = _route == _Route.library
-        ? CreateOrigin.library
-        : CreateOrigin.setup;
-    _placeIntent = null;
-    _route = _Route.create;
+    _push(const _Create());
     _changed();
   }
 
   @override
   Future<void> edit(CanonicalExercise exercise) async {
     _ctrl.closeExercise();
-    _placeIntent = null;
     _highlightedRow = null;
-    _editing = exercise;
-    _route = _Route.edit;
+    _push(_Edit(exercise));
     _changed();
   }
 
   @override
   Future<bool> save(ExerciseDef exercise) async {
-    if (_route == _Route.edit) return _saveEdit(exercise);
+    final page = _pages.last;
+    if (page case _Edit(exercise: final selected)) {
+      final ok = await _ctrl.updateExercise(
+        selectedExercise: selected,
+        exercise: exercise,
+      );
+      if (!ok) return false;
+      _highlightedRow = selected.sheetRowNumber;
+      _pages.removeLast();
+      _changed();
+      return true;
+    }
+
     final ok = await _ctrl.createExercise(exercise: exercise);
     if (!ok) return false;
-    _highlightedRow = _createOrigin == CreateOrigin.library
-        ? _lastExerciseRow(exercise.exercise)
-        : null;
-    _route = _createOrigin == CreateOrigin.library
-        ? _Route.library
-        : _Route.setup;
-    _changed();
-    return true;
-  }
-
-  Future<bool> _saveEdit(ExerciseDef exercise) async {
-    final selected = _editing;
-    if (selected == null) return false;
-    final ok = await _ctrl.updateExercise(
-      selectedExercise: selected,
-      exercise: exercise,
-    );
-    if (!ok) return false;
-    _editing = null;
-    _highlightedRow = selected.sheetRowNumber;
-    _route = _Route.library;
+    if (_previous is _Library) {
+      _highlightedRow = _lastExerciseRow(exercise.exercise);
+    }
+    _pages.removeLast();
     _changed();
     return true;
   }
@@ -273,8 +265,9 @@ final class LoadedFlow
     WorkoutPlacementMetadata metadata, {
     bool keepAdding = false,
   }) async {
-    final intent = _placeIntent;
-    if (intent == null) return false;
+    final page = _pages.last;
+    if (page is! _Placement) return false;
+    final intent = page.intent;
     final ok = await _ctrl.addExerciseToWorkout(
       exercise: exercise,
       metadata: metadata,
@@ -287,12 +280,7 @@ final class LoadedFlow
         ),
       },
     );
-    if (ok && !keepAdding) {
-      _placeIntent = null;
-      _route = _placeOrigin == PlaceOrigin.setup
-          ? _Route.setup
-          : _Route.workout;
-    }
+    if (ok && !keepAdding) _pages.removeLast();
     _changed();
     return ok;
   }
@@ -305,32 +293,33 @@ final class LoadedFlow
     _ctrl.selectLoggingRow(sheetRow);
   }
 
-  void _openLog(int primaryRow) {
-    _ctrl.openExercise(primaryRow);
-    _route = _Route.log;
+  _Page? get _previous => _pages.length < 2 ? null : _pages[_pages.length - 2];
+
+  void _push(_Page page) => _pages.add(page);
+
+  void _leave(_Page page) {
+    if (page is _Log) _ctrl.closeExercise();
   }
 
-  void _openPrimary(String workout, PlaceOrigin origin) {
+  void _openPrimary(String workout) {
     _ctrl.closeExercise();
-    _editing = null;
     _highlightedRow = null;
-    _placeOrigin = origin;
-    _placeIntent = PlaceIntent.primary(workout: workout);
-    _route = _Route.placement;
+    _push(_Placement(PlaceIntent.primary(workout: workout)));
   }
 
-  void _openBackup(WorkoutOverviewSlot slot, PlaceOrigin origin) {
+  void _openBackup(WorkoutOverviewSlot slot) {
     final workout = _ctrl.workoutSetup?.selectedWorkout;
     if (workout == null) return;
-    _placeOrigin = origin;
     _ctrl.closeExercise();
-    _editing = null;
-    _placeIntent = PlaceIntent.backup(
-      workout: workout,
-      primaryRow: slot.sheetRowNumber,
-      primaryExercise: slot.exercise,
+    _push(
+      _Placement(
+        PlaceIntent.backup(
+          workout: workout,
+          primaryRow: slot.sheetRowNumber,
+          primaryExercise: slot.exercise,
+        ),
+      ),
     );
-    _route = _Route.placement;
   }
 
   int? _lastExerciseRow(String name) {
@@ -340,11 +329,6 @@ final class LoadedFlow
       if (exercise.exercise == name) return exercise.sheetRowNumber;
     }
     return null;
-  }
-
-  void _clearTransient() {
-    _placeIntent = null;
-    _editing = null;
   }
 
   void _saveSelection() {

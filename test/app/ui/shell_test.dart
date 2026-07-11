@@ -85,17 +85,11 @@ void main() {
     await tester.pump();
     await expectFlutterAccessibilityGuidelines(tester);
 
-    await tester.tap(find.byKey(const ValueKey('select-workout-setup')));
-    await tester.pumpAndSettle();
-    await expectFlutterAccessibilityGuidelines(tester);
-
     await tester.tap(find.text('Squat').first);
     await tester.pumpAndSettle();
     await expectFlutterAccessibilityGuidelines(tester);
 
     await tester.tap(find.byTooltip('Back to exercises'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Back to workout setup'));
     await tester.pumpAndSettle();
 
     final inventoryService = TestValSvc(

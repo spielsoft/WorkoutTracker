@@ -10,8 +10,7 @@ import 'exercise_edit_screen.dart';
 import 'placement_screen.dart';
 import 'logging.dart';
 import 'repair.dart';
-import 'setup.dart';
-import 'workout_screen.dart';
+import 'workout_home.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
 import 'ui/view.dart';
@@ -107,6 +106,7 @@ class AppShell extends StatefulWidget {
 class _AppShellSt extends State<AppShell> {
   late final AppFlow _flow;
   late final Future<void> _init;
+  final _navKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -140,83 +140,101 @@ class _AppShellSt extends State<AppShell> {
             builder: (context, _) => ListenableBuilder(
               listenable: _flow,
               builder: (context, _) {
-                final view = _flow.view;
-                final fullScreen = switch (view) {
-                  SetupView() => SetupScreen(view: view, actions: _flow.loaded),
-                  WorkoutView() => WorkoutScreen(
-                    view: view,
-                    actions: _flow.loaded,
+                final pages = _flow.pages;
+                return PopScope<Object?>(
+                  canPop: pages.length == 1,
+                  onPopInvokedWithResult: (didPop, _) {
+                    if (!didPop) _navKey.currentState?.maybePop();
+                  },
+                  child: Navigator(
+                    key: _navKey,
+                    pages: [
+                      for (final page in pages)
+                        if (page.view is SheetView ||
+                            page.view is WorkoutHomeView)
+                          _RootPage(
+                            key: ValueKey(page.id),
+                            child: _page(page.view),
+                          )
+                        else
+                          MaterialPage<Object?>(
+                            key: ValueKey(page.id),
+                            child: _page(page.view),
+                          ),
+                    ],
+                    onDidRemovePage: (page) {
+                      final key = page.key;
+                      if (key is ValueKey<Object>) _flow.didPop(key.value);
+                    },
                   ),
-                  LibraryView() => _feature(
-                    view,
-                    ExerciseLibraryScreen(view: view, actions: _flow.loaded),
-                    fill: true,
-                  ),
-                  _ => null,
-                };
-                if (fullScreen != null) {
-                  return Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 840),
-                        child: fullScreen,
-                      ),
-                    ),
-                  );
-                }
-                return ListView(
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 840),
-                        child: switch (view) {
-                          SheetView() => SheetScreen(
-                            view: view,
-                            run: (cmd) => _flow.run(cmd),
-                          ),
-                          CreateExerciseView() => _feature(
-                            view,
-                            CreateExerciseScreen(
-                              view: view,
-                              actions: _flow.loaded,
-                            ),
-                          ),
-                          EditExerciseView() => _feature(
-                            view,
-                            EditExerciseScreen(
-                              view: view,
-                              actions: _flow.loaded,
-                            ),
-                          ),
-                          PlacementView() => _feature(
-                            view,
-                            PlacementScreen(view: view, actions: _flow.loaded),
-                          ),
-                          LogView() => _feature(
-                            view,
-                            LogScreen(view: view, actions: _flow.loaded),
-                            showError: false,
-                          ),
-                          SetupView() ||
-                          WorkoutView() ||
-                          LibraryView() => throw StateError(
-                            'This view must use its full-screen layout.',
-                          ),
-                          _ => throw StateError('Unsupported app view $view'),
-                        },
-                      ),
-                    ),
-                  ],
                 );
               },
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _page(AppView view) {
+    final fullScreen = switch (view) {
+      WorkoutHomeView() => WorkoutHomeScreen(view: view, actions: _flow.loaded),
+      LibraryView() => _feature(
+        view,
+        ExerciseLibraryScreen(view: view, actions: _flow.loaded),
+        fill: true,
+      ),
+      _ => null,
+    };
+    if (fullScreen != null) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 840),
+            child: fullScreen,
+          ),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 840),
+            child: switch (view) {
+              SheetView() => SheetScreen(
+                view: view,
+                run: (cmd) => _flow.run(cmd),
+              ),
+              CreateExerciseView() => _feature(
+                view,
+                CreateExerciseScreen(view: view, actions: _flow.loaded),
+              ),
+              EditExerciseView() => _feature(
+                view,
+                EditExerciseScreen(view: view, actions: _flow.loaded),
+              ),
+              PlacementView() => _feature(
+                view,
+                PlacementScreen(view: view, actions: _flow.loaded),
+              ),
+              LogView() => _feature(
+                view,
+                LogScreen(view: view, actions: _flow.loaded),
+                showError: false,
+              ),
+              WorkoutHomeView() || LibraryView() => throw StateError(
+                'This view must use its full-screen layout.',
+              ),
+              _ => throw StateError('Unsupported app view $view'),
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -243,4 +261,54 @@ class _AppShellSt extends State<AppShell> {
       ],
     );
   }
+}
+
+final class _RootPage extends Page<Object?> {
+  const _RootPage({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Route<Object?> createRoute(BuildContext context) {
+    return _RootRoute(this);
+  }
+}
+
+final class _RootRoute extends PageRoute<Object?> {
+  _RootRoute(_RootPage page) : super(settings: page);
+
+  _RootPage get _page => settings as _RootPage;
+
+  @override
+  bool get barrierDismissible => false;
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  bool get maintainState => true;
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Duration get reverseTransitionDuration => Duration.zero;
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => _page.child;
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }

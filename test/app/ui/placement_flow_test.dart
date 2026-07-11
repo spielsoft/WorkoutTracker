@@ -139,9 +139,7 @@ void main() {
       await tester.tap(find.text('Upper (0/1 started)').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const ValueKey('add-primary-exercise-from-setup')),
-      );
+      await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const ValueKey('exercise-picker-search')),
@@ -149,8 +147,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byTooltip('Back to workout setup'), findsOneWidget);
-      await tester.tap(find.byTooltip('Back to workout setup'));
+      expect(find.byTooltip('Back'), findsOneWidget);
+      await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
 
       expect(find.text('Upper exercises'), findsOneWidget);
@@ -161,9 +159,7 @@ void main() {
       );
       expect(find.text('Return to workout'), findsNothing);
 
-      await tester.tap(
-        find.byKey(const ValueKey('add-primary-exercise-from-setup')),
-      );
+      await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const ValueKey('exercise-picker-search')),
@@ -256,9 +252,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    await tester.tap(
-      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
-    );
+    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
     await tester.pumpAndSettle();
 
     expect(find.text('Add to workout'), findsWidgets);
@@ -346,9 +340,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    await tester.tap(
-      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
-    );
+    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
     await tester.pumpAndSettle();
 
     final selector = find.byKey(const ValueKey('exercise-picker-search'));
@@ -449,9 +441,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    await tester.tap(
-      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
-    );
+    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
@@ -562,9 +552,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    await tester.tap(
-      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
-    );
+    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
     await tester.pumpAndSettle();
 
     await tester.enterText(

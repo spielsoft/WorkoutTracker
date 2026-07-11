@@ -8,7 +8,7 @@ intentionally excluded.
 
 - [x] Slice 1: Make exercise log-format authoring safe and understandable
 - [x] Slice 2: Serialize loaded-workbook mutations
-- [ ] Slice 3: Unify workout home and native navigation
+- [x] Slice 3: Unify workout home and native navigation
 - [ ] Slice 4: Streamline phone set entry
 - [ ] Slice 5: Make logged-set editing compact and recoverable
 - [ ] Slice 6: Add scalable exercise-library search
@@ -99,18 +99,18 @@ and iOS back gestures return to the page that actually launched the feature.
 
 ### Acceptance criteria
 
-- [ ] Workout and history selectors update the exercise list immediately.
-- [ ] The duplicate workout-list destination and generic Select action are
+- [x] Workout and history selectors update the exercise list immediately.
+- [x] The duplicate workout-list destination and generic Select action are
       removed.
-- [ ] Logging, placement, library, create, and edit pages return to their actual
+- [x] Logging, placement, library, create, and edit pages return to their actual
       origin through page history rather than origin flags.
-- [ ] Android-style back dispatch follows the page stack before allowing app
+- [x] Android-style back dispatch follows the page stack before allowing app
       exit.
-- [ ] iOS feature pages participate in normal back navigation.
-- [ ] Sheet selection remains the parent destination of workout home.
-- [ ] AppShell composes pages without interpreting feature or workbook
+- [x] iOS feature pages participate in normal back navigation.
+- [x] Sheet selection remains the parent destination of workout home.
+- [x] AppShell composes pages without interpreting feature or workbook
       commands.
-- [ ] Navigation tests assert visible destinations and back behavior rather
+- [x] Navigation tests assert visible destinations and back behavior rather
       than internal route enum values.
 
 ### Blocked by

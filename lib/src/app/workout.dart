@@ -78,7 +78,7 @@ class WorkoutList extends StatelessWidget {
                   ),
                   if (onAddPrimary != null)
                     IconButton.filled(
-                      key: const ValueKey('add-primary-exercise-from-setup'),
+                      key: const ValueKey('add-primary-exercise'),
                       tooltip: 'Add to workout',
                       onPressed: onAddPrimary,
                       icon: const Icon(Icons.add_outlined),

@@ -5,6 +5,13 @@ abstract base class AppView {
   final String? error;
 }
 
+final class AppPage {
+  const AppPage({required this.id, required this.view});
+
+  final Object id;
+  final AppView view;
+}
+
 abstract base class LoadedView extends AppView {
   const LoadedView({
     required super.isBusy,

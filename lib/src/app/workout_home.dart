@@ -9,8 +9,8 @@ import 'ui/shared/name_dialog.dart';
 import 'workout.dart';
 import 'ui/view.dart';
 
-final class SetupView extends LoadedView {
-  const SetupView({
+final class WorkoutHomeView extends LoadedView {
+  const WorkoutHomeView({
     required super.isBusy,
     required this.setup,
     required super.sheetLabel,
@@ -23,81 +23,81 @@ final class SetupView extends LoadedView {
 const _addWorkoutValue = '__workout_tracker_add_workout__';
 const _addHistoryValue = '__workout_tracker_add_history_block__';
 
-abstract interface class SetupActions {
-  Future<void> setup(SetupAction action);
+abstract interface class WorkoutHomeActions {
+  Future<void> home(WorkoutHomeAction action);
 
   Future<bool> reorder(ReorderIntent intent);
 }
 
-sealed class SetupAction {
-  const SetupAction();
+sealed class WorkoutHomeAction {
+  const WorkoutHomeAction();
 }
 
-final class BackToSheets extends SetupAction {
+final class BackToSheets extends WorkoutHomeAction {
   const BackToSheets();
 }
 
-final class OpenExerciseLibrary extends SetupAction {
+final class OpenExerciseLibrary extends WorkoutHomeAction {
   const OpenExerciseLibrary();
 }
 
-final class ChooseWorkout extends SetupAction {
+final class ChooseWorkout extends WorkoutHomeAction {
   const ChooseWorkout(this.workout);
 
   final String? workout;
 }
 
-final class ChooseHistory extends SetupAction {
+final class ChooseHistory extends WorkoutHomeAction {
   const ChooseHistory(this.block);
 
   final String? block;
 }
 
-final class CreateWorkout extends SetupAction {
+final class CreateWorkout extends WorkoutHomeAction {
   const CreateWorkout(this.name);
 
   final String name;
 }
 
-final class CreateHistory extends SetupAction {
+final class CreateHistory extends WorkoutHomeAction {
   const CreateHistory(this.label);
 
   final String label;
 }
 
-final class OpenSelectedWorkout extends SetupAction {
-  const OpenSelectedWorkout();
-}
-
-final class OpenSetupLog extends SetupAction {
-  const OpenSetupLog(this.primaryRow);
+final class OpenWorkoutLog extends WorkoutHomeAction {
+  const OpenWorkoutLog(this.primaryRow);
 
   final int primaryRow;
 }
 
-final class AddSetupPrimary extends SetupAction {
-  const AddSetupPrimary(this.workout);
+final class AddWorkoutPrimary extends WorkoutHomeAction {
+  const AddWorkoutPrimary(this.workout);
 
   final String workout;
 }
 
-final class AddSetupBackup extends SetupAction {
-  const AddSetupBackup(this.slot);
+final class AddWorkoutBackup extends WorkoutHomeAction {
+  const AddWorkoutBackup(this.slot);
 
   final WorkoutOverviewSlot slot;
 }
 
-final class DeleteSetupExercise extends SetupAction {
-  const DeleteSetupExercise(this.primaryRow);
+final class DeleteWorkoutExercise extends WorkoutHomeAction {
+  const DeleteWorkoutExercise(this.primaryRow);
 
   final int primaryRow;
 }
 
-class SetupScreen extends StatelessWidget {
-  const SetupScreen({required this.view, required this.actions, super.key});
+class WorkoutHomeScreen extends StatelessWidget {
+  const WorkoutHomeScreen({
+    required this.view,
+    required this.actions,
+    super.key,
+  });
 
-  final SetupView view;
-  final SetupActions actions;
+  final WorkoutHomeView view;
+  final WorkoutHomeActions actions;
 
   @override
   Widget build(BuildContext context) {
@@ -120,11 +120,11 @@ class SetupScreen extends StatelessWidget {
           title: view.sheetLabel,
           compactTitle: true,
           backTooltip: 'Back to sheet selection',
-          onBack: () => actions.setup(const BackToSheets()),
+          onBack: () => actions.home(const BackToSheets()),
           trailing: IconButton.filledTonal(
             key: const ValueKey('open-exercise-manager'),
             tooltip: 'Edit exercise library',
-            onPressed: () => actions.setup(const OpenExerciseLibrary()),
+            onPressed: () => actions.home(const OpenExerciseLibrary()),
             icon: const Icon(Icons.fitness_center_outlined),
           ),
         ),
@@ -145,7 +145,7 @@ class SetupScreen extends StatelessWidget {
                     workouts: setup.workouts,
                     selected: selectedWorkout,
                     progress: setup.progressByWorkout,
-                    onChanged: (value) => actions.setup(ChooseWorkout(value)),
+                    onChanged: (value) => actions.home(ChooseWorkout(value)),
                     onAdd: view.isBusy ? null : () => _addWorkout(context),
                   ),
                 ),
@@ -154,7 +154,7 @@ class SetupScreen extends StatelessWidget {
                   child: _HistoryField(
                     blocks: setup.historyBlocks,
                     selected: setup.selectedHistoryBlock,
-                    onChanged: (value) => actions.setup(ChooseHistory(value)),
+                    onChanged: (value) => actions.home(ChooseHistory(value)),
                     onAdd: view.isBusy ? null : () => _addHistory(context),
                   ),
                 ),
@@ -162,46 +162,36 @@ class SetupScreen extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 24),
-        FilledButton.icon(
-          key: const ValueKey('select-workout-setup'),
-          onPressed: overview == null
-              ? null
-              : () => actions.setup(const OpenSelectedWorkout()),
-          icon: const Icon(Icons.check_circle_outline),
-          label: const Text('Select'),
-        ),
         const SizedBox(height: 16),
       ],
     );
     if (overview == null) {
       return A11yScreen(
-        label: 'Workout setup',
+        label: 'Workout home',
         child: ListView(children: [header]),
       );
     }
     return WorkoutList(
-      key: const ValueKey('compact-workout-overview'),
-      label: 'Workout setup',
+      key: const ValueKey('workout-home'),
+      label: '${overview.workout} exercise list',
       header: header,
       overview: overview,
-      onOpenExercise: (row) => actions.setup(OpenSetupLog(row)),
+      onOpenExercise: (row) => actions.home(OpenWorkoutLog(row)),
       onAddPrimary: view.isBusy || selectedWorkout == null
           ? null
-          : () => actions.setup(AddSetupPrimary(selectedWorkout)),
+          : () => actions.home(AddWorkoutPrimary(selectedWorkout)),
       onAddBackup: view.isBusy
           ? null
-          : (slot) => actions.setup(AddSetupBackup(slot)),
+          : (slot) => actions.home(AddWorkoutBackup(slot)),
       onDeleteExercise: view.isBusy ? null : (slot) => _delete(context, slot),
       onReorderExercises: view.isBusy ? null : actions.reorder,
-      compact: true,
     );
   }
 
   Future<void> _addWorkout(BuildContext context) async {
     final name = await _prompt(context, 'Add workout', 'Workout name');
     if (name != null) {
-      await actions.setup(CreateWorkout(name));
+      await actions.home(CreateWorkout(name));
     }
   }
 
@@ -212,7 +202,7 @@ class SetupScreen extends StatelessWidget {
       'History block label',
     );
     if (name != null) {
-      await actions.setup(CreateHistory(name));
+      await actions.home(CreateHistory(name));
     }
   }
 
@@ -231,7 +221,7 @@ class SetupScreen extends StatelessWidget {
 
   Future<void> _delete(BuildContext context, WorkoutOverviewSlot slot) async {
     if (await confirmWorkoutDelete(context, slot)) {
-      await actions.setup(DeleteSetupExercise(slot.sheetRowNumber));
+      await actions.home(DeleteWorkoutExercise(slot.sheetRowNumber));
     }
   }
 }

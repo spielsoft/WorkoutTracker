@@ -7,8 +7,6 @@ import 'ui/shared/header.dart';
 
 enum PlaceKind { primary, backup }
 
-enum PlaceOrigin { setup, workout }
-
 class PlaceIntent {
   const PlaceIntent.primary({required this.workout})
     : kind = PlaceKind.primary,
@@ -33,13 +31,11 @@ final class PlacementView extends LoadedView {
     required this.exercises,
     required super.sheetLabel,
     required this.intent,
-    required this.origin,
     super.error,
   });
 
   final List<CanonicalExercise> exercises;
   final PlaceIntent intent;
-  final PlaceOrigin origin;
 }
 
 abstract interface class PlacementActions {
@@ -70,9 +66,7 @@ class PlacementScreen extends StatelessWidget {
             title: view.sheetLabel,
             subtitle: isBackup ? 'Add backup exercise' : 'Add to workout',
             compactTitle: true,
-            backTooltip: view.origin == PlaceOrigin.setup
-                ? 'Back to workout setup'
-                : 'Back to workout',
+            backTooltip: 'Back',
             onBack: actions.close,
           ),
           const SizedBox(height: 16),

@@ -4,17 +4,12 @@ import 'package:workout_tracker/contract.dart';
 import 'exercise_form.dart';
 import 'ui/view.dart';
 
-enum CreateOrigin { setup, library }
-
 final class CreateExerciseView extends LoadedView {
   const CreateExerciseView({
     required super.isBusy,
     required super.sheetLabel,
-    required this.origin,
     super.error,
   });
-
-  final CreateOrigin origin;
 }
 
 abstract interface class CreateExerciseActions {
@@ -39,9 +34,7 @@ class CreateExerciseScreen extends StatelessWidget {
       a11yLabel: 'New exercise',
       title: 'New exercise',
       sheetLabel: view.sheetLabel,
-      backTooltip: view.origin == CreateOrigin.library
-          ? 'Back to edit exercises'
-          : 'Back to workout setup',
+      backTooltip: 'Back',
       mode: ExerciseFormMode.create,
       initialDraft: CanonicalExerciseDraft.defaults,
       isBusy: view.isBusy,

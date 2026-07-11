@@ -37,7 +37,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Edit exercises'), findsWidgets);
-    expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+    expect(find.byTooltip('Back to workout'), findsOneWidget);
     expect(find.byTooltip('Create exercise'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);
     expect(find.text('Back squat'), findsOneWidget);
@@ -96,7 +96,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('New exercise'), findsWidgets);
-      expect(find.byTooltip('Back to edit exercises'), findsOneWidget);
+      expect(find.byTooltip('Back'), findsOneWidget);
 
       await tester.enterText(
         find.byKey(const ValueKey('exercise-authoring-name')),
@@ -109,8 +109,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(authoringService.createdExercises, [
         const ExerciseDef(
@@ -223,8 +222,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
       await tester.pumpAndSettle();
 
@@ -251,8 +249,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(authoringService.createdExercises, isEmpty);
       expect(authoringService.updatedExercises, [

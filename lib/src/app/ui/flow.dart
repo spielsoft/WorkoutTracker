@@ -10,6 +10,7 @@ import 'sheet.dart';
 import 'view.dart';
 
 const _manualSheetLabel = 'Workout sheet';
+const _sheetPageId = 'sheet';
 
 /// Routes between sheet setup and the loaded-workout module.
 ///
@@ -50,33 +51,54 @@ final class AppFlow extends ChangeNotifier {
   String _sheetText;
 
   AppView get view {
+    return pages.last.view;
+  }
+
+  List<AppPage> get pages {
     final report = _ctrl.report;
     final workspace = _workspace.state;
     final busy =
         _ctrl.isBusy || workspace.isCommandInFlight || workspace.isInitializing;
     if (!_showLoaded || report == null || report.hasBlockingIssues) {
-      return SheetView(
-        isBusy: busy,
-        error: _ctrl.error ?? workspace.error,
-        sheetText: _sheetText,
-        selectedSheet: workspace.selectedSheet,
-        availability: workspace.pickerAvailability,
-        showAvailability: workspace.selectedSheet == null && _hasPicker,
-        showTextFallback: !_hasPicker || workspace.fallbackAvailable,
-        hasLoadedWorkout: report != null && !report.hasBlockingIssues,
-        report: report,
-        account: workspace.accountProfile,
-        hasPicker: _hasPicker,
-        showAccount: _showAccount,
-        accountMismatch: workspace.accountMismatch,
-      );
+      return [
+        AppPage(id: _sheetPageId, view: _sheetView(report, workspace, busy)),
+      ];
     }
     final label = workspace.selectedSheet?.displayLabel ?? _manualSheetLabel;
-    return loaded.view(
-      busy: busy,
-      sheetLabel: label,
+    return [
+      AppPage(id: _sheetPageId, view: _sheetView(report, workspace, busy)),
+      ...loaded.pages(
+        busy: busy,
+        sheetLabel: label,
+        error: _ctrl.error ?? workspace.error,
+      ),
+    ];
+  }
+
+  SheetView _sheetView(ValReport? report, WorkspaceUiSt workspace, bool busy) {
+    return SheetView(
+      isBusy: busy,
       error: _ctrl.error ?? workspace.error,
+      sheetText: _sheetText,
+      selectedSheet: workspace.selectedSheet,
+      availability: workspace.pickerAvailability,
+      showAvailability: workspace.selectedSheet == null && _hasPicker,
+      showTextFallback: !_hasPicker || workspace.fallbackAvailable,
+      hasLoadedWorkout: report != null && !report.hasBlockingIssues,
+      report: report,
+      account: workspace.accountProfile,
+      hasPicker: _hasPicker,
+      showAccount: _showAccount,
+      accountMismatch: workspace.accountMismatch,
     );
+  }
+
+  void didPop(Object id) {
+    if (loaded.owns(id)) {
+      if (!loaded.didPop(id)) _showSheet();
+      return;
+    }
+    if (id == _sheetPageId) return;
   }
 
   Future<void> restore() async {
@@ -136,7 +158,7 @@ final class AppFlow extends ChangeNotifier {
         : await _ctrl.validateSelected(selected);
     final report = _ctrl.report;
     _showLoaded = ok && report != null && !report.hasBlockingIssues;
-    if (_showLoaded) loaded.showSetup();
+    if (_showLoaded) loaded.showHome();
     return CmdResult.result(ok);
   }
 
@@ -208,7 +230,7 @@ final class AppFlow extends ChangeNotifier {
     if (report == null || report.hasBlockingIssues) {
       return const CmdResult.failed();
     }
-    loaded.showSetup();
+    loaded.showHome();
     _showLoaded = true;
     return const CmdResult.done();
   }
@@ -217,7 +239,7 @@ final class AppFlow extends ChangeNotifier {
     final ok = await _ctrl.repairFormulas();
     if (ok) {
       _showLoaded = _ctrl.report?.hasBlockingIssues == false;
-      if (_showLoaded) loaded.showSetup();
+      if (_showLoaded) loaded.showHome();
     }
     return CmdResult.result(ok);
   }
@@ -229,7 +251,7 @@ final class AppFlow extends ChangeNotifier {
     );
     if (ok) {
       _showLoaded = _ctrl.report?.hasBlockingIssues == false;
-      if (_showLoaded) loaded.showSetup();
+      if (_showLoaded) loaded.showHome();
     }
     return CmdResult.result(ok);
   }
