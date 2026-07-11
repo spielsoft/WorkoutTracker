@@ -10,6 +10,19 @@ workout rows and visible workout history. The `Exercises` tab stores canonical
 exercise metadata. The MVP app may append new canonical exercise rows to
 `Exercises`, but it does not otherwise behave as a broad spreadsheet editor.
 
+Both tabs are required before the app may write. The active tab must contain
+the fixed columns below, and `Exercises` must contain exactly these columns in
+this order:
+
+```text
+Exercise | Description | Default Sets | Default Reps | Default RPE | Default Rest | Default Tempo | Notes | Log Format
+```
+
+A missing or empty tab, a missing or reordered required column, or an
+unsupported non-empty `Exercises` column is blocking schema damage. The app
+must not infer writable column positions or apply any write while schema damage
+is present.
+
 The active sheet starts with fixed columns, followed by visible history blocks:
 
 ```text
@@ -121,6 +134,9 @@ Examples:
   active-sheet display formulas so they point directly into `Exercises` again.
   Healing must not introduce app-only IDs or replace the human-readable sheet
   contract.
+- **Sheet account binding**: the Google account email recorded when a sheet is
+  selected. A restored sheet must not be opened through another account until
+  the user explicitly confirms rebinding or selects a different sheet.
 
 ## Test Fixtures
 

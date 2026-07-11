@@ -284,7 +284,7 @@ class DriveSheetPicker implements SheetPicker {
     final savedEmail = _normalizedEmail(selected.accountEmail);
     final currentEmail = _normalizedEmail(auth.currentAccount?.email);
     if (savedEmail != null && savedEmail != currentEmail) {
-      throw AccountMismatchException(
+      throw AcctMismatchException(
         savedEmail: selected.accountEmail,
         currentEmail: auth.currentAccount?.email,
       );

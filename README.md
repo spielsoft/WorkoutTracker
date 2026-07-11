@@ -167,3 +167,9 @@ in-app Flutter chooser for recent/searchable Google Sheets. Google-backed sheet
 creation stays on the native session path, creates the spreadsheet through the
 Sheets API, initializes it with the WorkoutTracker contract, selects it, and
 persists that selection for later launches.
+
+Restored selections remain bound to the account that selected them. When a
+different account is active, the app stops before resolving or validating the
+sheet and requires explicit confirmation or reselection. Startup restoration
+also blocks selection commands until the saved account and sheet state have
+finished restoring.
