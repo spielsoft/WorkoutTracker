@@ -210,6 +210,10 @@ final class ChooseSheet extends SheetCmd {
   const ChooseSheet();
 }
 
+final class SignIn extends SheetCmd {
+  const SignIn();
+}
+
 final class AuthorizeCreate extends SheetCmd {
   const AuthorizeCreate();
 }
@@ -546,6 +550,7 @@ class AppFlow extends ChangeNotifier implements UiFlow {
       SetSheetText(:final text) => await _setSheetText(text),
       ValidateSheet() => await _validate(),
       ChooseSheet() => await _chooseSheet(),
+      SignIn() => await _signIn(),
       AuthorizeCreate() => await _authorizeCreate(),
       CreateSheet(:final name) => await _createSheet(name),
       SignOut() => await _signOut(),
@@ -629,6 +634,17 @@ class AppFlow extends ChangeNotifier implements UiFlow {
     } on Object catch (error) {
       _ctrl.reportSelectionFailure(error);
       return CmdResult.failed(error.toString());
+    }
+  }
+
+  Future<CmdResult> _signIn() async {
+    try {
+      final workspace = await _workspace.signIn();
+      return workspace.accountProfile == null
+          ? const CmdResult.failed('Google Sheets login was cancelled.')
+          : const CmdResult.done();
+    } on Object catch (error) {
+      return CmdResult.failed('Unable to log in to Google Sheets: $error');
     }
   }
 

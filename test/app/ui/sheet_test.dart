@@ -3,12 +3,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 
 void main() {
+  testWidgets('offers login from the disconnected account menu', (
+    tester,
+  ) async {
+    final cmds = <SheetCmd>[];
+    await tester.pumpWidget(
+      _app(_view(showTextFallback: false), (cmd) async {
+        cmds.add(cmd);
+        return const CmdResult.done();
+      }),
+    );
+
+    await tester.tap(find.byTooltip('Connect Google Sheets'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log in'));
+    await tester.pumpAndSettle();
+
+    expect(cmds.single, isA<SignIn>());
+  });
+
   testWidgets('emits typed selection and pasted-sheet commands', (
     tester,
   ) async {
     final cmds = <SheetCmd>[];
     await tester.pumpWidget(
-      _app(_view(), (cmd) async {
+      _app(_view(account: _account), (cmd) async {
         cmds.add(cmd);
         return const CmdResult.done();
       }),
@@ -27,12 +46,28 @@ void main() {
     expect(cmds.last, isA<ValidateSheet>());
   });
 
+  testWidgets('disables sheet actions until login', (tester) async {
+    await tester.pumpWidget(
+      _app(_view(showTextFallback: false), (_) async => const CmdResult.done()),
+    );
+
+    final choose = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Choose workout sheet'),
+    );
+    final create = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Create sheet'),
+    );
+
+    expect(choose.onPressed, isNull);
+    expect(create.onPressed, isNull);
+  });
+
   testWidgets('authorizes creation before emitting the entered sheet name', (
     tester,
   ) async {
     final cmds = <SheetCmd>[];
     await tester.pumpWidget(
-      _app(_view(showTextFallback: false), (cmd) async {
+      _app(_view(showTextFallback: false, account: _account), (cmd) async {
         cmds.add(cmd);
         return const CmdResult.done();
       }),
@@ -111,6 +146,8 @@ void main() {
     expect(cmds.single, isA<ConfirmAccount>());
   });
 }
+
+const _account = GoogleAccountProfile(email: 'athlete@example.com');
 
 Widget _app(SheetView view, Future<CmdResult> Function(SheetCmd cmd) run) {
   return MaterialApp(

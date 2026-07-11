@@ -28,6 +28,8 @@ abstract interface class GoogleAccountSession implements Listenable {
 
   Future<void> restoreAccount();
 
+  Future<bool> signIn({List<String> scopes = const []});
+
   Future<void> switchAccount({List<String> scopes = const []});
 
   Future<void> signOut();
@@ -109,20 +111,42 @@ class NativeSignInAuthGateway extends ChangeNotifier
   }
 
   @override
+  Future<bool> signIn({List<String> scopes = const []}) async {
+    await _ensureInitialized();
+    try {
+      final account = _account ?? await _signIn.authenticate(scopeHint: scopes);
+      if (scopes.isNotEmpty) {
+        final headers = await account.authorizationClient.authorizationHeaders(
+          scopes,
+          promptIfNecessary: true,
+        );
+        if (headers == null) {
+          await signOut();
+          return false;
+        }
+      }
+      _setAccount(account);
+      return true;
+    } on GoogleSignInException catch (error) {
+      switch (error.code) {
+        case GoogleSignInExceptionCode.canceled:
+        case GoogleSignInExceptionCode.interrupted:
+        case GoogleSignInExceptionCode.uiUnavailable:
+          _setAccount(null);
+          return false;
+        default:
+          rethrow;
+      }
+    }
+  }
+
+  @override
   Future<void> switchAccount({List<String> scopes = const []}) async {
     await _ensureInitialized();
     await signOut();
-    final account = await _signIn.authenticate(scopeHint: scopes);
-    if (scopes.isNotEmpty) {
-      final headers = await account.authorizationClient.authorizationHeaders(
-        scopes,
-        promptIfNecessary: true,
-      );
-      if (headers == null) {
-        throw StateError('Google authorization did not return Sheets headers.');
-      }
+    if (!await signIn(scopes: scopes)) {
+      throw StateError('Google authorization was cancelled.');
     }
-    _setAccount(account);
   }
 
   @override

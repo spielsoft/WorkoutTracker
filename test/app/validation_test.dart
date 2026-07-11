@@ -1270,6 +1270,9 @@ class _RecordingSignInAuthGateway extends ChangeNotifier
   Future<void> restoreAccount() async {}
 
   @override
+  Future<bool> signIn({List<String> scopes = const []}) async => true;
+
+  @override
   Future<void> switchAccount({List<String> scopes = const []}) async {}
 
   @override

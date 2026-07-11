@@ -3,6 +3,7 @@ import 'package:workout_tracker/sheets.dart';
 
 import 'state_store.dart';
 import 'account_session.dart';
+import 'auth_client.dart';
 import 'selection.dart';
 
 const _pickerConfigReason =
@@ -62,6 +63,8 @@ abstract interface class WorkspaceLifecycle implements Listenable {
   Future<WorkspaceUiSt> adoptSelection(SelectedSheet selected);
 
   Future<WorkspaceUiSt> chooseSheet();
+
+  Future<WorkspaceUiSt> signIn();
 
   Future<bool> authorizeSheetCreation();
 
@@ -247,6 +250,18 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       ),
     );
     return _state;
+  }
+
+  @override
+  Future<WorkspaceUiSt> signIn() {
+    return _runStCmd(() async {
+      final account = _accountSession;
+      if (account == null) {
+        return _state;
+      }
+      await account.signIn(scopes: sheetScopes);
+      return _state;
+    });
   }
 
   @override

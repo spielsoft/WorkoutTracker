@@ -502,6 +502,58 @@ void main() {
     );
   });
 
+  testWidgets('login enables sheet choice with all required scopes', (
+    tester,
+  ) async {
+    final accountSession = FakeGoogleAccountSession(null);
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        svc: service,
+        accountSession: accountSession,
+        picker: FakeSheetPicker(),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Choose workout sheet'),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.byTooltip('Connect Google Sheets'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log in'));
+    await tester.pumpAndSettle();
+
+    expect(accountSession.signInCount, 1);
+    expect(accountSession.requestedScopes.single, [
+      driveMetaScope,
+      'https://www.googleapis.com/auth/spreadsheets',
+    ]);
+    expect(
+      find.byTooltip('Google Sheets account: right@example.com'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Choose workout sheet'),
+          )
+          .onPressed,
+      isNotNull,
+    );
+  });
+
   testWidgets('shows account summary and logout in the Google Sheets menu', (
     tester,
   ) async {

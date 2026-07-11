@@ -532,6 +532,11 @@ class _RecordingGoogleAccountSession extends ChangeNotifier
   Future<void> restoreAccount() async {}
 
   @override
+  Future<bool> signIn({List<String> scopes = const []}) async {
+    return _currentAccount != null;
+  }
+
+  @override
   Future<void> switchAccount({List<String> scopes = const []}) async {}
 
   @override

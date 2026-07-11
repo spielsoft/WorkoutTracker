@@ -14,6 +14,7 @@ class FakeGoogleAccountSession extends ChangeNotifier
   GoogleAccountProfile? _currentAccount;
   final GoogleAccountProfile? restoredAccount;
   int restoreCount = 0;
+  int signInCount = 0;
   int switchCount = 0;
   int signOutCount = 0;
   final requestedScopes = <List<String>>[];
@@ -28,6 +29,18 @@ class FakeGoogleAccountSession extends ChangeNotifier
       _currentAccount = restoredAccount;
       notifyListeners();
     }
+  }
+
+  @override
+  Future<bool> signIn({List<String> scopes = const []}) async {
+    signInCount += 1;
+    requestedScopes.add(scopes);
+    _currentAccount = const GoogleAccountProfile(
+      email: 'right@example.com',
+      displayName: 'Right Account',
+    );
+    notifyListeners();
+    return true;
   }
 
   @override

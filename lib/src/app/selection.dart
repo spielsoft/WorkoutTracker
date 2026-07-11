@@ -9,9 +9,6 @@ typedef WbkInitFact = WbkInit Function(sheets.SheetsApi api);
 typedef SheetViewFact = Future<SheetEntry?> Function(SheetViewReq req);
 typedef SheetLoad = Future<List<SheetEntry>> Function(String query);
 
-// Without Google Picker, the app needs Drive metadata scope to discover sheets.
-const driveMetaScope =
-    'https://www.googleapis.com/auth/drive.metadata.readonly';
 const _sheetMimeType = 'application/vnd.google-apps.spreadsheet';
 const _recentPageSize = 25;
 const _searchPageSize = 50;

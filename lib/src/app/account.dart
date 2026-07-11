@@ -16,6 +16,27 @@ class AccountMenu extends StatefulWidget {
 class _AccountMenuSt extends State<AccountMenu> {
   bool _isBusy = false;
 
+  Future<void> _signIn() async {
+    setState(() {
+      _isBusy = true;
+    });
+    try {
+      await widget.run(const SignIn());
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to log in to Google Sheets: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBusy = false;
+        });
+      }
+    }
+  }
+
   Future<void> _signOut() async {
     setState(() {
       _isBusy = true;
@@ -48,6 +69,8 @@ class _AccountMenuSt extends State<AccountMenu> {
       icon: _GoogleAccountAvatar(account: account, isBusy: _isBusy),
       onSelected: (action) {
         switch (action) {
+          case _GoogleAccountAction.signIn:
+            _signIn();
           case _GoogleAccountAction.signOut:
             _signOut();
         }
@@ -58,7 +81,20 @@ class _AccountMenuSt extends State<AccountMenu> {
           child: _GoogleAccountSummary(account: account),
         );
         if (account == null) {
-          return [summaryItem];
+          return [
+            summaryItem,
+            const PopupMenuDivider(),
+            const PopupMenuItem<_GoogleAccountAction>(
+              value: _GoogleAccountAction.signIn,
+              child: Row(
+                children: [
+                  Icon(Icons.login),
+                  SizedBox(width: 12),
+                  Flexible(child: Text('Log in')),
+                ],
+              ),
+            ),
+          ];
         }
         return [
           summaryItem,
@@ -79,7 +115,7 @@ class _AccountMenuSt extends State<AccountMenu> {
   }
 }
 
-enum _GoogleAccountAction { signOut }
+enum _GoogleAccountAction { signIn, signOut }
 
 class _GoogleAccountSummary extends StatelessWidget {
   const _GoogleAccountSummary({required this.account});

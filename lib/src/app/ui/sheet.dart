@@ -159,6 +159,7 @@ class _SheetPick extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = view.selectedSheet;
+    final connected = !view.showAccount || view.account != null;
     final colors = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -209,7 +210,8 @@ class _SheetPick extends StatelessWidget {
             else
               FilledButton.icon(
                 key: const ValueKey('choose-google-spreadsheet'),
-                onPressed: view.isBusy || !view.availability.canChoose
+                onPressed:
+                    view.isBusy || !connected || !view.availability.canChoose
                     ? null
                     : () => run(const ChooseSheet()),
                 icon: const Icon(Icons.drive_folder_upload_outlined),
@@ -225,7 +227,10 @@ class _SheetPick extends StatelessWidget {
                 if (selected != null && view.hasLoadedWorkout)
                   OutlinedButton.icon(
                     key: const ValueKey('choose-google-spreadsheet'),
-                    onPressed: view.isBusy || !view.availability.canChoose
+                    onPressed:
+                        view.isBusy ||
+                            !connected ||
+                            !view.availability.canChoose
                         ? null
                         : () => run(const ChooseSheet()),
                     icon: const Icon(Icons.drive_folder_upload_outlined),
@@ -233,7 +238,8 @@ class _SheetPick extends StatelessWidget {
                   ),
                 OutlinedButton.icon(
                   key: const ValueKey('create-google-spreadsheet'),
-                  onPressed: view.isBusy || !view.availability.canCreate
+                  onPressed:
+                      view.isBusy || !connected || !view.availability.canCreate
                       ? null
                       : onCreate,
                   icon: const Icon(Icons.add_to_drive_outlined),

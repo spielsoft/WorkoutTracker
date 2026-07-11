@@ -344,6 +344,9 @@ class _FakeAuthGateway extends ChangeNotifier implements SignInAuthGateway {
   Future<void> restoreAccount() async {}
 
   @override
+  Future<bool> signIn({List<String> scopes = const []}) async => true;
+
+  @override
   Future<void> signOut() async {}
 
   @override

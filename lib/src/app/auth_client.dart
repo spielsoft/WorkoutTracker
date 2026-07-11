@@ -6,6 +6,9 @@ import 'account_session.dart';
 
 typedef AuthClientFact = http.Client Function(Map<String, String> headers);
 
+const driveMetaScope = drive.DriveApi.driveMetadataReadonlyScope;
+const sheetScopes = [driveMetaScope, sheets.SheetsApi.spreadsheetsScope];
+
 abstract interface class ApiAccess {
   Future<T> run<T>({
     required List<String> scopes,
