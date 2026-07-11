@@ -22,11 +22,11 @@ TestFlight are the release gates.
 - Google Sign-In config lives in `ios/Flutter/GoogleSignIn.xcconfig`.
 - `ios/Runner/Info.plist` reads `GIDClientID` and URL scheme values from that
   xcconfig.
-- The app currently requests writable Google Sheets authorization for normal
-  sheet use.
+- Explicit account-menu login requests Drive metadata and writable Google
+  Sheets authorization together.
 - Native Google Sign-In is the single runtime account authority.
-- Existing sheet selection requests Drive metadata access and uses the in-app
-  Flutter chooser.
+- Sheet choice and creation are disabled while disconnected. Once connected,
+  they use silent native authorization and the in-app Flutter chooser.
 - Firebase project ID: `workouttracker-16285`.
 - Configured production support URL, after live Firebase deploy:
   `https://workouttracker-16285.web.app/`.
@@ -237,7 +237,9 @@ flutter run --release -d <device-id>
 Verify:
 
 - app launches without template text;
-- Google Sheets authorization opens;
+- logged-out sheet choice and creation are disabled;
+- the default account avatar offers **Log in**;
+- login requests Google authorization once before sheet choice;
 - selected sheet persists after force-quit and relaunch;
 - workout and history selection persists after relaunch;
 - creating a new sheet works;
@@ -251,8 +253,8 @@ Verify:
 - reordering exercises within a workout works;
 - logging a set writes to the correct visible history block;
 - stale-sheet/write-conflict errors are understandable;
-- no unexpected browser/login loop appears after the sheet is already
-  authorized.
+- no second login appears after choosing a sheet or during later validation and
+  writes.
 
 If runtime observability is needed without switching all the way to debug mode,
 use profile mode explicitly:

@@ -162,11 +162,14 @@ Integration slices may write to this sheet, but they must include reset and clea
 
 Native Google Sign-In is the single runtime account authority for iOS and
 macOS. Existing sheet selection now uses the Drive API directly from Flutter:
-the app signs in natively, requests Drive metadata access, and shows an
-in-app Flutter chooser for recent/searchable Google Sheets. Google-backed sheet
-creation stays on the native session path, creates the spreadsheet through the
-Sheets API, initializes it with the WorkoutTracker contract, selects it, and
-persists that selection for later launches.
+the account-avatar menu provides the explicit login action, which requests
+Drive metadata and writable Sheets scopes together. Sheet choice and creation
+remain disabled while disconnected. After login, the app shows an in-app
+Flutter chooser for recent/searchable Google Sheets, and all chooser,
+validation, creation, and logging access reuses the native session silently.
+Google-backed sheet creation initializes the spreadsheet with the
+WorkoutTracker contract, selects it, and persists that selection for later
+launches.
 
 Restored selections remain bound to the account that selected them. When a
 different account is active, the app stops before resolving or validating the

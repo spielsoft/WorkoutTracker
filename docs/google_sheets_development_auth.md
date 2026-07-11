@@ -14,15 +14,17 @@ authorization session.
 
 ## Runtime flow
 
-1. App startup restores the native Google session when the platform still has
-   one.
-2. Choosing a sheet requests Drive metadata scope through native Google
-   Sign-In if the scope is not already granted.
-3. The app opens a Flutter-native chooser and lists recent or searched Google
-   Sheets through `files.list`.
-4. Selecting a sheet persists the chosen spreadsheet and uses the native
-   account for later Sheets API work.
-5. Sheet creation uses the same native session and writable Sheets scope.
+1. App startup silently restores the native Google session only when its app
+   scopes remain authorized.
+2. While disconnected, choose/create actions stay disabled. The account-avatar
+   menu provides the explicit **Log in** action.
+3. Login requests Drive metadata and writable Sheets scopes together in one
+   user-initiated authorization.
+4. The app opens a Flutter-native chooser and lists recent or searched Google
+   Sheets through `files.list` without another interactive authorization.
+5. Selection, validation, creation, and later writes reuse the native session
+   through silent token acquisition. If authorization is unavailable, they
+   report that login is required instead of opening account UI themselves.
 
 ## Native OAuth configuration
 
@@ -105,18 +107,17 @@ https://workouttracker-16285.web.app/privacy.html
 
 ## Scopes
 
-Choosing a sheet uses:
+Explicit login requests both scopes needed by the application:
 
 ```text
 https://www.googleapis.com/auth/drive.metadata.readonly
-```
-
-Validation, workbook initialization, history writes, set logging, and sheet
-creation use:
-
-```text
 https://www.googleapis.com/auth/spreadsheets
 ```
+
+The first scope supports chooser discovery. The second supports validation,
+workbook initialization, history writes, set logging, and sheet creation.
+Downstream operations acquire these scopes silently and never initiate an
+interactive login.
 
 The MVP does not request full-drive read/write access.
 
