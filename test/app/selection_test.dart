@@ -134,6 +134,30 @@ void main() {
     expect(client.requests.single.queryParameters['pageSize'], '25');
   });
 
+  test('refuses to resolve a saved sheet under a different account', () async {
+    final auth = _FakeAuthGateway(
+      currentAccount: const GoogleAccountProfile(email: 'current@example.com'),
+      nextToken: 'native-token',
+    );
+    final picker = DriveSheetPicker(
+      auth: auth,
+      googleAccess: _RecordingApiAccess(_DriveListClient(files: const [])),
+      showPicker: (_) async => null,
+    );
+
+    await expectLater(
+      picker.resolveSelection(
+        const SelectedSheet(
+          spreadsheetId: 'saved-id',
+          name: 'Saved',
+          accountEmail: 'saved@example.com',
+        ),
+      ),
+      throwsA(isA<AcctMismatchException>()),
+    );
+    expect(auth.tokenRequests, isEmpty);
+  });
+
   test(
     'drive picker returns null when native authorization is cancelled',
     () async {

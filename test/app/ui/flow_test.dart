@@ -17,6 +17,7 @@ void main() {
         initialText: 'spreadsheet-id',
       );
       addTearDown(flow.dispose);
+      await flow.restore();
 
       expect(flow.view, isA<SheetView>());
 
@@ -55,6 +56,7 @@ void main() {
         ]),
       );
       addTearDown(flow.dispose);
+      await flow.restore();
 
       await flow.run(const SetSheetText(' spreadsheet-id '));
       expect((flow.view as SheetView).sheetText, ' spreadsheet-id ');

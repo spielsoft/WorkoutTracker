@@ -92,6 +92,19 @@ class SelectedSheet {
   }
 }
 
+class AcctMismatchException implements Exception {
+  const AcctMismatchException({this.savedEmail, this.currentEmail});
+
+  final String? savedEmail;
+  final String? currentEmail;
+
+  @override
+  String toString() {
+    return 'Saved sheet account ${savedEmail ?? '(none)'} does not match '
+        'the current account ${currentEmail ?? '(signed out)'}.';
+  }
+}
+
 abstract interface class SheetPicker {
   PickerAvail get availability;
 
@@ -268,10 +281,19 @@ class DriveSheetPicker implements SheetPicker {
 
   @override
   Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
+    final savedEmail = _normalizedEmail(selected.accountEmail);
+    final currentEmail = _normalizedEmail(auth.currentAccount?.email);
+    if (savedEmail != null && savedEmail != currentEmail) {
+      throw AccountMismatchException(
+        savedEmail: selected.accountEmail,
+        currentEmail: auth.currentAccount?.email,
+      );
+    }
     return _pickedSheet(
       selected.id,
       fallbackName: selected.name,
       fallbackUrl: selected.webViewLink,
+      accountEmail: selected.accountEmail ?? auth.currentAccount?.email,
       promptIfNecessary: false,
     );
   }
@@ -280,6 +302,7 @@ class DriveSheetPicker implements SheetPicker {
     String spreadsheetId, {
     String? fallbackName,
     String? fallbackUrl,
+    required String? accountEmail,
     required bool promptIfNecessary,
   }) async {
     final accessToken = await auth.authorizationToken(
@@ -287,11 +310,8 @@ class DriveSheetPicker implements SheetPicker {
       promptIfNecessary: promptIfNecessary,
     );
     if (accessToken == null || accessToken.trim().isEmpty) {
-      return SelectedSheet(
-        spreadsheetId: spreadsheetId,
-        name: fallbackName ?? spreadsheetId,
-        webViewLink: fallbackUrl ?? sheetUrl(spreadsheetId),
-        accountEmail: auth.currentAccount?.email,
+      throw StateError(
+        'The current account could not authorize the saved sheet.',
       );
     }
 
@@ -316,19 +336,17 @@ class DriveSheetPicker implements SheetPicker {
             spreadsheet.spreadsheetUrl ??
             fallbackUrl ??
             sheetUrl(spreadsheetId),
-        accountEmail: auth.currentAccount?.email,
-      );
-    } on Object {
-      return SelectedSheet(
-        spreadsheetId: spreadsheetId,
-        name: fallbackName ?? spreadsheetId,
-        webViewLink: fallbackUrl ?? sheetUrl(spreadsheetId),
-        accountEmail: auth.currentAccount?.email,
+        accountEmail: accountEmail,
       );
     } finally {
       client.close();
     }
   }
+}
+
+String? _normalizedEmail(String? email) {
+  final normalized = email?.trim().toLowerCase();
+  return normalized == null || normalized.isEmpty ? null : normalized;
 }
 
 SheetEntry? _sheetEntry(drive.File file) {

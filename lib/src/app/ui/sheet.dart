@@ -92,6 +92,27 @@ class _SheetScreenSt extends State<SheetScreen> {
           ),
           const SizedBox(height: 16),
         ],
+        if (view.accountMismatch case final mismatch?) ...[
+          IssuePanel(
+            icon: Icons.manage_accounts_outlined,
+            title: 'Saved sheet uses another account',
+            lines: [
+              'This sheet was saved for ${mismatch.savedEmail ?? 'an unbound account'}, '
+                  'but the current account is ${mismatch.currentEmail ?? 'signed out'}.',
+              'Confirm the current account or choose another sheet.',
+            ],
+            tone: IssueTone.warning,
+            action: FilledButton.icon(
+              key: const ValueKey('confirm-sheet-account'),
+              onPressed: view.isBusy
+                  ? null
+                  : () => widget.run(const ConfirmAccount()),
+              icon: const Icon(Icons.check_outlined),
+              label: const Text('Use current account'),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (view.report case final report?)
           ValidationSummary(
             report: report,

@@ -49,6 +49,23 @@ void main() {
     },
   );
 
+  test('discards a stale validation result', () async {
+    final access = _DelayedAccess();
+    final controller = AppCtrl(svc: access);
+    final first = controller.validateSelection('first-id');
+    final second = controller.validateSelection('second-id');
+
+    access.complete('second-id', _report('second-id', 'Deadlift'));
+    expect(await second, isTrue);
+    expect(controller.report?.sheetId, 'second-id');
+    expect(controller.isBusy, isTrue);
+
+    access.complete('first-id', _report('first-id', 'Squat'));
+    expect(await first, isFalse);
+    expect(controller.report?.sheetId, 'second-id');
+    expect(controller.isBusy, isFalse);
+  });
+
   test(
     'blocks workout setup when the selected sheet has structural damage',
     () async {
@@ -807,6 +824,49 @@ class _ScriptedAccess implements WbkAccess {
     _io.writeFuture = writeFuture;
     return ValSess(sheetId: sheetId, io: _io);
   }
+}
+
+class _DelayedAccess implements WbkAccess {
+  final _reads = <String, Completer<ValReport>>{};
+
+  @override
+  WbkSess open(String sheetId) {
+    final read = Completer<ValReport>();
+    _reads[sheetId] = read;
+    return _DelayedSess(sheetId, read.future);
+  }
+
+  void complete(String sheetId, ValReport report) {
+    _reads[sheetId]!.complete(report);
+  }
+}
+
+class _DelayedSess implements WbkSess {
+  const _DelayedSess(this.sheetId, this._read);
+
+  @override
+  final String sheetId;
+  final Future<ValReport> _read;
+
+  @override
+  Future<ValReport> read() => _read;
+
+  @override
+  Future<ValReport> execute(WbkCmd cmd) => throw UnimplementedError();
+}
+
+ValReport _report(String id, String exercise) {
+  return ValReport(
+    spreadsheetId: id,
+    activeSheet: parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          activeSheetFixedColumns,
+          [exercise, '3', '5', '8', '3 min', '', '', '', 'Legs', ''],
+        ],
+      ),
+    ),
+  );
 }
 
 class _ScriptedIo implements WbkIo {

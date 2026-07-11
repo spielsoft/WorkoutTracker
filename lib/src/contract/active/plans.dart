@@ -1217,7 +1217,9 @@ class _WritePlanner {
   }
 
   ExercisesWritePlan planCanonicalAppend(ExerciseDef exercise) {
-    if (_blocked) return ExercisesWritePlan();
+    if (_blocked || _context.sheet._exerciseColumns == null) {
+      return ExercisesWritePlan();
+    }
     return _canonicalExercises.planCanonicalAppend(exercise);
   }
 
@@ -1225,7 +1227,9 @@ class _WritePlanner {
     required CanonicalExercise selectedExercise,
     required ExerciseDef exercise,
   }) {
-    if (_blocked) return ExercisesWritePlan();
+    if (_blocked || _context.sheet._exerciseColumns == null) {
+      return ExercisesWritePlan();
+    }
     return _canonicalExercises.planCanonicalUpdate(
       selectedExercise: selectedExercise,
       exercise: exercise,
@@ -1233,7 +1237,9 @@ class _WritePlanner {
   }
 
   ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
-    if (_blocked) return ExercisesWritePlan();
+    if (_blocked || _context.sheet._exerciseColumns == null) {
+      return ExercisesWritePlan();
+    }
     return _canonicalExercises.planCanonicalReorder(intent);
   }
 
@@ -1250,7 +1256,9 @@ class _WritePlanner {
     required String workout,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    if (_blocked) return ActiveSheetWritePlan();
+    if (_blocked || _context.sheet._exerciseColumns == null) {
+      return ActiveSheetWritePlan();
+    }
     return _workoutRows.planPrimaryPlacement(
       exercise: exercise,
       workout: workout,
@@ -1263,7 +1271,9 @@ class _WritePlanner {
     required CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata = const WorkoutPlacementMetadata(),
   }) {
-    if (_blocked) return ActiveSheetWritePlan();
+    if (_blocked || _context.sheet._exerciseColumns == null) {
+      return ActiveSheetWritePlan();
+    }
     return _workoutRows.planBackupPlacement(
       primaryRow: primaryRow,
       exercise: exercise,

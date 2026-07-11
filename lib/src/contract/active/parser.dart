@@ -1,8 +1,12 @@
 part of '../active.dart';
 
 ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
-  final exerciseViolations = _exerciseColumnViolations(sheet);
-  final exerciseColumns = exerciseViolations.isEmpty
+  final validateExercises =
+      sheet.validateWorkbook || sheet.exercisesRows.isNotEmpty;
+  final exerciseViolations = validateExercises
+      ? _exerciseColumnViolations(sheet)
+      : const <SchemaViolation>[];
+  final exerciseColumns = validateExercises && exerciseViolations.isEmpty
       ? _ExercisesColumnIndexes.fromHeader(sheet.exercisesRows.first)
       : null;
   if (sheet.rows.isEmpty) {
@@ -110,7 +114,9 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     historyBlocks: historyBlocks,
     primarySlots: primarySlotBuilders.map((builder) => builder.toSlot()),
     schemaViolations: schemaViolations,
-    healingIssues: _healingIssues(sheet, columns),
+    healingIssues: exerciseColumns == null
+        ? const []
+        : _healingIssues(sheet, columns),
     exerciseFormulaColumns: exerciseColumns == null
         ? const {}
         : {

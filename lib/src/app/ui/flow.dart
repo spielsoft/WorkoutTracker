@@ -48,6 +48,7 @@ final class SheetView extends AppView {
     required this.account,
     required this.hasPicker,
     required this.showAccount,
+    this.accountMismatch,
     super.error,
   });
 
@@ -61,6 +62,7 @@ final class SheetView extends AppView {
   final GoogleAccountProfile? account;
   final bool hasPicker;
   final bool showAccount;
+  final AcctMismatch? accountMismatch;
 }
 
 sealed class LoadedView extends AppView {
@@ -220,6 +222,10 @@ final class CreateSheet extends SheetCmd {
 
 final class SignOut extends SheetCmd {
   const SignOut();
+}
+
+final class ConfirmAccount extends SheetCmd {
+  const ConfirmAccount();
 }
 
 final class ReturnToSheet extends SheetCmd {
@@ -433,14 +439,15 @@ class AppFlow extends ChangeNotifier implements UiFlow {
   @override
   AppView get view {
     final report = _ctrl.report;
-    final busy = _ctrl.isBusy || _workspace.state.isCommandInFlight;
+    final workspace = _workspace.state;
+    final busy =
+        _ctrl.isBusy || workspace.isCommandInFlight || workspace.isInitializing;
     if (_route == AppRoute.sheet ||
         report == null ||
         report.hasBlockingIssues) {
-      final workspace = _workspace.state;
       return SheetView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? workspace.error,
         sheetText: _sheetText,
         selectedSheet: workspace.selectedSheet,
         availability: workspace.pickerAvailability,
@@ -451,6 +458,7 @@ class AppFlow extends ChangeNotifier implements UiFlow {
         account: _accountSession?.currentAccount,
         hasPicker: _picker != null,
         showAccount: _accountSession != null,
+        accountMismatch: workspace.accountMismatch,
       );
     }
     final setup = _ctrl.workoutSetup!;
@@ -512,6 +520,10 @@ class AppFlow extends ChangeNotifier implements UiFlow {
   @override
   Future<void> restore() async {
     final workspace = await _workspace.restoreResolved();
+    if (workspace.accountMismatch != null || workspace.error != null) {
+      notifyListeners();
+      return;
+    }
     final selected = workspace.selectedSheet;
     if (selected != null) {
       _sheetText = selected.id;
@@ -527,6 +539,9 @@ class AppFlow extends ChangeNotifier implements UiFlow {
 
   @override
   Future<CmdResult> run(UiCmd cmd) async {
+    if (_workspace.state.isInitializing) {
+      return const CmdResult.failed('WorkoutTracker is still starting.');
+    }
     final result = switch (cmd) {
       SetSheetText(:final text) => await _setSheetText(text),
       ValidateSheet() => await _validate(),
@@ -534,6 +549,7 @@ class AppFlow extends ChangeNotifier implements UiFlow {
       AuthorizeCreate() => await _authorizeCreate(),
       CreateSheet(:final name) => await _createSheet(name),
       SignOut() => await _signOut(),
+      ConfirmAccount() => await _confirmAccount(),
       ReturnToSheet() => _goSheet(),
       ReturnToWorkout() => _returnToWorkout(),
       RepairAll() => await _repairAll(),
@@ -649,6 +665,19 @@ class AppFlow extends ChangeNotifier implements UiFlow {
     _placeIntent = null;
     _editingExercise = null;
     return const CmdResult.done();
+  }
+
+  Future<CmdResult> _confirmAccount() async {
+    final workspace = await _workspace.confirmAccount();
+    if (workspace.accountMismatch != null || workspace.error != null) {
+      return CmdResult.failed(workspace.error);
+    }
+    final selected = workspace.selectedSheet;
+    if (selected == null) {
+      return const CmdResult.failed();
+    }
+    _sheetText = selected.id;
+    return _validate();
   }
 
   CmdResult _goSheet() {

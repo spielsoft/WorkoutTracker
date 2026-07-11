@@ -24,6 +24,8 @@ class AppCtrl extends ChangeNotifier {
   int? _loggingPrimaryRow;
   int? _selectedLoggingRow;
   bool _isBusy = false;
+  int _busyActions = 0;
+  int _validationEpoch = 0;
   bool _isDisposed = false;
 
   ValReport? get report => _report;
@@ -81,6 +83,7 @@ class AppCtrl extends ChangeNotifier {
   }
 
   Future<bool> validateSelection(String selection) async {
+    final epoch = ++_validationEpoch;
     final spreadsheetId = sheetIdFromSelection(selection);
     if (spreadsheetId.isEmpty) {
       _report = null;
@@ -91,10 +94,12 @@ class AppCtrl extends ChangeNotifier {
 
     return _runServiceAction(
       clearReport: true,
+      isCurrent: () => epoch == _validationEpoch,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
         final sess = svc.open(spreadsheetId);
         final report = await sess.read();
+        if (epoch != _validationEpoch) return;
         _sess = sess;
         _adoptReport(report);
       },
@@ -102,12 +107,15 @@ class AppCtrl extends ChangeNotifier {
   }
 
   Future<bool> validateSelected(SelectedSheet selection) {
+    final epoch = ++_validationEpoch;
     return _runServiceAction(
       clearReport: true,
+      isCurrent: () => epoch == _validationEpoch,
       failurePrefix: 'Unable to validate spreadsheet',
       action: () async {
         final sess = svc.open(selection.id);
         final report = await sess.read();
+        if (epoch != _validationEpoch) return;
         _sess = sess;
         _adoptReport(report);
       },
@@ -115,6 +123,7 @@ class AppCtrl extends ChangeNotifier {
   }
 
   void clearSelection() {
+    _validationEpoch += 1;
     _report = null;
     _sess = null;
     _error = null;
@@ -456,18 +465,26 @@ class AppCtrl extends ChangeNotifier {
     required Future<void> Function() action,
     required String failurePrefix,
     bool clearReport = false,
+    bool Function()? isCurrent,
   }) async {
+    final current = isCurrent ?? () => true;
+    _busyActions += 1;
     _isBusy = true;
-    _error = null;
-    if (clearReport) {
+    if (current()) {
+      _error = null;
+    }
+    if (clearReport && current()) {
       _report = null;
     }
     notifyListeners();
 
     try {
       await action();
-      return true;
+      return current();
     } on Object catch (error) {
+      if (!current()) {
+        return false;
+      }
       if (clearReport) {
         _report = null;
       }
@@ -477,7 +494,8 @@ class AppCtrl extends ChangeNotifier {
       );
       return false;
     } finally {
-      _isBusy = false;
+      _busyActions -= 1;
+      _isBusy = _busyActions > 0;
       if (!_isDisposed) {
         notifyListeners();
       }

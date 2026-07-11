@@ -80,6 +80,36 @@ void main() {
       expect(cmds.single, isA<SignOut>());
     },
   );
+
+  testWidgets('requires explicit account rebinding confirmation', (
+    tester,
+  ) async {
+    final cmds = <SheetCmd>[];
+    await tester.pumpWidget(
+      _app(
+        _view(
+          account: const GoogleAccountProfile(email: 'current@example.com'),
+          accountMismatch: const AcctMismatch(
+            sheet: SelectedSheet(
+              spreadsheetId: 'saved-id',
+              name: 'Saved',
+              accountEmail: 'saved@example.com',
+            ),
+            savedEmail: 'saved@example.com',
+            currentEmail: 'current@example.com',
+          ),
+        ),
+        (cmd) async {
+          cmds.add(cmd);
+          return const CmdResult.done();
+        },
+      ),
+    );
+
+    expect(find.text('Saved sheet uses another account'), findsOneWidget);
+    await tester.tap(find.text('Use current account'));
+    expect(cmds.single, isA<ConfirmAccount>());
+  });
 }
 
 Widget _app(SheetView view, Future<CmdResult> Function(SheetCmd cmd) run) {
@@ -93,7 +123,11 @@ Widget _app(SheetView view, Future<CmdResult> Function(SheetCmd cmd) run) {
   );
 }
 
-SheetView _view({bool showTextFallback = true, GoogleAccountProfile? account}) {
+SheetView _view({
+  bool showTextFallback = true,
+  GoogleAccountProfile? account,
+  AcctMismatch? accountMismatch,
+}) {
   return SheetView(
     isBusy: false,
     sheetText: '',
@@ -106,5 +140,6 @@ SheetView _view({bool showTextFallback = true, GoogleAccountProfile? account}) {
     account: account,
     hasPicker: true,
     showAccount: true,
+    accountMismatch: accountMismatch,
   );
 }

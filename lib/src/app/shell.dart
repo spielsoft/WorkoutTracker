@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -100,6 +99,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellSt extends State<AppShell> {
   late final AppFlow _flow;
+  late final Future<void> _init;
 
   @override
   void initState() {
@@ -113,7 +113,7 @@ class _AppShellSt extends State<AppShell> {
       initialText: widget.initialText,
       initialSelection: widget.initialSelection,
     );
-    unawaited(_flow.restore());
+    _init = _flow.restore();
   }
 
   @override
@@ -128,29 +128,32 @@ class _AppShellSt extends State<AppShell> {
       body: A11yScreen(
         label: 'WorkoutTracker',
         child: SafeArea(
-          child: ListenableBuilder(
-            listenable: _flow,
-            builder: (context, _) {
-              final view = _flow.view;
-              return ListView(
-                padding: const EdgeInsets.all(24),
-                children: [
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 840),
-                    child: switch (view) {
-                      SheetView() => SheetScreen(
-                        view: view,
-                        run: (cmd) => _flow.run(cmd),
-                      ),
-                      LoadedView() => WorkoutScreens(
-                        view: view,
-                        run: _flow.run,
-                      ),
-                    },
-                  ),
-                ],
-              );
-            },
+          child: FutureBuilder<void>(
+            future: _init,
+            builder: (context, _) => ListenableBuilder(
+              listenable: _flow,
+              builder: (context, _) {
+                final view = _flow.view;
+                return ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 840),
+                      child: switch (view) {
+                        SheetView() => SheetScreen(
+                          view: view,
+                          run: (cmd) => _flow.run(cmd),
+                        ),
+                        LoadedView() => WorkoutScreens(
+                          view: view,
+                          run: _flow.run,
+                        ),
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),

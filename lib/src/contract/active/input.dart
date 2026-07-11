@@ -33,8 +33,9 @@ class ActiveSheetInput {
   ActiveSheetInput({
     required Iterable<Iterable<String>> rows,
     Iterable<CellFormula> cellFormulas = const [],
-    Iterable<Iterable<String>> exercisesRows = const [exercisesSheetColumns],
+    Iterable<Iterable<String>> exercisesRows = const [],
     this.hasExercisesSheet = true,
+    this.validateWorkbook = false,
     Set<int> mergedFirstColumnRows = const {},
   }) : rows = List<List<String>>.unmodifiable(
          rows.map((row) => List<String>.unmodifiable(row)),
@@ -49,6 +50,12 @@ class ActiveSheetInput {
   final List<CellFormula> cellFormulas;
   final List<List<String>> exercisesRows;
   final bool hasExercisesSheet;
+
+  /// Whether missing workbook tabs and headers must be reported.
+  ///
+  /// Active-sheet-only contract tests may omit the Exercises grid. Production
+  /// workbook reads always set this to true.
+  final bool validateWorkbook;
 
   /// 1-based sheet row numbers whose first display cell is merged for humans.
   final Set<int> mergedFirstColumnRows;

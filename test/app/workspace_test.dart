@@ -68,6 +68,108 @@ void main() {
   );
 
   test(
+    'keeps selection commands blocked until restoration completes',
+    () async {
+      final restore = Completer<WorkspaceAccessSt>();
+      final picker = _CommandSheetPicker(
+        chooseResult: const SelectedSheet(
+          spreadsheetId: 'chosen-id',
+          name: 'Chosen',
+        ),
+      );
+      final workspace = WorkspaceCtrl(
+        accessStOwner: _DelayedWorkspaceStOwner(restore.future),
+        picker: picker,
+      );
+
+      final restoring = workspace.restoreResolved();
+      final choosing = workspace.chooseSheet();
+
+      expect(workspace.state.isInitializing, isTrue);
+      expect(workspace.state.isCommandInFlight, isTrue);
+      expect(picker.chooseCount, 0);
+
+      restore.complete(
+        const WorkspaceAccessSt(
+          selectedSheet: SelectedSheet(
+            spreadsheetId: 'saved-id',
+            name: 'Saved',
+          ),
+        ),
+      );
+      await restoring;
+      await choosing;
+
+      expect(workspace.state.isInitializing, isFalse);
+      expect(workspace.state.selectedSheet?.id, 'saved-id');
+      expect(picker.chooseCount, 0);
+    },
+  );
+
+  test(
+    'requires confirmation before rebinding a saved sheet account',
+    () async {
+      final accessSt = _MemoryWorkspaceStOwner(
+        const WorkspaceAccessSt(
+          selectedSheet: SelectedSheet(
+            spreadsheetId: 'saved-id',
+            name: 'Saved',
+            accountEmail: 'saved@example.com',
+          ),
+        ),
+      );
+      final account = _RecordingGoogleAccountSession(
+        const GoogleAccountProfile(email: 'current@example.com'),
+      );
+      final picker = _CommandSheetPicker();
+      final workspace = WorkspaceCtrl(
+        accessStOwner: accessSt,
+        accountSession: account,
+        picker: picker,
+      );
+
+      final restored = await workspace.restoreResolved();
+
+      expect(restored.accountMismatch?.savedEmail, 'saved@example.com');
+      expect(restored.accountMismatch?.currentEmail, 'current@example.com');
+      expect(picker.resolveCount, 0);
+      expect(accessSt.value.selectedSheet?.accountEmail, 'saved@example.com');
+
+      final confirmed = await workspace.confirmAccount();
+
+      expect(confirmed.accountMismatch, isNull);
+      expect(confirmed.error, isNull);
+      expect(picker.resolveCount, 1);
+      expect(accessSt.value.selectedSheet?.accountEmail, 'current@example.com');
+    },
+  );
+
+  test('surfaces saved-sheet resolution failures without rebinding', () async {
+    final accessSt = _MemoryWorkspaceStOwner(
+      const WorkspaceAccessSt(
+        selectedSheet: SelectedSheet(
+          spreadsheetId: 'saved-id',
+          name: 'Saved',
+          accountEmail: 'athlete@example.com',
+        ),
+      ),
+    );
+    final picker = _CommandSheetPicker(resolveError: StateError('denied'));
+    final workspace = WorkspaceCtrl(
+      accessStOwner: accessSt,
+      accountSession: _RecordingGoogleAccountSession(
+        const GoogleAccountProfile(email: 'athlete@example.com'),
+      ),
+      picker: picker,
+    );
+
+    final restored = await workspace.restoreResolved();
+
+    expect(restored.error, contains('denied'));
+    expect(accessSt.value.selectedSheet?.accountEmail, 'athlete@example.com');
+  });
+
+  test(
     'persists selected sheet, pasted sheet text, and workout selection',
     () async {
       final accessSt = _MemoryWorkspaceStOwner(const WorkspaceAccessSt());
@@ -312,6 +414,27 @@ class _MemoryWorkspaceStOwner implements WorkspaceStOwner {
   }
 }
 
+class _DelayedWorkspaceStOwner implements WorkspaceStOwner {
+  _DelayedWorkspaceStOwner(this.restored);
+
+  final Future<WorkspaceAccessSt> restored;
+  WorkspaceAccessSt _value = const WorkspaceAccessSt();
+
+  @override
+  WorkspaceAccessSt get value => _value;
+
+  @override
+  Future<void> clear() async => _value = const WorkspaceAccessSt();
+
+  @override
+  Future<WorkspaceAccessSt> restore() async => _value = await restored;
+
+  @override
+  Future<WorkspaceAccessSt> update(
+    WorkspaceAccessSt Function(WorkspaceAccessSt current) updateFn,
+  ) async => _value = updateFn(_value);
+}
+
 class _ResolvingSheetPicker implements SheetPicker {
   const _ResolvingSheetPicker(this.resolved);
 
@@ -348,15 +471,18 @@ class _CommandSheetPicker implements SheetPicker {
     this.chooseResult,
     this.creationAuthorizationResult = true,
     this.createResult,
+    this.resolveError,
   });
 
   final SelectedSheet? chooseResult;
   final bool creationAuthorizationResult;
   final SelectedSheet? createResult;
+  final Object? resolveError;
   Future<SelectedSheet?>? chooseFuture;
   int chooseCount = 0;
   int creationAuthorizationCount = 0;
   int createCount = 0;
+  int resolveCount = 0;
   final createNames = <String?>[];
 
   @override
@@ -385,6 +511,9 @@ class _CommandSheetPicker implements SheetPicker {
 
   @override
   Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
+    resolveCount += 1;
+    final error = resolveError;
+    if (error != null) throw error;
     return selected;
   }
 }

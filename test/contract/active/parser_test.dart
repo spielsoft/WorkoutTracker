@@ -376,12 +376,14 @@ void main() {
         rows: const [activeSheetFixedColumns],
         exercisesRows: const [],
         hasExercisesSheet: false,
+        validateWorkbook: true,
       ),
     );
     final empty = parseActiveSheet(
       ActiveSheetInput(
         rows: const [activeSheetFixedColumns],
         exercisesRows: const [],
+        validateWorkbook: true,
       ),
     );
     final malformed = parseActiveSheet(

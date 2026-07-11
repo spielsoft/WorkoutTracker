@@ -8,6 +8,18 @@ import 'selection.dart';
 const _pickerConfigReason =
     'Google Drive sheet selection is not configured for this build.';
 
+class AcctMismatch {
+  const AcctMismatch({
+    required this.sheet,
+    required this.savedEmail,
+    required this.currentEmail,
+  });
+
+  final SelectedSheet sheet;
+  final String? savedEmail;
+  final String? currentEmail;
+}
+
 class WorkspaceUiSt {
   const WorkspaceUiSt({
     this.selectedSheet,
@@ -15,6 +27,9 @@ class WorkspaceUiSt {
     this.accountProfile,
     this.workoutSelection,
     this.isCommandInFlight = false,
+    this.isInitializing = false,
+    this.accountMismatch,
+    this.error,
     required this.pickerAvailability,
   });
 
@@ -23,6 +38,9 @@ class WorkspaceUiSt {
   final GoogleAccountProfile? accountProfile;
   final WorkoutSelectionSt? workoutSelection;
   final bool isCommandInFlight;
+  final bool isInitializing;
+  final AcctMismatch? accountMismatch;
+  final String? error;
   final PickerAvail pickerAvailability;
 
   bool get fallbackAvailable {
@@ -51,6 +69,8 @@ abstract interface class WorkspaceLifecycle implements Listenable {
 
   Future<SelectedSheet> resolveSelection(SelectedSheet selected);
 
+  Future<WorkspaceUiSt> confirmAccount();
+
   Future<WorkspaceUiSt> signOut();
 
   Future<WorkspaceUiSt> persistWorkoutSelection(WorkoutSelectionSt selection);
@@ -68,6 +88,10 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   }) : _accessSt = accessStOwner,
        _accountSession = accountSession,
        _picker = picker,
+       _needsInit =
+           accessStOwner != null ||
+           accountSession != null ||
+           (initialSelection != null && picker != null),
        _initialText = initialText,
        _initialSelection = initialSelection,
        _state = WorkspaceUiSt(
@@ -76,12 +100,17 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
          accountProfile: accountSession?.currentAccount,
          workoutSelection: null,
          isCommandInFlight: false,
+         isInitializing:
+             accessStOwner != null ||
+             accountSession != null ||
+             (initialSelection != null && picker != null),
          pickerAvailability: _availabilityFor(picker),
        );
 
   final WorkspaceStOwner? _accessSt;
   final GoogleAccountSession? _accountSession;
   final SheetPicker? _picker;
+  final bool _needsInit;
   final String _initialText;
   final SelectedSheet? _initialSelection;
   WorkspaceUiSt _state;
@@ -91,7 +120,12 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   WorkspaceUiSt get state => _state;
 
   @override
-  Future<WorkspaceUiSt> restore() async {
+  Future<WorkspaceUiSt> restore() {
+    if (!_needsInit) return _restore();
+    return _runStCmd(_restore, initializing: true);
+  }
+
+  Future<WorkspaceUiSt> _restore() async {
     await _restoreAccount();
     final restoredAccessSt = await _restoreAccessSt();
     final accessSt = restoredAccessSt ?? const WorkspaceAccessSt();
@@ -102,6 +136,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       accountProfile: _accountSession?.currentAccount,
       workoutSelection: accessSt.workoutSelection,
       isCommandInFlight: _isCommandInFlight,
+      isInitializing: _needsInit,
       pickerAvailability: _availabilityFor(_picker),
     );
     notifyListeners();
@@ -109,13 +144,43 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   }
 
   @override
-  Future<WorkspaceUiSt> restoreResolved() async {
-    final restored = await restore();
+  Future<WorkspaceUiSt> restoreResolved() {
+    if (!_needsInit) return _restoreResolved();
+    return _runStCmd(_restoreResolved, initializing: true);
+  }
+
+  Future<WorkspaceUiSt> _restoreResolved() async {
+    final restored = await _restore();
     final selected = restored.selectedSheet;
     if (selected == null) {
       return restored;
     }
-    await resolveSelection(selected);
+    final mismatch = _mismatchFor(selected);
+    if (mismatch != null) {
+      _setUiSt(
+        _stateWith(
+          selectedSheet: selected,
+          pastedText: restored.pastedText,
+          workoutSelection: restored.workoutSelection,
+          accountMismatch: mismatch,
+          clearIssue: true,
+        ),
+      );
+      return _state;
+    }
+    try {
+      await _resolveAndAdopt(selected);
+    } on Object catch (error) {
+      _setUiSt(
+        _stateWith(
+          selectedSheet: selected,
+          pastedText: restored.pastedText,
+          workoutSelection: restored.workoutSelection,
+          error: 'Unable to restore the saved sheet: $error',
+          clearIssue: true,
+        ),
+      );
+    }
     return _state;
   }
 
@@ -161,6 +226,10 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
 
   @override
   Future<WorkspaceUiSt> adoptSelection(SelectedSheet selected) async {
+    return _runStCmd(() => _adoptSelection(selected));
+  }
+
+  Future<WorkspaceUiSt> _adoptSelection(SelectedSheet selected) async {
     final updatedAccessSt = await _updateSt(
       (accessSt) => WorkspaceAccessSt(
         sheetText: selected.id,
@@ -174,6 +243,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
         pastedText: selected.id,
         workoutSelection:
             updatedAccessSt?.workoutSelection ?? _state.workoutSelection,
+        clearIssue: true,
       ),
     );
     return _state;
@@ -190,7 +260,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       if (selected == null) {
         return _state;
       }
-      return adoptSelection(selected);
+      return _adoptSelection(selected);
     });
   }
 
@@ -230,23 +300,71 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       if (selected == null) {
         return _state;
       }
-      return adoptSelection(selected);
+      return _adoptSelection(selected);
     });
   }
 
   @override
   Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
+    if (_isCommandInFlight) {
+      throw StateError('Another workspace command is in progress.');
+    }
+    _beginCommand();
+    try {
+      final mismatch = _mismatchFor(selected);
+      if (mismatch != null) {
+        throw AcctMismatchException(
+          savedEmail: mismatch.savedEmail,
+          currentEmail: mismatch.currentEmail,
+        );
+      }
+      return await _resolveAndAdopt(selected);
+    } finally {
+      _endCommand();
+    }
+  }
+
+  Future<SelectedSheet> _resolveAndAdopt(SelectedSheet selected) async {
     final picker = _picker;
     if (picker == null) {
+      await _adoptSelection(selected);
       return selected;
     }
-    try {
-      final resolved = await picker.resolveSelection(selected);
-      await adoptSelection(resolved);
-      return resolved;
-    } on Object {
-      return selected;
-    }
+    final resolved = await picker.resolveSelection(selected);
+    await _adoptSelection(resolved);
+    return resolved;
+  }
+
+  @override
+  Future<WorkspaceUiSt> confirmAccount() {
+    return _runStCmd(() async {
+      final mismatch = _state.accountMismatch;
+      final currentEmail = _accountSession?.currentAccount?.email;
+      if (mismatch == null || currentEmail == null) {
+        return _state;
+      }
+      final rebound = SelectedSheet(
+        spreadsheetId: mismatch.sheet.id,
+        name: mismatch.sheet.name,
+        drivePath: mismatch.sheet.drivePath,
+        webViewLink: mismatch.sheet.webViewLink,
+        accountEmail: currentEmail,
+      );
+      try {
+        await _resolveAndAdopt(rebound);
+      } on Object catch (error) {
+        _setUiSt(
+          _stateWith(
+            selectedSheet: mismatch.sheet,
+            pastedText: _state.pastedText,
+            workoutSelection: _state.workoutSelection,
+            error: 'Unable to use the saved sheet with this account: $error',
+            clearIssue: true,
+          ),
+        );
+      }
+      return _state;
+    });
   }
 
   @override
@@ -295,6 +413,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
           accountProfile: _accountSession?.currentAccount,
           workoutSelection: null,
           isCommandInFlight: _isCommandInFlight,
+          isInitializing: false,
           pickerAvailability: _availabilityFor(_picker),
         ),
       );
@@ -310,6 +429,11 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
     } on Object {
       // Startup restore is best-effort; explicit account actions report errors.
     }
+  }
+
+  AcctMismatch? _mismatchFor(SelectedSheet selected) {
+    if (_accountSession == null) return null;
+    return _mismatchForSelection(selected, _accountSession.currentAccount);
   }
 
   Future<WorkspaceAccessSt?> _restoreAccessSt() async {
@@ -336,20 +460,22 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   }
 
   Future<WorkspaceUiSt> _runStCmd(
-    Future<WorkspaceUiSt> Function() action,
-  ) async {
+    Future<WorkspaceUiSt> Function() action, {
+    bool initializing = false,
+  }) async {
     if (_isCommandInFlight) {
       return _state;
     }
-    _beginCommand();
+    _beginCommand(initializing: initializing);
     try {
-      return await action();
+      await action();
     } finally {
       _endCommand();
     }
+    return _state;
   }
 
-  void _beginCommand() {
+  void _beginCommand({bool initializing = false}) {
     _isCommandInFlight = true;
     _setUiSt(
       _stateWith(
@@ -357,6 +483,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
         pastedText: _state.pastedText,
         workoutSelection: _state.workoutSelection,
         isCommandInFlight: true,
+        isInitializing: initializing,
       ),
     );
   }
@@ -369,6 +496,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
         pastedText: _state.pastedText,
         workoutSelection: _state.workoutSelection,
         isCommandInFlight: false,
+        isInitializing: false,
       ),
     );
   }
@@ -378,6 +506,10 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
     required String? pastedText,
     required WorkoutSelectionSt? workoutSelection,
     bool? isCommandInFlight,
+    bool? isInitializing,
+    AcctMismatch? accountMismatch,
+    String? error,
+    bool clearIssue = false,
   }) {
     return WorkspaceUiSt(
       selectedSheet: selectedSheet,
@@ -385,9 +517,38 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       accountProfile: _accountSession?.currentAccount,
       workoutSelection: workoutSelection,
       isCommandInFlight: isCommandInFlight ?? _state.isCommandInFlight,
+      isInitializing: isInitializing ?? _state.isInitializing,
+      accountMismatch: clearIssue
+          ? accountMismatch
+          : accountMismatch ?? _state.accountMismatch,
+      error: clearIssue ? error : error ?? _state.error,
       pickerAvailability: _availabilityFor(_picker),
     );
   }
+}
+
+AcctMismatch? _mismatchForSelection(
+  SelectedSheet selected,
+  GoogleAccountProfile? current,
+) {
+  final savedEmail = _normalizedEmail(selected.accountEmail);
+  final currentEmail = _normalizedEmail(current?.email);
+  if (savedEmail == currentEmail && savedEmail != null) {
+    return null;
+  }
+  if (savedEmail == null && currentEmail == null) {
+    return null;
+  }
+  return AcctMismatch(
+    sheet: selected,
+    savedEmail: selected.accountEmail,
+    currentEmail: current?.email,
+  );
+}
+
+String? _normalizedEmail(String? email) {
+  final normalized = email?.trim().toLowerCase();
+  return normalized == null || normalized.isEmpty ? null : normalized;
 }
 
 PickerAvail _availabilityFor(SheetPicker? picker) {
