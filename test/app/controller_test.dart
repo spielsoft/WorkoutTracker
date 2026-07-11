@@ -351,11 +351,72 @@ void main() {
       ),
     );
 
-    expect(saved, isTrue);
+    expect(saved, isFalse);
+    expect(
+      controller.error,
+      contains('Row 3 no longer matches Squat in workout Legs.'),
+    );
     expect(controller.report?.hasBlockingIssues, isTrue);
     expect(controller.workoutSetup, isNull);
     expect(service.appliedPlans, isEmpty);
   });
+
+  test(
+    'stale clear and undo commands fail without discarding rejections',
+    () async {
+      final cases = <({String visible, String changed, WbkCmd cmd})>[
+        (
+          visible: '225x5@8',
+          changed: '230x5@8',
+          cmd: const ClearSetCmd(
+            blockLabel: 'Week 1',
+            sheetRow: 3,
+            setNumber: 1,
+          ),
+        ),
+        (
+          visible: '',
+          changed: 'unexpected manual value',
+          cmd: const EditRawSetCmd(
+            blockLabel: 'Week 1',
+            sheetRow: 3,
+            setNumber: 1,
+            rawText: '  exact prior raw value  ',
+          ),
+        ),
+      ];
+
+      for (final testCase in cases) {
+        ParsedActiveSheet sheet(String value) => parseActiveSheet(
+          ActiveSheetInput(
+            rows: [
+              [...activeSheetFixedColumns, 'Week 1'],
+              [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+              ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', value],
+            ],
+          ),
+        );
+
+        final service = _ScriptedAccess([
+          sheet(testCase.visible),
+          sheet(testCase.changed),
+        ]);
+        final controller = AppCtrl(svc: service);
+        await controller.validateSelection('spreadsheet-id');
+
+        final saved = await controller.execute(testCase.cmd);
+
+        expect(saved, isFalse);
+        expect(
+          controller.error,
+          contains('Cell row 3 column 11 no longer matches'),
+        );
+        expect(controller.report?.writeRejections, isNotEmpty);
+        expect(controller.report?.hasBlockingIssues, isTrue);
+        expect(service.appliedPlans, isEmpty);
+      }
+    },
+  );
 
   test(
     'rejects a logged next-set save when refresh does not retain the set',

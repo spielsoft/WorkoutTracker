@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
@@ -10,6 +12,7 @@ import 'ui/shared/header.dart';
 import 'ui/shared/status.dart';
 
 const _segmentRadius = 8.0;
+const _undoWindow = Duration(seconds: 5);
 
 final class LogView extends LoadedView {
   const LogView({
@@ -44,6 +47,8 @@ class LogScreen extends StatefulWidget {
 
 class _LogScreenSt extends State<LogScreen> {
   late final LoggingFlow _flow;
+  int? _editingSet;
+  Timer? _undoTimer;
 
   @override
   void initState() {
@@ -66,11 +71,13 @@ class _LogScreenSt extends State<LogScreen> {
         primaryRow: next.target.primaryRow,
         selectedRow: next.target.selectedRow,
       );
+      _editingSet = null;
     }
   }
 
   @override
   void dispose() {
+    _undoTimer?.cancel();
     _flow.dispose();
     super.dispose();
   }
@@ -98,19 +105,78 @@ class _LogScreenSt extends State<LogScreen> {
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
     if (widget.view.isBusy) return;
-    await widget.actions.execute(_flow.planRawSetEdit(entry));
+    final saved = await widget.actions.execute(_flow.planRawSetEdit(entry));
+    if (saved && mounted) {
+      setState(() => _editingSet = null);
+    }
   }
 
   Future<void> _saveSetEdit(RowHistoryEntry entry) async {
     if (widget.view.isBusy) return;
     final plan = _flow.planSetEdit(entry);
     if (plan == null) return;
-    await widget.actions.execute(plan);
+    final saved = await widget.actions.execute(plan);
+    if (saved && mounted) {
+      setState(() => _editingSet = null);
+    }
   }
 
   Future<void> _clearSet(RowHistoryEntry entry) async {
     if (widget.view.isBusy) return;
-    await widget.actions.execute(_flow.planSetClear(entry));
+    final recovery = _flow.planSetClear(entry);
+    final cleared = await widget.actions.execute(recovery.clear);
+    if (!mounted) return;
+    if (!cleared) {
+      _showMessage('${recovery.setLabel} was not cleared.');
+      return;
+    }
+
+    if (_editingSet == entry.setNumber) {
+      setState(() => _editingSet = null);
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    final snackBar = messenger.showSnackBar(
+      SnackBar(
+        content: Text('${recovery.setLabel} cleared.'),
+        duration: _undoWindow,
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async => _undoSet(recovery),
+        ),
+      ),
+    );
+    _undoTimer?.cancel();
+    _undoTimer = Timer(_undoWindow, snackBar.close);
+  }
+
+  Future<void> _undoSet(SetRecovery recovery) async {
+    _undoTimer?.cancel();
+    final restored = await widget.actions.execute(recovery.undo);
+    if (!mounted) return;
+    _showMessage(
+      restored
+          ? '${recovery.setLabel} restored.'
+          : '${recovery.setLabel} was not restored.',
+    );
+  }
+
+  void _editSet(RowHistoryEntry entry) {
+    _flow.discardSetEdits();
+    setState(() => _editingSet = entry.setNumber);
+  }
+
+  void _cancelSetEdit() {
+    _flow.discardSetEdits();
+    setState(() => _editingSet = null);
+  }
+
+  void _showMessage(String message) {
+    _undoTimer?.cancel();
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -251,13 +317,23 @@ class _LogScreenSt extends State<LogScreen> {
             const Text('No sets logged in this block.')
           else
             for (final entry in viewModel.loggedEntries)
-              if (entry.logEntry case FormattedLogEntry(:final fieldLabels))
+              if (_editingSet != entry.setNumber)
+                _LoggedSetSummary(
+                  entry: entry,
+                  isBusy: widget.view.isBusy,
+                  onEdit: () => _editSet(entry),
+                  onClear: () => _clearSet(entry),
+                )
+              else if (entry.logEntry case FormattedLogEntry(
+                :final fieldLabels,
+              ))
                 _LoggedSetFields(
                   entry: entry,
                   fieldLabels: fieldLabels,
                   controllers: viewModel.loggedCtrls[entry.setNumber]!,
                   isBusy: widget.view.isBusy,
                   onSave: () => _saveSetEdit(entry),
+                  onCancel: _cancelSetEdit,
                   onClear: () => _clearSet(entry),
                 )
               else
@@ -266,6 +342,7 @@ class _LogScreenSt extends State<LogScreen> {
                   controller: viewModel.rawCtrls[entry.setNumber]!,
                   isBusy: widget.view.isBusy,
                   onSave: () => _saveRawSet(entry),
+                  onCancel: _cancelSetEdit,
                   onClear: () => _clearSet(entry),
                 ),
           const SizedBox(height: 16),
@@ -565,12 +642,64 @@ class _StructuredSetEditor extends StatelessWidget {
   }
 }
 
+class _LoggedSetSummary extends StatelessWidget {
+  const _LoggedSetSummary({
+    required this.entry,
+    required this.isBusy,
+    required this.onEdit,
+    required this.onClear,
+  });
+
+  final RowHistoryEntry entry;
+  final bool isBusy;
+  final VoidCallback onEdit;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 36,
+            child: Text(
+              entry.setLabel,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              entry.rawValue,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            key: ValueKey('edit-${entry.setLabel}'),
+            tooltip: 'Edit ${entry.setLabel}',
+            onPressed: isBusy ? null : onEdit,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            key: ValueKey('clear-${entry.setLabel}'),
+            tooltip: 'Clear set',
+            onPressed: isBusy ? null : onClear,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LoggedSetEditor extends StatelessWidget {
   const _LoggedSetEditor({
     required this.entry,
     required this.controller,
     required this.isBusy,
     required this.onSave,
+    required this.onCancel,
     required this.onClear,
   });
 
@@ -578,6 +707,7 @@ class _LoggedSetEditor extends StatelessWidget {
   final TextEditingController controller;
   final bool isBusy;
   final VoidCallback onSave;
+  final VoidCallback onCancel;
   final VoidCallback onClear;
 
   @override
@@ -610,6 +740,12 @@ class _LoggedSetEditor extends StatelessWidget {
             icon: const Icon(Icons.check_outlined),
           ),
           IconButton(
+            key: ValueKey('cancel-${entry.setLabel}'),
+            tooltip: 'Cancel set edit',
+            onPressed: isBusy ? null : onCancel,
+            icon: const Icon(Icons.close_outlined),
+          ),
+          IconButton(
             key: ValueKey('clear-${entry.setLabel}'),
             tooltip: 'Clear set',
             onPressed: isBusy ? null : onClear,
@@ -628,6 +764,7 @@ class _LoggedSetFields extends StatelessWidget {
     required this.controllers,
     required this.isBusy,
     required this.onSave,
+    required this.onCancel,
     required this.onClear,
   });
 
@@ -636,6 +773,7 @@ class _LoggedSetFields extends StatelessWidget {
   final Map<String, TextEditingController> controllers;
   final bool isBusy;
   final VoidCallback onSave;
+  final VoidCallback onCancel;
   final VoidCallback onClear;
 
   @override
@@ -647,7 +785,7 @@ class _LoggedSetFields extends StatelessWidget {
         child: TextField(
           key: ValueKey('logged-${entry.setLabel}-field-$label'),
           controller: controllers[label],
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
           decoration: InputDecoration(
             labelText: label,
             border: const OutlineInputBorder(),
@@ -674,6 +812,15 @@ class _LoggedSetFields extends StatelessWidget {
       );
     }
 
+    Widget cancelButton() {
+      return IconButton(
+        key: ValueKey('cancel-${entry.setLabel}'),
+        tooltip: 'Cancel set edit',
+        onPressed: isBusy ? null : onCancel,
+        icon: const Icon(Icons.close_outlined),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: LayoutBuilder(
@@ -687,6 +834,7 @@ class _LoggedSetFields extends StatelessWidget {
                     SizedBox(width: 36, child: Text(entry.setLabel)),
                     const Spacer(),
                     saveButton(),
+                    cancelButton(),
                     clearButton(),
                   ],
                 ),
@@ -707,6 +855,7 @@ class _LoggedSetFields extends StatelessWidget {
               for (final label in fieldLabels)
                 SizedBox(width: 112, child: field(label)),
               saveButton(),
+              cancelButton(),
               clearButton(),
             ],
           );

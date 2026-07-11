@@ -10,7 +10,7 @@ intentionally excluded.
 - [x] Slice 2: Serialize loaded-workbook mutations
 - [x] Slice 3: Unify workout home and native navigation
 - [x] Slice 4: Streamline phone set entry
-- [ ] Slice 5: Make logged-set editing compact and recoverable
+- [x] Slice 5: Make logged-set editing compact and recoverable
 - [ ] Slice 6: Add scalable exercise-library search
 - [ ] Slice 7: Complete responsive light and dark visual polish
 - [ ] Slice 8: Clean up tests and run the release gate
@@ -172,17 +172,17 @@ protections.
 
 ### Acceptance criteria
 
-- [ ] Logged sets are compact summaries by default on phone and desktop.
-- [ ] Tapping an edit action expands only the selected set.
-- [ ] Saving or cancelling collapses the editor without changing other sets.
-- [ ] Clearing a set provides a visible, time-limited Undo action.
-- [ ] Undo restores the exact prior raw cell value through the normal command
+- [x] Logged sets are compact summaries by default on phone and desktop.
+- [x] Tapping an edit action expands only the selected set.
+- [x] Saving or cancelling collapses the editor without changing other sets.
+- [x] Clearing a set provides a visible, time-limited Undo action.
+- [x] Undo restores the exact prior raw cell value through the normal command
       interface.
-- [ ] Failed clear or undo operations preserve clear error feedback and do not
+- [x] Failed clear or undo operations preserve clear error feedback and do not
       claim success.
-- [ ] Training details and the new-set editor are not pushed below multiple
+- [x] Training details and the new-set editor are not pushed below multiple
       expanded saved-set forms.
-- [ ] Behavior tests cover formatted and raw sets, clear, undo, stale rejection,
+- [x] Behavior tests cover formatted and raw sets, clear, undo, stale rejection,
       and one-editor-at-a-time behavior.
 
 ### Blocked by

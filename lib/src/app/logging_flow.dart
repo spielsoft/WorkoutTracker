@@ -101,13 +101,25 @@ class LoggingFlow {
     );
   }
 
-  ClearSetCmd planSetClear(RowHistoryEntry entry) {
-    return ClearSetCmd(
-      blockLabel: _blockLabel,
-      sheetRow: _context.selectedChoice.sheetRowNumber,
-      setNumber: entry.setNumber,
+  SetRecovery planSetClear(RowHistoryEntry entry) {
+    final sheetRow = _context.selectedChoice.sheetRowNumber;
+    return SetRecovery(
+      setLabel: entry.setLabel,
+      clear: ClearSetCmd(
+        blockLabel: _blockLabel,
+        sheetRow: sheetRow,
+        setNumber: entry.setNumber,
+      ),
+      undo: EditRawSetCmd(
+        blockLabel: _blockLabel,
+        sheetRow: sheetRow,
+        setNumber: entry.setNumber,
+        rawText: entry.rawValue,
+      ),
     );
   }
+
+  void discardSetEdits() => _syncLoggedCtrls(_context);
 
   void clearNewSets() {
     for (final controller in _newSetCtrls.values) {
@@ -256,6 +268,18 @@ class LoggingFlow {
     }
     return block.entries.length + 1;
   }
+}
+
+final class SetRecovery {
+  const SetRecovery({
+    required this.setLabel,
+    required this.clear,
+    required this.undo,
+  });
+
+  final String setLabel;
+  final ClearSetCmd clear;
+  final EditRawSetCmd undo;
 }
 
 class LoggingVm {

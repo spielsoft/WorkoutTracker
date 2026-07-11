@@ -266,7 +266,8 @@ void main() {
     expect(find.text('Carry logging'), findsNothing);
     expect(find.text('Next set S2'), findsOneWidget);
     expect(find.text('Logged sets'), findsOneWidget);
-    expect(textFieldWithLabel('Raw set text'), findsOneWidget);
+    expect(find.text('worked up, grip failed'), findsOneWidget);
+    expect(textFieldWithLabel('Raw set text'), findsNothing);
     expect(find.text('Training details'), findsOneWidget);
     expect(find.text('Plan 3 x 40 @ 8'), findsOneWidget);
     expect(find.text('Rest 90s | Tempo Smooth'), findsOneWidget);
@@ -409,6 +410,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Front Plank'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('edit-S1')));
+      await tester.pump();
       expect(
         find.byKey(const ValueKey('logged-S1-field-Reps')),
         findsOneWidget,
@@ -421,6 +424,8 @@ void main() {
       expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
       expect(find.byKey(const ValueKey('set-field-Reps')), findsNothing);
 
+      await tester.tap(find.byKey(const ValueKey('edit-S1')));
+      await tester.pump();
       await tester.enterText(
         find.byKey(const ValueKey('logged-S1-field-Seconds')),
         '50',

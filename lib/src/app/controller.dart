@@ -241,6 +241,12 @@ class AppCtrl extends ChangeNotifier {
         _report = await _execute(cmd);
         _error = null;
       },
+      rejection: () {
+        final rejections = _report?.writeRejections ?? const [];
+        return rejections.isEmpty
+            ? null
+            : rejections.map((item) => item.message).join(' ');
+      },
     );
   }
 
@@ -503,6 +509,7 @@ class AppCtrl extends ChangeNotifier {
   Future<bool> _runMutation({
     required Future<void> Function() action,
     required String failurePrefix,
+    String? Function()? rejection,
   }) async {
     if (_mutationPending) return false;
 
@@ -512,6 +519,10 @@ class AppCtrl extends ChangeNotifier {
 
     try {
       await action();
+      if (rejection?.call() case final message?) {
+        _error = '$failurePrefix: $message';
+        return false;
+      }
       return true;
     } on Object catch (error) {
       _error = _formatServiceFailure(

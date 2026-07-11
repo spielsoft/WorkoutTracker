@@ -181,7 +181,7 @@ void main() {
     );
     expect(
       tester
-          .widget<IconButton>(find.byKey(const ValueKey('save-S1')))
+          .widget<IconButton>(find.byKey(const ValueKey('edit-S1')))
           .onPressed,
       isNull,
     );
@@ -191,6 +191,209 @@ void main() {
           .onPressed,
       isNull,
     );
+  });
+
+  testWidgets('shows formatted and raw sets as compact summaries', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 2', ''],
+          setLabels: const ['S1', 'S2'],
+          values: const ['225x5@8', 'manual note'],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
+
+    expect(find.text('225x5@8'), findsOneWidget);
+    expect(find.text('manual note'), findsOneWidget);
+    expect(find.byKey(const ValueKey('logged-S1-field-Weight')), findsNothing);
+    expect(find.byKey(const ValueKey('raw-S2')), findsNothing);
+  });
+
+  testWidgets('expands one saved set and save or cancel collapses it', (
+    tester,
+  ) async {
+    final actions = _LogActions();
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _historyView(
+          labels: const ['Week 2', ''],
+          setLabels: const ['S1', 'S2'],
+          values: const ['225x5@8', 'manual note'],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('edit-S1')));
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('logged-S1-field-Weight')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('edit-S2')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('logged-S1-field-Weight')), findsNothing);
+    expect(find.byKey(const ValueKey('raw-S2')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('cancel-S2')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('raw-S2')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('edit-S1')));
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const ValueKey('logged-S1-field-Weight')),
+      '230',
+    );
+    await tester.tap(find.byKey(const ValueKey('save-S1')));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('logged-S1-field-Weight')), findsNothing);
+    expect(actions.cmds.single, isA<EditSetCmd>());
+  });
+
+  testWidgets('saved custom-format fields accept decimal and literal edits', (
+    tester,
+  ) async {
+    final actions = _LogActions();
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _historyView(
+          labels: const ['Week 2'],
+          setLabels: const ['S1'],
+          values: const ['102.5x7.5; smooth'],
+          selectedBlock: 'Week 2',
+          logFormat: '{Load}[x]{Effort}[; ]{Cue}',
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('edit-S1')));
+    await tester.pump();
+    final cue = find.byKey(const ValueKey('logged-S1-field-Cue'));
+
+    await tester.enterText(
+      find.byKey(const ValueKey('logged-S1-field-Load')),
+      '103.25',
+    );
+    await tester.enterText(cue, 'grindy today');
+    await tester.tap(find.byKey(const ValueKey('save-S1')));
+    await tester.pump();
+
+    final edit = actions.cmds.single as EditSetCmd;
+    expect(edit.fields, {
+      'Load': '103.25',
+      'Effort': '7.5',
+      'Cue': 'grindy today',
+    });
+  });
+
+  testWidgets('clear offers time-limited undo with exact raw restoration', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final actions = _LogActions();
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _historyView(
+          labels: const ['Week 2'],
+          setLabels: const ['S1'],
+          values: const ['  manual; note  '],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(actions.cmds.single, isA<ClearSetCmd>());
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final undo = actions.cmds.last as EditRawSetCmd;
+    expect(undo.rawText, '  manual; note  ');
+    expect(find.text('S1 restored.'), findsOneWidget);
+  });
+
+  testWidgets('clear undo expires', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 2'],
+          setLabels: const ['S1'],
+          values: const ['225x5@8'],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Undo'), findsNothing);
+  });
+
+  testWidgets('failed clear and undo show errors without claiming success', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final failedClear = _LogActions(outcomes: const [false]);
+    final view = _historyView(
+      labels: const ['Week 2'],
+      setLabels: const ['S1'],
+      values: const ['manual note'],
+      selectedBlock: 'Week 2',
+    );
+    await tester.pumpWidget(_app(actions: failedClear, view: view));
+
+    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.pump();
+
+    expect(find.text('S1 was not cleared.'), findsOneWidget);
+    expect(find.text('Undo'), findsNothing);
+
+    final failedUndo = _LogActions(outcomes: const [true, false]);
+    await tester.pumpWidget(_app(actions: failedUndo, view: view));
+    await tester.tap(find.byKey(const ValueKey('clear-S1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Undo'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('S1 was not restored.'), findsOneWidget);
+    expect(find.text('S1 restored.'), findsNothing);
   });
 
   testWidgets('uses the newest non-empty set across gaps and trailing blanks', (
@@ -254,7 +457,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Latest history: 35x5@8'), findsOneWidget);
-    expect(find.textContaining('999x5@9'), findsNothing);
+    expect(find.text('Latest history: 999x5@9'), findsNothing);
   });
 
   testWidgets('omits latest history when no prior block has data', (
@@ -291,9 +494,10 @@ Widget _app({required LogActions actions, LogView? view}) {
 }
 
 final class _LogActions implements LogActions {
-  _LogActions({this.succeeds = true});
+  _LogActions({this.succeeds = true, this.outcomes = const []});
 
   final bool succeeds;
+  final List<bool> outcomes;
   final cmds = <WbkCmd>[];
   final selectedRows = <int>[];
   bool closed = false;
@@ -304,7 +508,8 @@ final class _LogActions implements LogActions {
   @override
   Future<bool> execute(WbkCmd cmd) async {
     cmds.add(cmd);
-    return succeeds;
+    final index = cmds.length - 1;
+    return index < outcomes.length ? outcomes[index] : succeeds;
   }
 
   @override
@@ -391,6 +596,7 @@ LogView _historyView({
   required List<String> setLabels,
   required List<String> values,
   required String selectedBlock,
+  String logFormat = '{Weight}[x]{Reps}[@]{RPE}',
 }) {
   final active = parseActiveSheet(
     ActiveSheetInput(
@@ -405,7 +611,7 @@ LogView _historyView({
           '3 min',
           '',
           '',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          logFormat,
           'Legs',
           '',
           ...values,
