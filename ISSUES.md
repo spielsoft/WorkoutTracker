@@ -1,16 +1,21 @@
-# Engineering Debt Issues
+# Remaining Workout UI and Interaction Issues
 
-This plan resolves the remaining non-blocking engineering debt found in the
-second codebase review.
+This plan implements the remaining non-simple work described in
+`ISSUES_PRD.md`. Localized findings already fixed before the PRD was written are
+intentionally excluded.
 
 ## Progress
 
-- [x] Slice 1: Surface workspace persistence failures
-- [x] Slice 2: Own the native authentication event lifecycle
-- [x] Slice 3: Decompose write planning by responsibility
-- [x] Slice 4: Clean up the resulting tests
+- [ ] Slice 1: Make exercise log-format authoring safe and understandable
+- [ ] Slice 2: Serialize loaded-workbook mutations
+- [ ] Slice 3: Unify workout home and native navigation
+- [ ] Slice 4: Streamline phone set entry
+- [ ] Slice 5: Make logged-set editing compact and recoverable
+- [ ] Slice 6: Add scalable exercise-library search
+- [ ] Slice 7: Complete responsive light and dark visual polish
+- [ ] Slice 8: Clean up tests and run the release gate
 
-## Slice 1: Surface workspace persistence failures
+## Slice 1: Make exercise log-format authoring safe and understandable
 
 ### Type
 
@@ -18,23 +23,24 @@ second codebase review.
 
 ### What to build
 
-Make saved-workspace read and write failures visible without making the current
-session unusable. A user should be able to continue with an in-memory sheet or
-workout selection, while the application clearly reports that the choice could
-not be restored or persisted and therefore may not survive a restart.
+Turn the literal log-format field into a guided, workbook-safe authoring
+experience. Users should see concise syntax help, immediate validation, and a
+representative output preview. Invalid formats must remain local to the draft
+and must also be rejected by the write-planning contract. Protect changed
+exercise drafts from accidental dismissal.
 
 ### Acceptance criteria
 
-- [x] Failed workspace restoration produces a clear, non-crashing application
-      error instead of being silently treated as empty state.
-- [x] Failed persistence of pasted sheet text, a selected sheet, or workout
-      setup is surfaced to the user.
-- [x] A persistence failure does not discard an otherwise valid in-memory
-      selection or prevent the current session from continuing.
-- [x] A later successful persistence operation clears the stale persistence
-      error.
-- [x] Behavior tests cover restoration failure, write failure, recovery, and
-      preservation of in-memory state through the public workspace interface.
+- [ ] Valid literal formats show a representative preview before submission.
+- [ ] Invalid formats show focused, human-readable feedback beside the field.
+- [ ] Create and edit actions cannot submit an invalid format.
+- [ ] The public planner rejects an invalid application-authored format without
+      emitting a write.
+- [ ] Attempting to leave a changed create or edit draft requires explicit
+      discard confirmation; unchanged forms close immediately.
+- [ ] Valid create and edit flows preserve current workbook behavior.
+- [ ] Behavior tests exercise the public parser/planner and visible form
+      behavior without duplicating parser internals.
 
 ### Blocked by
 
@@ -42,11 +48,9 @@ None - can start immediately.
 
 ### User stories covered
 
-- Users can trust whether their selected sheet and workout setup will restore
-  on the next launch.
-- Local state failures remain recoverable and do not block workout logging.
+- PRD user stories 7-11.
 
-## Slice 2: Own the native authentication event lifecycle
+## Slice 2: Serialize loaded-workbook mutations
 
 ### Type
 
@@ -54,21 +58,22 @@ None - can start immediately.
 
 ### What to build
 
-Give the native Google account gateway explicit ownership of its authentication
-event listener. Initialization should create at most one listener, and disposing
-the gateway should detach it so a retired gateway cannot retain resources or
-publish account changes.
+Put every loaded-workbook mutation behind one authoritative single-flight
+command owner. It should expose consistent pending and failure state, prevent
+overlapping commands regardless of which screen launched them, and leave safe
+read-only navigation available where appropriate.
 
 ### Acceptance criteria
 
-- [x] Repeated initialization uses one authentication event subscription.
-- [x] Disposing the gateway cancels its subscription exactly once.
-- [x] Authentication events cannot notify listeners after the gateway is
-      disposed.
-- [x] Existing restore, explicit login, authorization-header, and logout
-      behavior is unchanged.
-- [x] Focused tests exercise the lifecycle through an intentional injectable
-      interface rather than a simulated Google service response.
+- [ ] All loaded-workbook mutations use one command gate.
+- [ ] A second mutation cannot begin while the first is pending.
+- [ ] Pending state is visible through the existing typed screen read models.
+- [ ] Relevant mutation controls disable consistently while pending.
+- [ ] Success and failure both release pending state exactly once.
+- [ ] Existing stale-write expectations and workbook-session behavior remain
+      authoritative.
+- [ ] Tests assert the app-owned command contract rather than simulated Google
+      behavior or private counter state.
 
 ### Blocked by
 
@@ -76,11 +81,9 @@ None - can start immediately.
 
 ### User stories covered
 
-- Recreating or shutting down the application does not leave authentication
-  listeners attached to retired state owners.
-- Account state remains single-sourced by the active native gateway.
+- PRD user stories 12-14.
 
-## Slice 3: Decompose write planning by responsibility
+## Slice 3: Unify workout home and native navigation
 
 ### Type
 
@@ -88,38 +91,37 @@ None - can start immediately.
 
 ### What to build
 
-Replace the oversized write-planning compilation units with cohesive internal
-modules for plan contracts, stale-write expectations, preview application, and
-the history, set, exercise, and workout planning strategies. Preserve the
-existing public sheet-contract API and keep each module deep enough to own a
-complete planning concern.
+Replace the duplicate setup/workout destinations with one workout home that
+contains workout selection, history selection, progress, and the interactive
+exercise list. Remove the generic Select transition. Represent feature
+navigation with a typed native page stack so in-app Back, Android system Back,
+and iOS back gestures return to the page that actually launched the feature.
 
 ### Acceptance criteria
 
-- [x] Public plan types and planner entry points remain source-compatible for
-      application and adapter callers.
-- [x] Stale-write expectations and rejection messages have one clear owner.
-- [x] In-memory preview application has one clear owner independent of planner
-      orchestration.
-- [x] History, set, exercise, and workout planning strategies are separated by
-      domain responsibility without shallow pass-through wrappers.
-- [x] No behavior changes occur in parsing, safety rejection, write previews,
-      or generated write requests.
-- [x] Existing contract and adapter behavior tests pass without pinning the new
-      private file layout.
+- [ ] Workout and history selectors update the exercise list immediately.
+- [ ] The duplicate workout-list destination and generic Select action are
+      removed.
+- [ ] Logging, placement, library, create, and edit pages return to their actual
+      origin through page history rather than origin flags.
+- [ ] Android-style back dispatch follows the page stack before allowing app
+      exit.
+- [ ] iOS feature pages participate in normal back navigation.
+- [ ] Sheet selection remains the parent destination of workout home.
+- [ ] AppShell composes pages without interpreting feature or workbook
+      commands.
+- [ ] Navigation tests assert visible destinations and back behavior rather
+      than internal route enum values.
 
 ### Blocked by
 
-None - can start immediately.
+- Slice 2: Serialize loaded-workbook mutations.
 
 ### User stories covered
 
-- Maintainers can change one write-planning concern without navigating an
-  unrelated monolith.
-- Workbook safety and human-readable sheet behavior remain stable through
-  future planner changes.
+- PRD user stories 1-6 and 14.
 
-## Slice 4: Clean up the resulting tests
+## Slice 4: Streamline phone set entry
 
 ### Type
 
@@ -127,27 +129,181 @@ None - can start immediately.
 
 ### What to build
 
-Use the `test-cleanup` skill to remove temporary scaffolding and keep only the
-smallest durable behavior tests for persistence errors, authentication
-lifecycle ownership, and the unchanged public write-planning contract.
+Make the active set the primary phone task. Keep target sets, reps, RPE, and
+rest visible near the editor; order fields before Save; support efficient
+next/done keyboard flow; and accept both decimal values and arbitrary literal
+field text without inferring semantics from field labels.
 
 ### Acceptance criteria
 
-- [x] The `test-cleanup` skill is used for this slice.
-- [x] Tests assert public behavior or intentional adapter interfaces rather
-      than private helper names and file placement.
-- [x] Temporary TDD-only cases and redundant assertions are removed.
-- [x] Persistence recovery and authentication disposal retain focused coverage.
-- [x] The complete Flutter test suite and static analysis pass.
-- [x] Clean macOS and unsigned iOS release builds pass.
+- [ ] At phone width, structured fields appear before the primary Save action.
+- [ ] Target and rest information stays visible near the active editor.
+- [ ] Keyboard Next advances through structured fields in format order.
+- [ ] The final keyboard action can submit a non-empty valid set.
+- [ ] Decimal values and non-numeric literal field values can both be entered.
+- [ ] Saving retains existing write planning, pending-state, error, and
+      next-set behavior.
+- [ ] Desktop layout remains compact without introducing a separate execution
+      path.
+- [ ] Focused widget tests cover task order and keyboard submission through the
+      public logging action interface.
 
 ### Blocked by
 
-- Slice 1: Surface workspace persistence failures.
-- Slice 2: Own the native authentication event lifecycle.
-- Slice 3: Decompose write planning by responsibility.
+- Slice 2: Serialize loaded-workbook mutations.
+- Slice 3: Unify workout home and native navigation.
 
 ### User stories covered
 
-- Future refactors retain a compact safety net around behavior instead of
-  implementation details.
+- PRD user stories 15-20.
+
+## Slice 5: Make logged-set editing compact and recoverable
+
+### Type
+
+`AFK`
+
+### What to build
+
+Render saved sets as compact summaries and expand only the set being edited.
+Clearing a set should use the normal workbook command path and offer an undo
+action that restores the exact previous raw value through existing stale-write
+protections.
+
+### Acceptance criteria
+
+- [ ] Logged sets are compact summaries by default on phone and desktop.
+- [ ] Tapping an edit action expands only the selected set.
+- [ ] Saving or cancelling collapses the editor without changing other sets.
+- [ ] Clearing a set provides a visible, time-limited Undo action.
+- [ ] Undo restores the exact prior raw cell value through the normal command
+      interface.
+- [ ] Failed clear or undo operations preserve clear error feedback and do not
+      claim success.
+- [ ] Training details and the new-set editor are not pushed below multiple
+      expanded saved-set forms.
+- [ ] Behavior tests cover formatted and raw sets, clear, undo, stale rejection,
+      and one-editor-at-a-time behavior.
+
+### Blocked by
+
+- Slice 2: Serialize loaded-workbook mutations.
+- Slice 4: Streamline phone set entry.
+
+### User stories covered
+
+- PRD user stories 20-23.
+
+## Slice 6: Add scalable exercise-library search
+
+### Type
+
+`AFK`
+
+### What to build
+
+Add local search by exercise display name and description while retaining
+canonical sheet order. Searching must not create a second ordering model, and
+reordering must be unavailable while a filter hides part of the library.
+
+### Acceptance criteria
+
+- [ ] Search matches display names and descriptions case-insensitively.
+- [ ] Results remain in canonical sheet order.
+- [ ] A clear empty-result state explains that no exercise matched.
+- [ ] Clearing search restores the full list and canonical order.
+- [ ] Reorder handles and reorder commands are unavailable while filtered.
+- [ ] Newly created or edited highlighted exercises remain discoverable after
+      returning to the library.
+- [ ] Tests cover matching, empty results, clearing, order preservation, and
+      filtered reorder protection through visible behavior.
+
+### Blocked by
+
+- Slice 3: Unify workout home and native navigation.
+
+### User stories covered
+
+- PRD user stories 24-26.
+
+## Slice 7: Complete responsive light and dark visual polish
+
+### Type
+
+`AFK`
+
+### What to build
+
+Add a system-following dark theme and make custom workout state colors adapt to
+the active color scheme. Review the completed workout home, logging,
+authoring, placement, library, picker, and repair states at narrow phone, large
+text, normal desktop, and wide desktop sizes. Correct hierarchy, wrapping,
+clipping, and action placement without creating platform-specific screen
+implementations.
+
+### Acceptance criteria
+
+- [ ] The app follows system light and dark appearance.
+- [ ] Logged, current, backup, warning, and error states meet contrast guidance
+      in both themes.
+- [ ] Core screens remain usable at narrow phone width and with large text.
+- [ ] Desktop content retains intentional density and maximum width.
+- [ ] Primary actions remain visually ordered after responsive wrapping.
+- [ ] No status relies on color alone.
+- [ ] Accessibility guideline tests pass for representative light and dark
+      states.
+- [ ] A visual smoke pass covers the main macOS flow and representative phone
+      widget sizes.
+
+### Blocked by
+
+- Slice 1: Make exercise log-format authoring safe and understandable.
+- Slice 3: Unify workout home and native navigation.
+- Slice 4: Streamline phone set entry.
+- Slice 5: Make logged-set editing compact and recoverable.
+- Slice 6: Add scalable exercise-library search.
+
+### User stories covered
+
+- PRD user stories 27-29.
+
+## Slice 8: Clean up tests and run the release gate
+
+### Type
+
+`AFK`
+
+### What to build
+
+Use the `test-cleanup` skill to remove temporary TDD scaffolding and rewrite
+tests that pin widget structure, private navigation state, or command-owner
+implementation. Retain the smallest durable behavior suite, then run the full
+static, test, accessibility, and clean release-build gate.
+
+### Acceptance criteria
+
+- [ ] The `test-cleanup` skill is used for this slice.
+- [ ] Tests assert public screen behavior, command contracts, or workbook plans
+      rather than private helpers and widget-tree trivia.
+- [ ] Redundant TDD-only cases are removed or consolidated.
+- [ ] Safety coverage remains for invalid-format rejection, command
+      serialization, navigation/back behavior, set clear/undo, and filtered
+      reorder protection.
+- [ ] The complete Flutter test suite passes.
+- [ ] Static analysis and diff checks pass.
+- [ ] A clean macOS release build passes.
+- [ ] A clean unsigned iOS release build passes.
+
+### Blocked by
+
+- Slice 1: Make exercise log-format authoring safe and understandable.
+- Slice 2: Serialize loaded-workbook mutations.
+- Slice 3: Unify workout home and native navigation.
+- Slice 4: Streamline phone set entry.
+- Slice 5: Make logged-set editing compact and recoverable.
+- Slice 6: Add scalable exercise-library search.
+- Slice 7: Complete responsive light and dark visual polish.
+
+### User stories covered
+
+- PRD user story 30 and the complete release-readiness goal.
