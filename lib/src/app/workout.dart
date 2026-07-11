@@ -1,69 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
-import 'exercise_library.dart';
-import 'exercise_screens.dart';
-import 'logging.dart';
-import 'repair.dart';
-import 'ui/flow.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/status.dart';
-
-class FeatureScreens extends StatelessWidget {
-  const FeatureScreens({required this.view, required this.run, super.key});
-
-  final FeatureView view;
-  final Future<CmdResult> Function(UiCmd cmd) run;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (view.error case final error?) ...[
-          IssuePanel(
-            icon: Icons.error_outline,
-            title: 'Connection or validation failed',
-            lines: [error],
-            tone: IssueTone.error,
-          ),
-          const SizedBox(height: 16),
-        ],
-        switch (view) {
-          LibraryView() => _library(),
-          CreateExerciseView() => _create(),
-          EditExerciseView() => _edit(),
-          PlacementView() => _placement(),
-          LogView() => _log(),
-        },
-      ],
-    );
-  }
-
-  Widget _library() {
-    final library = view as LibraryView;
-    return ExerciseLibraryScreen(view: library, run: (cmd) => run(cmd));
-  }
-
-  Widget _create() {
-    final create = view as CreateExerciseView;
-    return CreateExerciseScreen(view: create, run: (cmd) => run(cmd));
-  }
-
-  Widget _edit() {
-    final edit = view as EditExerciseView;
-    return EditExerciseScreen(view: edit, run: (cmd) => run(cmd));
-  }
-
-  Widget _placement() {
-    final placement = view as PlacementView;
-    return PlacementScreen(view: placement, run: (cmd) => run(cmd));
-  }
-
-  Widget _log() {
-    return LogScreen(view: view as LogView, run: (cmd) => run(cmd));
-  }
-}
 
 Future<bool> confirmWorkoutDelete(
   BuildContext context,

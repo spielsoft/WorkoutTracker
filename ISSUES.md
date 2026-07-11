@@ -7,7 +7,7 @@ latest-history verification gaps identified in the codebase review.
 
 - [x] Slice 1: Eliminate inferred writable column positions
 - [x] Slice 2: Route setup and workout screens through narrow contracts
-- [ ] Slice 3: Route logging and exercise screens through narrow contracts
+- [x] Slice 3: Route logging and exercise screens through narrow contracts
 - [ ] Slice 4: Reduce the application flow to a routing facade
 - [ ] Slice 5: Harden latest-history behavior coverage
 - [ ] Slice 6: Clean up tests after the architecture slices

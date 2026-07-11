@@ -6,8 +6,13 @@ import 'package:workout_tracker/contract.dart';
 import 'state_store.dart';
 import 'validation.dart';
 import 'selection.dart';
+import 'exercise_library.dart';
+import 'exercise_create_screen.dart';
+import 'exercise_edit_screen.dart';
+import 'placement_screen.dart';
+import 'logging.dart';
+import 'repair.dart';
 import 'setup.dart';
-import 'workout.dart';
 import 'workout_screen.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
@@ -155,9 +160,40 @@ class _AppShellSt extends State<AppShell> {
                           view: view,
                           actions: _WorkoutFlowActions(_flow),
                         ),
-                        FeatureView() => FeatureScreens(
-                          view: view,
-                          run: _flow.run,
+                        LibraryView() => _feature(
+                          view,
+                          ExerciseLibraryScreen(
+                            view: view,
+                            actions: _LibraryFlowActions(_flow),
+                          ),
+                        ),
+                        CreateExerciseView() => _feature(
+                          view,
+                          CreateExerciseScreen(
+                            view: view,
+                            actions: _CreateExerciseFlowActions(_flow),
+                          ),
+                        ),
+                        EditExerciseView() => _feature(
+                          view,
+                          EditExerciseScreen(
+                            view: view,
+                            actions: _EditExerciseFlowActions(_flow),
+                          ),
+                        ),
+                        PlacementView() => _feature(
+                          view,
+                          PlacementScreen(
+                            view: view,
+                            actions: _PlacementFlowActions(_flow),
+                          ),
+                        ),
+                        LogView() => _feature(
+                          view,
+                          LogScreen(
+                            view: view,
+                            actions: _LogFlowActions(_flow),
+                          ),
                         ),
                       },
                     ),
@@ -168,6 +204,24 @@ class _AppShellSt extends State<AppShell> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _feature(AppView view, Widget screen) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (view.error case final error?) ...[
+          IssuePanel(
+            icon: Icons.error_outline,
+            title: 'Connection or validation failed',
+            lines: [error],
+            tone: IssueTone.error,
+          ),
+          const SizedBox(height: 16),
+        ],
+        screen,
+      ],
     );
   }
 }
@@ -222,4 +276,90 @@ final class _WorkoutFlowActions implements WorkoutActions {
   Future<bool> reorder(ReorderIntent intent) async {
     return (await flow.run(ReorderWorkout(intent))).ok;
   }
+}
+
+final class _LibraryFlowActions implements LibraryActions {
+  const _LibraryFlowActions(this.flow);
+
+  final UiFlow flow;
+
+  @override
+  Future<void> close() async => flow.run(const CloseLibrary());
+
+  @override
+  Future<void> create() async => flow.run(const OpenExerciseCreate());
+
+  @override
+  Future<void> edit(CanonicalExercise exercise) async =>
+      flow.run(OpenExerciseEdit(exercise));
+
+  @override
+  Future<bool> reorder(ReorderIntent intent) async =>
+      (await flow.run(ReorderExercises(intent))).ok;
+}
+
+final class _CreateExerciseFlowActions implements CreateExerciseActions {
+  const _CreateExerciseFlowActions(this.flow);
+
+  final UiFlow flow;
+
+  @override
+  Future<void> close() async => flow.run(const CloseExerciseCreate());
+
+  @override
+  Future<bool> save(ExerciseDef exercise) async => (await flow.run(
+    SaveExercise(exercise: exercise, name: exercise.exercise),
+  )).ok;
+}
+
+final class _EditExerciseFlowActions implements EditExerciseActions {
+  const _EditExerciseFlowActions(this.flow);
+
+  final UiFlow flow;
+
+  @override
+  Future<void> close() async => flow.run(const CloseExerciseEdit());
+
+  @override
+  Future<bool> save(ExerciseDef exercise) async =>
+      (await flow.run(SaveExerciseEdit(exercise))).ok;
+}
+
+final class _PlacementFlowActions implements PlacementActions {
+  const _PlacementFlowActions(this.flow);
+
+  final UiFlow flow;
+
+  @override
+  Future<void> close() async => flow.run(const CloseExerciseCreate());
+
+  @override
+  Future<bool> save(
+    CanonicalExercise exercise,
+    WorkoutPlacementMetadata metadata, {
+    bool keepAdding = false,
+  }) async => (await flow.run(
+    SavePlacement(
+      exercise: exercise,
+      metadata: metadata,
+      keepAdding: keepAdding,
+    ),
+  )).ok;
+}
+
+final class _LogFlowActions implements LogActions {
+  const _LogFlowActions(this.flow);
+
+  final UiFlow flow;
+
+  @override
+  Future<void> close() async => flow.run(const CloseLog());
+
+  @override
+  Future<bool> execute(WbkCmd cmd) async =>
+      (await flow.run(ExecuteWbk(cmd))).ok;
+
+  @override
+  Future<void> selectRow(int sheetRow) async =>
+      flow.run(SelectLogRow(sheetRow));
 }

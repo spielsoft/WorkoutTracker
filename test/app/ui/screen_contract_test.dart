@@ -76,49 +76,108 @@ void main() {
     expect(actions.seen.single, const BackToWorkoutSetup());
   });
 
-  testWidgets('exercise library emits only exercise commands', (tester) async {
-    final cmds = <ExerciseCmd>[];
+  testWidgets('exercise library exposes only library actions', (tester) async {
+    final actions = _LibraryActions();
     await tester.pumpWidget(
       _app(
         ExerciseLibraryScreen(
           view: LibraryView(
             isBusy: false,
-            setup: _setup(),
+            exercises: _setup().activeSheet.canonicalExercises,
             sheetLabel: 'Training',
             highlightedRow: null,
           ),
-          run: (cmd) async {
-            cmds.add(cmd);
-            return const CmdResult.done();
-          },
+          actions: actions,
         ),
       ),
     );
 
     await tester.tap(find.text('Squat'));
-    expect(cmds.single, isA<OpenExerciseEdit>());
+    expect(actions.edited.single.exercise, 'Squat');
 
-    cmds.clear();
     await tester.tap(find.byTooltip('Back to workout setup'));
-    expect(cmds.single, isA<CloseLibrary>());
+    expect(actions.closed, isTrue);
+
+    await tester.tap(find.byTooltip('Create exercise'));
+    expect(actions.created, isTrue);
+  });
+
+  testWidgets('exercise creation exposes only create actions', (tester) async {
+    final actions = _CreateActions();
+    await tester.pumpWidget(
+      _app(
+        CreateExerciseScreen(
+          view: CreateExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            returnRoute: AppRoute.library,
+          ),
+          actions: actions,
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-authoring-name')),
+      'Romanian Deadlift',
+    );
+    final submit = find.byKey(const ValueKey('exercise-authoring-submit'));
+    await tester.scrollUntilVisible(
+      submit,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(submit);
+
+    expect(actions.saved!.exercise, 'Romanian Deadlift');
+  });
+
+  testWidgets('exercise editing exposes only edit actions', (tester) async {
+    final actions = _EditActions();
+    final exercise = _setup().activeSheet.canonicalExercises.single;
+    await tester.pumpWidget(
+      _app(
+        EditExerciseScreen(
+          view: EditExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            exercise: exercise,
+          ),
+          actions: actions,
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-authoring-name')),
+      'Front Squat',
+    );
+    final submit = find.byKey(const ValueKey('exercise-authoring-submit'));
+    await tester.scrollUntilVisible(
+      submit,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(submit);
+
+    expect(actions.saved!.exercise, 'Front Squat');
   });
 
   testWidgets('placement emits selected exercise metadata', (tester) async {
-    final cmds = <ExerciseCmd>[];
+    final actions = _PlacementActions();
     await tester.pumpWidget(
       _app(
         PlacementScreen(
           view: PlacementView(
             isBusy: false,
-            setup: _setup(),
+            exercises: _setup().activeSheet.canonicalExercises,
             sheetLabel: 'Training',
             intent: const PlaceIntent.primary(workout: 'Legs'),
             returnRoute: AppRoute.workout,
           ),
-          run: (cmd) async {
-            cmds.add(cmd);
-            return const CmdResult.done();
-          },
+          actions: actions,
         ),
       ),
     );
@@ -129,11 +188,73 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
 
-    final save = cmds.single as SavePlacement;
-    expect(save.exercise.exercise, 'Squat');
-    expect(save.metadata.sets, '3');
-    expect(save.metadata.reps, '5');
+    expect(actions.exercise!.exercise, 'Squat');
+    expect(actions.metadata!.sets, '3');
+    expect(actions.metadata!.reps, '5');
   });
+}
+
+final class _LibraryActions implements LibraryActions {
+  final edited = <CanonicalExercise>[];
+  bool closed = false;
+  bool created = false;
+
+  @override
+  Future<void> close() async => closed = true;
+
+  @override
+  Future<void> create() async => created = true;
+
+  @override
+  Future<void> edit(CanonicalExercise exercise) async => edited.add(exercise);
+
+  @override
+  Future<bool> reorder(ReorderIntent intent) async => true;
+}
+
+final class _CreateActions implements CreateExerciseActions {
+  ExerciseDef? saved;
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Future<bool> save(ExerciseDef exercise) async {
+    saved = exercise;
+    return true;
+  }
+}
+
+final class _EditActions implements EditExerciseActions {
+  ExerciseDef? saved;
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Future<bool> save(ExerciseDef exercise) async {
+    saved = exercise;
+    return true;
+  }
+}
+
+final class _PlacementActions implements PlacementActions {
+  CanonicalExercise? exercise;
+  WorkoutPlacementMetadata? metadata;
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Future<bool> save(
+    CanonicalExercise exercise,
+    WorkoutPlacementMetadata metadata, {
+    bool keepAdding = false,
+  }) async {
+    this.exercise = exercise;
+    this.metadata = metadata;
+    return true;
+  }
 }
 
 final class _SetupActions implements SetupActions {

@@ -95,48 +95,41 @@ final class WorkoutView extends LoadedView {
   });
 }
 
-sealed class FeatureView extends LoadedView {
-  const FeatureView({
-    required super.isBusy,
-    required super.setup,
-    required super.sheetLabel,
-    super.error,
-  });
-}
-
-final class LibraryView extends FeatureView {
+final class LibraryView extends AppView {
   const LibraryView({
     required super.isBusy,
-    required super.setup,
-    required super.sheetLabel,
+    required this.exercises,
+    required this.sheetLabel,
     required this.highlightedRow,
     super.error,
   });
 
+  final List<CanonicalExercise> exercises;
+  final String sheetLabel;
   final int? highlightedRow;
 }
 
-final class CreateExerciseView extends FeatureView {
+final class CreateExerciseView extends AppView {
   const CreateExerciseView({
     required super.isBusy,
-    required super.setup,
-    required super.sheetLabel,
+    required this.sheetLabel,
     required this.returnRoute,
     super.error,
   });
 
+  final String sheetLabel;
   final AppRoute returnRoute;
 }
 
-final class EditExerciseView extends FeatureView {
+final class EditExerciseView extends AppView {
   const EditExerciseView({
     required super.isBusy,
-    required super.setup,
-    required super.sheetLabel,
+    required this.sheetLabel,
     required this.exercise,
     super.error,
   });
 
+  final String sheetLabel;
   final CanonicalExercise exercise;
 }
 
@@ -160,29 +153,33 @@ class PlaceIntent {
   final String? primaryExercise;
 }
 
-final class PlacementView extends FeatureView {
+final class PlacementView extends AppView {
   const PlacementView({
     required super.isBusy,
-    required super.setup,
-    required super.sheetLabel,
+    required this.exercises,
+    required this.sheetLabel,
     required this.intent,
     required this.returnRoute,
     super.error,
   });
 
+  final List<CanonicalExercise> exercises;
+  final String sheetLabel;
   final PlaceIntent intent;
   final AppRoute returnRoute;
 }
 
-final class LogView extends FeatureView {
+final class LogView extends AppView {
   const LogView({
     required super.isBusy,
-    required super.setup,
-    required super.sheetLabel,
+    required this.activeSheet,
+    required this.sheetLabel,
     required this.target,
     super.error,
   });
 
+  final ParsedActiveSheet activeSheet;
+  final String sheetLabel;
   final WorkoutLoggingTarget target;
 }
 
@@ -487,28 +484,26 @@ class AppFlow extends ChangeNotifier implements UiFlow {
       AppRoute.library => LibraryView(
         isBusy: busy,
         error: _ctrl.error,
-        setup: setup,
+        exercises: setup.activeSheet.canonicalExercises,
         sheetLabel: label,
         highlightedRow: _highlightedRow,
       ),
       AppRoute.createExercise => CreateExerciseView(
         isBusy: busy,
         error: _ctrl.error,
-        setup: setup,
         sheetLabel: label,
         returnRoute: _returnRoute,
       ),
       AppRoute.editExercise => EditExerciseView(
         isBusy: busy,
         error: _ctrl.error,
-        setup: setup,
         sheetLabel: label,
         exercise: _editingExercise!,
       ),
       AppRoute.placement => PlacementView(
         isBusy: busy,
         error: _ctrl.error,
-        setup: setup,
+        exercises: setup.activeSheet.canonicalExercises,
         sheetLabel: label,
         intent: _placeIntent!,
         returnRoute: _returnRoute,
@@ -516,7 +511,7 @@ class AppFlow extends ChangeNotifier implements UiFlow {
       AppRoute.log => LogView(
         isBusy: busy,
         error: _ctrl.error,
-        setup: setup,
+        activeSheet: setup.activeSheet,
         sheetLabel: label,
         target: setup.loggingTarget!,
       ),

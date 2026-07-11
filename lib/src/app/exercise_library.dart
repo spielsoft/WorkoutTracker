@@ -6,19 +6,29 @@ import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/status.dart';
 
+abstract interface class LibraryActions {
+  Future<void> close();
+
+  Future<void> create();
+
+  Future<void> edit(CanonicalExercise exercise);
+
+  Future<bool> reorder(ReorderIntent intent);
+}
+
 class ExerciseLibraryScreen extends StatelessWidget {
   const ExerciseLibraryScreen({
     required this.view,
-    required this.run,
+    required this.actions,
     super.key,
   });
 
   final LibraryView view;
-  final Future<CmdResult> Function(ExerciseCmd cmd) run;
+  final LibraryActions actions;
 
   @override
   Widget build(BuildContext context) {
-    final exercises = view.setup.activeSheet.canonicalExercises;
+    final exercises = view.exercises;
     final highlightedRow = view.highlightedRow;
     if (highlightedRow != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,13 +52,13 @@ class ExerciseLibraryScreen extends StatelessWidget {
             subtitle: 'Edit exercises',
             compactTitle: true,
             backTooltip: 'Back to workout setup',
-            onBack: () => run(const CloseLibrary()),
+            onBack: actions.close,
             trailing: view.isBusy
                 ? null
                 : IconButton.filled(
                     key: const ValueKey('add-canonical-exercise'),
                     tooltip: 'Create exercise',
-                    onPressed: () => run(const OpenExerciseCreate()),
+                    onPressed: actions.create,
                     icon: const Icon(Icons.add_outlined),
                   ),
           ),
@@ -71,10 +81,8 @@ class ExerciseLibraryScreen extends StatelessWidget {
               onReorderItem: view.isBusy
                   ? (_, _) {}
                   : (oldIndex, newIndex) {
-                      run(
-                        ReorderExercises(
-                          ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
-                        ),
+                      actions.reorder(
+                        ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
                       );
                     },
               itemBuilder: (context, index) {
@@ -92,9 +100,7 @@ class ExerciseLibraryScreen extends StatelessWidget {
                     exercise: exercise,
                     isHighlighted: isHighlighted,
                     canReorder: !view.isBusy,
-                    onTap: view.isBusy
-                        ? null
-                        : () => run(OpenExerciseEdit(exercise)),
+                    onTap: view.isBusy ? null : () => actions.edit(exercise),
                   ),
                 );
               },

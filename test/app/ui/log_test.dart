@@ -5,33 +5,22 @@ import 'package:workout_tracker/contract.dart';
 
 void main() {
   testWidgets('emits typed row, close, and set-save commands', (tester) async {
-    final cmds = <LogCmd>[];
-    await tester.pumpWidget(
-      _app(
-        run: (cmd) async {
-          cmds.add(cmd);
-          return const CmdResult.done();
-        },
-      ),
-    );
+    final actions = _LogActions();
+    await tester.pumpWidget(_app(actions: actions));
 
     await tester.tap(find.text('Leg Press'));
-    expect(cmds.single, isA<SelectLogRow>());
-    expect((cmds.single as SelectLogRow).sheetRow, 4);
+    expect(actions.selectedRows.single, 4);
 
-    cmds.clear();
     await tester.tap(find.byTooltip('Back to exercises'));
-    expect(cmds.single, isA<CloseLog>());
+    expect(actions.closed, isTrue);
 
-    cmds.clear();
     await tester.enterText(_field('Weight'), '225');
     await tester.enterText(_field('Reps'), '5');
     await tester.enterText(_field('RPE'), '8');
     await tester.tap(find.text('Save set'));
     await tester.pump();
 
-    final execute = cmds.single as ExecuteWbk;
-    final save = execute.cmd as SaveSetCmd;
+    final save = actions.cmds.single as SaveSetCmd;
     expect(save.blockLabel, 'Week 2');
     expect(save.sheetRow, 3);
     expect(save.fields, {'Weight': '225', 'Reps': '5', 'RPE': '8'});
@@ -40,7 +29,7 @@ void main() {
   testWidgets('keeps failed input visible and reports the screen-local error', (
     tester,
   ) async {
-    await tester.pumpWidget(_app(run: (_) async => const CmdResult.failed()));
+    await tester.pumpWidget(_app(actions: _LogActions(succeeds: false)));
 
     await tester.enterText(_field('Weight'), '225');
     await tester.tap(find.text('Save set'));
@@ -53,7 +42,7 @@ void main() {
   testWidgets('shows the newest non-empty set from the latest prior block', (
     tester,
   ) async {
-    await tester.pumpWidget(_app(run: (_) async => const CmdResult.done()));
+    await tester.pumpWidget(_app(actions: _LogActions()));
 
     await tester.tap(find.text('Training details'));
     await tester.pumpAndSettle();
@@ -62,15 +51,36 @@ void main() {
   });
 }
 
-Widget _app({required Future<CmdResult> Function(LogCmd cmd) run}) {
+Widget _app({required LogActions actions}) {
   return MaterialApp(
     home: Scaffold(
       body: ListView(
         padding: const EdgeInsets.all(24),
-        children: [LogScreen(view: _view(), run: run)],
+        children: [LogScreen(view: _view(), actions: actions)],
       ),
     ),
   );
+}
+
+final class _LogActions implements LogActions {
+  _LogActions({this.succeeds = true});
+
+  final bool succeeds;
+  final cmds = <WbkCmd>[];
+  final selectedRows = <int>[];
+  bool closed = false;
+
+  @override
+  Future<void> close() async => closed = true;
+
+  @override
+  Future<bool> execute(WbkCmd cmd) async {
+    cmds.add(cmd);
+    return succeeds;
+  }
+
+  @override
+  Future<void> selectRow(int sheetRow) async => selectedRows.add(sheetRow);
 }
 
 LogView _view() {
@@ -132,7 +142,7 @@ LogView _view() {
   );
   return LogView(
     isBusy: false,
-    setup: setup,
+    activeSheet: setup.activeSheet,
     sheetLabel: 'Development Workouts',
     target: setup.loggingTarget!,
   );

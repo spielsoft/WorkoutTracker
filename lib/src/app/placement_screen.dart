@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
-import 'exercise_form.dart';
 import 'ui/flow.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 
+abstract interface class PlacementActions {
+  Future<void> close();
+
+  Future<bool> save(
+    CanonicalExercise exercise,
+    WorkoutPlacementMetadata metadata, {
+    bool keepAdding = false,
+  });
+}
+
 class PlacementScreen extends StatelessWidget {
-  const PlacementScreen({required this.view, required this.run, super.key});
+  const PlacementScreen({required this.view, required this.actions, super.key});
 
   final PlacementView view;
-  final Future<CmdResult> Function(ExerciseCmd cmd) run;
+  final PlacementActions actions;
 
   @override
   Widget build(BuildContext context) {
@@ -27,22 +36,15 @@ class PlacementScreen extends StatelessWidget {
             backTooltip: view.returnRoute == AppRoute.setup
                 ? 'Back to workout setup'
                 : 'Back to exercises',
-            onBack: () => run(const CloseExerciseCreate()),
+            onBack: actions.close,
           ),
           const SizedBox(height: 16),
           _PlaceForm(
-            exercises: view.setup.activeSheet.canonicalExercises,
+            exercises: view.exercises,
             initialExercise: null,
-            onSubmit: (draft) => run(
-              SavePlacement(exercise: draft.exercise, metadata: draft.metadata),
-            ),
-            onSubmitAndAddAnother: (draft) async => (await run(
-              SavePlacement(
-                exercise: draft.exercise,
-                metadata: draft.metadata,
-                keepAdding: true,
-              ),
-            )).ok,
+            onSubmit: (draft) => actions.save(draft.exercise, draft.metadata),
+            onSubmitAndAddAnother: (draft) =>
+                actions.save(draft.exercise, draft.metadata, keepAdding: true),
           ),
         ],
       ),
@@ -358,82 +360,6 @@ class _MetaField extends StatelessWidget {
           border: const OutlineInputBorder(),
         ),
         textInputAction: TextInputAction.next,
-      ),
-    );
-  }
-}
-
-class CreateExerciseScreen extends StatelessWidget {
-  const CreateExerciseScreen({
-    required this.view,
-    required this.run,
-    super.key,
-  });
-
-  final CreateExerciseView view;
-  final Future<CmdResult> Function(ExerciseCmd cmd) run;
-
-  @override
-  Widget build(BuildContext context) {
-    return A11yScreen(
-      label: 'New exercise',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ScreenHeader(
-            title: view.sheetLabel,
-            subtitle: 'New exercise',
-            compactTitle: true,
-            backTooltip: view.returnRoute == AppRoute.library
-                ? 'Back to edit exercises'
-                : 'Back to workout setup',
-            onBack: () => run(const CloseExerciseCreate()),
-          ),
-          const SizedBox(height: 16),
-          ExerciseAuthoringForm(
-            authoringContext: ExerciseAuthoringContext.canonicalExercise,
-            onCancel: () => run(const CloseExerciseCreate()),
-            onSubmit: (draft) => run(
-              SaveExercise(
-                exercise: draft.toDef(),
-                name: draft.normalized().exerciseName,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class EditExerciseScreen extends StatelessWidget {
-  const EditExerciseScreen({required this.view, required this.run, super.key});
-
-  final EditExerciseView view;
-  final Future<CmdResult> Function(ExerciseCmd cmd) run;
-
-  @override
-  Widget build(BuildContext context) {
-    return A11yScreen(
-      label: 'Edit exercise ${view.exercise.displayName}',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ScreenHeader(
-            title: view.sheetLabel,
-            subtitle: 'Edit exercise',
-            compactTitle: true,
-            backTooltip: 'Back to edit exercises',
-            onBack: () => run(const CloseExerciseEdit()),
-          ),
-          const SizedBox(height: 16),
-          ExerciseAuthoringForm(
-            authoringContext: ExerciseAuthoringContext.canonicalExercise,
-            initialDraft: CanonicalExerciseDraft.fromExercise(view.exercise),
-            onCancel: () => run(const CloseExerciseEdit()),
-            onSubmit: (draft) => run(SaveExerciseEdit(draft.toDef())),
-          ),
-        ],
       ),
     );
   }
