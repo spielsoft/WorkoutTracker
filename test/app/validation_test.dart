@@ -115,6 +115,35 @@ void main() {
     expect(writeClient.operations, isEmpty);
   });
 
+  test('malformed headers cannot apply active or Exercises writes', () async {
+    final malformedWorkbooks = [
+      _workbookSnapshot(
+        const [
+          ['Exercise', 'Reps', 'Sets'],
+        ],
+        const [exercisesSheetColumns],
+      ),
+      _workbookSnapshot(
+        const [activeSheetFixedColumns],
+        const [
+          ['Description', 'Exercise'],
+        ],
+      ),
+    ];
+
+    for (final workbook in malformedWorkbooks) {
+      final readClient = _SequencedSpreadsheetClient([workbook]);
+      final writeClient = _RecordingWriteClient();
+      final sess = _session(readClient, writeClient);
+
+      await sess.read();
+      await sess.execute(const NewHistoryCmd('Week 1'));
+      await sess.execute(const CreateExeCmd(ExerciseDef(exercise: 'Squat')));
+
+      expect(writeClient.operations, isEmpty);
+    }
+  });
+
   test('rechecks schema immediately before applying a write', () async {
     final validRows = [
       [...activeSheetFixedColumns, 'Week 1'],

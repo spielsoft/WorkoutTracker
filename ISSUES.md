@@ -5,7 +5,7 @@ latest-history verification gaps identified in the codebase review.
 
 ## Progress
 
-- [ ] Slice 1: Eliminate inferred writable column positions
+- [x] Slice 1: Eliminate inferred writable column positions
 - [ ] Slice 2: Route setup and workout screens through narrow contracts
 - [ ] Slice 3: Route logging and exercise screens through narrow contracts
 - [ ] Slice 4: Reduce the application flow to a routing facade

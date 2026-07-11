@@ -158,6 +158,9 @@ class _HealingPlanner {
     required int activeSheetRowNumber,
     int? selectedRow,
   }) {
+    if (sheet.schemaViolations.isNotEmpty) {
+      return ActiveSheetWritePlan();
+    }
     FormulaHealingIssue? issue;
     for (final candidate in sheet.healingIssues) {
       if (candidate.activeSheetRowNumber == activeSheetRowNumber) {
@@ -200,6 +203,9 @@ class _HealingPlanner {
   }
 
   ActiveSheetWritePlan planFormulaRepair() {
+    if (sheet.schemaViolations.isNotEmpty) {
+      return ActiveSheetWritePlan();
+    }
     final updates = <CellUpdate>[];
     final expectations = <WriteExpct>[];
     for (final issue in sheet.healingIssues) {
@@ -451,12 +457,11 @@ List<_FormulaDrivenColumn> _formulaDrivenColumns(
       activeSheetColumnIndex: active.exercise,
       exerciseColumnIndex: exercises.exercise,
     ),
-    if (active.logFormat != null)
-      _FormulaDrivenColumn(
-        activeColumnName: 'Log Format',
-        activeSheetColumnIndex: active.logFormat!,
-        exerciseColumnIndex: exercises.logFormat,
-      ),
+    _FormulaDrivenColumn(
+      activeColumnName: 'Log Format',
+      activeSheetColumnIndex: active.logFormat,
+      exerciseColumnIndex: exercises.logFormat,
+    ),
   ];
 }
 

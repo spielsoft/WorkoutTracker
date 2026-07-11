@@ -776,21 +776,18 @@ class _WorkoutRowWritePlanner {
     required bool isBackup,
     required WorkoutPlacementMetadata metadata,
   }) {
-    final activeColumns = _FixedColumnIndexes.fromHeader(
-      context.sheet._sheetRow(1),
-    );
+    final activeColumns = context.sheet._columns!;
     final formulaColumns = [
       _FormulaDrivenColumn(
         activeColumnName: 'Exercise',
         activeSheetColumnIndex: activeColumns.exercise,
         exerciseColumnIndex: context.exerciseColumn('Exercise') - 1,
       ),
-      if (activeColumns.logFormat != null)
-        _FormulaDrivenColumn(
-          activeColumnName: 'Log Format',
-          activeSheetColumnIndex: activeColumns.logFormat!,
-          exerciseColumnIndex: context.exerciseColumn('Log Format') - 1,
-        ),
+      _FormulaDrivenColumn(
+        activeColumnName: 'Log Format',
+        activeSheetColumnIndex: activeColumns.logFormat,
+        exerciseColumnIndex: context.exerciseColumn('Log Format') - 1,
+      ),
     ];
 
     return [

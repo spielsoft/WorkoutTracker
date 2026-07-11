@@ -21,6 +21,29 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
         ...exerciseViolations,
       ],
       exerciseColumns: exerciseColumns,
+      columns: null,
+      rows: sheet.rows,
+      exercisesRows: sheet.exercisesRows,
+      cellFormulas: sheet.cellFormulas,
+    );
+  }
+
+  final fixedViolations = _fixedColumnViolations(sheet.rows.first);
+  final schemaViolations = <SchemaViolation>[
+    ...fixedViolations,
+    ...exerciseViolations,
+    ..._historyBlockViolations(
+      header: sheet.rows.first,
+      setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
+      firstHistoryColumn: activeSheetFixedColumns.length,
+    ),
+  ];
+  if (fixedViolations.isNotEmpty) {
+    return ParsedActiveSheet._(
+      slots: const [],
+      schemaViolations: schemaViolations,
+      exerciseColumns: exerciseColumns,
+      columns: null,
       rows: sheet.rows,
       exercisesRows: sheet.exercisesRows,
       cellFormulas: sheet.cellFormulas,
@@ -28,15 +51,6 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   }
 
   final columns = _FixedColumnIndexes.fromHeader(sheet.rows.first);
-  final schemaViolations = <SchemaViolation>[
-    ..._fixedColumnViolations(sheet.rows.first),
-    ...exerciseViolations,
-    ..._historyBlockViolations(
-      header: sheet.rows.first,
-      setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
-      firstHistoryColumn: columns.isBackup + 1,
-    ),
-  ];
   final historyBlocks = _discoverHistoryBlocks(
     header: sheet.rows.first,
     setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
@@ -128,6 +142,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
                   formulaColumn.exerciseColumnIndex + 1,
           },
     exerciseColumns: exerciseColumns,
+    columns: columns,
     rows: sheet.rows,
     exercisesRows: sheet.exercisesRows,
     cellFormulas: sheet.cellFormulas,
@@ -346,18 +361,16 @@ class _FixedColumnIndexes {
     }
 
     return _FixedColumnIndexes(
-      exercise: indexes['Exercise'] ?? 0,
-      sets: indexes['Sets'] ?? 1,
-      reps: indexes['Reps'] ?? 2,
-      rpe: indexes['RPE'] ?? 3,
-      rest: indexes['Rest'] ?? 4,
-      tempo: indexes['Tempo'] ?? 5,
-      notes: indexes['Notes'] ?? 6,
-      logFormat: indexes['Log Format'],
-      workout:
-          indexes['Workout'] ?? (indexes.containsKey('Log Format') ? 8 : 7),
-      isBackup:
-          indexes['is_backup'] ?? (indexes.containsKey('Log Format') ? 9 : 8),
+      exercise: indexes['Exercise']!,
+      sets: indexes['Sets']!,
+      reps: indexes['Reps']!,
+      rpe: indexes['RPE']!,
+      rest: indexes['Rest']!,
+      tempo: indexes['Tempo']!,
+      notes: indexes['Notes']!,
+      logFormat: indexes['Log Format']!,
+      workout: indexes['Workout']!,
+      isBackup: indexes['is_backup']!,
     );
   }
 
@@ -368,17 +381,13 @@ class _FixedColumnIndexes {
   final int rest;
   final int tempo;
   final int notes;
-  final int? logFormat;
+  final int logFormat;
   final int workout;
   final int isBackup;
 }
 
 String _logFormatCell(List<String> row, _FixedColumnIndexes columns) {
-  final logFormatColumn = columns.logFormat;
-  if (logFormatColumn == null) {
-    return '';
-  }
-  return _cell(row, logFormatColumn);
+  return _cell(row, columns.logFormat);
 }
 
 class _ExercisesColumnIndexes {
