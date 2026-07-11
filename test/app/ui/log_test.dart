@@ -107,6 +107,26 @@ void main() {
     }
   });
 
+  testWidgets('logging remains usable at narrow width with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+
+    await tester.pumpWidget(_app(actions: _LogActions()));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Current S1'), findsOneWidget);
+    expect(find.text('Backup'), findsWidgets);
+    expect(find.text('Save set'), findsOneWidget);
+  });
+
   testWidgets('emits typed row, close, and set-save commands', (tester) async {
     final actions = _LogActions();
     await tester.pumpWidget(_app(actions: actions));

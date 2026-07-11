@@ -16,6 +16,17 @@ import 'ui/sheet.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 
+const _seed = Color(0xFF0E7C66);
+
+ThemeData _theme(Brightness brightness) {
+  return ThemeData(
+    brightness: brightness,
+    colorScheme: ColorScheme.fromSeed(seedColor: _seed, brightness: brightness),
+    splashFactory: InkRipple.splashFactory,
+    useMaterial3: true,
+  );
+}
+
 class WorkoutTrackerApp extends StatelessWidget {
   const WorkoutTrackerApp({
     required this.svc,
@@ -43,11 +54,9 @@ class WorkoutTrackerApp extends StatelessWidget {
     return MaterialApp(
       title: 'WorkoutTracker',
       navigatorKey: navigatorKey,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7C66)),
-        splashFactory: InkRipple.splashFactory,
-        useMaterial3: true,
-      ),
+      theme: _theme(Brightness.light),
+      darkTheme: _theme(Brightness.dark),
+      themeMode: ThemeMode.system,
       scrollBehavior: const AppScrollBehavior(),
       home: AppShell(
         svc: svc,

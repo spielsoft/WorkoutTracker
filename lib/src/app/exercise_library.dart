@@ -356,6 +356,16 @@ class _ExerciseInventoryRow extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
+                          if (isHighlighted) ...[
+                            const SizedBox(height: 6),
+                            const Align(
+                              alignment: Alignment.centerLeft,
+                              child: StChip(
+                                state: VisualSt.logged,
+                                label: 'Saved',
+                              ),
+                            ),
+                          ],
                           if (description.isNotEmpty) ...[
                             const SizedBox(height: 2),
                             Text(

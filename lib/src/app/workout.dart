@@ -141,6 +141,9 @@ class _WorkoutOverviewTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final setLabel = slot.setCount == 1 ? '1 set' : '${slot.setCount} sets';
+    final setStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
     final backupSummaryLabel = slot.backups.length == 1
         ? '1 backup'
         : '${slot.backups.length} backups';
@@ -211,6 +214,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                       context,
                                     ).textTheme.titleMedium,
                                   ),
+                                  const SizedBox(height: 2),
+                                  Text(setLabel, style: setStyle),
                                   if (slot.backups.isNotEmpty) ...[
                                     const SizedBox(height: 6),
                                     StChip(
@@ -221,8 +226,6 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Text(setLabel),
                             if (exerciseActionButton != null) ...[
                               const SizedBox(width: 4),
                               exerciseActionButton,
@@ -255,6 +258,8 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                       context,
                                     ).textTheme.titleMedium,
                                   ),
+                                  const SizedBox(height: 2),
+                                  Text(setLabel, style: setStyle),
                                   if (slot.backups.isNotEmpty) ...[
                                     const SizedBox(height: 6),
                                     StChip(
@@ -265,8 +270,6 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Text(setLabel),
                             if (exerciseActionButton != null) ...[
                               const SizedBox(width: 4),
                               exerciseActionButton,

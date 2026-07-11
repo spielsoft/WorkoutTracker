@@ -60,6 +60,43 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
     expect(find.text('Morning Log'), findsNothing);
   });
+
+  testWidgets('picker remains usable at narrow width with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _PickerLauncher(
+          req: SheetViewReq(
+            accountEmail: 'athlete.with.a.long.address@example.com',
+            load: (_) async => [
+              SheetEntry(
+                id: 'morning-id',
+                name: 'Morning strength and conditioning log',
+                owner: 'Athlete With A Long Name',
+                viewedAt: DateTime(2026, 7, 11),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Choose'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Choose workout sheet'), findsOneWidget);
+    expect(find.byType(SearchBar), findsOneWidget);
+  });
 }
 
 class _PickerLauncher extends StatelessWidget {

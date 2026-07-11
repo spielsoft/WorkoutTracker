@@ -73,9 +73,7 @@ class StChip extends StatelessWidget {
       label: label,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: emphasized
-              ? style.background
-              : style.background.withValues(alpha: 0.55),
+          color: style.background,
           border: Border.all(color: style.border),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -186,6 +184,10 @@ String _stateLabel(VisualSt state) {
   ColorScheme colors,
   VisualSt state,
 ) {
+  final warning = ColorScheme.fromSeed(
+    seedColor: const Color(0xFFFFB300),
+    brightness: colors.brightness,
+  );
   return switch (state) {
     VisualSt.logged => (
       background: colors.secondaryContainer,
@@ -194,21 +196,21 @@ String _stateLabel(VisualSt state) {
       icon: Icons.check_circle_outline,
     ),
     VisualSt.current => (
-      background: const Color(0xFFE7F0FF),
-      border: const Color(0xFF4B74B9),
-      foreground: const Color(0xFF173A6A),
+      background: colors.primaryContainer,
+      border: colors.primary,
+      foreground: colors.onPrimaryContainer,
       icon: Icons.radio_button_checked,
     ),
     VisualSt.backup => (
-      background: const Color(0xFFF0E9FF),
-      border: const Color(0xFF7A5DB5),
-      foreground: const Color(0xFF3F2869),
+      background: colors.tertiaryContainer,
+      border: colors.tertiary,
+      foreground: colors.onTertiaryContainer,
       icon: Icons.alt_route_outlined,
     ),
     VisualSt.warning => (
-      background: const Color(0xFFFFF6D6),
-      border: const Color(0xFFB28A00),
-      foreground: const Color(0xFF5F4600),
+      background: warning.primaryContainer,
+      border: warning.primary,
+      foreground: warning.onPrimaryContainer,
       icon: Icons.warning_amber_outlined,
     ),
     VisualSt.error => (

@@ -426,6 +426,88 @@ void main() {
       isNull,
     );
   });
+
+  testWidgets('core feature actions wrap at narrow width with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1000);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+    final setup = _setup();
+
+    await tester.pumpWidget(
+      _boundedApp(
+        WorkoutHomeScreen(
+          view: WorkoutHomeView(
+            isBusy: false,
+            setup: setup,
+            sheetLabel: 'Training plan with a long sheet name',
+          ),
+          actions: _HomeActions(),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull, reason: 'workout home overflowed');
+
+    await tester.pumpWidget(
+      _boundedApp(
+        ExerciseLibraryScreen(
+          view: LibraryView(
+            isBusy: false,
+            exercises: setup.activeSheet.canonicalExercises,
+            sheetLabel: 'Training plan with a long sheet name',
+            highlightedRow: 2,
+          ),
+          actions: _LibraryActions(),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull, reason: 'library overflowed');
+    expect(find.text('Saved'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _app(
+        CreateExerciseScreen(
+          view: const CreateExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training plan with a long sheet name',
+          ),
+          actions: _CreateActions(),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull, reason: 'authoring overflowed');
+    final cancel = tester.getRect(find.text('Cancel'));
+    final save = tester.getRect(find.text('Save exercise'));
+    expect(save.top, greaterThanOrEqualTo(cancel.top));
+
+    await tester.pumpWidget(
+      _app(
+        PlacementScreen(
+          view: PlacementView(
+            isBusy: false,
+            exercises: setup.activeSheet.canonicalExercises,
+            sheetLabel: 'Training plan with a long sheet name',
+            intent: const PlaceIntent.backup(
+              workout: 'Lower body strength day',
+              primaryRow: 3,
+              primaryExercise: 'Barbell back squat',
+            ),
+          ),
+          actions: _PlacementActions(),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull, reason: 'placement overflowed');
+    final primary = tester.getRect(find.text('Add to workout'));
+    final secondary = tester.getRect(find.text('Add another'));
+    expect(primary.top, lessThanOrEqualTo(secondary.top));
+  });
 }
 
 final class _LibraryActions implements LibraryActions {

@@ -12,7 +12,7 @@ intentionally excluded.
 - [x] Slice 4: Streamline phone set entry
 - [x] Slice 5: Make logged-set editing compact and recoverable
 - [x] Slice 6: Add scalable exercise-library search
-- [ ] Slice 7: Complete responsive light and dark visual polish
+- [x] Slice 7: Complete responsive light and dark visual polish
 - [ ] Slice 8: Clean up tests and run the release gate
 
 ## Slice 1: Make exercise log-format authoring safe and understandable
@@ -243,16 +243,16 @@ implementations.
 
 ### Acceptance criteria
 
-- [ ] The app follows system light and dark appearance.
-- [ ] Logged, current, backup, warning, and error states meet contrast guidance
+- [x] The app follows system light and dark appearance.
+- [x] Logged, current, backup, warning, and error states meet contrast guidance
       in both themes.
-- [ ] Core screens remain usable at narrow phone width and with large text.
-- [ ] Desktop content retains intentional density and maximum width.
-- [ ] Primary actions remain visually ordered after responsive wrapping.
-- [ ] No status relies on color alone.
-- [ ] Accessibility guideline tests pass for representative light and dark
+- [x] Core screens remain usable at narrow phone width and with large text.
+- [x] Desktop content retains intentional density and maximum width.
+- [x] Primary actions remain visually ordered after responsive wrapping.
+- [x] No status relies on color alone.
+- [x] Accessibility guideline tests pass for representative light and dark
       states.
-- [ ] A visual smoke pass covers the main macOS flow and representative phone
+- [x] A visual smoke pass covers the main macOS flow and representative phone
       widget sizes.
 
 ### Blocked by
