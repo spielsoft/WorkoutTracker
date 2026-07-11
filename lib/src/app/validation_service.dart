@@ -54,6 +54,9 @@ class ValSess implements WbkSess {
   @override
   Future<ValReport> execute(WbkCmd cmd) async {
     final baseline = await _baseline();
+    if (baseline.schemaViolations.isNotEmpty) {
+      return _rejectSchema(baseline);
+    }
     return switch (cmd) {
       NewHistoryCmd(:final label) => _commitActive(
         baseline.activeSheet.planNewHistoryBlock(label: label),
@@ -154,6 +157,9 @@ class ValSess implements WbkSess {
 
   Future<ValReport> _createExe(ExerciseDef exercise) async {
     final current = await _read();
+    if (current.schemaViolations.isNotEmpty) {
+      return _rejectSchema(current);
+    }
     final plan = current.activeSheet.planCanonicalAppend(exercise);
     if (plan.rowAppends.singleOrNull == null) {
       throw StateError('No exercise row was planned.');
@@ -205,6 +211,9 @@ class ValSess implements WbkSess {
     CanonicalExercise? selected,
   }) async {
     final current = await _read();
+    if (current.schemaViolations.isNotEmpty) {
+      return _rejectSchema(current);
+    }
     final exerciseRejection = selected == null
         ? null
         : _exerciseRowRejection(
@@ -232,6 +241,9 @@ class ValSess implements WbkSess {
     CanonicalExercise? selected,
   }) async {
     final current = await _read();
+    if (current.schemaViolations.isNotEmpty) {
+      return _rejectSchema(current);
+    }
     final exerciseRejection = selected == null
         ? null
         : _exerciseRowRejection(
@@ -284,6 +296,15 @@ class ValSess implements WbkSess {
 
   ValReport _reject(ValReport current, WriteRejection rejection) {
     return _rejectAll(current, [rejection]);
+  }
+
+  ValReport _rejectSchema(ValReport current) {
+    return _reject(
+      current,
+      const WriteRejection(
+        'Workbook schema is invalid. No spreadsheet changes were applied.',
+      ),
+    );
   }
 
   ValReport _rejectAll(ValReport current, Iterable<WriteRejection> rejections) {

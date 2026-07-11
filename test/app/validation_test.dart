@@ -95,6 +95,46 @@ void main() {
     },
   );
 
+  test('rejects writes when workbook schema is invalid', () async {
+    final readClient = _SequencedSpreadsheetClient([
+      _workbookSnapshot(const [], const [exercisesSheetColumns]),
+    ]);
+    final writeClient = _RecordingWriteClient();
+    final sess = _session(readClient, writeClient);
+
+    final initial = await sess.read();
+    final rejected = await sess.execute(const NewHistoryCmd('Week 1'));
+
+    expect(initial.schemaViolations, isNotEmpty);
+    expect(
+      rejected.manualRepairItems.map((item) => item.problem),
+      contains(
+        'Workbook schema is invalid. No spreadsheet changes were applied.',
+      ),
+    );
+    expect(writeClient.operations, isEmpty);
+  });
+
+  test('rechecks schema immediately before applying a write', () async {
+    final validRows = [
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+    ];
+    final readClient = _SequencedSpreadsheetClient([
+      _workbookSnapshot(validRows, const [exercisesSheetColumns]),
+      _workbookSnapshot(validRows, const []),
+    ]);
+    final writeClient = _RecordingWriteClient();
+    final sess = _session(readClient, writeClient);
+
+    await sess.read();
+    final rejected = await sess.execute(const NewHistoryCmd('Week 2'));
+
+    expect(rejected.schemaViolations, isNotEmpty);
+    expect(writeClient.operations, isEmpty);
+  });
+
   test(
     'rejects a set write when the current row identity no longer matches the visible target',
     () async {
@@ -208,7 +248,7 @@ void main() {
       final changedRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Upper', 'TRUE', ''],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Upper', '', ''],
       ];
       final readClient = _SequencedSpreadsheetClient([
         _snapshot(staleRows),
@@ -1046,6 +1086,10 @@ SheetsWorkbookSnapshot _snapshot(List<List<String>> rows) {
       SheetsGridSnapshot(
         sheet: const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
         rows: rows,
+      ),
+      SheetsGridSnapshot(
+        sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
+        rows: const [exercisesSheetColumns],
       ),
     ],
   );
