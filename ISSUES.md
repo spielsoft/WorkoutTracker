@@ -11,7 +11,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 - [x] Slice 3: Make mobile state persistence durable
 - [x] Slice 4: Exercise production composition in live Google validation
 - [x] Slice 5: Publish accurate support and privacy resources
-- [ ] Slice 6: Replace historical setup notes with a public self-build guide
+- [x] Slice 6: Replace historical setup notes with a public self-build guide
 - [ ] Slice 7: Add dependency and continuous-integration gates
 - [ ] Slice 8: Clean the release test suite
 - [ ] Slice 9: Produce and hand off the gym-test candidate
@@ -219,21 +219,21 @@ code and verified instructions.
 
 ### Acceptance criteria
 
-- [ ] A new user can identify prerequisites, clone, install dependencies,
+- [x] A new user can identify prerequisites, clone, install dependencies,
       configure Google, run tests, and build a supported target in order.
-- [ ] iOS and macOS signing, bundle identity, OAuth configuration, and clean
+- [x] iOS and macOS signing, bundle identity, OAuth configuration, and clean
       release commands are described without the owner's team identity.
-- [ ] Android is clearly deferred, with known missing SDK, package/signing,
+- [x] Android is clearly deferred, with known missing SDK, package/signing,
       OAuth, network, build, and physical-device validation work summarized.
-- [ ] Supported, experimentally viable, and currently unvalidated platforms
+- [x] Supported, experimentally viable, and currently unvalidated platforms
       are distinguished.
-- [ ] The source-MVP authorization limitations and future Picker plan are
+- [x] The source-MVP authorization limitations and future Picker plan are
       stated plainly.
-- [ ] Historical store documentation is removed or marked non-authoritative;
+- [x] Historical store documentation is removed or marked non-authoritative;
       no current guide cites it as evidence.
-- [ ] Commands, paths, bundle names, and opt-in live-test invocation match the
+- [x] Commands, paths, bundle names, and opt-in live-test invocation match the
       repository and a clean local run.
-- [ ] Documentation correctness is reviewed manually rather than enforced with
+- [x] Documentation correctness is reviewed manually rather than enforced with
       brittle prose tests.
 
 ### Blocked by

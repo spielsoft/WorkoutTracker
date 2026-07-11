@@ -18,29 +18,22 @@ is not copied to an application backend.
 
 ## Current Status
 
-The MVP is implemented in Flutter/Dart. macOS is the primary development and
-front-line testing target; iOS is the intended mobile target. Android, Linux,
-and Windows retain Flutter scaffolding but are not release-ready or validated.
+macOS and iOS are the prepared source-build targets; the repository does not
+ship signed public bundles. Android readiness is deferred, while Linux and
+Windows remain unvalidated. [`BUILDING.md`](BUILDING.md) defines the exact
+platform boundaries.
 
 The current source-MVP uses native Google Sign-In plus an in-app Flutter chooser
 that lists Sheets through the Drive API. Each public source builder is expected
 to supply a separate Google Cloud project and OAuth configuration. A future,
 separately gated migration will evaluate Google Picker with per-file access.
 
-## Build and Test
+## Build and Run
 
-Install Flutter and Xcode, then from the repository root run:
-
-```sh
-flutter pub get
-flutter analyze
-flutter test
-```
-
-Google login requires local configuration described in
-[`docs/google_sheets_development_auth.md`](docs/google_sheets_development_auth.md).
-Apple release commands and artifact locations are in
-[`COMPILE.md`](COMPILE.md).
+[`BUILDING.md`](BUILDING.md) is the authoritative clone-to-run and clean-release
+guide. It covers prerequisites, builder-owned Google configuration, tests,
+Apple signing, release artifacts, platform limits, and the opt-in live Google
+gate.
 
 ## Documentation
 
@@ -50,7 +43,7 @@ Apple release commands and artifact locations are in
 | Test tiers and live integration | [`docs/testing.md`](docs/testing.md) |
 | Google account and chooser architecture | [`docs/google_sheets_development_auth.md`](docs/google_sheets_development_auth.md) |
 | UI accessibility contract | [`docs/accessibility.md`](docs/accessibility.md) |
-| Apple release builds | [`COMPILE.md`](COMPILE.md) |
+| Clone, run, and clean release builds | [`BUILDING.md`](BUILDING.md) |
 
 ## Project Policy
 
