@@ -214,10 +214,6 @@ final class SignIn extends SheetCmd {
   const SignIn();
 }
 
-final class AuthorizeCreate extends SheetCmd {
-  const AuthorizeCreate();
-}
-
 final class CreateSheet extends SheetCmd {
   const CreateSheet(this.name);
 
@@ -419,8 +415,8 @@ class AppFlow extends ChangeNotifier implements UiFlow {
          initialText: initialText,
          initialSelection: initialSelection,
        ),
-       _accountSession = accountSession,
-       _picker = picker,
+       _showAccount = accountSession != null,
+       _hasPicker = picker != null,
        _sheetText = initialSelection?.id ?? initialText {
     _ctrl.addListener(_forward);
     _workspace.addListener(_forward);
@@ -428,8 +424,8 @@ class AppFlow extends ChangeNotifier implements UiFlow {
 
   final AppCtrl _ctrl;
   final WorkspaceCtrl _workspace;
-  final GoogleAccountSession? _accountSession;
-  final SheetPicker? _picker;
+  final bool _showAccount;
+  final bool _hasPicker;
   final SheetOpener _sheetOpener;
   AppRoute _route = AppRoute.sheet;
   AppRoute _returnRoute = AppRoute.workout;
@@ -437,8 +433,6 @@ class AppFlow extends ChangeNotifier implements UiFlow {
   CanonicalExercise? _editingExercise;
   int? _highlightedRow;
   String _sheetText;
-
-  GoogleAccountSession? get accountSession => _accountSession;
 
   @override
   AppView get view {
@@ -455,13 +449,13 @@ class AppFlow extends ChangeNotifier implements UiFlow {
         sheetText: _sheetText,
         selectedSheet: workspace.selectedSheet,
         availability: workspace.pickerAvailability,
-        showAvailability: workspace.selectedSheet == null && _picker != null,
-        showTextFallback: _picker == null || workspace.fallbackAvailable,
+        showAvailability: workspace.selectedSheet == null && _hasPicker,
+        showTextFallback: !_hasPicker || workspace.fallbackAvailable,
         hasLoadedWorkout: report != null && !report.hasBlockingIssues,
         report: report,
-        account: _accountSession?.currentAccount,
-        hasPicker: _picker != null,
-        showAccount: _accountSession != null,
+        account: workspace.accountProfile,
+        hasPicker: _hasPicker,
+        showAccount: _showAccount,
         accountMismatch: workspace.accountMismatch,
       );
     }
@@ -523,7 +517,7 @@ class AppFlow extends ChangeNotifier implements UiFlow {
 
   @override
   Future<void> restore() async {
-    final workspace = await _workspace.restoreResolved();
+    final workspace = await _workspace.restore();
     if (workspace.accountMismatch != null || workspace.error != null) {
       notifyListeners();
       return;
@@ -551,7 +545,6 @@ class AppFlow extends ChangeNotifier implements UiFlow {
       ValidateSheet() => await _validate(),
       ChooseSheet() => await _chooseSheet(),
       SignIn() => await _signIn(),
-      AuthorizeCreate() => await _authorizeCreate(),
       CreateSheet(:final name) => await _createSheet(name),
       SignOut() => await _signOut(),
       ConfirmAccount() => await _confirmAccount(),
@@ -645,15 +638,6 @@ class AppFlow extends ChangeNotifier implements UiFlow {
           : const CmdResult.done();
     } on Object catch (error) {
       return CmdResult.failed('Unable to log in to Google Sheets: $error');
-    }
-  }
-
-  Future<CmdResult> _authorizeCreate() async {
-    try {
-      final ok = await _workspace.authorizeSheetCreation();
-      return CmdResult._(ok, null);
-    } on Object catch (error) {
-      return CmdResult.failed('Unable to connect Google Sheets: $error');
     }
   }
 

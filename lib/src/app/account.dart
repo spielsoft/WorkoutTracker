@@ -16,38 +16,23 @@ class AccountMenu extends StatefulWidget {
 class _AccountMenuSt extends State<AccountMenu> {
   bool _isBusy = false;
 
-  Future<void> _signIn() async {
+  Future<void> _run(SheetCmd cmd, String failure) async {
     setState(() {
       _isBusy = true;
     });
     try {
-      await widget.run(const SignIn());
+      final result = await widget.run(cmd);
+      final message = result.message;
+      if (!result.ok && message != null && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
     } on Object catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to log in to Google Sheets: $error')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isBusy = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _signOut() async {
-    setState(() {
-      _isBusy = true;
-    });
-    try {
-      await widget.run(const SignOut());
-    } on Object catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to log out of Google Sheets: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$failure: $error')));
       }
     } finally {
       if (mounted) {
@@ -70,9 +55,9 @@ class _AccountMenuSt extends State<AccountMenu> {
       onSelected: (action) {
         switch (action) {
           case _GoogleAccountAction.signIn:
-            _signIn();
+            _run(const SignIn(), 'Unable to log in to Google Sheets');
           case _GoogleAccountAction.signOut:
-            _signOut();
+            _run(const SignOut(), 'Unable to log out of Google Sheets');
         }
       },
       itemBuilder: (context) {

@@ -7,7 +7,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final navigatorKey = GlobalKey<NavigatorState>();
   final googleAuth = NativeSignInAuthGateway();
-  final sheetSvc = SheetAccess(ScopedApiAccess(auth: googleAuth));
+  final google = ScopedApiAccess(auth: googleAuth);
+  final sheetSvc = SheetAccess(google);
   runApp(
     WorkoutTrackerApp(
       svc: sheetSvc,
@@ -15,7 +16,7 @@ Future<void> main() async {
       accountSession: googleAuth,
       appStStore: const FileAppStStore(),
       picker: DriveSheetPicker(
-        auth: googleAuth,
+        googleAccess: google,
         showPicker: (req) async {
           final context = navigatorKey.currentContext;
           if (context == null) {
@@ -23,7 +24,7 @@ Future<void> main() async {
           }
           return showSheetPickerPage(context, req);
         },
-        sheetCreator: SheetCreator(auth: googleAuth),
+        sheetCreator: SheetCreator(googleAccess: google),
       ),
     ),
   );

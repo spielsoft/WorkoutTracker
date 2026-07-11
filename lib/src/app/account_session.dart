@@ -26,22 +26,15 @@ class GoogleAccountProfile {
 abstract interface class GoogleAccountSession implements Listenable {
   GoogleAccountProfile? get currentAccount;
 
-  Future<void> restoreAccount();
+  Future<void> restoreAccount({List<String> scopes = const []});
 
   Future<bool> signIn({List<String> scopes = const []});
-
-  Future<void> switchAccount({List<String> scopes = const []});
 
   Future<void> signOut();
 }
 
 abstract interface class SignInAuthGateway implements GoogleAccountSession {
-  Future<String?> authorizationToken(
-    List<String> scopes, {
-    bool promptIfNecessary = false,
-  });
-
-  Future<Map<String, String>> authorizationHeaders(List<String> scopes);
+  Future<Map<String, String>?> authorizationHeaders(List<String> scopes);
 }
 
 class NativeSignInAuthGateway extends ChangeNotifier
@@ -63,29 +56,30 @@ class NativeSignInAuthGateway extends ChangeNotifier
   GoogleAccountProfile? get currentAccount => _currentAccountProfile;
 
   @override
-  Future<void> restoreAccount() async {
+  Future<void> restoreAccount({List<String> scopes = const []}) async {
     await _ensureInitialized();
     final lightweight = _signIn.attemptLightweightAuthentication();
     final account = lightweight == null ? null : await lightweight;
     if (account != null) {
+      if (scopes.isNotEmpty &&
+          await account.authorizationClient.authorizationHeaders(scopes) ==
+              null) {
+        await _disconnect();
+        return;
+      }
       _setAccount(account);
     }
   }
 
   @override
-  Future<String?> authorizationToken(
-    List<String> scopes, {
-    bool promptIfNecessary = false,
-  }) async {
+  Future<Map<String, String>?> authorizationHeaders(List<String> scopes) async {
     await _ensureInitialized();
+    final account = _account;
+    if (account == null) {
+      return null;
+    }
     try {
-      final account = await _currentAccount(scopes);
-      final auth =
-          await account.authorizationClient.authorizationForScopes(scopes) ??
-          (promptIfNecessary
-              ? await account.authorizationClient.authorizeScopes(scopes)
-              : null);
-      return auth?.accessToken;
+      return account.authorizationClient.authorizationHeaders(scopes);
     } on GoogleSignInException catch (error) {
       switch (error.code) {
         case GoogleSignInExceptionCode.canceled:
@@ -96,18 +90,6 @@ class NativeSignInAuthGateway extends ChangeNotifier
           rethrow;
       }
     }
-  }
-
-  @override
-  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
-    final accessToken = await authorizationToken(
-      scopes,
-      promptIfNecessary: true,
-    );
-    if (accessToken == null || accessToken.trim().isEmpty) {
-      throw StateError('Google authorization did not return Sheets headers.');
-    }
-    return {'Authorization': 'Bearer $accessToken', 'X-Goog-AuthUser': '0'};
   }
 
   @override
@@ -132,7 +114,7 @@ class NativeSignInAuthGateway extends ChangeNotifier
         case GoogleSignInExceptionCode.canceled:
         case GoogleSignInExceptionCode.interrupted:
         case GoogleSignInExceptionCode.uiUnavailable:
-          _setAccount(null);
+          await _disconnect();
           return false;
         default:
           rethrow;
@@ -141,19 +123,9 @@ class NativeSignInAuthGateway extends ChangeNotifier
   }
 
   @override
-  Future<void> switchAccount({List<String> scopes = const []}) async {
-    await _ensureInitialized();
-    await signOut();
-    if (!await signIn(scopes: scopes)) {
-      throw StateError('Google authorization was cancelled.');
-    }
-  }
-
-  @override
   Future<void> signOut() async {
     await _ensureInitialized();
-    await _signIn.signOut();
-    _setAccount(null);
+    await _disconnect();
   }
 
   Future<void> _ensureInitialized() {
@@ -175,21 +147,10 @@ class NativeSignInAuthGateway extends ChangeNotifier
     });
   }
 
-  Future<GoogleSignInAccount> _currentAccount(List<String> scopes) async {
-    final existing = _account;
-    if (existing != null) {
-      return existing;
-    }
-
-    await restoreAccount();
-    final lightweightAccount = _account;
-    final account =
-        lightweightAccount ?? await _signIn.authenticate(scopeHint: scopes);
-    _setAccount(account);
-    return account;
-  }
-
   void _setAccount(GoogleSignInAccount? account) {
+    if (_account == account) {
+      return;
+    }
     _account = account;
     _currentAccountProfile = account == null
         ? null
@@ -199,6 +160,14 @@ class NativeSignInAuthGateway extends ChangeNotifier
             photoUrl: account.photoUrl,
           );
     notifyListeners();
+  }
+
+  Future<void> _disconnect() async {
+    try {
+      await _signIn.signOut();
+    } finally {
+      _setAccount(null);
+    }
   }
 
   static String? _optional(String value) {

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:http/http.dart' as http;
@@ -25,7 +24,6 @@ void main() {
 
   test('drive picker keeps sheet choice available without sheet creation', () {
     final picker = DriveSheetPicker(
-      auth: _FakeAuthGateway(nextToken: 'native-token'),
       googleAccess: _RecordingApiAccess(_DriveListClient(files: const [])),
       showPicker: (_) async => null,
     );
@@ -39,14 +37,8 @@ void main() {
   });
 
   test(
-    'drive picker searches Google Sheets through Drive metadata scope',
+    'connected drive picker searches sheets without another login',
     () async {
-      final auth = _FakeAuthGateway(
-        currentAccount: const GoogleAccountProfile(
-          email: 'athlete@example.com',
-        ),
-        nextToken: 'native-token',
-      );
       final client = _DriveListClient(
         files: const [
           {
@@ -62,10 +54,12 @@ void main() {
           },
         ],
       );
-      final access = _RecordingApiAccess(client);
+      final access = _RecordingApiAccess(
+        client,
+        account: const GoogleAccountProfile(email: 'athlete@example.com'),
+      );
       SheetViewReq? req;
       final picker = DriveSheetPicker(
-        auth: auth,
         googleAccess: access,
         showPicker: (pickedReq) async {
           req = pickedReq;
@@ -77,8 +71,6 @@ void main() {
 
       final selected = await picker.chooseSheet();
 
-      expect(auth.tokenRequests.single.scopes, const [driveMetaScope]);
-      expect(auth.tokenRequests.single.promptIfNecessary, isTrue);
       expect(req?.accountEmail, 'athlete@example.com');
       expect(access.requestedScopes.single, [driveMetaScope]);
       expect(
@@ -109,7 +101,6 @@ void main() {
     );
     final access = _RecordingApiAccess(client);
     final picker = DriveSheetPicker(
-      auth: _FakeAuthGateway(nextToken: 'native-token'),
       googleAccess: access,
       showPicker: (req) async {
         final recent = await req.load('');
@@ -134,51 +125,6 @@ void main() {
     expect(client.requests.single.queryParameters['pageSize'], '25');
   });
 
-  test('refuses to resolve a saved sheet under a different account', () async {
-    final auth = _FakeAuthGateway(
-      currentAccount: const GoogleAccountProfile(email: 'current@example.com'),
-      nextToken: 'native-token',
-    );
-    final picker = DriveSheetPicker(
-      auth: auth,
-      googleAccess: _RecordingApiAccess(_DriveListClient(files: const [])),
-      showPicker: (_) async => null,
-    );
-
-    await expectLater(
-      picker.resolveSelection(
-        const SelectedSheet(
-          spreadsheetId: 'saved-id',
-          name: 'Saved',
-          accountEmail: 'saved@example.com',
-        ),
-      ),
-      throwsA(isA<AcctMismatchException>()),
-    );
-    expect(auth.tokenRequests, isEmpty);
-  });
-
-  test(
-    'drive picker returns null when native authorization is cancelled',
-    () async {
-      final auth = _FakeAuthGateway(nextToken: null);
-      var showPickerCalled = false;
-      final picker = DriveSheetPicker(
-        auth: auth,
-        googleAccess: _RecordingApiAccess(_DriveListClient(files: const [])),
-        showPicker: (_) async {
-          showPickerCalled = true;
-          return null;
-        },
-      );
-
-      final selected = await picker.chooseSheet();
-
-      expect(selected, isNull);
-      expect(showPickerCalled, isFalse);
-    },
-  );
-
   test(
     'Google Sheets creator runs workbook creation through scoped Sheets access',
     () async {
@@ -186,7 +132,6 @@ void main() {
       final access = _RecordingApiAccess(client);
       final initializer = _RecordingWbkInit(client);
       final creator = SheetCreator(
-        auth: _FakeAuthGateway(),
         googleAccess: access,
         initFactory: (_) => initializer,
         titleFactory: () => 'Workout Log',
@@ -207,9 +152,11 @@ void main() {
 }
 
 class _RecordingApiAccess implements ApiAccess {
-  _RecordingApiAccess(this.client);
+  _RecordingApiAccess(this.client, {this.account});
 
   final http.Client client;
+  @override
+  final GoogleAccountProfile? account;
   final List<List<String>> requestedScopes = [];
 
   @override
@@ -299,56 +246,4 @@ class _RecordingWbkInit implements WbkInit {
     initializedSpreadsheetIds.add(spreadsheetId);
     clientWasOpenDuringInitialization = !client.closed;
   }
-}
-
-class _TokenReq {
-  const _TokenReq({required this.scopes, required this.promptIfNecessary});
-
-  final List<String> scopes;
-  final bool promptIfNecessary;
-}
-
-class _FakeAuthGateway extends ChangeNotifier implements SignInAuthGateway {
-  _FakeAuthGateway({this.currentAccount, this.nextToken});
-
-  @override
-  GoogleAccountProfile? currentAccount;
-
-  final String? nextToken;
-  final List<_TokenReq> tokenRequests = [];
-
-  @override
-  Future<String?> authorizationToken(
-    List<String> scopes, {
-    bool promptIfNecessary = false,
-  }) async {
-    tokenRequests.add(
-      _TokenReq(
-        scopes: List<String>.from(scopes),
-        promptIfNecessary: promptIfNecessary,
-      ),
-    );
-    return nextToken;
-  }
-
-  @override
-  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
-    final token = await authorizationToken(scopes, promptIfNecessary: true);
-    if (token == null || token.isEmpty) {
-      throw StateError('Google authorization did not return Sheets headers.');
-    }
-    return {'Authorization': 'Bearer $token'};
-  }
-
-  @override
-  Future<void> restoreAccount() async {}
-
-  @override
-  Future<bool> signIn({List<String> scopes = const []}) async => true;
-
-  @override
-  Future<void> signOut() async {}
-
-  @override
-  Future<void> switchAccount({List<String> scopes = const []}) async {}
 }

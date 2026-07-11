@@ -87,18 +87,8 @@ class _RecordingSheetPicker implements SheetPicker {
   }
 
   @override
-  Future<bool> authorizeSheetCreation() async {
-    return true;
-  }
-
-  @override
   Future<SelectedSheet?> createSheet({String? name}) async {
     createNames.add(name);
     return null;
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    return selected;
   }
 }

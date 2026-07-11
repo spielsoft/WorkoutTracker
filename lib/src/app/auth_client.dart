@@ -10,6 +10,8 @@ const driveMetaScope = drive.DriveApi.driveMetadataReadonlyScope;
 const sheetScopes = [driveMetaScope, sheets.SheetsApi.spreadsheetsScope];
 
 abstract interface class ApiAccess {
+  GoogleAccountProfile? get account;
+
   Future<T> run<T>({
     required List<String> scopes,
     required Future<T> Function(ApiResources resources) action,
@@ -26,11 +28,17 @@ class ScopedApiAccess implements ApiAccess {
   final AuthClientFact authClientFactory;
 
   @override
+  GoogleAccountProfile? get account => auth.currentAccount;
+
+  @override
   Future<T> run<T>({
     required List<String> scopes,
     required Future<T> Function(ApiResources resources) action,
   }) async {
     final headers = await auth.authorizationHeaders(scopes);
+    if (headers == null) {
+      throw const AuthRequired();
+    }
     final client = authClientFactory(headers);
     try {
       return await action(ApiResources(client));
@@ -38,6 +46,13 @@ class ScopedApiAccess implements ApiAccess {
       client.close();
     }
   }
+}
+
+class AuthRequired implements Exception {
+  const AuthRequired();
+
+  @override
+  String toString() => 'Google Sheets login is required.';
 }
 
 class ApiResources {

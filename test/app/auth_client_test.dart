@@ -52,6 +52,24 @@ void main() {
       expect(authClient.closed, isTrue);
     },
   );
+
+  test('scoped API access requires login before running an action', () async {
+    final gateway = _RecordingSignInAuthGateway(headers: null);
+    final access = ScopedApiAccess(auth: gateway);
+    var actionRan = false;
+
+    await expectLater(
+      access.run(
+        scopes: const [sheets.SheetsApi.spreadsheetsScope],
+        action: (_) async {
+          actionRan = true;
+        },
+      ),
+      throwsA(isA<AuthRequired>()),
+    );
+
+    expect(actionRan, isFalse);
+  });
 }
 
 class _CapturingClient extends http.BaseClient {
@@ -80,35 +98,28 @@ class _CloseTrackingAuthClient extends http.BaseClient {
 
 class _RecordingSignInAuthGateway extends ChangeNotifier
     implements SignInAuthGateway {
+  _RecordingSignInAuthGateway({
+    this.headers = const {'Authorization': 'Bearer test-token'},
+  });
+
+  final Map<String, String>? headers;
   final List<List<String>> requestedScopes = [];
 
   @override
   GoogleAccountProfile? get currentAccount => null;
 
   @override
-  Future<String?> authorizationToken(
-    List<String> scopes, {
-    bool promptIfNecessary = false,
-  }) async {
+  Future<Map<String, String>?> authorizationHeaders(List<String> scopes) async {
     requestedScopes.add(scopes);
-    return 'test-token';
+    return headers;
   }
 
   @override
-  Future<void> restoreAccount() async {}
+  Future<void> restoreAccount({List<String> scopes = const []}) async {}
 
   @override
   Future<bool> signIn({List<String> scopes = const []}) async => true;
 
   @override
-  Future<void> switchAccount({List<String> scopes = const []}) async {}
-
-  @override
   Future<void> signOut() async {}
-
-  @override
-  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
-    final token = await authorizationToken(scopes, promptIfNecessary: true);
-    return {'Authorization': 'Bearer $token'};
-  }
 }

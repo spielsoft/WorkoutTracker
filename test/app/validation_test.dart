@@ -1258,29 +1258,17 @@ class _RecordingSignInAuthGateway extends ChangeNotifier
   GoogleAccountProfile? get currentAccount => null;
 
   @override
-  Future<String?> authorizationToken(
-    List<String> scopes, {
-    bool promptIfNecessary = false,
-  }) async {
+  Future<Map<String, String>?> authorizationHeaders(List<String> scopes) async {
     requestedScopes.add(scopes);
-    return 'test-token';
+    return {'Authorization': 'Bearer test-token'};
   }
 
   @override
-  Future<void> restoreAccount() async {}
+  Future<void> restoreAccount({List<String> scopes = const []}) async {}
 
   @override
   Future<bool> signIn({List<String> scopes = const []}) async => true;
 
   @override
-  Future<void> switchAccount({List<String> scopes = const []}) async {}
-
-  @override
   Future<void> signOut() async {}
-
-  @override
-  Future<Map<String, String>> authorizationHeaders(List<String> scopes) async {
-    final token = await authorizationToken(scopes, promptIfNecessary: true);
-    return {'Authorization': 'Bearer $token'};
-  }
 }

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/contract.dart';
@@ -345,53 +343,6 @@ void main() {
   );
 
   testWidgets(
-    'create sheet authorizes access before asking for a workbook name',
-    (tester) async {
-      final picker = CountingSheetPicker();
-      final authorization = Completer<bool>();
-      picker.creationAuthorization = authorization.future;
-      final service = TestValSvc.fromRows([
-        [...activeSheetFixedColumns, 'Week 1'],
-        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
-      ]);
-
-      await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
-      await tester.pump();
-
-      await tester.tap(find.text('Create sheet'));
-      await tester.pump();
-
-      expect(picker.creationAuthorizationCount, 1);
-      expect(find.text('Sheet name'), findsNothing);
-      expect(picker.createCount, 0);
-
-      authorization.complete(true);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Sheet name'), findsOneWidget);
-      final nameField = find.byKey(const ValueKey('create-spreadsheet-name'));
-      expect(nameField, findsOneWidget);
-      expect(tester.widget<TextField>(nameField).controller!.text, isNotEmpty);
-
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-
-      expect(picker.createCount, 0);
-      expect(picker.createNames, isEmpty);
-
-      await tester.tap(find.text('Create sheet'));
-      await tester.pumpAndSettle();
-      await tester.enterText(nameField, 'Custom Training Log');
-      await tester.tap(find.text('Create'));
-      await tester.pump();
-
-      expect(picker.createCount, 1);
-      expect(picker.createNames, ['Custom Training Log']);
-    },
-  );
-
-  testWidgets(
     'exposes pasted sheet validation when picker choosing is unavailable',
     (tester) async {
       const picker = DisabledPicker(
@@ -586,7 +537,6 @@ void main() {
     expect(find.text('wrong@example.com'), findsOneWidget);
     expect(find.text('Switch Google Sheets account'), findsNothing);
     expect(find.text('Log out'), findsOneWidget);
-    expect(accountSession.switchCount, 0);
     expect(accountSession.requestedScopes, isEmpty);
   });
 

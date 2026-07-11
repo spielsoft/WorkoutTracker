@@ -1,6 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:workout_tracker/sheets.dart';
-
 import 'state_store.dart';
 import 'account_session.dart';
 import 'auth_client.dart';
@@ -54,23 +52,13 @@ abstract interface class WorkspaceLifecycle implements Listenable {
 
   Future<WorkspaceUiSt> restore();
 
-  Future<WorkspaceUiSt> restoreResolved();
-
   Future<WorkspaceUiSt> persistPastedText(String text);
-
-  Future<WorkspaceUiSt> usePastedSheetText(String text);
-
-  Future<WorkspaceUiSt> adoptSelection(SelectedSheet selected);
 
   Future<WorkspaceUiSt> chooseSheet();
 
   Future<WorkspaceUiSt> signIn();
 
-  Future<bool> authorizeSheetCreation();
-
   Future<WorkspaceUiSt> createSheet({String? name});
-
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected);
 
   Future<WorkspaceUiSt> confirmAccount();
 
@@ -140,50 +128,13 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       workoutSelection: accessSt.workoutSelection,
       isCommandInFlight: _isCommandInFlight,
       isInitializing: _needsInit,
+      accountMismatch: switch (accessSt.selectedSheet ?? _initialSelection) {
+        final selected? => _mismatchFor(selected),
+        null => null,
+      },
       pickerAvailability: _availabilityFor(_picker),
     );
     notifyListeners();
-    return _state;
-  }
-
-  @override
-  Future<WorkspaceUiSt> restoreResolved() {
-    if (!_needsInit) return _restoreResolved();
-    return _runStCmd(_restoreResolved, initializing: true);
-  }
-
-  Future<WorkspaceUiSt> _restoreResolved() async {
-    final restored = await _restore();
-    final selected = restored.selectedSheet;
-    if (selected == null) {
-      return restored;
-    }
-    final mismatch = _mismatchFor(selected);
-    if (mismatch != null) {
-      _setUiSt(
-        _stateWith(
-          selectedSheet: selected,
-          pastedText: restored.pastedText,
-          workoutSelection: restored.workoutSelection,
-          accountMismatch: mismatch,
-          clearIssue: true,
-        ),
-      );
-      return _state;
-    }
-    try {
-      await _resolveAndAdopt(selected);
-    } on Object catch (error) {
-      _setUiSt(
-        _stateWith(
-          selectedSheet: selected,
-          pastedText: restored.pastedText,
-          workoutSelection: restored.workoutSelection,
-          error: 'Unable to restore the saved sheet: $error',
-          clearIssue: true,
-        ),
-      );
-    }
     return _state;
   }
 
@@ -205,31 +156,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       ),
     );
     return _state;
-  }
-
-  @override
-  Future<WorkspaceUiSt> usePastedSheetText(String text) async {
-    final persistedText = _trimmedOrNull(text);
-    await _updateSt(
-      (accessSt) => WorkspaceAccessSt(
-        sheetText: persistedText,
-        selectedSheet: null,
-        workoutSelection: null,
-      ),
-    );
-    _setUiSt(
-      _stateWith(
-        selectedSheet: null,
-        pastedText: persistedText,
-        workoutSelection: null,
-      ),
-    );
-    return _state;
-  }
-
-  @override
-  Future<WorkspaceUiSt> adoptSelection(SelectedSheet selected) async {
-    return _runStCmd(() => _adoptSelection(selected));
   }
 
   Future<WorkspaceUiSt> _adoptSelection(SelectedSheet selected) async {
@@ -260,6 +186,16 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
         return _state;
       }
       await account.signIn(scopes: sheetScopes);
+      final selected = _state.selectedSheet;
+      _setUiSt(
+        _stateWith(
+          selectedSheet: selected,
+          pastedText: _state.pastedText,
+          workoutSelection: _state.workoutSelection,
+          accountMismatch: selected == null ? null : _mismatchFor(selected),
+          clearIssue: true,
+        ),
+      );
       return _state;
     });
   }
@@ -267,7 +203,8 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   @override
   Future<WorkspaceUiSt> chooseSheet() async {
     final picker = _picker;
-    if (picker == null) {
+    if (picker == null ||
+        (_accountSession != null && _accountSession.currentAccount == null)) {
       return _state;
     }
     return _runStCmd(() async {
@@ -280,34 +217,10 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   }
 
   @override
-  Future<bool> authorizeSheetCreation() async {
-    if (_isCommandInFlight) {
-      return false;
-    }
-    _beginCommand();
-    try {
-      final picker = _picker;
-      if (picker != null) {
-        return await picker.authorizeSheetCreation();
-      }
-
-      final accountSession = _accountSession;
-      if (accountSession == null || accountSession.currentAccount != null) {
-        return true;
-      }
-      await accountSession.switchAccount(
-        scopes: GoogleApisWbkClient.writeScopes,
-      );
-      return accountSession.currentAccount != null;
-    } finally {
-      _endCommand();
-    }
-  }
-
-  @override
   Future<WorkspaceUiSt> createSheet({String? name}) async {
     final picker = _picker;
-    if (picker == null) {
+    if (picker == null ||
+        (_accountSession != null && _accountSession.currentAccount == null)) {
       return _state;
     }
     return _runStCmd(() async {
@@ -317,37 +230,6 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
       }
       return _adoptSelection(selected);
     });
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    if (_isCommandInFlight) {
-      throw StateError('Another workspace command is in progress.');
-    }
-    _beginCommand();
-    try {
-      final mismatch = _mismatchFor(selected);
-      if (mismatch != null) {
-        throw AcctMismatchException(
-          savedEmail: mismatch.savedEmail,
-          currentEmail: mismatch.currentEmail,
-        );
-      }
-      return await _resolveAndAdopt(selected);
-    } finally {
-      _endCommand();
-    }
-  }
-
-  Future<SelectedSheet> _resolveAndAdopt(SelectedSheet selected) async {
-    final picker = _picker;
-    if (picker == null) {
-      await _adoptSelection(selected);
-      return selected;
-    }
-    final resolved = await picker.resolveSelection(selected);
-    await _adoptSelection(resolved);
-    return resolved;
   }
 
   @override
@@ -365,19 +247,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
         webViewLink: mismatch.sheet.webViewLink,
         accountEmail: currentEmail,
       );
-      try {
-        await _resolveAndAdopt(rebound);
-      } on Object catch (error) {
-        _setUiSt(
-          _stateWith(
-            selectedSheet: mismatch.sheet,
-            pastedText: _state.pastedText,
-            workoutSelection: _state.workoutSelection,
-            error: 'Unable to use the saved sheet with this account: $error',
-            clearIssue: true,
-          ),
-        );
-      }
+      await _adoptSelection(rebound);
       return _state;
     });
   }
@@ -440,7 +310,7 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
 
   Future<void> _restoreAccount() async {
     try {
-      await _accountSession?.restoreAccount();
+      await _accountSession?.restoreAccount(scopes: sheetScopes);
     } on Object {
       // Startup restore is best-effort; explicit account actions report errors.
     }

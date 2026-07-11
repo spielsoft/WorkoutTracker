@@ -15,7 +15,6 @@ class FakeGoogleAccountSession extends ChangeNotifier
   final GoogleAccountProfile? restoredAccount;
   int restoreCount = 0;
   int signInCount = 0;
-  int switchCount = 0;
   int signOutCount = 0;
   final requestedScopes = <List<String>>[];
 
@@ -23,7 +22,7 @@ class FakeGoogleAccountSession extends ChangeNotifier
   GoogleAccountProfile? get currentAccount => _currentAccount;
 
   @override
-  Future<void> restoreAccount() async {
+  Future<void> restoreAccount({List<String> scopes = const []}) async {
     restoreCount += 1;
     if (restoredAccount != null) {
       _currentAccount = restoredAccount;
@@ -41,17 +40,6 @@ class FakeGoogleAccountSession extends ChangeNotifier
     );
     notifyListeners();
     return true;
-  }
-
-  @override
-  Future<void> switchAccount({List<String> scopes = const []}) async {
-    switchCount += 1;
-    requestedScopes.add(scopes);
-    _currentAccount = const GoogleAccountProfile(
-      email: 'right@example.com',
-      displayName: 'Right Account',
-    );
-    notifyListeners();
   }
 
   @override
@@ -138,18 +126,8 @@ class FakeSheetPicker implements SheetPicker {
   }
 
   @override
-  Future<bool> authorizeSheetCreation() async {
-    return true;
-  }
-
-  @override
   Future<SelectedSheet?> createSheet({String? name}) async {
     return null;
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    return selected;
   }
 }
 
@@ -169,18 +147,8 @@ class SelectingSheetPicker implements SheetPicker {
   }
 
   @override
-  Future<bool> authorizeSheetCreation() async {
-    return true;
-  }
-
-  @override
   Future<SelectedSheet?> createSheet({String? name}) async {
     return null;
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    return selected;
   }
 }
 
@@ -203,20 +171,10 @@ class CompletingSheetPicker implements SheetPicker {
   }
 
   @override
-  Future<bool> authorizeSheetCreation() async {
-    return true;
-  }
-
-  @override
   Future<SelectedSheet?> createSheet({String? name}) {
     createCount += 1;
     createNames.add(name);
     return createCompleter.future;
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    return selected;
   }
 }
 
@@ -581,9 +539,7 @@ class DeletingWorkoutExerciseAuthoringService
 class CountingSheetPicker implements SheetPicker {
   int chooseCount = 0;
   int createCount = 0;
-  int creationAuthorizationCount = 0;
   final createNames = <String?>[];
-  Future<bool>? creationAuthorization;
 
   @override
   PickerAvail get availability {
@@ -601,17 +557,6 @@ class CountingSheetPicker implements SheetPicker {
     createCount += 1;
     createNames.add(name);
     return null;
-  }
-
-  @override
-  Future<bool> authorizeSheetCreation() async {
-    creationAuthorizationCount += 1;
-    return creationAuthorization ?? true;
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    return selected;
   }
 }
 

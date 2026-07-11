@@ -62,9 +62,7 @@ void main() {
     expect(create.onPressed, isNull);
   });
 
-  testWidgets('authorizes creation before emitting the entered sheet name', (
-    tester,
-  ) async {
+  testWidgets('collects a name before creating a sheet', (tester) async {
     final cmds = <SheetCmd>[];
     await tester.pumpWidget(
       _app(_view(showTextFallback: false, account: _account), (cmd) async {
@@ -75,14 +73,14 @@ void main() {
 
     await tester.tap(find.text('Create sheet'));
     await tester.pumpAndSettle();
-    expect(cmds.single, isA<AuthorizeCreate>());
+    expect(cmds, isEmpty);
 
     final field = find.byKey(const ValueKey('create-spreadsheet-name'));
     await tester.enterText(field, 'Training Log');
     await tester.tap(find.widgetWithText(FilledButton, 'Create'));
     await tester.pumpAndSettle();
 
-    expect((cmds.last as CreateSheet).name, 'Training Log');
+    expect((cmds.single as CreateSheet).name, 'Training Log');
   });
 
   testWidgets(

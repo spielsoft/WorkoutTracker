@@ -33,9 +33,15 @@ void main() {
     }
 
     final auth = NativeSignInAuthGateway();
+    if (!await auth.signIn(scopes: sheetScopes)) {
+      throw StateError('Google Sheets login was cancelled.');
+    }
     final headers = await auth.authorizationHeaders(
       GoogleApisWbkClient.writeScopes,
     );
+    if (headers == null) {
+      throw StateError('Google Sheets login is required.');
+    }
     final authenticatedClient = AuthHeadersClient(headers: headers);
     client = authenticatedClient;
     final api = sheets.SheetsApi(authenticatedClient);

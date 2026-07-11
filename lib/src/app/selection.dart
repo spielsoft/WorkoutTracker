@@ -2,7 +2,6 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:workout_tracker/sheets.dart';
 
-import 'account_session.dart';
 import 'auth_client.dart';
 
 typedef WbkInitFact = WbkInit Function(sheets.SheetsApi api);
@@ -89,29 +88,12 @@ class SelectedSheet {
   }
 }
 
-class AcctMismatchException implements Exception {
-  const AcctMismatchException({this.savedEmail, this.currentEmail});
-
-  final String? savedEmail;
-  final String? currentEmail;
-
-  @override
-  String toString() {
-    return 'Saved sheet account ${savedEmail ?? '(none)'} does not match '
-        'the current account ${currentEmail ?? '(signed out)'}.';
-  }
-}
-
 abstract interface class SheetPicker {
   PickerAvail get availability;
 
   Future<SelectedSheet?> chooseSheet();
 
-  Future<bool> authorizeSheetCreation();
-
   Future<SelectedSheet?> createSheet({String? name});
-
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected);
 }
 
 class PickerAvail {
@@ -154,36 +136,20 @@ class DisabledPicker implements SheetPicker {
   }
 
   @override
-  Future<bool> authorizeSheetCreation() async {
-    throw StateError(reason);
-  }
-
-  @override
   Future<SelectedSheet?> createSheet({String? name}) async {
     throw StateError(reason);
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    return selected;
   }
 }
 
 class DriveSheetPicker implements SheetPicker {
   DriveSheetPicker({
-    required this.auth,
+    required this.googleAccess,
     required this.showPicker,
-    ApiAccess? googleAccess,
-    this.authClientFactory,
     this.sheetCreator,
-  }) : googleAccess =
-           googleAccess ??
-           ScopedApiAccess(auth: auth, authClientFactory: authClientFactory);
+  });
 
-  final SignInAuthGateway auth;
   final SheetViewFact showPicker;
   final ApiAccess googleAccess;
-  final AuthClientFact? authClientFactory;
   final SheetCreator? sheetCreator;
 
   @override
@@ -196,63 +162,52 @@ class DriveSheetPicker implements SheetPicker {
   }
 
   @override
-  Future<SelectedSheet?> chooseSheet() async {
-    final accessToken = await auth.authorizationToken(const [
-      driveMetaScope,
-    ], promptIfNecessary: true);
-    if (accessToken == null || accessToken.trim().isEmpty) {
-      return null;
-    }
-
-    final picked = await showPicker(
-      SheetViewReq(load: _loadSheets, accountEmail: auth.currentAccount?.email),
-    );
-    if (picked == null) {
-      return null;
-    }
-    return SelectedSheet(
-      spreadsheetId: picked.id,
-      name: picked.name,
-      webViewLink: picked.webViewLink,
-      accountEmail: auth.currentAccount?.email,
-    );
-  }
-
-  Future<List<SheetEntry>> _loadSheets(String query) {
-    final trimmed = query.trim();
+  Future<SelectedSheet?> chooseSheet() {
     return googleAccess.run(
       scopes: const [driveMetaScope],
       action: (resources) async {
-        final listed = await resources.driveApi.files.list(
-          q: _sheetQuery(trimmed),
-          orderBy: trimmed.isEmpty
-              ? 'viewedByMeTime desc,modifiedTime desc,name_natural'
-              : 'name_natural',
-          pageSize: trimmed.isEmpty ? _recentPageSize : _searchPageSize,
-          spaces: 'drive',
-          includeItemsFromAllDrives: true,
-          supportsAllDrives: true,
-          $fields:
-              'files('
-              'id,'
-              'name,'
-              'webViewLink,'
-              'owners(displayName,emailAddress),'
-              'modifiedTime,'
-              'viewedByMeTime'
-              ')',
+        final picked = await showPicker(
+          SheetViewReq(
+            load: (query) => _loadSheets(resources.driveApi, query),
+            accountEmail: googleAccess.account?.email,
+          ),
         );
-        final files = listed.files ?? const <drive.File>[];
-        final entries = <SheetEntry>[];
-        for (final file in files) {
-          final entry = _sheetEntry(file);
-          if (entry != null) {
-            entries.add(entry);
-          }
+        if (picked == null) {
+          return null;
         }
-        return entries;
+        return SelectedSheet(
+          spreadsheetId: picked.id,
+          name: picked.name,
+          webViewLink: picked.webViewLink,
+          accountEmail: googleAccess.account?.email,
+        );
       },
     );
+  }
+
+  Future<List<SheetEntry>> _loadSheets(drive.DriveApi api, String query) async {
+    final trimmed = query.trim();
+    final listed = await api.files.list(
+      q: _sheetQuery(trimmed),
+      orderBy: trimmed.isEmpty
+          ? 'viewedByMeTime desc,modifiedTime desc,name_natural'
+          : 'name_natural',
+      pageSize: trimmed.isEmpty ? _recentPageSize : _searchPageSize,
+      spaces: 'drive',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true,
+      $fields:
+          'files('
+          'id,'
+          'name,'
+          'webViewLink,'
+          'owners(displayName,emailAddress),'
+          'modifiedTime,'
+          'viewedByMeTime'
+          ')',
+    );
+    final files = listed.files ?? const <drive.File>[];
+    return [for (final file in files) ?_sheetEntry(file)];
   }
 
   @override
@@ -263,87 +218,6 @@ class DriveSheetPicker implements SheetPicker {
     }
     return creator.createSheet(name: name);
   }
-
-  @override
-  Future<bool> authorizeSheetCreation() async {
-    if (sheetCreator == null) {
-      throw StateError('Google Drive sheet creation is not connected yet.');
-    }
-    final accessToken = await auth.authorizationToken(
-      GoogleApisWbkInit.writeScopes,
-      promptIfNecessary: true,
-    );
-    return accessToken != null && accessToken.trim().isNotEmpty;
-  }
-
-  @override
-  Future<SelectedSheet> resolveSelection(SelectedSheet selected) async {
-    final savedEmail = _normalizedEmail(selected.accountEmail);
-    final currentEmail = _normalizedEmail(auth.currentAccount?.email);
-    if (savedEmail != null && savedEmail != currentEmail) {
-      throw AcctMismatchException(
-        savedEmail: selected.accountEmail,
-        currentEmail: auth.currentAccount?.email,
-      );
-    }
-    return _pickedSheet(
-      selected.id,
-      fallbackName: selected.name,
-      fallbackUrl: selected.webViewLink,
-      accountEmail: selected.accountEmail ?? auth.currentAccount?.email,
-      promptIfNecessary: false,
-    );
-  }
-
-  Future<SelectedSheet> _pickedSheet(
-    String spreadsheetId, {
-    String? fallbackName,
-    String? fallbackUrl,
-    required String? accountEmail,
-    required bool promptIfNecessary,
-  }) async {
-    final accessToken = await auth.authorizationToken(
-      GoogleApisWbkClient.writeScopes,
-      promptIfNecessary: promptIfNecessary,
-    );
-    if (accessToken == null || accessToken.trim().isEmpty) {
-      throw StateError(
-        'The current account could not authorize the saved sheet.',
-      );
-    }
-
-    final client = (authClientFactory ?? _authClientFactory)({
-      'Authorization': 'Bearer $accessToken',
-      'X-Goog-AuthUser': '0',
-    });
-    try {
-      final api = sheets.SheetsApi(client);
-      final spreadsheet = await api.spreadsheets.get(
-        spreadsheetId,
-        includeGridData: false,
-        $fields: 'spreadsheetId,spreadsheetUrl,properties/title',
-      );
-      final title = spreadsheet.properties?.title?.trim();
-      return SelectedSheet(
-        spreadsheetId: spreadsheetId,
-        name: title == null || title.isEmpty
-            ? fallbackName ?? spreadsheetId
-            : title,
-        webViewLink:
-            spreadsheet.spreadsheetUrl ??
-            fallbackUrl ??
-            sheetUrl(spreadsheetId),
-        accountEmail: accountEmail,
-      );
-    } finally {
-      client.close();
-    }
-  }
-}
-
-String? _normalizedEmail(String? email) {
-  final normalized = email?.trim().toLowerCase();
-  return normalized == null || normalized.isEmpty ? null : normalized;
 }
 
 SheetEntry? _sheetEntry(drive.File file) {
@@ -392,23 +266,14 @@ String _escapeDriveQuery(String value) {
   return value.replaceAll('\\', r'\\').replaceAll("'", r"\'");
 }
 
-AuthClientFact _authClientFactory = (headers) =>
-    AuthHeadersClient(headers: headers);
-
 class SheetCreator {
   SheetCreator({
-    required this.auth,
-    AuthClientFact? authClientFactory,
-    ApiAccess? googleAccess,
+    required this.googleAccess,
     WbkInitFact? initFactory,
     String Function()? titleFactory,
-  }) : googleAccess =
-           googleAccess ??
-           ScopedApiAccess(auth: auth, authClientFactory: authClientFactory),
-       initFactory = initFactory ?? ((api) => GoogleApisWbkInit(api)),
+  }) : initFactory = initFactory ?? ((api) => GoogleApisWbkInit(api)),
        titleFactory = titleFactory ?? defaultSheetTitle;
 
-  final SignInAuthGateway auth;
   final ApiAccess googleAccess;
   final WbkInitFact initFactory;
   final String Function() titleFactory;
@@ -439,7 +304,7 @@ class SheetCreator {
           spreadsheetId: spreadsheetId,
           name: created.properties?.title ?? title,
           webViewLink: created.spreadsheetUrl ?? sheetUrl(spreadsheetId),
-          accountEmail: auth.currentAccount?.email,
+          accountEmail: googleAccess.account?.email,
         );
       },
     );

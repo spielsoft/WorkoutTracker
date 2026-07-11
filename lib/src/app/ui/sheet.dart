@@ -42,16 +42,6 @@ class _SheetScreenSt extends State<SheetScreen> {
   }
 
   Future<void> _createSheet() async {
-    final auth = await widget.run(const AuthorizeCreate());
-    if (!mounted || !auth.ok) {
-      final message = auth.message;
-      if (message != null && mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
-      }
-      return;
-    }
     final initial = defaultSheetTitle();
     final value = await showDialog<String>(
       context: context,
