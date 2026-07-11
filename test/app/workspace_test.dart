@@ -67,6 +67,104 @@ void main() {
     },
   );
 
+  test('reports a failed restore while preserving session defaults', () async {
+    final workspace = WorkspaceCtrl(
+      accessStOwner: _FailingWorkspaceStOwner(failRestore: true),
+      initialText: 'session-sheet-id',
+      initialSelection: const SelectedSheet(
+        spreadsheetId: 'session-sheet-id',
+        name: 'Session Workouts',
+      ),
+    );
+
+    final restored = await workspace.restore();
+
+    expect(restored.selectedSheet?.id, 'session-sheet-id');
+    expect(restored.pastedText, 'session-sheet-id');
+    expect(
+      restored.error,
+      'Saved workspace could not be restored. Your current session can '
+      'continue, but previous choices may need to be selected again.',
+    );
+  });
+
+  test(
+    'keeps pasted text after a failed save and clears the error on recovery',
+    () async {
+      final accessSt = _FailingWorkspaceStOwner(failUpdates: true);
+      final workspace = WorkspaceCtrl(accessStOwner: accessSt);
+
+      final failed = await workspace.persistPastedText(' session-sheet-id ');
+
+      expect(failed.pastedText, 'session-sheet-id');
+      expect(
+        failed.error,
+        'This choice could not be saved. It remains available for this session '
+        'but may be lost when the app closes.',
+      );
+      expect(accessSt.value.sheetText, isNull);
+
+      accessSt.failUpdates = false;
+      final recovered = await workspace.persistPastedText('saved-sheet-id');
+
+      expect(recovered.pastedText, 'saved-sheet-id');
+      expect(recovered.error, isNull);
+      expect(accessSt.value.sheetText, 'saved-sheet-id');
+    },
+  );
+
+  test('keeps a chosen sheet after its persistence write fails', () async {
+    final accessSt = _FailingWorkspaceStOwner(failUpdates: true);
+    final workspace = WorkspaceCtrl(
+      accessStOwner: accessSt,
+      picker: _CommandSheetPicker(
+        chooseResult: const SelectedSheet(
+          spreadsheetId: 'chosen-sheet-id',
+          name: 'Chosen Workouts',
+        ),
+      ),
+    );
+
+    final failed = await workspace.chooseSheet();
+
+    expect(failed.selectedSheet?.id, 'chosen-sheet-id');
+    expect(failed.pastedText, 'chosen-sheet-id');
+    expect(failed.error, isNotNull);
+    expect(accessSt.value.selectedSheet, isNull);
+  });
+
+  test(
+    'keeps workout setup after a failed save and clears the error on recovery',
+    () async {
+      final accessSt = _FailingWorkspaceStOwner(failUpdates: true);
+      final workspace = WorkspaceCtrl(accessStOwner: accessSt);
+      const first = WorkoutSelectionSt(
+        spreadsheetId: 'sheet-id',
+        workout: 'Legs',
+        historyBlock: 'Week 1',
+      );
+
+      final failed = await workspace.persistWorkoutSelection(first);
+
+      expect(failed.workoutSelection, first);
+      expect(workspace.workoutSelectionFor('sheet-id'), first);
+      expect(failed.error, isNotNull);
+      expect(accessSt.value.workoutSelection, isNull);
+
+      accessSt.failUpdates = false;
+      const second = WorkoutSelectionSt(
+        spreadsheetId: 'sheet-id',
+        workout: 'Upper',
+        historyBlock: 'Week 2',
+      );
+      final recovered = await workspace.persistWorkoutSelection(second);
+
+      expect(recovered.workoutSelection, second);
+      expect(recovered.error, isNull);
+      expect(accessSt.value.workoutSelection, second);
+    },
+  );
+
   test(
     'keeps selection commands blocked until restoration completes',
     () async {
@@ -343,6 +441,37 @@ class _DelayedWorkspaceStOwner implements WorkspaceStOwner {
   Future<WorkspaceAccessSt> update(
     WorkspaceAccessSt Function(WorkspaceAccessSt current) updateFn,
   ) async => _value = updateFn(_value);
+}
+
+class _FailingWorkspaceStOwner implements WorkspaceStOwner {
+  _FailingWorkspaceStOwner({
+    this.failRestore = false,
+    this.failUpdates = false,
+  });
+
+  bool failRestore;
+  bool failUpdates;
+  WorkspaceAccessSt _value = const WorkspaceAccessSt();
+
+  @override
+  WorkspaceAccessSt get value => _value;
+
+  @override
+  Future<void> clear() async => _value = const WorkspaceAccessSt();
+
+  @override
+  Future<WorkspaceAccessSt> restore() async {
+    if (failRestore) throw StateError('restore failed');
+    return _value;
+  }
+
+  @override
+  Future<WorkspaceAccessSt> update(
+    WorkspaceAccessSt Function(WorkspaceAccessSt current) updateFn,
+  ) async {
+    if (failUpdates) throw StateError('write failed');
+    return _value = updateFn(_value);
+  }
 }
 
 class _CommandSheetPicker implements SheetPicker {

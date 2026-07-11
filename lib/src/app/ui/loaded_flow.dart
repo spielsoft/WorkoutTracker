@@ -45,43 +45,47 @@ final class LoadedFlow
   CanonicalExercise? _editing;
   int? _highlightedRow;
 
-  AppView view({required bool busy, required String sheetLabel}) {
+  AppView view({
+    required bool busy,
+    required String sheetLabel,
+    String? error,
+  }) {
     final setup = _ctrl.workoutSetup!;
     return switch (_route) {
       _Route.setup => SetupView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? error,
         setup: setup,
         sheetLabel: sheetLabel,
       ),
       _Route.workout => WorkoutView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? error,
         setup: setup,
         sheetLabel: sheetLabel,
       ),
       _Route.library => LibraryView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? error,
         exercises: setup.activeSheet.canonicalExercises,
         sheetLabel: sheetLabel,
         highlightedRow: _highlightedRow,
       ),
       _Route.create => CreateExerciseView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? error,
         sheetLabel: sheetLabel,
         origin: _createOrigin,
       ),
       _Route.edit => EditExerciseView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? error,
         sheetLabel: sheetLabel,
         exercise: _editing!,
       ),
       _Route.placement => PlacementView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? error,
         exercises: setup.activeSheet.canonicalExercises,
         sheetLabel: sheetLabel,
         intent: _placeIntent!,
@@ -89,7 +93,7 @@ final class LoadedFlow
       ),
       _Route.log => LogView(
         isBusy: busy,
-        error: _ctrl.error,
+        error: _ctrl.error ?? error,
         activeSheet: setup.activeSheet,
         sheetLabel: sheetLabel,
         target: setup.loggingTarget!,

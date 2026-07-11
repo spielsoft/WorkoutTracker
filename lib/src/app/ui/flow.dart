@@ -72,12 +72,16 @@ final class AppFlow extends ChangeNotifier {
       );
     }
     final label = workspace.selectedSheet?.displayLabel ?? _manualSheetLabel;
-    return loaded.view(busy: busy, sheetLabel: label);
+    return loaded.view(
+      busy: busy,
+      sheetLabel: label,
+      error: _ctrl.error ?? workspace.error,
+    );
   }
 
   Future<void> restore() async {
     final workspace = await _workspace.restore();
-    if (workspace.accountMismatch != null || workspace.error != null) {
+    if (workspace.accountMismatch != null) {
       notifyListeners();
       return;
     }
@@ -184,7 +188,7 @@ final class AppFlow extends ChangeNotifier {
 
   Future<CmdResult> _confirmAccount() async {
     final workspace = await _workspace.confirmAccount();
-    if (workspace.accountMismatch != null || workspace.error != null) {
+    if (workspace.accountMismatch != null) {
       return CmdResult.failed(workspace.error);
     }
     final selected = workspace.selectedSheet;
