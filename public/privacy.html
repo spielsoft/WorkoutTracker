@@ -5,247 +5,190 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       name="description"
-      content="WorkoutTracker privacy policy for App Store Connect and Google OAuth consent."
+      content="WorkoutTracker privacy policy covering Google authorization, local app state, and user-owned workout Sheets."
     >
+    <meta name="theme-color" content="#07100d">
     <title>WorkoutTracker Privacy Policy</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --ink: #17211f;
-        --muted: #52615d;
-        --line: #d7dfda;
-        --paper: #fbfcfa;
-        --panel: #ffffff;
-        --accent: #146c5c;
-        --accent-soft: #e6f3ef;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        background: var(--paper);
-        color: var(--ink);
-        font-family:
-          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
-        line-height: 1.6;
-      }
-
-      header,
-      main,
-      footer {
-        width: min(860px, calc(100% - 32px));
-        margin: 0 auto;
-      }
-
-      header {
-        padding: 42px 0 24px;
-      }
-
-      nav {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: center;
-        padding-bottom: 44px;
-      }
-
-      a {
-        color: var(--accent);
-        font-weight: 650;
-        text-decoration: none;
-      }
-
-      a:hover {
-        text-decoration: underline;
-      }
-
-      .brand {
-        color: var(--ink);
-        font-weight: 800;
-      }
-
-      h1 {
-        margin: 0;
-        font-size: clamp(2rem, 6vw, 3.75rem);
-        line-height: 1;
-        letter-spacing: 0;
-      }
-
-      h2 {
-        margin: 0 0 10px;
-        font-size: 1.28rem;
-      }
-
-      p {
-        margin: 0;
-      }
-
-      .updated {
-        margin-top: 16px;
-        color: var(--muted);
-      }
-
-      .summary {
-        margin-top: 22px;
-        padding: 18px 20px;
-        border: 1px solid var(--line);
-        background: var(--accent-soft);
-      }
-
-      main {
-        display: grid;
-        gap: 18px;
-        padding: 8px 0 42px;
-      }
-
-      section {
-        padding: 22px;
-        border: 1px solid var(--line);
-        background: var(--panel);
-      }
-
-      ul {
-        margin: 0;
-        padding-left: 1.15rem;
-      }
-
-      li + li {
-        margin-top: 8px;
-      }
-
-      code {
-        overflow-wrap: anywhere;
-      }
-
-      footer {
-        padding: 28px 0 44px;
-        border-top: 1px solid var(--line);
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-
-      @media (max-width: 680px) {
-        header {
-          padding-top: 28px;
-        }
-
-        nav {
-          padding-bottom: 34px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/site.css">
   </head>
   <body>
-    <header>
-      <nav aria-label="Site">
-        <a class="brand" href="/">WorkoutTracker</a>
-        <a href="/">Support</a>
+    <header class="shell">
+      <nav class="site-nav" aria-label="Site">
+        <a class="brand" href="/" aria-label="WorkoutTracker home">
+          <span class="brand-mark" aria-hidden="true">WT</span>
+          <span>WorkoutTracker</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="/privacy.html" aria-current="page">Privacy</a></li>
+          <li><a href="/terms.html">Terms</a></li>
+          <li class="optional"><a href="/">Home</a></li>
+        </ul>
       </nav>
-      <h1>WorkoutTracker Privacy Policy</h1>
-      <p class="updated">Effective date: July 11, 2026</p>
-      <p class="summary">
-        WorkoutTracker stores durable workout data in a user-owned Google Sheet,
-        while limited app state is stored locally on your device. The app
-        communicates directly with Google APIs.
-      </p>
+
+      <div class="legal-hero">
+        <p class="eyebrow">Clear by design</p>
+        <h1>Privacy Policy</h1>
+        <p class="lede">
+          Your workout belongs in a Sheet you own—not in a WorkoutTracker
+          database. This policy explains the limited information the app uses
+          to connect your device to Google Sheets.
+        </p>
+        <p class="updated">Effective date: July 11, 2026</p>
+      </div>
     </header>
 
-    <main>
-      <section>
-        <h2>Overview</h2>
+    <main class="legal-grid shell">
+      <aside class="callout" aria-label="Privacy summary">
         <p>
-          WorkoutTracker uses native Google Sign-In for account access. Its
-          custom in-app chooser uses the Google Drive API to discover Google
-          Sheets. The app then uses the Google Sheets API to create, validate,
-          read, and write the Sheet you choose. This chooser runs in the app;
-          these hosted pages do not participate in sign-in or sheet selection.
+          <strong>In short:</strong> WorkoutTracker has no workout-data backend,
+          advertising network, or analytics SDK. Durable workout data stays in
+          your user-owned Google Sheet. Limited workspace preferences stay on
+          your device.
+        </p>
+      </aside>
+
+      <section class="legal-card">
+        <h2>1. Scope</h2>
+        <p>
+          This policy applies to the WorkoutTracker applications for iOS and
+          macOS and to these public support pages. WorkoutTracker lets you sign
+          in with Google, select or create your own Google Sheet, organize your
+          workouts, and write workout results back to that Sheet.
         </p>
       </section>
 
-      <section>
-        <h2>Data and Storage</h2>
+      <section class="legal-card">
+        <h2>2. Information the App Processes</h2>
         <ul>
           <li>
-            <strong>Google account identity:</strong> Google Sign-In provides
-            your email address and may provide your display name and profile
-            photo so the app can show and bind the active account.
+            <strong>Google account identity.</strong> Native Google Sign-In may
+            provide your email address, display name, and profile photo. The app
+            uses these details to show the connected account and keep a saved
+            Sheet bound to the account that selected it.
           </li>
           <li>
-            <strong>Local app state:</strong> the app stores application state
-            in its platform application-support directory. This can include the
-            selected Sheet's ID, name, link, account email, the last-entered
-            Sheet identifier or link, and the last workout and history choices.
+            <strong>Google Sheet metadata.</strong> The app reads limited Drive
+            metadata such as Sheet names, identifiers, links, and modification
+            times so you can find and select a Sheet.
           </li>
           <li>
-            <strong>User-owned Google Sheet:</strong> workout data, exercise
-            names, targets, notes, and set history remain in the Sheet you
-            choose or create in your Google Drive. That Sheet is the durable
-            source of truth.
+            <strong>Google Sheet content.</strong> The app reads and writes the
+            selected Sheet to validate its structure, show workouts and
+            exercises, create visible history, and apply changes you request.
           </li>
           <li>
-            <strong>Hosted pages:</strong> Firebase Hosting publishes only
-            these static support and privacy pages. The pages do not load a
-            Firebase database, storage, authentication, or analytics client.
+            <strong>Local app state.</strong> The app may store the selected
+            Sheet's ID, name, link, account email, last entered Sheet identifier,
+            and recent workout or history choices in the platform's application
+            support storage.
+          </li>
+          <li>
+            <strong>Store purchase information.</strong> If you obtain the app
+            through the Apple App Store or another app store, that store handles
+            payment and purchase records under its own privacy policy.
+            WorkoutTracker does not receive your full payment-card details.
           </li>
         </ul>
       </section>
 
-      <section>
-        <h2>Google Authorization Scopes</h2>
+      <section class="legal-card">
+        <h2>3. Google Permissions</h2>
+        <p>WorkoutTracker currently requests these Google authorization scopes:</p>
         <ul>
           <li>
             <code>https://www.googleapis.com/auth/drive.metadata.readonly</code>
-            lets the custom chooser discover recent or searched Google Sheets
-            and read their file metadata. It does not grant Drive file-content
-            access.
+            allows the app to find Google Sheets and read their file metadata.
+            It does not grant general Drive file-content access.
           </li>
           <li>
-            <code>https://www.googleapis.com/auth/spreadsheets</code> lets the
-            app create, validate, read and write spreadsheet content needed for
-            workout authoring and logging.
+            <code>https://www.googleapis.com/auth/spreadsheets</code> allows the
+            app to create, validate, read, and write spreadsheet content needed
+            for workout setup and logging.
           </li>
         </ul>
-      </section>
-
-      <section>
-        <h2>How the App Uses Data</h2>
         <p>
-          Account identity is used to display the signed-in account and prevent
-          a saved Sheet from silently moving to another account. Sheet metadata
-          is used to present chooser results. Spreadsheet content is used to
-          validate the workbook, show workouts and history, and apply edits you
-          request. WorkoutTracker does not use this data for advertising or
-          sell it. The project maintainer does not receive it through these
-          hosted pages.
+          Authentication credentials are handled by Google Sign-In and the
+          platform's protected storage. Do not send credentials or authorization
+          tokens to WorkoutTracker support.
         </p>
       </section>
 
-      <section>
-        <h2>Deletion and Revocation</h2>
+      <section class="legal-card">
+        <h2>4. How Information Is Used and Shared</h2>
+        <p>
+          WorkoutTracker uses account identity to display and preserve the
+          active account, Sheet metadata to help you choose a workbook, and
+          Sheet content to perform the workout actions you request. The app
+          communicates directly with Google APIs from your device.
+        </p>
+        <p>
+          WorkoutTracker does not sell personal information, use workout data
+          for advertising, or send workout data to a maintainer-operated
+          backend. Information may be processed by Google when you use Google
+          Sign-In, Drive, or Sheets, and by an app store when it distributes or
+          sells the app, under those providers' terms and privacy policies.
+        </p>
+      </section>
+
+      <section class="legal-card">
+        <h2>5. Hosted Pages</h2>
+        <p>
+          Firebase Hosting serves the static homepage, Privacy Policy, and
+          proposed Terms. These pages do not load Firebase Authentication,
+          Analytics, a database, cloud storage, advertising code, or a Google
+          sign-in flow. The hosting provider may process ordinary network
+          request information needed to deliver and protect the pages.
+        </p>
+      </section>
+
+      <section class="legal-card">
+        <h2>6. Retention and Your Controls</h2>
         <ul>
           <li>
-            Sign out in WorkoutTracker to clear its saved workspace selection
-            and locally cached workspace state.
+            Your Google Sheet remains under your Google account's control. You
+            can view, edit, export, share, or delete it in Google Drive or
+            Google Sheets at any time.
           </li>
           <li>
-            View, edit, export, share, or delete your user-owned Google Sheet in
-            Google Drive or Google Sheets. Deleting app-local state does not
-            delete the Sheet.
+            Signing out of WorkoutTracker clears its saved Google workspace
+            selection. Removing the app clears app-local data according to the
+            operating system's behavior. Neither action deletes your Sheet.
           </li>
           <li>
-            Revoke WorkoutTracker's Google access from the third-party access
-            controls in your Google Account. Revocation stops future authorized
-            app requests but does not delete your Sheet or other Google data.
+            You can revoke WorkoutTracker's access in your Google Account's
+            third-party access settings. Revocation stops future authorized
+            requests but does not delete your Sheet.
           </li>
         </ul>
       </section>
 
-      <section>
-        <h2>Support</h2>
+      <section class="legal-card">
+        <h2>7. Security and Your Responsibilities</h2>
+        <p>
+          WorkoutTracker validates workbook structure before app-directed
+          writes and preserves set text it cannot parse. No software can
+          guarantee absolute security or prevent every spreadsheet mistake.
+          Protect your device and Google account, review sharing permissions,
+          and keep backups appropriate for your needs.
+        </p>
+      </section>
+
+      <section class="legal-card">
+        <h2>8. Children</h2>
+        <p>
+          WorkoutTracker is a general fitness logging tool and is not directed
+          to children under 13. A parent or guardian should supervise a minor's
+          use where required by applicable law.
+        </p>
+      </section>
+
+      <section class="legal-card">
+        <h2>9. Changes and Contact</h2>
+        <p>
+          This policy may be updated as the app, its permissions, or its
+          distribution changes. The effective date above will change when a
+          revised policy is published.
+        </p>
         <p>
           For privacy questions, access requests, or support, email
           <a href="mailto:ian.spielman@gmail.com">ian.spielman@gmail.com</a>.
@@ -254,8 +197,16 @@
       </section>
     </main>
 
-    <footer>
-      <p><a href="/">Return to WorkoutTracker support</a></p>
+    <footer class="site-footer shell">
+      <p>
+        This policy should be read with the
+        <a href="/terms.html">proposed WorkoutTracker Terms</a>.
+      </p>
+      <nav class="footer-links" aria-label="Legal">
+        <a href="/">Home</a>
+        <a href="/terms.html">Terms</a>
+        <a href="mailto:ian.spielman@gmail.com">Contact</a>
+      </nav>
     </footer>
   </body>
 </html>

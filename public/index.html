@@ -5,224 +5,173 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       name="description"
-      content="WorkoutTracker support page for a gym logging app backed by a user-owned Google Sheet."
+      content="WorkoutTracker is a focused iPhone and Mac gym logger backed by a user-owned Google Sheet."
     >
-    <title>WorkoutTracker Support</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --ink: #17211f;
-        --muted: #52615d;
-        --line: #d7dfda;
-        --paper: #fbfcfa;
-        --panel: #ffffff;
-        --accent: #146c5c;
-        --accent-soft: #e6f3ef;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        background: var(--paper);
-        color: var(--ink);
-        font-family:
-          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
-        line-height: 1.55;
-      }
-
-      header,
-      main,
-      footer {
-        width: min(920px, calc(100% - 32px));
-        margin: 0 auto;
-      }
-
-      header {
-        padding: 48px 0 28px;
-      }
-
-      nav {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: center;
-        padding-bottom: 52px;
-      }
-
-      a {
-        color: var(--accent);
-        font-weight: 650;
-        text-decoration: none;
-      }
-
-      a:hover {
-        text-decoration: underline;
-      }
-
-      .brand {
-        color: var(--ink);
-        font-size: 1rem;
-        font-weight: 800;
-        letter-spacing: 0;
-      }
-
-      h1 {
-        max-width: 760px;
-        margin: 0;
-        font-size: clamp(2.25rem, 7vw, 4.5rem);
-        line-height: 0.96;
-        letter-spacing: 0;
-      }
-
-      h2 {
-        margin: 0 0 12px;
-        font-size: 1.35rem;
-        line-height: 1.2;
-      }
-
-      p {
-        margin: 0;
-      }
-
-      .lede {
-        max-width: 680px;
-        margin-top: 22px;
-        color: var(--muted);
-        font-size: 1.15rem;
-      }
-
-      .notice {
-        margin-top: 28px;
-        padding: 18px 20px;
-        border: 1px solid var(--line);
-        background: var(--accent-soft);
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-        padding: 28px 0 42px;
-      }
-
-      section {
-        min-width: 0;
-        padding: 22px;
-        border: 1px solid var(--line);
-        background: var(--panel);
-      }
-
-      ul {
-        margin: 0;
-        padding-left: 1.15rem;
-      }
-
-      li + li {
-        margin-top: 8px;
-      }
-
-      footer {
-        padding: 28px 0 44px;
-        border-top: 1px solid var(--line);
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-
-      @media (max-width: 760px) {
-        header {
-          padding-top: 28px;
-        }
-
-        nav {
-          padding-bottom: 36px;
-        }
-
-        .grid {
-          grid-template-columns: 1fr;
-          padding-top: 20px;
-        }
-      }
-    </style>
+    <meta name="theme-color" content="#07100d">
+    <title>WorkoutTracker — Your workout. Your sheet.</title>
+    <link rel="stylesheet" href="/site.css">
   </head>
   <body>
-    <header>
-      <nav aria-label="Site">
-        <a class="brand" href="/">WorkoutTracker</a>
-        <a href="/privacy.html">Privacy Policy</a>
-      </nav>
-      <h1>Fast workout logging over your own spreadsheet.</h1>
-      <p class="lede">
-        WorkoutTracker is a lightweight gym logging app for people who want a
-        focused phone and desktop interface without giving up their
-        human-readable workout sheet.
-      </p>
-      <p class="notice">
-        Durable workout data is stored in a user-owned Google Sheet in the
-        user's Google Drive. WorkoutTracker does not run a workout data server
-        and does not create a separate WorkoutTracker database.
-      </p>
-    </header>
-
-    <main>
-      <div class="grid" aria-label="Support topics">
-        <section>
-          <h2>What It Does</h2>
-          <p>
-            After native Google Sign-In, the app uses a custom in-app chooser
-            to find or create a workout spreadsheet. It validates the sheet,
-            presents workouts and history, and writes compact set notation back
-            to visible cells.
-          </p>
-        </section>
-
-        <section>
-          <h2>Your Sheet</h2>
-          <p>
-            The Google Sheet remains the source of truth. You can open and edit
-            it directly in Google Sheets when the app is unavailable.
-          </p>
-        </section>
-
-        <section>
-          <h2>Support</h2>
-          <p>
-            <a href="mailto:ian.spielman@gmail.com">Email WorkoutTracker support</a>
-            to request help or report a problem. Include your platform, app
-            version, what you expected, and what happened. Do not send Google
-            credentials or private workout data.
-          </p>
-        </section>
-      </div>
-
-      <section aria-labelledby="data-model-heading">
-        <h2 id="data-model-heading">Data Model</h2>
-        <ul>
-          <li>
-            Workout rows and history live in the first tab of the selected
-            spreadsheet.
-          </li>
-          <li>
-            Canonical exercise metadata lives in the sheet's Exercises tab.
-          </li>
-          <li>Unparseable set cells are preserved as text instead of discarded.</li>
-          <li>
-            Firebase Hosting serves only these static support and privacy
-            pages. The app communicates directly with Google APIs from your
-            device.
+    <header class="shell">
+      <nav class="site-nav" aria-label="Site">
+        <a class="brand" href="/" aria-label="WorkoutTracker home">
+          <span class="brand-mark" aria-hidden="true">WT</span>
+          <span>WorkoutTracker</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="/privacy.html">Privacy</a></li>
+          <li><a href="/terms.html">Terms</a></li>
+          <li class="optional">
+            <a href="https://github.com/ispielma/WorkoutTracker">Source</a>
           </li>
         </ul>
+      </nav>
+
+      <div class="hero">
+        <div>
+          <p class="eyebrow">Focused gym logging</p>
+          <h1>Log the set.<br>Keep the sheet.</h1>
+          <p class="lede">
+            WorkoutTracker turns a user-owned Google Sheet into a fast,
+            purpose-built workout logger for iPhone and Mac. Your program stays
+            readable, editable, and yours.
+          </p>
+        </div>
+
+        <figure class="screen-shot">
+          <img
+            src="/workout-screen.png"
+            alt="WorkoutTracker workout screen showing a Lower Dominant and Upper Push exercise list"
+            width="1612"
+            height="1878"
+            fetchpriority="high"
+          >
+        </figure>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="section" aria-labelledby="designed-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Designed for the set in front of you</p>
+            <h2 id="designed-heading">Less app between you and the workout.</h2>
+          </div>
+          <p>
+            Select or create your own Google Sheet, organize exercises into
+            workouts, and record results in a compact interface. WorkoutTracker
+            handles the workflow while the Sheet remains the durable record.
+          </p>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <span class="card-icon" aria-hidden="true">01</span>
+            <h3>Your data stays useful</h3>
+            <p>
+              Workout rows, targets, notes, and history remain visible in a
+              normal Google Sheet that you can inspect and edit directly.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-icon" aria-hidden="true">02</span>
+            <h3>Fast set entry</h3>
+            <p>
+              Row-specific formats become focused entry fields, with the last
+              result ready as the starting point for the next set.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-icon" aria-hidden="true">03</span>
+            <h3>Safe by default</h3>
+            <p>
+              The app validates workbook structure before it writes and keeps
+              unrecognized set text intact instead of silently discarding it.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="how-it-works" aria-labelledby="works-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">A short path to the first set</p>
+            <h2 id="works-heading">Your Google Sheet, with a gym-ready front end.</h2>
+          </div>
+          <p>
+            WorkoutTracker uses native Google Sign-In so you can select an
+            existing workout Sheet or create one of your own, then get straight
+            to logging.
+          </p>
+        </div>
+
+        <div class="steps">
+          <article class="step">
+            <span class="step-number">1</span>
+            <h3>Connect Google</h3>
+            <p>Sign in and grant the Sheet permissions the app needs.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">2</span>
+            <h3>Select your Sheet</h3>
+            <p>Choose a workout Sheet you own or create a fresh one.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">3</span>
+            <h3>Train and log</h3>
+            <p>Record sets quickly and see the results in Google Sheets.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="privacy-heading">
+        <div class="promise">
+          <div>
+            <p class="eyebrow">A deliberately small data footprint</p>
+            <h2 id="privacy-heading">No account database. No ads. No analytics SDK.</h2>
+            <p>
+              WorkoutTracker communicates directly with Google APIs from your
+              device. Durable workout data stays in your Sheet, while limited
+              workspace preferences stay locally on your device.
+            </p>
+          </div>
+          <a class="button secondary" href="/privacy.html">Read the privacy policy</a>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="availability-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Availability</p>
+            <h2 id="availability-heading">Prepared for iPhone and Mac.</h2>
+          </div>
+          <p>
+            The first app-store release is in preparation. The source is
+            available now under the Apache License 2.0 for people who want to
+            inspect it or build with their own Google and Apple configuration.
+          </p>
+        </div>
+        <div class="actions">
+          <a class="button secondary" href="https://github.com/ispielma/WorkoutTracker">
+            View source on GitHub
+          </a>
+          <a class="button secondary" href="mailto:ian.spielman@gmail.com">
+            Email support
+          </a>
+        </div>
       </section>
     </main>
 
-    <footer>
+    <footer class="site-footer shell">
       <p>
-        Read the <a href="/privacy.html">WorkoutTracker Privacy Policy</a> for
-        details about Google authorization and data storage.
+        WorkoutTracker is a focused gym logger backed by a Google Sheet you own.
+        Support: <a href="mailto:ian.spielman@gmail.com">ian.spielman@gmail.com</a>
       </p>
+      <nav class="footer-links" aria-label="Legal">
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="https://github.com/ispielma/WorkoutTracker">Source</a>
+      </nav>
     </footer>
   </body>
 </html>
