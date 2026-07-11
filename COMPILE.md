@@ -1,21 +1,30 @@
 # Compile Release App Bundles
 
-These commands build deployment/release artifacts from the repository root.
-They are not debug builds.
+These commands build release artifacts from the repository root. They are not
+debug builds.
 
 ## Prerequisites
 
 - Xcode is installed and its license has been accepted.
-- Flutter dependencies are available. If needed, run:
-
-```sh
-flutter pub get
-```
-
 - Apple signing is configured in Xcode for team `K77H93FM2M` and bundle ID
   `com.spielman.workouttracker` when producing signed deployment artifacts.
   IPA export requires an Apple account in Xcode, an iOS Distribution
   certificate, and a matching provisioning profile.
+
+## Clean Build Setup
+
+Remove previous outputs, then restore dependencies before either platform
+build:
+
+```sh
+flutter clean
+flutter pub get
+```
+
+Do not omit `flutter pub get` after `flutter clean`. It regenerates the
+ephemeral Swift package used by the macOS and iOS projects. Build macOS before
+iOS if both bundles should remain under `build/`, because another
+`flutter clean` removes both outputs.
 
 ## macOS `.app`
 
@@ -41,6 +50,22 @@ The app bundle is written to:
 build/macos/Build/Products/Release/Workout Tracker.app
 ```
 
+Verify that the bundle is structurally complete after either signed or
+unsigned compilation:
+
+```sh
+scripts/validate_macos_app_bundle.sh --compile-only \
+  "build/macos/Build/Products/Release/Workout Tracker.app"
+```
+
+For a distribution candidate, omit `--compile-only`. Strict validation then
+requires a trusted signature:
+
+```sh
+scripts/validate_macos_app_bundle.sh \
+  "build/macos/Build/Products/Release/Workout Tracker.app"
+```
+
 The unsigned fallback is a release app bundle, but it must be signed before
 distribution outside local development.
 
@@ -59,7 +84,7 @@ build/ios/iphoneos/Runner.app
 ```
 
 This produces a release-mode app bundle, but it is not installable on a device
-until it is signed.
+until it is signed. `Runner.app/Runner` should be an arm64 Mach-O executable.
 
 ## iOS Signed Deployment Archive
 

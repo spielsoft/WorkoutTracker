@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -u
 
+compile_only=false
+
 pass() {
   printf 'PASS: %s\n' "$1"
 }
@@ -10,8 +12,13 @@ fail() {
   exit 1
 }
 
+if [ "${1:-}" = "--compile-only" ]; then
+  compile_only=true
+  shift
+fi
+
 if [ "$#" -ne 1 ]; then
-  fail "Usage: $0 /path/to/App.app"
+  fail "Usage: $0 [--compile-only] /path/to/App.app"
 fi
 
 bundle_path=${1%/}
@@ -61,6 +68,18 @@ esac
 if command -v codesign >/dev/null 2>&1; then
   if codesign_output=$(codesign --verify --deep --strict --verbose=4 "$bundle_path" 2>&1); then
     pass "codesign verification passed"
+  elif $compile_only; then
+    case "$codesign_output" in
+      *CSSMERR_TP_NOT_TRUSTED*)
+        pass "bundle is signed, but the local certificate chain is not trusted"
+        ;;
+      *"code object is not signed at all"*)
+        pass "bundle is unsigned, as allowed for compile validation"
+        ;;
+      *)
+        fail "codesign structure verification failed: $codesign_output"
+        ;;
+    esac
   else
     fail "codesign verification failed: $codesign_output"
   fi
