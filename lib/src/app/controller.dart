@@ -394,6 +394,10 @@ class AppCtrl extends ChangeNotifier {
         _report = deleteReport;
         _error = null;
         _prunePendingWorkouts(_report!.activeSheet);
+        _retainWorkout(
+          activeSheet: _report!.activeSheet,
+          workout: selectedWorkout,
+        );
         _selectedWorkout = _preservedWorkout(
           activeSheet: _report!.activeSheet,
           selectedWorkout: selectedWorkout,
@@ -568,6 +572,17 @@ class AppCtrl extends ChangeNotifier {
   void _prunePendingWorkouts(ParsedActiveSheet activeSheet) {
     final durableWorkouts = activeSheet.selectableWorkouts;
     _pendingWorkouts.removeWhere(durableWorkouts.contains);
+  }
+
+  void _retainWorkout({
+    required ParsedActiveSheet activeSheet,
+    required String? workout,
+  }) {
+    if (workout != null &&
+        !activeSheet.selectableWorkouts.contains(workout) &&
+        !_pendingWorkouts.contains(workout)) {
+      _pendingWorkouts.add(workout);
+    }
   }
 
   String? _preservedWorkout({

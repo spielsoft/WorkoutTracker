@@ -300,6 +300,43 @@ void main() {
   );
 
   test(
+    'keeps an emptied workout selected after deleting its last exercise',
+    () async {
+      final service = TestValSvc.fromRows([
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+        [
+          'Bench Press',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '',
+          'Upper',
+          '',
+          '135x5@8',
+        ],
+      ]);
+      final controller = AppCtrl(svc: service);
+
+      await controller.validateSelection('spreadsheet-id');
+      controller.selectWorkout('Upper');
+
+      final deleted = await controller.deleteWorkoutExercise(primaryRow: 4);
+      final setup = controller.workoutSetup;
+
+      expect(deleted, isTrue);
+      expect(setup?.selectedWorkout, 'Upper');
+      expect(setup?.workouts, ['Legs', 'Upper']);
+      expect(setup?.overview?.workout, 'Upper');
+      expect(setup?.overview?.slots, isEmpty);
+    },
+  );
+
+  test(
     'blocks duplicate history block labels before applying a write',
     () async {
       final service = TestValSvc.fromRows([
