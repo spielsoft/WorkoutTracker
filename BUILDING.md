@@ -76,12 +76,18 @@ values, API keys, or local credential files.
 ## 4. Run the Credential-Free Local Gate
 
 ```sh
+dart format --output=none --set-exit-if-changed lib test integration_test
 flutter analyze
 flutter test
 ```
 
 These checks use application-owned fakes. They do not prove Google, OAuth,
 Firebase, or native sign-in behavior.
+
+Public CI runs this gate on Linux with Flutter 3.44.2. It intentionally has no
+Google credentials and does not run the opt-in live test. Apple builds remain a
+local release gate because Xcode availability, signing, provisioning, and
+bundle inspection cannot be established reliably by that unsigned Linux job.
 
 ## 5. Run a Prepared Target
 
@@ -194,6 +200,12 @@ WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
 Without the environment flag, the test skips before authentication. Report a
 skipped live run as skipped, not as passing Google integration, and report any
 fixture reset failure distinctly.
+
+## 8. Prepare Release Notes
+
+Follow [`RELEASING.md`](RELEASING.md) for semantic versioning, changelog, tag,
+and GitHub release-note expectations. Public releases contain source and notes,
+not app bundles or shared credentials.
 
 ## Source-MVP Authorization Limit
 

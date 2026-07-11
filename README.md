@@ -44,6 +44,9 @@ gate.
 | Google account and chooser architecture | [`docs/google_sheets_development_auth.md`](docs/google_sheets_development_auth.md) |
 | UI accessibility contract | [`docs/accessibility.md`](docs/accessibility.md) |
 | Clone, run, and clean release builds | [`BUILDING.md`](BUILDING.md) |
+| Dependency update policy and review | [`DEPENDENCIES.md`](DEPENDENCIES.md) |
+| Versioning and GitHub releases | [`RELEASING.md`](RELEASING.md) |
+| User-visible release history | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## Project Policy
 

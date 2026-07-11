@@ -12,7 +12,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 - [x] Slice 4: Exercise production composition in live Google validation
 - [x] Slice 5: Publish accurate support and privacy resources
 - [x] Slice 6: Replace historical setup notes with a public self-build guide
-- [ ] Slice 7: Add dependency and continuous-integration gates
+- [x] Slice 7: Add dependency and continuous-integration gates
 - [ ] Slice 8: Clean the release test suite
 - [ ] Slice 9: Produce and hand off the gym-test candidate
 
@@ -263,17 +263,17 @@ GitHub releases.
 
 ### Acceptance criteria
 
-- [ ] Direct dependencies and important platform implementations are checked
+- [x] Direct dependencies and important platform implementations are checked
       against current authoritative release notes.
-- [ ] Compatible crash, security, and correctness fixes are adopted and tested.
-- [ ] CI runs formatting verification, static analysis, and the default Flutter
+- [x] Compatible crash, security, and correctness fixes are adopted and tested.
+- [x] CI runs formatting verification, static analysis, and the default Flutter
       test suite without Google credentials.
-- [ ] Live Google validation remains outside the default CI path.
-- [ ] Platform build jobs are included only where unsigned runners can execute
+- [x] Live Google validation remains outside the default CI path.
+- [x] Platform build jobs are included only where unsigned runners can execute
       them reliably; omitted builds have a documented local gate.
-- [ ] The repository defines versioning, changelog, and GitHub release
+- [x] The repository defines versioning, changelog, and GitHub release
       expectations without publishing app bundles.
-- [ ] CI and dependency changes do not introduce a Firebase application backend
+- [x] CI and dependency changes do not introduce a Firebase application backend
       or centralized credentials.
 
 ### Blocked by

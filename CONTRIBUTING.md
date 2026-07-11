@@ -9,8 +9,9 @@ files it routes to.
 1. Open an issue before a large behavior or architecture change.
 2. Create a focused branch and include public-contract tests for changed
    behavior.
-3. Run `flutter analyze` and the narrowest relevant tests described in
-   `docs/testing.md`.
+3. Run formatting verification, `flutter analyze`, and the narrowest relevant
+   tests described in `docs/testing.md`. Dependency changes require the full
+   default suite and the review in `DEPENDENCIES.md`.
 4. Submit a pull request that explains the user-visible result, validation,
    and any skipped gates or remaining risks.
 
