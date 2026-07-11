@@ -36,7 +36,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Unable to save set. Try again.'), findsOneWidget);
-    expect(tester.widget<TextField>(_field('Weight')).controller!.text, '225');
+    expect(find.text('225'), findsOneWidget);
   });
 
   testWidgets('uses the newest non-empty set across gaps and trailing blanks', (
@@ -262,7 +262,5 @@ LogView _historyView({
 }
 
 Finder _field(String label) {
-  return find.byWidgetPredicate(
-    (widget) => widget is TextField && widget.decoration?.labelText == label,
-  );
+  return find.bySemanticsLabel(label);
 }

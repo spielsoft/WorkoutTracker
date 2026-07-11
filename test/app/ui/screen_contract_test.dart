@@ -118,10 +118,10 @@ void main() {
     );
 
     await tester.enterText(
-      find.byKey(const ValueKey('exercise-authoring-name')),
+      find.bySemanticsLabel('Exercise name'),
       'Romanian Deadlift',
     );
-    final submit = find.byKey(const ValueKey('exercise-authoring-submit'));
+    final submit = find.text('Save exercise');
     await tester.scrollUntilVisible(
       submit,
       300,
@@ -150,10 +150,10 @@ void main() {
     );
 
     await tester.enterText(
-      find.byKey(const ValueKey('exercise-authoring-name')),
+      find.bySemanticsLabel('Exercise name'),
       'Front Squat',
     );
-    final submit = find.byKey(const ValueKey('exercise-authoring-submit'));
+    final submit = find.text('Save exercise');
     await tester.scrollUntilVisible(
       submit,
       300,
@@ -182,11 +182,16 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
+    await tester.tap(
+      find.widgetWithText(
+        DropdownButtonFormField<CanonicalExercise>,
+        'Choose exercise',
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Squat').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
+    await tester.tap(find.widgetWithText(FilledButton, 'Add to workout'));
 
     expect(actions.exercise!.exercise, 'Squat');
     expect(actions.metadata!.sets, '3');
