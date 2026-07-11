@@ -9,6 +9,7 @@ import 'validation_core.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
+import 'ui/shared/role.dart';
 import 'ui/shared/status.dart';
 
 const _segmentRadius = 8.0;
@@ -218,6 +219,7 @@ class _LogScreenSt extends State<LogScreen> {
                   : Axis.horizontal;
               return SegmentedButton<int>(
                 direction: direction,
+                showSelectedIcon: false,
                 style: const ButtonStyle(
                   shape: WidgetStatePropertyAll(
                     RoundedRectangleBorder(
@@ -232,8 +234,6 @@ class _LogScreenSt extends State<LogScreen> {
                     ButtonSegment(
                       value: choice.sheetRowNumber,
                       label: Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
@@ -241,16 +241,11 @@ class _LogScreenSt extends State<LogScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (choice.isBackup)
-                            const StChip(
-                              state: VisualSt.backup,
-                              label: 'Backup',
-                            ),
                         ],
                       ),
                       icon: Icon(
                         choice.isBackup
-                            ? Icons.alt_route_outlined
+                            ? backupIcon
                             : Icons.fitness_center_outlined,
                       ),
                     ),
@@ -270,7 +265,7 @@ class _LogScreenSt extends State<LogScreen> {
             children: [
               Icon(
                 selectedChoice.isBackup
-                    ? Icons.alt_route_outlined
+                    ? backupIcon
                     : Icons.fitness_center_outlined,
                 size: 20,
                 color: Theme.of(context).colorScheme.primary,
@@ -279,8 +274,6 @@ class _LogScreenSt extends State<LogScreen> {
                 selectedChoice.exercise,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              if (selectedChoice.isBackup)
-                const StChip(state: VisualSt.backup, label: 'Backup'),
             ],
           ),
           const SizedBox(height: 8),

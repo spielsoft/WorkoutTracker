@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'a11y.dart';
 
-enum VisualSt { logged, current, backup, warning, error }
+enum VisualSt { logged, current, warning, error }
 
 class SetProgressStrip extends StatelessWidget {
   const SetProgressStrip({
@@ -174,7 +174,6 @@ String _stateLabel(VisualSt state) {
   return switch (state) {
     VisualSt.logged => 'Logged',
     VisualSt.current => 'Current',
-    VisualSt.backup => 'Backup',
     VisualSt.warning => 'Warning',
     VisualSt.error => 'Error',
   };
@@ -200,12 +199,6 @@ String _stateLabel(VisualSt state) {
       border: colors.primary,
       foreground: colors.onPrimaryContainer,
       icon: Icons.radio_button_checked,
-    ),
-    VisualSt.backup => (
-      background: colors.tertiaryContainer,
-      border: colors.tertiary,
-      foreground: colors.onTertiaryContainer,
-      icon: Icons.alt_route_outlined,
     ),
     VisualSt.warning => (
       background: warning.primaryContainer,

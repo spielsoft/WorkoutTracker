@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
 import 'ui/shared/a11y.dart';
-import 'ui/shared/status.dart';
+import 'ui/shared/role.dart';
 
 Future<bool> confirmWorkoutDelete(
   BuildContext context,
@@ -144,9 +144,6 @@ class _WorkoutOverviewTile extends StatelessWidget {
     final setStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
     );
-    final backupSummaryLabel = slot.backups.length == 1
-        ? '1 backup'
-        : '${slot.backups.length} backups';
     final hasExerciseActions = onAddBackup != null || onDeleteExercise != null;
     final exerciseActionButton = !hasExerciseActions
         ? null
@@ -196,131 +193,76 @@ class _WorkoutOverviewTile extends StatelessWidget {
             onTap: () => onOpenExercise(slot.sheetRowNumber),
             child: Padding(
               padding: EdgeInsets.all(compact ? 10 : 14),
-              child: compact
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    slot.exercise,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(setLabel, style: setStyle),
-                                  if (slot.backups.isNotEmpty) ...[
-                                    const SizedBox(height: 6),
-                                    StChip(
-                                      state: VisualSt.backup,
-                                      label: backupSummaryLabel,
-                                    ),
-                                  ],
-                                ],
-                              ),
+                            Text(
+                              slot.exercise,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
-                            if (exerciseActionButton != null) ...[
-                              const SizedBox(width: 4),
-                              exerciseActionButton,
-                            ],
-                            if (canReorder) ...[
-                              const SizedBox(width: 4),
-                              _WorkoutReorderHandle(
-                                index: index,
-                                label: slot.exercise,
-                              ),
-                            ],
+                            const SizedBox(height: 2),
+                            Text(setLabel, style: setStyle),
                           ],
+                        ),
+                      ),
+                      if (exerciseActionButton != null) ...[
+                        const SizedBox(width: 4),
+                        exerciseActionButton,
+                      ],
+                      if (canReorder) ...[
+                        const SizedBox(width: 4),
+                        _WorkoutReorderHandle(
+                          index: index,
+                          label: slot.exercise,
                         ),
                       ],
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    slot.exercise,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
+                    ],
+                  ),
+                  if (slot.backups.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final (index, backup) in slot.backups.indexed)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom: index < slot.backups.length - 1 ? 6 : 0,
+                              ),
+                              child: Semantics(
+                                label: 'Backup exercise: ${backup.exercise}',
+                                child: ExcludeSemantics(
+                                  child: Row(
+                                    children: [
+                                      const Icon(backupIcon, size: 18),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          backup.exercise,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(setLabel, style: setStyle),
-                                  if (slot.backups.isNotEmpty) ...[
-                                    const SizedBox(height: 6),
-                                    StChip(
-                                      state: VisualSt.backup,
-                                      label: backupSummaryLabel,
-                                    ),
-                                  ],
-                                ],
+                                ),
                               ),
                             ),
-                            if (exerciseActionButton != null) ...[
-                              const SizedBox(width: 4),
-                              exerciseActionButton,
-                            ],
-                            if (canReorder) ...[
-                              const SizedBox(width: 4),
-                              _WorkoutReorderHandle(
-                                index: index,
-                                label: slot.exercise,
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (slot.backups.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                for (final (index, backup)
-                                    in slot.backups.indexed)
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: index < slot.backups.length - 1
-                                          ? 6
-                                          : 0,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.subdirectory_arrow_right,
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            backup.exercise,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
                         ],
-                      ],
+                      ),
                     ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
@@ -420,7 +362,7 @@ class _AddBackupMenuItem extends StatelessWidget {
         width: 220,
         child: Row(
           children: [
-            Icon(Icons.subdirectory_arrow_right),
+            const Icon(backupIcon),
             SizedBox(width: 8),
             Expanded(
               child: Text(

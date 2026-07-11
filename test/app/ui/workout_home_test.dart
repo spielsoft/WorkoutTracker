@@ -547,7 +547,8 @@ void main() {
       tester.getTopLeft(find.text('Lunge')).dy,
       lessThan(tester.getTopLeft(find.text('Squat')).dy),
     );
-    expect(find.text('1 backup'), findsOneWidget);
+    expect(find.text('1 backup'), findsNothing);
+    expect(find.byIcon(Icons.alt_route_outlined), findsOneWidget);
   });
 
   testWidgets(

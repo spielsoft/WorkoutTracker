@@ -70,7 +70,6 @@ Future<Map<VisualSt, _Style>> _styles(
 String _label(VisualSt state) => switch (state) {
   VisualSt.logged => 'Logged',
   VisualSt.current => 'Current',
-  VisualSt.backup => 'Backup',
   VisualSt.warning => 'Warning',
   VisualSt.error => 'Error',
 };

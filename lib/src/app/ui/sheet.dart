@@ -323,12 +323,10 @@ class _SheetPick extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (selected != null && view.hasLoadedWorkout)
-                  OutlinedButton.icon(
+            if (selected != null && view.hasLoadedWorkout)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final change = OutlinedButton.icon(
                     key: const ValueKey('choose-google-spreadsheet'),
                     onPressed:
                         view.isBusy ||
@@ -338,8 +336,37 @@ class _SheetPick extends StatelessWidget {
                         : () => run(const ChooseSheet()),
                     icon: const Icon(Icons.drive_folder_upload_outlined),
                     label: const Text('Change sheet'),
-                  ),
-                OutlinedButton.icon(
+                  );
+                  final create = OutlinedButton.icon(
+                    key: const ValueKey('create-google-spreadsheet'),
+                    onPressed:
+                        view.isBusy ||
+                            !connected ||
+                            !view.availability.canCreate
+                        ? null
+                        : onCreate,
+                    icon: const Icon(Icons.add_to_drive_outlined),
+                    label: const Text('Create sheet'),
+                  );
+                  if (constraints.maxWidth < 400) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [change, const SizedBox(height: 8), create],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: change),
+                      const SizedBox(width: 8),
+                      Expanded(child: create),
+                    ],
+                  );
+                },
+              )
+            else
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
                   key: const ValueKey('create-google-spreadsheet'),
                   onPressed:
                       view.isBusy || !connected || !view.availability.canCreate
@@ -348,8 +375,7 @@ class _SheetPick extends StatelessWidget {
                   icon: const Icon(Icons.add_to_drive_outlined),
                   label: const Text('Create sheet'),
                 ),
-              ],
-            ),
+              ),
             if (view.showAvailability && view.availability.summary != null) ...[
               const SizedBox(height: 8),
               Text(

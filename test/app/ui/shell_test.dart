@@ -7,7 +7,9 @@ import '../service_fake.dart';
 import '../../support/widget.dart';
 
 void main() {
-  testWidgets('follows the system light and dark appearance', (tester) async {
+  testWidgets('forces dark appearance for every system setting', (
+    tester,
+  ) async {
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
     for (final brightness in Brightness.values) {
@@ -25,7 +27,7 @@ void main() {
 
       expect(
         Theme.of(tester.element(find.byType(Scaffold).first)).brightness,
-        brightness,
+        Brightness.dark,
       );
     }
   });

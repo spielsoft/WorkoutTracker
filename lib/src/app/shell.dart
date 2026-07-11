@@ -56,7 +56,7 @@ class WorkoutTrackerApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       theme: _theme(Brightness.light),
       darkTheme: _theme(Brightness.dark),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       scrollBehavior: const AppScrollBehavior(),
       home: AppShell(
         svc: svc,

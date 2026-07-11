@@ -4,6 +4,7 @@ import 'package:workout_tracker/contract.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
+import 'ui/shared/role.dart';
 
 enum PlaceKind { primary, backup }
 
@@ -111,9 +112,7 @@ class _PlacementContext extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                backup
-                    ? Icons.account_tree_outlined
-                    : Icons.fitness_center_outlined,
+                backup ? backupIcon : Icons.fitness_center_outlined,
                 color: colors.onSecondaryContainer,
               ),
               const SizedBox(width: 12),
