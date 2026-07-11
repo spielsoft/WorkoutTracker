@@ -318,6 +318,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
 
     expect(authoringService.updatedExercises, isEmpty);
     expect(authoringService.createdExercises, isEmpty);

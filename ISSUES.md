@@ -6,7 +6,7 @@ intentionally excluded.
 
 ## Progress
 
-- [ ] Slice 1: Make exercise log-format authoring safe and understandable
+- [x] Slice 1: Make exercise log-format authoring safe and understandable
 - [ ] Slice 2: Serialize loaded-workbook mutations
 - [ ] Slice 3: Unify workout home and native navigation
 - [ ] Slice 4: Streamline phone set entry
@@ -31,15 +31,15 @@ exercise drafts from accidental dismissal.
 
 ### Acceptance criteria
 
-- [ ] Valid literal formats show a representative preview before submission.
-- [ ] Invalid formats show focused, human-readable feedback beside the field.
-- [ ] Create and edit actions cannot submit an invalid format.
-- [ ] The public planner rejects an invalid application-authored format without
+- [x] Valid literal formats show a representative preview before submission.
+- [x] Invalid formats show focused, human-readable feedback beside the field.
+- [x] Create and edit actions cannot submit an invalid format.
+- [x] The public planner rejects an invalid application-authored format without
       emitting a write.
-- [ ] Attempting to leave a changed create or edit draft requires explicit
+- [x] Attempting to leave a changed create or edit draft requires explicit
       discard confirmation; unchanged forms close immediately.
-- [ ] Valid create and edit flows preserve current workbook behavior.
-- [ ] Behavior tests exercise the public parser/planner and visible form
+- [x] Valid create and edit flows preserve current workbook behavior.
+- [x] Behavior tests exercise the public parser/planner and visible form
       behavior without duplicating parser internals.
 
 ### Blocked by

@@ -622,6 +622,34 @@ void main() {
     ]);
   });
 
+  test('rejects invalid application-authored exercise formats', () {
+    final exercisesRows = [
+      exercisesSheetColumns,
+      _canonicalExerciseRow('Squat'),
+    ];
+    final sheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [historyHeaderRow([]), setLabelRow([])],
+        exercisesRows: exercisesRows,
+      ),
+    );
+    const invalid = ExerciseDef(
+      exercise: 'Broken',
+      logFormat: '{Weight[x]{Reps}',
+    );
+
+    final append = sheet.planCanonicalAppend(invalid);
+    final update = sheet.planCanonicalUpdate(
+      selectedExercise: sheet.canonicalExercises.single,
+      exercise: invalid,
+    );
+
+    expect(append.rowAppends, isEmpty);
+    expect(append.rowUpdates, isEmpty);
+    expect(update.rowAppends, isEmpty);
+    expect(update.rowUpdates, isEmpty);
+  });
+
   test(
     'plans workout exercise reorder as metadata-preserving primary group moves',
     () {

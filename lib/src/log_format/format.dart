@@ -21,6 +21,14 @@ class ParsedLogFormat extends LogFormatParseResult {
       if (segment case LogLiteral(:final text)) text,
   ];
 
+  String get representativeEntry {
+    const samples = ['100', '8', '8', '1'];
+    return render({
+      for (var i = 0; i < fieldLabels.length; i += 1)
+        fieldLabels[i]: samples[i],
+    });
+  }
+
   String render(Map<String, String> fieldValues) {
     final buffer = StringBuffer();
     for (final segment in segments) {

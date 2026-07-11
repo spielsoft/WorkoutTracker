@@ -3,8 +3,6 @@ import 'package:workout_tracker/contract.dart';
 
 import 'exercise_form.dart';
 import 'ui/view.dart';
-import 'ui/shared/a11y.dart';
-import 'ui/shared/header.dart';
 
 enum CreateOrigin { setup, library }
 
@@ -37,29 +35,18 @@ class CreateExerciseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return A11yScreen(
-      label: 'New exercise',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ScreenHeader(
-            title: view.sheetLabel,
-            subtitle: 'New exercise',
-            compactTitle: true,
-            backTooltip: view.origin == CreateOrigin.library
-                ? 'Back to edit exercises'
-                : 'Back to workout setup',
-            onBack: actions.close,
-          ),
-          const SizedBox(height: 16),
-          ExerciseAuthoringForm(
-            mode: ExerciseFormMode.create,
-            onCancel: actions.close,
-            onSubmit: (draft) => actions.save(draft.toDef()),
-            isBusy: view.isBusy,
-          ),
-        ],
-      ),
+    return ExerciseAuthoringScreen(
+      a11yLabel: 'New exercise',
+      title: 'New exercise',
+      sheetLabel: view.sheetLabel,
+      backTooltip: view.origin == CreateOrigin.library
+          ? 'Back to edit exercises'
+          : 'Back to workout setup',
+      mode: ExerciseFormMode.create,
+      initialDraft: CanonicalExerciseDraft.defaults,
+      isBusy: view.isBusy,
+      onClose: actions.close,
+      onSave: actions.save,
     );
   }
 }

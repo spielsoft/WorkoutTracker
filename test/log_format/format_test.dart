@@ -71,6 +71,13 @@ void main() {
     );
   });
 
+  test('renders a representative entry for a parsed format', () {
+    final format =
+        parseLogFormat('{Weight}[x]{Reps}[@]{RPE}') as ParsedLogFormat;
+
+    expect(format.representativeEntry, '100x8@8');
+  });
+
   test('renders literals even when adjacent field values are blank', () {
     final format =
         parseLogFormat('{Weight}[x]{Reps}[@]{RPE}[,]{Pain}') as ParsedLogFormat;

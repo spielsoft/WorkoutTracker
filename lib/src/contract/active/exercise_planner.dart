@@ -6,6 +6,9 @@ class _ExerciseWritePlanner {
   final _WritePlanningContext context;
 
   ExercisesWritePlan planCanonicalAppend(ExerciseDef exercise) {
+    if (!_hasValidFormat(exercise)) {
+      return ExercisesWritePlan();
+    }
     final append = ExercisesRowAppend(
       sheetRowNumber: 2,
       values: _exerciseValues(exercise),
@@ -17,6 +20,9 @@ class _ExerciseWritePlanner {
     required CanonicalExercise selectedExercise,
     required ExerciseDef exercise,
   }) {
+    if (!_hasValidFormat(exercise)) {
+      return ExercisesWritePlan();
+    }
     final sheetRowNumber = selectedExercise.sheetRowNumber;
     if (sheetRowNumber < 2 ||
         sheetRowNumber > context.sheet._exercisesRows.length) {
@@ -30,6 +36,10 @@ class _ExerciseWritePlanner {
         ),
       ],
     );
+  }
+
+  bool _hasValidFormat(ExerciseDef exercise) {
+    return parseLogFormat(exercise.resolvedLogFormat) is ParsedLogFormat;
   }
 
   ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {

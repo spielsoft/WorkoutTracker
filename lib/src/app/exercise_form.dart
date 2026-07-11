@@ -2,8 +2,129 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
 import 'ui/shared/a11y.dart';
+import 'ui/shared/header.dart';
 
 enum ExerciseFormMode { create, edit }
+
+class ExerciseAuthoringScreen extends StatefulWidget {
+  const ExerciseAuthoringScreen({
+    required this.a11yLabel,
+    required this.title,
+    required this.sheetLabel,
+    required this.backTooltip,
+    required this.mode,
+    required this.initialDraft,
+    required this.isBusy,
+    required this.onClose,
+    required this.onSave,
+    super.key,
+  });
+
+  final String a11yLabel;
+  final String title;
+  final String sheetLabel;
+  final String backTooltip;
+  final ExerciseFormMode mode;
+  final CanonicalExerciseDraft initialDraft;
+  final bool isBusy;
+  final Future<void> Function() onClose;
+  final Future<bool> Function(ExerciseDef exercise) onSave;
+
+  @override
+  State<ExerciseAuthoringScreen> createState() => _AuthoringScreenSt();
+}
+
+class _AuthoringScreenSt extends State<ExerciseAuthoringScreen> {
+  late CanonicalExerciseDraft _initial;
+  bool _dirty = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initial = widget.initialDraft.normalized();
+  }
+
+  @override
+  void didUpdateWidget(ExerciseAuthoringScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialDraft == widget.initialDraft) {
+      return;
+    }
+    _initial = widget.initialDraft.normalized();
+    _dirty = false;
+  }
+
+  void _draftChanged(CanonicalExerciseDraft draft) {
+    final dirty = draft.normalized() != _initial;
+    if (dirty == _dirty) {
+      return;
+    }
+    setState(() => _dirty = dirty);
+  }
+
+  Future<void> _close() async {
+    if (!_dirty) {
+      await widget.onClose();
+      return;
+    }
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Discard changes?'),
+        content: const Text('Your unsaved exercise changes will be lost.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep editing'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if (discard == true) {
+      await widget.onClose();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _close();
+        }
+      },
+      child: A11yScreen(
+        label: widget.a11yLabel,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ScreenHeader(
+              title: widget.sheetLabel,
+              subtitle: widget.title,
+              compactTitle: true,
+              backTooltip: widget.backTooltip,
+              onBack: _close,
+            ),
+            const SizedBox(height: 16),
+            ExerciseAuthoringForm(
+              mode: widget.mode,
+              initialDraft: widget.initialDraft,
+              onCancel: _close,
+              onChanged: _draftChanged,
+              onSubmit: (draft) => widget.onSave(draft.toDef()),
+              isBusy: widget.isBusy,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class CanonicalExerciseDraft {
   const CanonicalExerciseDraft({
@@ -123,6 +244,7 @@ class ExerciseAuthoringForm extends StatefulWidget {
     required this.mode,
     this.initialDraft = CanonicalExerciseDraft.defaults,
     this.onCancel,
+    this.onChanged,
     this.isBusy = false,
     super.key,
   });
@@ -131,6 +253,7 @@ class ExerciseAuthoringForm extends StatefulWidget {
   final CanonicalExerciseDraft initialDraft;
   final ValueChanged<CanonicalExerciseDraft> onSubmit;
   final VoidCallback? onCancel;
+  final ValueChanged<CanonicalExerciseDraft>? onChanged;
   final bool isBusy;
 
   @override
@@ -219,6 +342,18 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     );
   }
 
+  void _changed(String _) {
+    widget.onChanged?.call(_draft());
+    setState(() {});
+  }
+
+  String? _formatError(String? value) {
+    return switch (parseLogFormat(value ?? '')) {
+      InvalidLogFormat(:final errors) => errors.join(' '),
+      ParsedLogFormat() => null,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -226,6 +361,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       ExerciseFormMode.create => 'New exercise',
       ExerciseFormMode.edit => 'Edit exercise',
     };
+    final parsedFormat = parseLogFormat(_formatCtrl.text);
 
     return Form(
       key: _formKey,
@@ -259,6 +395,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                 prefixIcon: Icon(Icons.fitness_center_outlined),
               ),
               textInputAction: TextInputAction.next,
+              onChanged: _changed,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Enter an exercise name.';
@@ -282,6 +419,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                 prefixIcon: Icon(Icons.short_text_outlined),
               ),
               textInputAction: TextInputAction.next,
+              onChanged: _changed,
             ),
           ),
           const SizedBox(height: 12),
@@ -306,6 +444,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       icon: Icons.format_list_numbered_outlined,
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.number,
+                      onChanged: _changed,
                     ),
                   ),
                   SizedBox(
@@ -318,6 +457,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       labelText: 'Default reps',
                       icon: Icons.repeat_outlined,
                       textInputAction: TextInputAction.next,
+                      onChanged: _changed,
                     ),
                   ),
                   SizedBox(
@@ -331,6 +471,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       icon: Icons.speed_outlined,
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.number,
+                      onChanged: _changed,
                     ),
                   ),
                   SizedBox(
@@ -343,6 +484,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       labelText: 'Default rest',
                       icon: Icons.timer_outlined,
                       textInputAction: TextInputAction.next,
+                      onChanged: _changed,
                     ),
                   ),
                   SizedBox(
@@ -355,18 +497,38 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       labelText: 'Default tempo',
                       icon: Icons.graphic_eq_outlined,
                       textInputAction: TextInputAction.next,
+                      onChanged: _changed,
                     ),
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _AuthoringField(
-                      key: const ValueKey('exercise-authoring-log-format'),
-                      controller: _formatCtrl,
-                      enabled: !widget.isBusy,
-                      semanticsIdentifier: 'exercise-authoring-log-format',
-                      labelText: 'Log format',
-                      icon: Icons.data_object_outlined,
-                      textInputAction: TextInputAction.next,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _AuthoringField(
+                          key: const ValueKey('exercise-authoring-log-format'),
+                          controller: _formatCtrl,
+                          enabled: !widget.isBusy,
+                          semanticsIdentifier: 'exercise-authoring-log-format',
+                          labelText: 'Log format',
+                          icon: Icons.data_object_outlined,
+                          textInputAction: TextInputAction.next,
+                          helperText:
+                              'Use {Field} for values and [text] for literal '
+                              'separators; use 1–4 fields.',
+                          validator: _formatError,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          onChanged: _changed,
+                        ),
+                        if (parsedFormat case ParsedLogFormat()) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            'Preview: ${parsedFormat.representativeEntry}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -390,6 +552,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
               minLines: 3,
               maxLines: 5,
               textInputAction: TextInputAction.newline,
+              onChanged: _changed,
             ),
           ),
           const SizedBox(height: 20),
@@ -433,6 +596,10 @@ class _AuthoringField extends StatefulWidget {
     required this.icon,
     required this.textInputAction,
     this.keyboardType,
+    this.helperText,
+    this.validator,
+    this.autovalidateMode,
+    this.onChanged,
   });
 
   final TextEditingController controller;
@@ -442,6 +609,10 @@ class _AuthoringField extends StatefulWidget {
   final IconData icon;
   final TextInputAction textInputAction;
   final TextInputType? keyboardType;
+  final String? helperText;
+  final FormFieldValidator<String>? validator;
+  final AutovalidateMode? autovalidateMode;
+  final ValueChanged<String>? onChanged;
 
   @override
   State<_AuthoringField> createState() => _AuthoringFieldSt();
@@ -494,10 +665,14 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
           floatingLabelBehavior: FloatingLabelBehavior.always,
           border: const OutlineInputBorder(),
           prefixIcon: Icon(widget.icon),
+          helperText: widget.helperText,
         ),
         textInputAction: widget.textInputAction,
         keyboardType: widget.keyboardType,
         selectAllOnFocus: true,
+        validator: widget.validator,
+        autovalidateMode: widget.autovalidateMode,
+        onChanged: widget.onChanged,
       ),
     );
   }

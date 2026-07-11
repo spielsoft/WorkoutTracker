@@ -3,8 +3,6 @@ import 'package:workout_tracker/contract.dart';
 
 import 'exercise_form.dart';
 import 'ui/view.dart';
-import 'ui/shared/a11y.dart';
-import 'ui/shared/header.dart';
 
 final class EditExerciseView extends LoadedView {
   const EditExerciseView({
@@ -35,28 +33,16 @@ class EditExerciseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return A11yScreen(
-      label: 'Edit exercise ${view.exercise.displayName}',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ScreenHeader(
-            title: view.sheetLabel,
-            subtitle: 'Edit exercise',
-            compactTitle: true,
-            backTooltip: 'Back to edit exercises',
-            onBack: actions.close,
-          ),
-          const SizedBox(height: 16),
-          ExerciseAuthoringForm(
-            mode: ExerciseFormMode.edit,
-            initialDraft: CanonicalExerciseDraft.fromExercise(view.exercise),
-            onCancel: actions.close,
-            onSubmit: (draft) => actions.save(draft.toDef()),
-            isBusy: view.isBusy,
-          ),
-        ],
-      ),
+    return ExerciseAuthoringScreen(
+      a11yLabel: 'Edit exercise ${view.exercise.displayName}',
+      title: 'Edit exercise',
+      sheetLabel: view.sheetLabel,
+      backTooltip: 'Back to edit exercises',
+      mode: ExerciseFormMode.edit,
+      initialDraft: CanonicalExerciseDraft.fromExercise(view.exercise),
+      isBusy: view.isBusy,
+      onClose: actions.close,
+      onSave: actions.save,
     );
   }
 }
