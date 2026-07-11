@@ -11,7 +11,7 @@ intentionally excluded.
 - [x] Slice 3: Unify workout home and native navigation
 - [x] Slice 4: Streamline phone set entry
 - [x] Slice 5: Make logged-set editing compact and recoverable
-- [ ] Slice 6: Add scalable exercise-library search
+- [x] Slice 6: Add scalable exercise-library search
 - [ ] Slice 7: Complete responsive light and dark visual polish
 - [ ] Slice 8: Clean up tests and run the release gate
 
@@ -208,14 +208,14 @@ reordering must be unavailable while a filter hides part of the library.
 
 ### Acceptance criteria
 
-- [ ] Search matches display names and descriptions case-insensitively.
-- [ ] Results remain in canonical sheet order.
-- [ ] A clear empty-result state explains that no exercise matched.
-- [ ] Clearing search restores the full list and canonical order.
-- [ ] Reorder handles and reorder commands are unavailable while filtered.
-- [ ] Newly created or edited highlighted exercises remain discoverable after
+- [x] Search matches display names and descriptions case-insensitively.
+- [x] Results remain in canonical sheet order.
+- [x] A clear empty-result state explains that no exercise matched.
+- [x] Clearing search restores the full list and canonical order.
+- [x] Reorder handles and reorder commands are unavailable while filtered.
+- [x] Newly created or edited highlighted exercises remain discoverable after
       returning to the library.
-- [ ] Tests cover matching, empty results, clearing, order preservation, and
+- [x] Tests cover matching, empty results, clearing, order preservation, and
       filtered reorder protection through visible behavior.
 
 ### Blocked by

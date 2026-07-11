@@ -45,7 +45,10 @@ class ExerciseLibraryScreen extends StatefulWidget {
 
 class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
   final _scrollCtrl = ScrollController();
+  final _searchCtrl = TextEditingController();
   final _highlightKey = GlobalKey();
+  Animation<double>? _coverAnim;
+  String _query = '';
 
   @override
   void initState() {
@@ -57,23 +60,56 @@ class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
   void didUpdateWidget(covariant ExerciseLibraryScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.view.highlightedRow != widget.view.highlightedRow) {
+      if (widget.view.highlightedRow != null && _query.isNotEmpty) {
+        _query = '';
+        _searchCtrl.clear();
+      }
       _showHighlight();
     }
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final coverAnim = ModalRoute.of(context)?.secondaryAnimation;
+    if (identical(coverAnim, _coverAnim)) return;
+    _coverAnim?.removeStatusListener(_coverChanged);
+    _coverAnim = coverAnim;
+    _coverAnim?.addStatusListener(_coverChanged);
+  }
+
+  @override
   void dispose() {
+    _coverAnim?.removeStatusListener(_coverChanged);
     _scrollCtrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
-  void _showHighlight() {
+  void _coverChanged(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed) _showHighlight();
+  }
+
+  void _search(String value) {
+    setState(() => _query = value);
+  }
+
+  void _clearSearch() {
+    _searchCtrl.clear();
+    setState(() => _query = '');
+  }
+
+  void _showHighlight([int attempt = 0]) {
     final row = widget.view.highlightedRow;
     if (row == null) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_scrollCtrl.hasClients) {
+      if (!mounted) {
+        return;
+      }
+      if (!_scrollCtrl.hasClients) {
+        _retryHighlight(attempt);
         return;
       }
       final exercises = widget.view.exercises;
@@ -92,19 +128,39 @@ class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
             alignment: 0.5,
             duration: const Duration(milliseconds: 1),
           );
+        } else {
+          _retryHighlight(attempt);
         }
       });
     });
+  }
+
+  void _retryHighlight(int attempt) {
+    if (attempt < 30) _showHighlight(attempt + 1);
   }
 
   @override
   Widget build(BuildContext context) {
     final view = widget.view;
     final actions = widget.actions;
-    final exercises = view.exercises;
+    final query = _query.trim().toLowerCase();
+    final isFiltered = query.isNotEmpty;
+    final exercises = isFiltered
+        ? view.exercises
+              .where(
+                (exercise) =>
+                    exercise.displayName.toLowerCase().contains(query) ||
+                    exercise.description.toLowerCase().contains(query),
+              )
+              .toList(growable: false)
+        : view.exercises;
     final highlightedRow = view.highlightedRow;
     final header = _LibraryHeader(
       view: view,
+      searchCtrl: _searchCtrl,
+      isFiltered: isFiltered,
+      onSearch: _search,
+      onClearSearch: _clearSearch,
       onClose: actions.close,
       onCreate: actions.create,
     );
@@ -115,11 +171,21 @@ class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
               controller: _scrollCtrl,
               children: [
                 header,
-                const StCallout(
+                StCallout(
                   state: VisualSt.current,
-                  icon: Icons.fitness_center_outlined,
-                  title: 'No exercises in this sheet.',
-                  children: [Text('The exercise library is empty.')],
+                  icon: isFiltered
+                      ? Icons.search_off_outlined
+                      : Icons.fitness_center_outlined,
+                  title: isFiltered
+                      ? 'No exercises matched your search.'
+                      : 'No exercises in this sheet.',
+                  children: [
+                    Text(
+                      isFiltered
+                          ? 'Try another name or description, or clear the search.'
+                          : 'The exercise library is empty.',
+                    ),
+                  ],
                 ),
               ],
             )
@@ -129,7 +195,7 @@ class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
               header: header,
               buildDefaultDragHandles: false,
               itemCount: exercises.length,
-              onReorderItem: view.isBusy
+              onReorderItem: view.isBusy || isFiltered
                   ? (_, _) {}
                   : (oldIndex, newIndex) {
                       actions.reorder(
@@ -150,7 +216,7 @@ class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
                     index: index,
                     exercise: exercise,
                     isHighlighted: isHighlighted,
-                    canReorder: !view.isBusy,
+                    canReorder: !view.isBusy && !isFiltered,
                     onTap: view.isBusy ? null : () => actions.edit(exercise),
                   ),
                 );
@@ -163,11 +229,19 @@ class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
 class _LibraryHeader extends StatelessWidget {
   const _LibraryHeader({
     required this.view,
+    required this.searchCtrl,
+    required this.isFiltered,
+    required this.onSearch,
+    required this.onClearSearch,
     required this.onClose,
     required this.onCreate,
   });
 
   final LibraryView view;
+  final TextEditingController searchCtrl;
+  final bool isFiltered;
+  final ValueChanged<String> onSearch;
+  final VoidCallback onClearSearch;
   final VoidCallback onClose;
   final VoidCallback onCreate;
 
@@ -193,6 +267,25 @@ class _LibraryHeader extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text('Edit exercises', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 12),
+        TextField(
+          key: const ValueKey('exercise-library-search'),
+          controller: searchCtrl,
+          onChanged: onSearch,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            labelText: 'Search exercises',
+            hintText: 'Name or description',
+            prefixIcon: const Icon(Icons.search_outlined),
+            suffixIcon: isFiltered
+                ? IconButton(
+                    tooltip: 'Clear exercise search',
+                    onPressed: onClearSearch,
+                    icon: const Icon(Icons.clear_outlined),
+                  )
+                : null,
+          ),
+        ),
         const SizedBox(height: 12),
       ],
     );

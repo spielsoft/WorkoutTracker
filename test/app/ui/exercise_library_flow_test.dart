@@ -92,6 +92,12 @@ void main() {
         findsOneWidget,
       );
 
+      await tester.enterText(
+        find.bySemanticsLabel('Search exercises'),
+        'squat',
+      );
+      await tester.pump();
+
       await tester.tap(find.byKey(const ValueKey('add-canonical-exercise')));
       await tester.pumpAndSettle();
 
@@ -111,6 +117,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
       await tester.pumpAndSettle();
 
+      expect(find.byTooltip('Clear exercise search'), findsNothing);
       expect(authoringService.createdExercises, [
         const ExerciseDef(
           exercise: 'Romanian Deadlift',
@@ -124,6 +131,10 @@ void main() {
       expect(find.text('Edit exercises'), findsWidgets);
       expect(find.text('Squat'), findsOneWidget);
       expect(find.text('Romanian Deadlift'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('saved-exercise-highlight')),
+        findsOneWidget,
+      );
       expect(find.text('New exercise'), findsNothing);
     },
   );
@@ -166,12 +177,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Seeded Exercise 24'),
-      400,
-      scrollable: find.byType(Scrollable).first,
+    await tester.enterText(
+      find.bySemanticsLabel('Search exercises'),
+      'seeded exercise 24',
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.text('Seeded Exercise 24'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -185,6 +195,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
     await tester.pumpAndSettle();
 
+    expect(find.byTooltip('Clear exercise search'), findsNothing);
     expect(find.text('Custom Rope Row'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('saved-exercise-highlight')),

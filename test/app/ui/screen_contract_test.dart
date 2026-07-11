@@ -124,7 +124,10 @@ void main() {
 
     final scrollable = find.descendant(
       of: find.byType(ExerciseLibraryScreen),
-      matching: find.byType(Scrollable),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
     );
     final position = tester.state<ScrollableState>(scrollable).position;
     final handle = find.byTooltip('Reorder Exercise 1');
