@@ -3,7 +3,7 @@ import 'package:workout_tracker/contract.dart';
 
 import 'ui/shared/a11y.dart';
 
-enum ExerciseAuthoringContext { canonicalExercise, workoutPlacement }
+enum ExerciseFormMode { create, edit }
 
 class CanonicalExerciseDraft {
   const CanonicalExerciseDraft({
@@ -117,68 +117,17 @@ class CanonicalExerciseDraft {
   }
 }
 
-class ExerciseAuthoringScreen extends StatelessWidget {
-  const ExerciseAuthoringScreen({
-    required this.onSubmit,
-    this.authoringContext = ExerciseAuthoringContext.canonicalExercise,
-    this.initialDraft = CanonicalExerciseDraft.defaults,
-    this.onCancel,
-    this.isBusy = false,
-    super.key,
-  });
-
-  final ExerciseAuthoringContext authoringContext;
-  final CanonicalExerciseDraft initialDraft;
-  final ValueChanged<CanonicalExerciseDraft> onSubmit;
-  final VoidCallback? onCancel;
-  final bool isBusy;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = _authoringTitle(authoringContext);
-    return Scaffold(
-      appBar: AppBar(
-        leading: onCancel == null
-            ? null
-            : IconButton(
-                tooltip: 'Cancel',
-                onPressed: onCancel,
-                icon: const Icon(Icons.close_outlined),
-              ),
-        title: Text(title),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 840),
-              child: ExerciseAuthoringForm(
-                authoringContext: authoringContext,
-                initialDraft: initialDraft,
-                onSubmit: onSubmit,
-                onCancel: onCancel,
-                isBusy: isBusy,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class ExerciseAuthoringForm extends StatefulWidget {
   const ExerciseAuthoringForm({
     required this.onSubmit,
-    this.authoringContext = ExerciseAuthoringContext.canonicalExercise,
+    required this.mode,
     this.initialDraft = CanonicalExerciseDraft.defaults,
     this.onCancel,
     this.isBusy = false,
     super.key,
   });
 
-  final ExerciseAuthoringContext authoringContext;
+  final ExerciseFormMode mode;
   final CanonicalExerciseDraft initialDraft;
   final ValueChanged<CanonicalExerciseDraft> onSubmit;
   final VoidCallback? onCancel;
@@ -273,8 +222,10 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final title = _authoringTitle(widget.authoringContext);
-    final submitText = _submitLabelText(widget.authoringContext);
+    final title = switch (widget.mode) {
+      ExerciseFormMode.create => 'New exercise',
+      ExerciseFormMode.edit => 'Edit exercise',
+    };
 
     return Form(
       key: _formKey,
@@ -283,10 +234,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
         children: [
           Row(
             children: [
-              Icon(
-                _authoringIcon(widget.authoringContext),
-                color: colorScheme.primary,
-              ),
+              Icon(Icons.fitness_center_outlined, color: colorScheme.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -465,7 +413,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check_circle_outline),
-                label: Text(submitText),
+                label: const Text('Save exercise'),
               ),
             ],
           ),
@@ -553,25 +501,4 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
       ),
     );
   }
-}
-
-String _authoringTitle(ExerciseAuthoringContext context) {
-  return switch (context) {
-    ExerciseAuthoringContext.canonicalExercise => 'New exercise',
-    ExerciseAuthoringContext.workoutPlacement => 'Add exercise to workout',
-  };
-}
-
-String _submitLabelText(ExerciseAuthoringContext context) {
-  return switch (context) {
-    ExerciseAuthoringContext.canonicalExercise => 'Save exercise',
-    ExerciseAuthoringContext.workoutPlacement => 'Continue',
-  };
-}
-
-IconData _authoringIcon(ExerciseAuthoringContext context) {
-  return switch (context) {
-    ExerciseAuthoringContext.canonicalExercise => Icons.fitness_center_outlined,
-    ExerciseAuthoringContext.workoutPlacement => Icons.playlist_add_outlined,
-  };
 }

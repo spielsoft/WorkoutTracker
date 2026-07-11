@@ -53,9 +53,10 @@ class CreateExerciseScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ExerciseAuthoringForm(
-            authoringContext: ExerciseAuthoringContext.canonicalExercise,
+            mode: ExerciseFormMode.create,
             onCancel: actions.close,
             onSubmit: (draft) => actions.save(draft.toDef()),
+            isBusy: view.isBusy,
           ),
         ],
       ),

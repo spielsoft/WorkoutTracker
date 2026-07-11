@@ -49,10 +49,11 @@ class EditExerciseScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ExerciseAuthoringForm(
-            authoringContext: ExerciseAuthoringContext.canonicalExercise,
+            mode: ExerciseFormMode.edit,
             initialDraft: CanonicalExerciseDraft.fromExercise(view.exercise),
             onCancel: actions.close,
             onSubmit: (draft) => actions.save(draft.toDef()),
+            isBusy: view.isBusy,
           ),
         ],
       ),
