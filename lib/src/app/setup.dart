@@ -104,7 +104,7 @@ class SetupScreen extends StatelessWidget {
     final setup = view.setup;
     final selectedWorkout = setup.selectedWorkout;
     final overview = setup.overview;
-    return Column(
+    final header = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (view.error case final error?) ...[
@@ -116,92 +116,83 @@ class SetupScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
-        A11yScreen(
-          label: 'Workout setup',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ScreenHeader(
-                title: view.sheetLabel,
-                compactTitle: true,
-                backTooltip: 'Back to sheet selection',
-                onBack: () => actions.setup(const BackToSheets()),
-                trailing: IconButton.filledTonal(
-                  key: const ValueKey('open-exercise-manager'),
-                  tooltip: 'Edit exercise library',
-                  onPressed: () => actions.setup(const OpenExerciseLibrary()),
-                  icon: const Icon(Icons.fitness_center_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final twoColumn = constraints.maxWidth >= 620;
-                  final fieldWidth = twoColumn
-                      ? (constraints.maxWidth - 12) / 2
-                      : constraints.maxWidth;
-                  return Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      SizedBox(
-                        width: fieldWidth,
-                        child: _WorkoutField(
-                          workouts: setup.workouts,
-                          selected: selectedWorkout,
-                          progress: setup.progressByWorkout,
-                          onChanged: (value) =>
-                              actions.setup(ChooseWorkout(value)),
-                          onAdd: view.isBusy
-                              ? null
-                              : () => _addWorkout(context),
-                        ),
-                      ),
-                      SizedBox(
-                        width: fieldWidth,
-                        child: _HistoryField(
-                          blocks: setup.historyBlocks,
-                          selected: setup.selectedHistoryBlock,
-                          onChanged: (value) =>
-                              actions.setup(ChooseHistory(value)),
-                          onAdd: view.isBusy
-                              ? null
-                              : () => _addHistory(context),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                key: const ValueKey('select-workout-setup'),
-                onPressed: overview == null
-                    ? null
-                    : () => actions.setup(const OpenSelectedWorkout()),
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Select'),
-              ),
-              const SizedBox(height: 16),
-              if (overview != null)
-                WorkoutList(
-                  key: const ValueKey('compact-workout-overview'),
-                  overview: overview,
-                  onOpenExercise: (row) => actions.setup(OpenSetupLog(row)),
-                  onAddPrimary: selectedWorkout == null
-                      ? null
-                      : () => actions.setup(AddSetupPrimary(selectedWorkout)),
-                  onAddBackup: (slot) => actions.setup(AddSetupBackup(slot)),
-                  onDeleteExercise: view.isBusy
-                      ? null
-                      : (slot) => _delete(context, slot),
-                  onReorderExercises: view.isBusy ? null : actions.reorder,
-                  compact: true,
-                ),
-            ],
+        ScreenHeader(
+          title: view.sheetLabel,
+          compactTitle: true,
+          backTooltip: 'Back to sheet selection',
+          onBack: () => actions.setup(const BackToSheets()),
+          trailing: IconButton.filledTonal(
+            key: const ValueKey('open-exercise-manager'),
+            tooltip: 'Edit exercise library',
+            onPressed: () => actions.setup(const OpenExerciseLibrary()),
+            icon: const Icon(Icons.fitness_center_outlined),
           ),
         ),
+        const SizedBox(height: 16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final twoColumn = constraints.maxWidth >= 620;
+            final fieldWidth = twoColumn
+                ? (constraints.maxWidth - 12) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: fieldWidth,
+                  child: _WorkoutField(
+                    workouts: setup.workouts,
+                    selected: selectedWorkout,
+                    progress: setup.progressByWorkout,
+                    onChanged: (value) => actions.setup(ChooseWorkout(value)),
+                    onAdd: view.isBusy ? null : () => _addWorkout(context),
+                  ),
+                ),
+                SizedBox(
+                  width: fieldWidth,
+                  child: _HistoryField(
+                    blocks: setup.historyBlocks,
+                    selected: setup.selectedHistoryBlock,
+                    onChanged: (value) => actions.setup(ChooseHistory(value)),
+                    onAdd: view.isBusy ? null : () => _addHistory(context),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          key: const ValueKey('select-workout-setup'),
+          onPressed: overview == null
+              ? null
+              : () => actions.setup(const OpenSelectedWorkout()),
+          icon: const Icon(Icons.check_circle_outline),
+          label: const Text('Select'),
+        ),
+        const SizedBox(height: 16),
       ],
+    );
+    if (overview == null) {
+      return A11yScreen(
+        label: 'Workout setup',
+        child: ListView(children: [header]),
+      );
+    }
+    return WorkoutList(
+      key: const ValueKey('compact-workout-overview'),
+      label: 'Workout setup',
+      header: header,
+      overview: overview,
+      onOpenExercise: (row) => actions.setup(OpenSetupLog(row)),
+      onAddPrimary: selectedWorkout == null
+          ? null
+          : () => actions.setup(AddSetupPrimary(selectedWorkout)),
+      onAddBackup: (slot) => actions.setup(AddSetupBackup(slot)),
+      onDeleteExercise: view.isBusy ? null : (slot) => _delete(context, slot),
+      onReorderExercises: view.isBusy ? null : actions.reorder,
+      compact: true,
     );
   }
 

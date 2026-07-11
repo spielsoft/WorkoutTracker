@@ -35,6 +35,8 @@ Future<bool> confirmWorkoutDelete(
 class WorkoutList extends StatelessWidget {
   const WorkoutList({
     super.key,
+    required this.label,
+    required this.header,
     required this.overview,
     required this.onOpenExercise,
     this.onAddPrimary,
@@ -45,6 +47,8 @@ class WorkoutList extends StatelessWidget {
     this.showTitle = true,
   });
 
+  final String label;
+  final Widget header;
   final WorkoutOverview overview;
   final ValueChanged<int> onOpenExercise;
   final VoidCallback? onAddPrimary;
@@ -57,61 +61,59 @@ class WorkoutList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return A11yScreen(
-      label: '${overview.workout} exercises',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (showTitle) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${overview.workout} exercises',
-                    style: Theme.of(context).textTheme.titleLarge,
+      label: label,
+      child: ReorderableListView.builder(
+        header: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            header,
+            if (showTitle) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${overview.workout} exercises',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                   ),
-                ),
-                if (onAddPrimary != null)
-                  IconButton.filled(
-                    key: const ValueKey('add-primary-exercise-from-setup'),
-                    tooltip: 'Add to workout',
-                    onPressed: onAddPrimary,
-                    icon: const Icon(Icons.add_outlined),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
+                  if (onAddPrimary != null)
+                    IconButton.filled(
+                      key: const ValueKey('add-primary-exercise-from-setup'),
+                      tooltip: 'Add to workout',
+                      onPressed: onAddPrimary,
+                      icon: const Icon(Icons.add_outlined),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
           ],
-          if (overview.slots.isNotEmpty)
-            ReorderableListView.builder(
-              buildDefaultDragHandles: false,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: overview.slots.length,
-              onReorderItem: onReorderExercises == null
-                  ? (_, _) {}
-                  : (oldIndex, newIndex) {
-                      onReorderExercises!(
-                        ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
-                      );
-                    },
-              itemBuilder: (context, index) {
-                final slot = overview.slots[index];
-                return Padding(
-                  key: ValueKey('workout-exercise-${slot.sheetRowNumber}'),
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _WorkoutOverviewTile(
-                    index: index,
-                    slot: slot,
-                    onOpenExercise: onOpenExercise,
-                    onAddBackup: onAddBackup,
-                    onDeleteExercise: onDeleteExercise,
-                    canReorder: onReorderExercises != null,
-                    compact: compact,
-                  ),
+        ),
+        buildDefaultDragHandles: false,
+        itemCount: overview.slots.length,
+        onReorderItem: onReorderExercises == null
+            ? (_, _) {}
+            : (oldIndex, newIndex) {
+                onReorderExercises!(
+                  ReorderIntent(fromIndex: oldIndex, toIndex: newIndex),
                 );
               },
+        itemBuilder: (context, index) {
+          final slot = overview.slots[index];
+          return Padding(
+            key: ValueKey('workout-exercise-${slot.sheetRowNumber}'),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _WorkoutOverviewTile(
+              index: index,
+              slot: slot,
+              onOpenExercise: onOpenExercise,
+              onAddBackup: onAddBackup,
+              onDeleteExercise: onDeleteExercise,
+              canReorder: onReorderExercises != null,
+              compact: compact,
             ),
-        ],
+          );
+        },
       ),
     );
   }

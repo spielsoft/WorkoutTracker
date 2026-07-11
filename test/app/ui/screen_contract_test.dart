@@ -9,7 +9,7 @@ void main() {
   ) async {
     final actions = _SetupActions();
     await tester.pumpWidget(
-      _app(
+      _boundedApp(
         SetupScreen(
           view: SetupView(
             isBusy: false,
@@ -29,7 +29,7 @@ void main() {
   testWidgets('workout execution emits only its typed actions', (tester) async {
     final actions = _WorkoutActions();
     await tester.pumpWidget(
-      _app(
+      _boundedApp(
         WorkoutScreen(
           view: WorkoutView(
             isBusy: false,
@@ -45,6 +45,47 @@ void main() {
     await tester.tap(find.text('Squat'));
 
     expect((actions.seen.single as OpenWorkoutLog).primaryRow, 3);
+  });
+
+  testWidgets('workout list auto-scrolls while reordering at an edge', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      _boundedApp(
+        WorkoutScreen(
+          view: WorkoutView(
+            isBusy: false,
+            setup: _longSetup(),
+            sheetLabel: 'Training',
+          ),
+          actions: _WorkoutActions(),
+        ),
+      ),
+    );
+
+    final scrollable = find.descendant(
+      of: find.byType(WorkoutScreen),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scrollable).position;
+    final handle = find.byTooltip('Reorder Exercise 1');
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 500));
+    await tester.pump(const Duration(milliseconds: 200));
+    await gesture.moveBy(const Offset(0, 50));
+    for (var tick = 0; tick < 20; tick++) {
+      await tester.pump(const Duration(milliseconds: 51));
+    }
+
+    expect(position.pixels, greaterThan(0));
+    await gesture.up();
   });
 
   testWidgets('exercise library auto-scrolls while reordering at an edge', (
@@ -413,6 +454,30 @@ WorkoutSetupReadModel _setup() {
       blockLabel: 'Week 1',
     ),
     progressByWorkout: const {'Legs': WorkoutSetupProgress(done: 0, total: 3)},
+    loggingTarget: null,
+  );
+}
+
+WorkoutSetupReadModel _longSetup() {
+  final setup = _setup();
+  return WorkoutSetupReadModel(
+    activeSheet: setup.activeSheet,
+    workouts: setup.workouts,
+    historyBlocks: setup.historyBlocks,
+    selectedWorkout: setup.selectedWorkout,
+    selectedHistoryBlock: setup.selectedHistoryBlock,
+    overview: WorkoutOverview(
+      workout: 'Legs',
+      slots: [
+        for (var index = 0; index < 20; index++)
+          WorkoutOverviewSlot(
+            sheetRowNumber: index + 3,
+            exercise: 'Exercise ${index + 1}',
+            setCount: 3,
+          ),
+      ],
+    ),
+    progressByWorkout: setup.progressByWorkout,
     loggingTarget: null,
   );
 }

@@ -71,7 +71,7 @@ class WorkoutScreen extends StatelessWidget {
     final title = workout == null || history == null
         ? 'Exercises'
         : '$workout - $history';
-    return Column(
+    final header = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (view.error case final error?) ...[
@@ -83,45 +83,41 @@ class WorkoutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
-        A11yScreen(
-          label: '$title exercise list',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ScreenHeader(
-                title: view.sheetLabel,
-                subtitle: title,
-                compactTitle: true,
-                backTooltip: 'Back to workout setup',
-                onBack: () => actions.workout(const BackToWorkoutSetup()),
-                trailing: workout == null
-                    ? null
-                    : IconButton.filled(
-                        key: const ValueKey('add-primary-exercise'),
-                        tooltip: 'Add to workout',
-                        onPressed: () =>
-                            actions.workout(AddWorkoutPrimary(workout)),
-                        icon: const Icon(Icons.add_outlined),
-                      ),
-              ),
-              const SizedBox(height: 12),
-              if (setup.overview case final overview?)
-                WorkoutList(
-                  key: const ValueKey('full-workout-overview'),
-                  overview: overview,
-                  onOpenExercise: (row) => actions.workout(OpenWorkoutLog(row)),
-                  onAddBackup: (slot) =>
-                      actions.workout(AddWorkoutBackup(slot)),
-                  onDeleteExercise: view.isBusy
-                      ? null
-                      : (slot) => _delete(context, slot),
-                  onReorderExercises: view.isBusy ? null : actions.reorder,
-                  showTitle: false,
+        ScreenHeader(
+          title: view.sheetLabel,
+          subtitle: title,
+          compactTitle: true,
+          backTooltip: 'Back to workout setup',
+          onBack: () => actions.workout(const BackToWorkoutSetup()),
+          trailing: workout == null
+              ? null
+              : IconButton.filled(
+                  key: const ValueKey('add-primary-exercise'),
+                  tooltip: 'Add to workout',
+                  onPressed: () => actions.workout(AddWorkoutPrimary(workout)),
+                  icon: const Icon(Icons.add_outlined),
                 ),
-            ],
-          ),
         ),
+        const SizedBox(height: 12),
       ],
+    );
+    final overview = setup.overview;
+    if (overview == null) {
+      return A11yScreen(
+        label: '$title exercise list',
+        child: ListView(children: [header]),
+      );
+    }
+    return WorkoutList(
+      key: const ValueKey('full-workout-overview'),
+      label: '$title exercise list',
+      header: header,
+      overview: overview,
+      onOpenExercise: (row) => actions.workout(OpenWorkoutLog(row)),
+      onAddBackup: (slot) => actions.workout(AddWorkoutBackup(slot)),
+      onDeleteExercise: view.isBusy ? null : (slot) => _delete(context, slot),
+      onReorderExercises: view.isBusy ? null : actions.reorder,
+      showTitle: false,
     );
   }
 

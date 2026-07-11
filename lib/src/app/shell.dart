@@ -141,21 +141,27 @@ class _AppShellSt extends State<AppShell> {
               listenable: _flow,
               builder: (context, _) {
                 final view = _flow.view;
-                if (view case LibraryView()) {
+                final fullScreen = switch (view) {
+                  SetupView() => SetupScreen(view: view, actions: _flow.loaded),
+                  WorkoutView() => WorkoutScreen(
+                    view: view,
+                    actions: _flow.loaded,
+                  ),
+                  LibraryView() => _feature(
+                    view,
+                    ExerciseLibraryScreen(view: view, actions: _flow.loaded),
+                    fill: true,
+                  ),
+                  _ => null,
+                };
+                if (fullScreen != null) {
                   return Padding(
                     padding: const EdgeInsets.all(24),
                     child: Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 840),
-                        child: _feature(
-                          view,
-                          ExerciseLibraryScreen(
-                            view: view,
-                            actions: _flow.loaded,
-                          ),
-                          fill: true,
-                        ),
+                        child: fullScreen,
                       ),
                     ),
                   );
@@ -169,14 +175,6 @@ class _AppShellSt extends State<AppShell> {
                         SheetView() => SheetScreen(
                           view: view,
                           run: (cmd) => _flow.run(cmd),
-                        ),
-                        SetupView() => SetupScreen(
-                          view: view,
-                          actions: _flow.loaded,
-                        ),
-                        WorkoutView() => WorkoutScreen(
-                          view: view,
-                          actions: _flow.loaded,
                         ),
                         CreateExerciseView() => _feature(
                           view,
@@ -197,8 +195,10 @@ class _AppShellSt extends State<AppShell> {
                           view,
                           LogScreen(view: view, actions: _flow.loaded),
                         ),
+                        SetupView() ||
+                        WorkoutView() ||
                         LibraryView() => throw StateError(
-                          'Library view must use its scrolling layout.',
+                          'This view must use its full-screen layout.',
                         ),
                         _ => throw StateError('Unsupported app view $view'),
                       },
