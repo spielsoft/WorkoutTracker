@@ -115,10 +115,10 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Upper (1/1 done)'), findsOneWidget);
-      await tester.tap(find.text('Upper (1/1 done)'));
+      expect(find.text('Upper (1/1 started)'), findsOneWidget);
+      await tester.tap(find.text('Upper (1/1 started)'));
       await tester.pumpAndSettle();
-      expect(find.text('Legs (0/1 done)'), findsOneWidget);
+      expect(find.text('Legs (0/1 started)'), findsOneWidget);
     },
   );
 
@@ -427,7 +427,7 @@ void main() {
     },
   );
 
-  testWidgets('back from adding to a selected workout returns to setup', (
+  testWidgets('back from adding to a selected workout returns to workout', (
     tester,
   ) async {
     final activeSheet = parseActiveSheet(
@@ -480,18 +480,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add to workout'), findsWidgets);
-    expect(find.byTooltip('Back to workout setup'), findsOneWidget);
+    expect(find.byTooltip('Back to workout'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Back to workout setup'));
+    await tester.tap(find.byTooltip('Back to workout'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('select-workout-setup')), findsOneWidget);
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.byKey(const ValueKey('select-workout-setup')), findsNothing);
+    expect(find.text('Legs - Week 1'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
     );
-    expect(find.text('Legs - Week 1'), findsNothing);
   });
 
   testWidgets('reorders workout exercises from the workout list', (
@@ -600,7 +599,7 @@ void main() {
       expect(find.byKey(const ValueKey('add-workout')), findsNothing);
       expect(find.byKey(const ValueKey('add-history-block')), findsNothing);
 
-      await tester.tap(find.text('Legs (0/1 done)').first);
+      await tester.tap(find.text('Legs (0/1 started)').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add workout...').last);
       await tester.pumpAndSettle();
@@ -609,7 +608,7 @@ void main() {
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Push (0/0 done)'), findsOneWidget);
+      expect(find.text('Push (0/0 started)'), findsOneWidget);
 
       await tester.tap(find.text('Week 1').first);
       await tester.pumpAndSettle();

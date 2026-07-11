@@ -675,7 +675,7 @@ class WorkoutSetupProgress {
   final int done;
   final int total;
 
-  String get label => '($done/$total done)';
+  String get label => '($done/$total started)';
 }
 
 @immutable

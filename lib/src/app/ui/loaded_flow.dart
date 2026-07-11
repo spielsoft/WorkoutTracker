@@ -154,7 +154,7 @@ final class LoadedFlow
       case OpenSetupLog(:final primaryRow):
         _openLog(primaryRow);
       case AddSetupPrimary(:final workout):
-        _openPrimary(workout);
+        _openPrimary(workout, PlaceOrigin.setup);
       case AddSetupBackup(:final slot):
         _openBackup(slot, PlaceOrigin.setup);
       case DeleteSetupExercise(:final primaryRow):
@@ -170,7 +170,7 @@ final class LoadedFlow
         showSetup();
         return;
       case AddWorkoutPrimary(:final workout):
-        _openPrimary(workout);
+        _openPrimary(workout, PlaceOrigin.workout);
       case OpenWorkoutLog(:final primaryRow):
         _openLog(primaryRow);
       case AddWorkoutBackup(:final slot):
@@ -310,11 +310,11 @@ final class LoadedFlow
     _route = _Route.log;
   }
 
-  void _openPrimary(String workout) {
+  void _openPrimary(String workout, PlaceOrigin origin) {
     _ctrl.closeExercise();
     _editing = null;
     _highlightedRow = null;
-    _placeOrigin = PlaceOrigin.setup;
+    _placeOrigin = origin;
     _placeIntent = PlaceIntent.primary(workout: workout);
     _route = _Route.placement;
   }

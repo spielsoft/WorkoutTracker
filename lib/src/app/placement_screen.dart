@@ -72,9 +72,11 @@ class PlacementScreen extends StatelessWidget {
             compactTitle: true,
             backTooltip: view.origin == PlaceOrigin.setup
                 ? 'Back to workout setup'
-                : 'Back to exercises',
+                : 'Back to workout',
             onBack: actions.close,
           ),
+          const SizedBox(height: 16),
+          _PlacementContext(intent: view.intent),
           const SizedBox(height: 16),
           _PlaceForm(
             exercises: view.exercises,
@@ -84,6 +86,65 @@ class PlacementScreen extends StatelessWidget {
                 actions.place(draft.exercise, draft.metadata, keepAdding: true),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PlacementContext extends StatelessWidget {
+  const _PlacementContext({required this.intent});
+
+  final PlaceIntent intent;
+
+  @override
+  Widget build(BuildContext context) {
+    final backup = intent.kind == PlaceKind.backup;
+    final title = backup
+        ? 'Backup for ${intent.primaryExercise}'
+        : 'Primary exercise';
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      container: true,
+      label: '$title, ${intent.workout} workout',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.secondaryContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(
+                backup
+                    ? Icons.account_tree_outlined
+                    : Icons.fitness_center_outlined,
+                color: colors.onSecondaryContainer,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colors.onSecondaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '${intent.workout} workout',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

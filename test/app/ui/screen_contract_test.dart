@@ -309,6 +309,8 @@ void main() {
       ),
     );
 
+    expect(find.text('Primary exercise'), findsOneWidget);
+    expect(find.text('Legs workout'), findsOneWidget);
     await tester.tap(
       find.widgetWithText(
         DropdownButtonFormField<CanonicalExercise>,
@@ -323,6 +325,33 @@ void main() {
     expect(actions.exercise!.exercise, 'Squat');
     expect(actions.metadata!.sets, '3');
     expect(actions.metadata!.reps, '5');
+  });
+
+  testWidgets('backup placement names its parent exercise and workout', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        PlacementScreen(
+          view: PlacementView(
+            isBusy: false,
+            exercises: _setup().activeSheet.canonicalExercises,
+            sheetLabel: 'Training',
+            intent: const PlaceIntent.backup(
+              workout: 'Legs',
+              primaryRow: 3,
+              primaryExercise: 'Squat',
+            ),
+            origin: PlaceOrigin.workout,
+          ),
+          actions: _PlacementActions(),
+        ),
+      ),
+    );
+
+    expect(find.text('Backup for Squat'), findsOneWidget);
+    expect(find.text('Legs workout'), findsOneWidget);
+    expect(find.byTooltip('Back to workout'), findsOneWidget);
   });
 }
 

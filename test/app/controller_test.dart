@@ -199,7 +199,7 @@ void main() {
       expect(setup.overview?.slots.single.exercise, 'Squat');
       expect(setup.progressByWorkout['Legs']?.done, 1);
       expect(setup.progressByWorkout['Legs']?.total, 1);
-      expect(setup.progressByWorkout['Legs']?.label, '(1/1 done)');
+      expect(setup.progressByWorkout['Legs']?.label, '(1/1 started)');
       expect(setup.progressByWorkout['Upper']?.done, 0);
       expect(setup.progressByWorkout['Upper']?.total, 1);
     },

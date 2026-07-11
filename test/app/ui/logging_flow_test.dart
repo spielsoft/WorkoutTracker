@@ -49,7 +49,7 @@ void main() {
     expect(find.byTooltip('Back to sheet selection'), findsOneWidget);
     expect(find.text('Workout'), findsOneWidget);
     expect(find.text('History block'), findsOneWidget);
-    expect(find.text('Legs (0/1 done)'), findsOneWidget);
+    expect(find.text('Legs (0/1 started)'), findsOneWidget);
     expect(find.text('Legs exercises'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);
 
@@ -58,9 +58,9 @@ void main() {
     await tester.tap(find.text('Week 1').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Legs (0/1 done)').first);
+    await tester.tap(find.text('Legs (0/1 started)').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Upper (0/1 done)').last);
+    await tester.tap(find.text('Upper (0/1 started)').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Upper exercises'), findsOneWidget);

@@ -134,9 +134,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Week 1').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Legs (0/1 done)').first);
+      await tester.tap(find.text('Legs (0/1 started)').first);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Upper (0/1 done)').last);
+      await tester.tap(find.text('Upper (0/1 started)').last);
       await tester.pumpAndSettle();
 
       await tester.tap(

@@ -38,11 +38,23 @@ void main() {
       await flow.loaded.close();
       expect(flow.view, isA<WorkoutView>());
 
+      await flow.loaded.workout(const AddWorkoutPrimary('Legs'));
+      final workoutPlacement = flow.view as PlacementView;
+      expect(workoutPlacement.intent.workout, 'Legs');
+      expect(workoutPlacement.origin, PlaceOrigin.workout);
+
+      await flow.loaded.close();
+      expect(flow.view, isA<WorkoutView>());
+
+      await flow.loaded.workout(const BackToWorkoutSetup());
       await flow.loaded.setup(const AddSetupPrimary('Legs'));
       final placement = flow.view as PlacementView;
       expect(placement.intent.kind, PlaceKind.primary);
       expect(placement.intent.workout, 'Legs');
       expect(placement.origin, PlaceOrigin.setup);
+
+      await flow.loaded.close();
+      expect(flow.view, isA<SetupView>());
     },
   );
 
