@@ -9,6 +9,8 @@ import 'loaded_flow.dart';
 import 'sheet.dart';
 import 'view.dart';
 
+const _manualSheetLabel = 'Workout sheet';
+
 /// Routes between sheet setup and the loaded-workout module.
 ///
 /// Feature navigation and transient state belong to [LoadedFlow]. This facade
@@ -69,7 +71,7 @@ final class AppFlow extends ChangeNotifier {
         accountMismatch: workspace.accountMismatch,
       );
     }
-    final label = workspace.selectedSheet?.displayLabel ?? report.sheetId;
+    final label = workspace.selectedSheet?.displayLabel ?? _manualSheetLabel;
     return loaded.view(busy: busy, sheetLabel: label);
   }
 

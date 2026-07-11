@@ -23,6 +23,7 @@ void main() {
 
       expect((await flow.run(const ValidateSheet())).ok, isTrue);
       final setup = flow.view as SetupView;
+      expect(setup.sheetLabel, 'Workout sheet');
       expect(setup.setup.selectedWorkout, 'Legs');
       expect(setup.setup.selectedHistoryBlock, 'Week 1');
 
