@@ -7,26 +7,73 @@ void main() {
   testWidgets('workout setup emits its typed selection command', (
     tester,
   ) async {
-    final cmds = <UiCmd>[];
+    final actions = _SetupActions();
     await tester.pumpWidget(
       _app(
-        WorkoutScreens(
+        SetupScreen(
           view: SetupView(
             isBusy: false,
             setup: _setup(),
             sheetLabel: 'Training',
           ),
-          run: (cmd) async {
-            cmds.add(cmd);
-            return const CmdResult.done();
-          },
+          actions: actions,
         ),
       ),
     );
 
     await tester.tap(find.text('Select'));
 
-    expect(cmds.single, isA<OpenWorkout>());
+    expect(actions.seen.single, const OpenSelectedWorkout());
+  });
+
+  testWidgets('workout execution emits only its typed actions', (tester) async {
+    final actions = _WorkoutActions();
+    await tester.pumpWidget(
+      _app(
+        WorkoutScreen(
+          view: WorkoutView(
+            isBusy: false,
+            setup: _setup(),
+            sheetLabel: 'Training',
+          ),
+          actions: actions,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Squat'));
+
+    expect((actions.seen.single as OpenWorkoutLog).primaryRow, 3);
+  });
+
+  testWidgets('workout execution exposes typed backup and back actions', (
+    tester,
+  ) async {
+    final actions = _WorkoutActions();
+    await tester.pumpWidget(
+      _app(
+        WorkoutScreen(
+          view: WorkoutView(
+            isBusy: false,
+            setup: _setup(),
+            sheetLabel: 'Training',
+          ),
+          actions: actions,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Exercise actions for Squat'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add backup exercise'));
+    await tester.pumpAndSettle();
+
+    expect((actions.seen.single as AddWorkoutBackup).slot.exercise, 'Squat');
+
+    actions.seen.clear();
+    await tester.tap(find.byTooltip('Back to workout setup'));
+
+    expect(actions.seen.single, const BackToWorkoutSetup());
   });
 
   testWidgets('exercise library emits only exercise commands', (tester) async {
@@ -87,6 +134,30 @@ void main() {
     expect(save.metadata.sets, '3');
     expect(save.metadata.reps, '5');
   });
+}
+
+final class _SetupActions implements SetupActions {
+  final seen = <SetupAction>[];
+
+  @override
+  Future<void> run(SetupAction action) async {
+    seen.add(action);
+  }
+
+  @override
+  Future<bool> reorder(ReorderIntent intent) async => true;
+}
+
+final class _WorkoutActions implements WorkoutActions {
+  final seen = <WorkoutAction>[];
+
+  @override
+  Future<void> run(WorkoutAction action) async {
+    seen.add(action);
+  }
+
+  @override
+  Future<bool> reorder(ReorderIntent intent) async => true;
 }
 
 Widget _app(Widget child) {

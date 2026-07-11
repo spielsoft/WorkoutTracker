@@ -95,7 +95,16 @@ final class WorkoutView extends LoadedView {
   });
 }
 
-final class LibraryView extends LoadedView {
+sealed class FeatureView extends LoadedView {
+  const FeatureView({
+    required super.isBusy,
+    required super.setup,
+    required super.sheetLabel,
+    super.error,
+  });
+}
+
+final class LibraryView extends FeatureView {
   const LibraryView({
     required super.isBusy,
     required super.setup,
@@ -107,7 +116,7 @@ final class LibraryView extends LoadedView {
   final int? highlightedRow;
 }
 
-final class CreateExerciseView extends LoadedView {
+final class CreateExerciseView extends FeatureView {
   const CreateExerciseView({
     required super.isBusy,
     required super.setup,
@@ -119,7 +128,7 @@ final class CreateExerciseView extends LoadedView {
   final AppRoute returnRoute;
 }
 
-final class EditExerciseView extends LoadedView {
+final class EditExerciseView extends FeatureView {
   const EditExerciseView({
     required super.isBusy,
     required super.setup,
@@ -151,7 +160,7 @@ class PlaceIntent {
   final String? primaryExercise;
 }
 
-final class PlacementView extends LoadedView {
+final class PlacementView extends FeatureView {
   const PlacementView({
     required super.isBusy,
     required super.setup,
@@ -165,7 +174,7 @@ final class PlacementView extends LoadedView {
   final AppRoute returnRoute;
 }
 
-final class LogView extends LoadedView {
+final class LogView extends FeatureView {
   const LogView({
     required super.isBusy,
     required super.setup,

@@ -1,11 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:workout_tracker/contract.dart';
 
 import 'state_store.dart';
 import 'validation.dart';
 import 'selection.dart';
+import 'setup.dart';
 import 'workout.dart';
+import 'workout_screen.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
 import 'ui/shared/a11y.dart';
@@ -144,7 +147,15 @@ class _AppShellSt extends State<AppShell> {
                           view: view,
                           run: (cmd) => _flow.run(cmd),
                         ),
-                        LoadedView() => WorkoutScreens(
+                        SetupView() => SetupScreen(
+                          view: view,
+                          actions: _SetupFlowActions(_flow),
+                        ),
+                        WorkoutView() => WorkoutScreen(
+                          view: view,
+                          actions: _WorkoutFlowActions(_flow),
+                        ),
+                        FeatureView() => FeatureScreens(
                           view: view,
                           run: _flow.run,
                         ),
@@ -158,5 +169,57 @@ class _AppShellSt extends State<AppShell> {
         ),
       ),
     );
+  }
+}
+
+final class _SetupFlowActions implements SetupActions {
+  const _SetupFlowActions(this.flow);
+
+  final UiFlow flow;
+
+  @override
+  Future<void> run(SetupAction action) async {
+    await flow.run(switch (action) {
+      BackToSheets() => const ReturnToSheet(),
+      OpenExerciseLibrary() => const OpenLibrary(),
+      ChooseWorkout(:final workout) => SelectWorkout(workout),
+      ChooseHistory(:final block) => SelectHistory(block),
+      CreateWorkout(:final name) => AddWorkout(name),
+      CreateHistory(:final label) => AddHistory(label),
+      OpenSelectedWorkout() => const OpenWorkout(),
+      OpenSetupLog(:final primaryRow) => OpenLog(primaryRow),
+      AddSetupPrimary(:final workout) => AddPrimary(workout),
+      AddSetupBackup(:final slot) => AddBackup(slot),
+      DeleteSetupExercise(:final primaryRow) => DeleteWorkoutExercise(
+        primaryRow,
+      ),
+    });
+  }
+
+  @override
+  Future<bool> reorder(ReorderIntent intent) async {
+    return (await flow.run(ReorderWorkout(intent))).ok;
+  }
+}
+
+final class _WorkoutFlowActions implements WorkoutActions {
+  const _WorkoutFlowActions(this.flow);
+
+  final UiFlow flow;
+
+  @override
+  Future<void> run(WorkoutAction action) async {
+    await flow.run(switch (action) {
+      BackToWorkoutSetup() => const BackToSetup(),
+      AddWorkoutPrimary(:final workout) => AddPrimary(workout),
+      OpenWorkoutLog(:final primaryRow) => OpenLog(primaryRow),
+      AddWorkoutBackup(:final slot) => AddBackup(slot),
+      DeleteWorkoutRow(:final primaryRow) => DeleteWorkoutExercise(primaryRow),
+    });
+  }
+
+  @override
+  Future<bool> reorder(ReorderIntent intent) async {
+    return (await flow.run(ReorderWorkout(intent))).ok;
   }
 }
