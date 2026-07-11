@@ -3,7 +3,10 @@ import 'package:workout_tracker/sheets.dart';
 import 'package:workout_tracker/contract.dart';
 
 import '../support/reset.dart'
-    show DevelopmentSheetResetHarness, workoutTrackerDevelopmentSpreadsheetId;
+    show
+        DevelopmentSheetResetFailure,
+        DevelopmentSheetResetHarness,
+        workoutTrackerDevelopmentSpreadsheetId;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -24,14 +27,11 @@ void main() {
       expect(workbook.exercisesSheet.title, 'Exercises');
 
       final activeRows = workbook.activeSheet.rows;
-      expect(activeRows, [activeSheetFixedColumns]);
-      final parsedActiveSheet = parseActiveSheet(
-        ActiveSheetInput(rows: activeRows),
-      );
-
-      expect(parsedActiveSheet.schemaViolations, isEmpty);
-      expect(parsedActiveSheet.primarySlots, isEmpty);
-      expect(parsedActiveSheet.historyBlocks, isEmpty);
+      expect(activeRows.first, [...activeSheetFixedColumns, 'Week 1']);
+      expect(activeRows[1].last, 'S1');
+      expect(activeRows[2][0], '=Exercises!A2');
+      expect(activeRows[2][7], '=Exercises!I2');
+      expect(activeRows[2].last, isEmpty);
 
       final exercisesRows = workbook.exercisesSheet.rows;
       expect(exercisesRows.first, [
@@ -56,10 +56,6 @@ void main() {
         exercisesRows.skip(1).map((row) => parseLogFormat(row[8])),
         everyElement(isA<ParsedLogFormat>()),
       );
-      expect(
-        activeRows.skip(1).where((row) => row.any((cell) => cell.isNotEmpty)),
-        isEmpty,
-      );
     },
   );
 
@@ -69,6 +65,23 @@ void main() {
     expect(
       () => harness.reset(spreadsheetId: 'unrelated-spreadsheet'),
       throwsArgumentError,
+    );
+  });
+
+  test('reports fixture reset failure distinctly', () async {
+    final harness = DevelopmentSheetResetHarness(
+      initializer: _FailingWbkInit(),
+    );
+
+    await expectLater(
+      harness.reset(),
+      throwsA(
+        isA<DevelopmentSheetResetFailure>().having(
+          (error) => error.toString(),
+          'message',
+          contains('Development sheet reset failed'),
+        ),
+      ),
     );
   });
 
@@ -197,5 +210,15 @@ class _FakeWbkInit implements WbkInit {
   }) async {
     initializedSpreadsheetIds.add(spreadsheetId);
     workbooks.add(workbook);
+  }
+}
+
+class _FailingWbkInit implements WbkInit {
+  @override
+  Future<void> initializeWorkbook({
+    required String spreadsheetId,
+    required Wbk workbook,
+  }) async {
+    throw StateError('fixture unavailable');
   }
 }

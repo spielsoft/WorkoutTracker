@@ -9,6 +9,7 @@ export 'src/app/exercise_create_screen.dart';
 export 'src/app/exercise_edit_screen.dart';
 export 'src/app/placement_screen.dart';
 export 'src/app/logging.dart';
+export 'src/app/live_logging.dart';
 export 'src/app/workout_home.dart';
 export 'src/app/ui/flow.dart';
 export 'src/app/ui/sheet.dart';

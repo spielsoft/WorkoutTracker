@@ -9,7 +9,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 - [x] Slice 1: Apply Apache-2.0 and public project policy
 - [x] Slice 2: Make builder-owned Google configuration safe and complete
 - [x] Slice 3: Make mobile state persistence durable
-- [ ] Slice 4: Exercise production composition in live Google validation
+- [x] Slice 4: Exercise production composition in live Google validation
 - [ ] Slice 5: Publish accurate support and privacy resources
 - [ ] Slice 6: Replace historical setup notes with a public self-build guide
 - [ ] Slice 7: Add dependency and continuous-integration gates
@@ -142,18 +142,18 @@ reset harness explicit and make the runnable device command truthful.
 
 ### Acceptance criteria
 
-- [ ] The live test uses production application composition rather than a
+- [x] The live test uses production application composition rather than a
       separately assembled authorization and adapter path.
-- [ ] Without the opt-in environment flag, the test skips before login or any
+- [x] Without the opt-in environment flag, the test skips before login or any
       Google request.
-- [ ] With the flag, the command identifies a supported device target and the
+- [x] With the flag, the command identifies a supported device target and the
       destructive development sheet clearly.
-- [ ] A successful run selects or resolves the fixture, validates it, performs
+- [x] A successful run selects or resolves the fixture, validates it, performs
       a representative logged-set write, rereads the result, and resets the
       fixture.
-- [ ] Cancellation, missing credentials, and reset failure are reported
+- [x] Cancellation, missing credentials, and reset failure are reported
       distinctly.
-- [ ] Local tests cover only the app-owned integration entry contract; they do
+- [x] Local tests cover only the app-owned integration entry contract; they do
       not simulate Google success as proof.
 
 ### Blocked by

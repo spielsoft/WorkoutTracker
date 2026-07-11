@@ -42,8 +42,12 @@ fixture writes:
 
 ```sh
 WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
-  flutter test integration_test/live_logging_flow_test.dart -d macos
+  flutter test integration_test/live_logging_flow_test.dart -d macos \
+  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
 ```
+
+This command targets the supported macOS app and destructively resets the
+named development Sheet before and after its representative logged-set write.
 
 Without the environment flag, it must skip before authentication. A live run
 must reset the fixture after itself; report reset failures and skipped runs
