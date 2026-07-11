@@ -29,28 +29,7 @@ void main() {
     expect(decoded.workoutSelection?.historyBlock, 'Week 1');
   });
 
-  test('file app state store uses Application Support on macOS', () {
-    final directory = FileAppStStore.defaultStDir(
-      isWindows: false,
-      isMacOS: true,
-      environment: {'HOME': '/Users/athlete'},
-      systemTemp: Directory('/tmp'),
-    );
-
-    expect(
-      directory.path,
-      [
-        '',
-        'Users',
-        'athlete',
-        'Library',
-        'Application Support',
-        'WorkoutTracker',
-      ].join(Platform.pathSeparator),
-    );
-  });
-
-  test('file app state store persists grouped state to disk', () async {
+  test('file app state store restores grouped state after restart', () async {
     final directory = await Directory.systemTemp.createTemp(
       'workout-tracker-state-test-',
     );
@@ -59,7 +38,7 @@ void main() {
         await directory.delete(recursive: true);
       }
     });
-    final store = FileAppStStore(stateDirectory: directory);
+    final store = FileAppStStore(() async => directory);
     const state = WorkspaceAccessSt(
       sheetText: 'spreadsheet-id',
       selectedSheet: SelectedSheet(
@@ -69,7 +48,9 @@ void main() {
     );
 
     await store.writeWorkspaceSt(state);
-    final restored = await store.readWorkspaceSt();
+    final restored = await FileAppStStore(
+      () async => directory,
+    ).readWorkspaceSt();
 
     expect(restored.sheetText, 'spreadsheet-id');
     expect(restored.selectedSheet?.name, 'Development Workouts');
@@ -84,7 +65,7 @@ void main() {
         await directory.delete(recursive: true);
       }
     });
-    final store = FileAppStStore(stateDirectory: directory);
+    final store = FileAppStStore(() async => directory);
     final controller = WorkspaceStCtrl(store);
 
     await Future.wait([
@@ -118,7 +99,7 @@ void main() {
     expect(restored.workoutSelection?.workout, 'Legs');
   });
 
-  test('file app state store ignores malformed existing state', () async {
+  test('file app state store reports malformed existing state', () async {
     final directory = await Directory.systemTemp.createTemp(
       'workout-tracker-malformed-state-test-',
     );
@@ -130,12 +111,47 @@ void main() {
     await File(
       '${directory.path}${Platform.pathSeparator}state.json',
     ).writeAsString('{"googleWorkspaceAccess":{}}{"extra":true}');
-    final store = FileAppStStore(stateDirectory: directory);
+    final store = FileAppStStore(() async => directory);
 
-    final restored = await store.readWorkspaceSt();
+    await expectLater(store.readWorkspaceSt(), throwsA(isA<FormatException>()));
+  });
 
-    expect(restored.sheetText, isNull);
-    expect(restored.selectedSheet, isNull);
+  test('file app state store reports an I/O failure', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'workout-tracker-failed-state-test-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final blocker = File(
+      '${directory.path}${Platform.pathSeparator}not-a-directory',
+    );
+    await blocker.writeAsString('blocked');
+    final store = FileAppStStore(() async => Directory(blocker.path));
+
+    await expectLater(
+      store.writeWorkspaceSt(
+        const WorkspaceAccessSt(sheetText: 'spreadsheet-id'),
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+  });
+
+  test('workspace reports application-support lookup failure', () async {
+    final store = FileAppStStore(() async {
+      throw const FileSystemException('Application Support unavailable');
+    });
+    final workspace = WorkspaceCtrl(
+      accessStOwner: WorkspaceStCtrl(store),
+      initialText: 'session-sheet-id',
+    );
+
+    final restored = await workspace.restore();
+
+    expect(restored.pastedText, 'session-sheet-id');
+    expect(restored.error, contains('could not be restored'));
   });
 
   test('ignores retired picker authorization in existing state', () {

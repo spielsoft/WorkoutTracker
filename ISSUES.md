@@ -8,7 +8,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 
 - [x] Slice 1: Apply Apache-2.0 and public project policy
 - [x] Slice 2: Make builder-owned Google configuration safe and complete
-- [ ] Slice 3: Make mobile state persistence durable
+- [x] Slice 3: Make mobile state persistence durable
 - [ ] Slice 4: Exercise production composition in live Google validation
 - [ ] Slice 5: Publish accurate support and privacy resources
 - [ ] Slice 6: Replace historical setup notes with a public self-build guide
@@ -108,15 +108,15 @@ temporary-directory fallbacks from production behavior.
 
 ### Acceptance criteria
 
-- [ ] Production state paths come from a supported platform application-data
+- [x] Production state paths come from a supported platform application-data
       provider on iOS and macOS.
-- [ ] Saving and restoring a selected sheet survives a normal restart.
-- [ ] A storage failure is observable through the existing application status
+- [x] Saving and restoring a selected sheet survives a normal restart.
+- [x] A storage failure is observable through the existing application status
       flow and never silently switches to temporary storage.
-- [ ] Account mismatch still requires explicit reselection or confirmation.
-- [ ] Restore remains serialized against login, logout, choose, and create
+- [x] Account mismatch still requires explicit reselection or confirmation.
+- [x] Restore remains serialized against login, logout, choose, and create
       commands.
-- [ ] Public store tests cover successful persistence, corrupt input, and I/O
+- [x] Public store tests cover successful persistence, corrupt input, and I/O
       failure without pinning the provider implementation.
 
 ### Blocked by

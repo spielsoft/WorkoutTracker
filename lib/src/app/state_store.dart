@@ -143,10 +143,9 @@ class WorkspaceStCtrl implements WorkspaceStOwner {
 }
 
 class FileAppStStore implements AppStStore {
-  const FileAppStStore({Directory? stateDirectory})
-    : _stateDirectoryOverride = stateDirectory;
+  const FileAppStStore(this._stDirProvider);
 
-  final Directory? _stateDirectoryOverride;
+  final Future<Directory> Function() _stDirProvider;
 
   static const _workspaceAccessKey = 'googleWorkspaceAccess';
 
@@ -178,12 +177,7 @@ class FileAppStStore implements AppStStore {
     if (!await file.exists()) {
       return null;
     }
-    Object? decoded;
-    try {
-      decoded = jsonDecode(await file.readAsString());
-    } on FormatException {
-      return null;
-    }
+    final decoded = jsonDecode(await file.readAsString());
     if (decoded is Map<String, Object?>) {
       return decoded;
     }
@@ -202,48 +196,8 @@ class FileAppStStore implements AppStStore {
   }
 
   Future<File> _stateFile() async {
-    final directory = _stateDirectory();
+    final directory = await _stDirProvider();
     return File('${directory.path}${Platform.pathSeparator}state.json');
-  }
-
-  Directory _stateDirectory() {
-    return _stateDirectoryOverride ??
-        defaultStDir(
-          isWindows: Platform.isWindows,
-          isMacOS: Platform.isMacOS,
-          environment: Platform.environment,
-          systemTemp: Directory.systemTemp,
-        );
-  }
-
-  static Directory defaultStDir({
-    required bool isWindows,
-    required bool isMacOS,
-    required Map<String, String> environment,
-    required Directory systemTemp,
-  }) {
-    if (isWindows) {
-      final appData = environment['APPDATA'];
-      if (appData != null && appData.trim().isNotEmpty) {
-        return Directory('$appData${Platform.pathSeparator}WorkoutTracker');
-      }
-    }
-
-    final home = environment['HOME'];
-    if (home != null && home.trim().isNotEmpty) {
-      if (isMacOS) {
-        return Directory(
-          '$home${Platform.pathSeparator}Library'
-          '${Platform.pathSeparator}Application Support'
-          '${Platform.pathSeparator}WorkoutTracker',
-        );
-      }
-      return Directory('$home${Platform.pathSeparator}.workout_tracker');
-    }
-
-    return Directory(
-      '${systemTemp.path}${Platform.pathSeparator}workout_tracker',
-    );
   }
 }
 

@@ -14,6 +14,7 @@ package's installed `pubspec.yaml` and `LICENSE` file.
 | `googleapis` | 16.0.0 | BSD-3-Clause | [googleapis.dart](https://github.com/google/googleapis.dart/tree/master/generated/googleapis) |
 | `http` | 1.6.0 | BSD-3-Clause | [Dart HTTP](https://github.com/dart-lang/http/tree/master/pkgs/http) |
 | `google_sign_in` | 7.2.0 | BSD-3-Clause | [Flutter packages](https://github.com/flutter/packages/tree/main/packages/google_sign_in/google_sign_in) |
+| `path_provider` | 2.1.6 | BSD-3-Clause | [Flutter packages](https://github.com/flutter/packages/tree/main/packages/path_provider/path_provider) |
 | `url_launcher` | 6.3.2 | BSD-3-Clause | [Flutter packages](https://github.com/flutter/packages/tree/main/packages/url_launcher/url_launcher) |
 
 This direct-dependency inventory is not a substitute for the complete license

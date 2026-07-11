@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:workout_tracker/app.dart';
 
 import 'src/app/sheet_picker_page.dart';
@@ -14,7 +15,7 @@ Future<void> main() async {
       svc: sheetSvc,
       navigatorKey: navigatorKey,
       accountSession: googleAuth,
-      appStStore: const FileAppStStore(),
+      appStStore: const FileAppStStore(getApplicationSupportDirectory),
       picker: DriveSheetPicker(
         googleAccess: google,
         showPicker: (req) async {
