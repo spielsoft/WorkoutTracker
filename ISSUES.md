@@ -1,18 +1,16 @@
-# Remaining Review Issues
+# Engineering Debt Issues
 
-This plan closes the remaining workbook-safety, GUI architecture, and
-latest-history verification gaps identified in the codebase review.
+This plan resolves the remaining non-blocking engineering debt found in the
+second codebase review.
 
 ## Progress
 
-- [x] Slice 1: Eliminate inferred writable column positions
-- [x] Slice 2: Route setup and workout screens through narrow contracts
-- [x] Slice 3: Route logging and exercise screens through narrow contracts
-- [x] Slice 4: Reduce the application flow to a routing facade
-- [x] Slice 5: Harden latest-history behavior coverage
-- [x] Slice 6: Clean up tests after the architecture slices
+- [ ] Slice 1: Surface workspace persistence failures
+- [ ] Slice 2: Own the native authentication event lifecycle
+- [ ] Slice 3: Decompose write planning by responsibility
+- [ ] Slice 4: Clean up the resulting tests
 
-## Slice 1: Eliminate inferred writable column positions
+## Slice 1: Surface workspace persistence failures
 
 ### Type
 
@@ -20,26 +18,23 @@ latest-history verification gaps identified in the codebase review.
 
 ### What to build
 
-Make exact workbook schema validation the prerequisite for deriving writable
-column positions or producing write plans. A malformed active sheet or
-`Exercises` tab must remain readable as a damage report, but it must not expose
-guessed writable positions or allow any planner or workbook session to produce
-an applicable write.
+Make saved-workspace read and write failures visible without making the current
+session unusable. A user should be able to continue with an in-memory sheet or
+workout selection, while the application clearly reports that the choice could
+not be restored or persisted and therefore may not survive a restart.
 
 ### Acceptance criteria
 
-- [ ] Active-sheet and `Exercises` column indexes are constructed only after
-      their headers pass exact schema validation.
-- [ ] Missing, empty, reordered, duplicated, or unsupported required columns do
-      not receive inferred writable positions.
-- [ ] Every public planner returns an empty or explicitly rejected plan when the
-      parsed workbook has schema damage.
-- [ ] Workout, healing, exercise-authoring, and logging actions remain
-      unavailable while schema damage is present.
-- [ ] Behavior tests prove that malformed active and `Exercises` headers cannot
-      produce or apply active-sheet or canonical-exercise writes.
-- [ ] Valid workbooks retain all existing parsing, planning, and writing
-      behavior.
+- [ ] Failed workspace restoration produces a clear, non-crashing application
+      error instead of being silently treated as empty state.
+- [ ] Failed persistence of pasted sheet text, a selected sheet, or workout
+      setup is surfaced to the user.
+- [ ] A persistence failure does not discard an otherwise valid in-memory
+      selection or prevent the current session from continuing.
+- [ ] A later successful persistence operation clears the stale persistence
+      error.
+- [ ] Behavior tests cover restoration failure, write failure, recovery, and
+      preservation of in-memory state through the public workspace interface.
 
 ### Blocked by
 
@@ -47,11 +42,11 @@ None - can start immediately.
 
 ### User stories covered
 
-- Original review finding: invalid workbooks must never receive unsafe writes.
-- Domain contract: the app must not infer writable column positions while
-  schema damage is present.
+- Users can trust whether their selected sheet and workout setup will restore
+  on the next launch.
+- Local state failures remain recoverable and do not block workout logging.
 
-## Slice 2: Route setup and workout screens through narrow contracts
+## Slice 2: Own the native authentication event lifecycle
 
 ### Type
 
@@ -59,24 +54,21 @@ None - can start immediately.
 
 ### What to build
 
-Make workout setup and workout execution independently importable screens. Each
-screen should receive only the read model it renders and the commands it is
-allowed to issue. The application shell should route their typed views directly
-instead of sending both through a multipurpose workout-screen dispatcher.
+Give the native Google account gateway explicit ownership of its authentication
+event listener. Initialization should create at most one listener, and disposing
+the gateway should detach it so a retired gateway cannot retain resources or
+publish account changes.
 
 ### Acceptance criteria
 
-- [ ] Workout setup and workout execution are separate importable screens.
-- [ ] Each screen accepts a small typed read model and a screen-specific command
-      interface.
-- [ ] Neither screen can issue unrelated sheet, account, library, authoring, or
-      logging commands through an unrestricted application command runner.
-- [ ] The application shell routes setup and workout views directly to their
-      owning screens.
-- [ ] Existing selection, progress, reordering, backup, deletion, and navigation
-      behavior remains available through the new contracts.
-- [ ] Focused tests exercise each public screen contract without depending on
-      private widget structure.
+- [ ] Repeated initialization uses one authentication event subscription.
+- [ ] Disposing the gateway cancels its subscription exactly once.
+- [ ] Authentication events cannot notify listeners after the gateway is
+      disposed.
+- [ ] Existing restore, explicit login, authorization-header, and logout
+      behavior is unchanged.
+- [ ] Focused tests exercise the lifecycle through an intentional injectable
+      interface rather than a simulated Google service response.
 
 ### Blocked by
 
@@ -84,47 +76,11 @@ None - can start immediately.
 
 ### User stories covered
 
-- Original review finding: replace the large private GUI library with
-  importable screens and small typed interfaces.
-- MVP workout setup and workout logging navigation.
+- Recreating or shutting down the application does not leave authentication
+  listeners attached to retired state owners.
+- Account state remains single-sourced by the active native gateway.
 
-## Slice 3: Route logging and exercise screens through narrow contracts
-
-### Type
-
-`AFK`
-
-### What to build
-
-Complete direct routing for logging, exercise library, exercise creation,
-exercise editing, and workout placement. Each screen should own its presentation
-contract and expose only feature-specific commands, allowing removal of the
-remaining multipurpose workout-screen dispatcher.
-
-### Acceptance criteria
-
-- [ ] Logging, exercise library, exercise creation, exercise editing, and
-      workout placement are independently importable screens.
-- [ ] Each screen accepts only its own typed read model and command interface.
-- [ ] Screens cannot issue arbitrary application commands through a shared
-      unrestricted runner.
-- [ ] The application shell routes every loaded application view directly to
-      its owning screen.
-- [ ] The multipurpose workout-screen dispatcher is removed.
-- [ ] Existing logging, authoring, editing, placement, backup, and return-route
-      behavior remains covered through public screen contracts.
-
-### Blocked by
-
-- Slice 2: Route setup and workout screens through narrow contracts.
-
-### User stories covered
-
-- Original review finding: make the shell the screen router and narrow GUI
-  interfaces.
-- MVP logging, exercise-library, authoring, editing, and placement flows.
-
-## Slice 4: Reduce the application flow to a routing facade
+## Slice 3: Decompose write planning by responsibility
 
 ### Type
 
@@ -132,61 +88,25 @@ remaining multipurpose workout-screen dispatcher.
 
 ### What to build
 
-Move feature-specific views, commands, and transitions into their owning
-modules, leaving the application flow as a small facade for startup restoration,
-top-level routing, and genuinely shared coordination. Remove duplicated state,
-pass-through commands, and feature behavior that no longer belongs in the
-top-level flow.
+Replace the oversized write-planning compilation units with cohesive internal
+modules for plan contracts, stale-write expectations, preview application, and
+the history, set, exercise, and workout planning strategies. Preserve the
+existing public sheet-contract API and keep each module deep enough to own a
+complete planning concern.
 
 ### Acceptance criteria
 
-- [ ] Feature-specific view and command declarations live with their owning
-      feature modules.
-- [ ] Feature transitions that do not cross application routes are handled by
-      the feature owner rather than the top-level flow.
-- [ ] The top-level flow exposes only the current routed view, restoration, and
-      the minimal commands required for cross-feature coordination.
-- [ ] Duplicate routing, selection, return-route, and transient feature state is
-      removed or assigned to one authoritative owner.
-- [ ] The routing facade is substantially smaller than the current monolithic
-      flow and no longer contains an application-wide feature command switch.
-- [ ] Startup restoration, account mismatch handling, stale validation
-      rejection, and navigation behavior remain covered through public
-      interfaces.
-
-### Blocked by
-
-- Slice 2: Route setup and workout screens through narrow contracts.
-- Slice 3: Route logging and exercise screens through narrow contracts.
-
-### User stories covered
-
-- Original review finding: make the application shell a router and eliminate
-  split GUI state ownership.
-- Architecture expectation: prefer deep modules with small public interfaces.
-
-## Slice 5: Harden latest-history behavior coverage
-
-### Type
-
-`AFK`
-
-### What to build
-
-Lock the latest-history display to the intended user-visible rule: show the
-newest non-empty set from the newest prior history block, while ignoring empty
-set gaps and excluding the currently selected block.
-
-### Acceptance criteria
-
-- [ ] A history block with an empty middle or trailing set still displays its
-      newest non-empty set.
-- [ ] When multiple prior history blocks contain data, the newest prior block
-      wins.
-- [ ] The currently selected block is not presented as prior history.
-- [ ] A row with no prior history omits the latest-history value cleanly.
-- [ ] Tests exercise the public logging-screen behavior and do not pin the
-      private helper implementation.
+- [ ] Public plan types and planner entry points remain source-compatible for
+      application and adapter callers.
+- [ ] Stale-write expectations and rejection messages have one clear owner.
+- [ ] In-memory preview application has one clear owner independent of planner
+      orchestration.
+- [ ] History, set, exercise, and workout planning strategies are separated by
+      domain responsibility without shallow pass-through wrappers.
+- [ ] No behavior changes occur in parsing, safety rejection, write previews,
+      or generated write requests.
+- [ ] Existing contract and adapter behavior tests pass without pinning the new
+      private file layout.
 
 ### Blocked by
 
@@ -194,11 +114,12 @@ None - can start immediately.
 
 ### User stories covered
 
-- Original review finding: latest history must display the latest set rather
-  than the oldest set.
-- MVP logging flow: show useful recent row-local history while logging.
+- Maintainers can change one write-planning concern without navigating an
+  unrelated monolith.
+- Workbook safety and human-readable sheet behavior remain stable through
+  future planner changes.
 
-## Slice 6: Clean up tests after the architecture slices
+## Slice 4: Clean up the resulting tests
 
 ### Type
 
@@ -206,34 +127,27 @@ None - can start immediately.
 
 ### What to build
 
-Use the `test-cleanup` skill to remove temporary TDD scaffolding and rewrite
-tests that pin routing internals, private widget structure, helper names, or
-transient command choreography. Preserve the smallest durable safety net around
-workbook write safety, public screen contracts, routing behavior, and
-latest-history behavior.
+Use the `test-cleanup` skill to remove temporary scaffolding and keep only the
+smallest durable behavior tests for persistence errors, authentication
+lifecycle ownership, and the unchanged public write-planning contract.
 
 ### Acceptance criteria
 
 - [ ] The `test-cleanup` skill is used for this slice.
-- [ ] Tests that exist only to pin private implementation details are removed or
-      rewritten through public interfaces.
-- [ ] Workbook safety tests prove damaged schemas cannot produce applied writes.
-- [ ] GUI tests are organized around importable public screen contracts.
-- [ ] Latest-history coverage retains the gap and multiple-prior-block cases.
-- [ ] `flutter analyze` and the full local `flutter test` suite pass.
-- [ ] Clean macOS and iOS release compilation and relevant bundle validation
-      pass before the plan is marked complete.
+- [ ] Tests assert public behavior or intentional adapter interfaces rather
+      than private helper names and file placement.
+- [ ] Temporary TDD-only cases and redundant assertions are removed.
+- [ ] Persistence recovery and authentication disposal retain focused coverage.
+- [ ] The complete Flutter test suite and static analysis pass.
+- [ ] Clean macOS and unsigned iOS release builds pass.
 
 ### Blocked by
 
-- Slice 1: Eliminate inferred writable column positions.
-- Slice 2: Route setup and workout screens through narrow contracts.
-- Slice 3: Route logging and exercise screens through narrow contracts.
-- Slice 4: Reduce the application flow to a routing facade.
-- Slice 5: Harden latest-history behavior coverage.
+- Slice 1: Surface workspace persistence failures.
+- Slice 2: Own the native authentication event lifecycle.
+- Slice 3: Decompose write planning by responsibility.
 
 ### User stories covered
 
-- Original review finding: keep the checked-in suite green and behavior-focused.
-- Repository testing expectation: tests should describe observable behavior,
-  public interfaces, and intentional seams rather than implementation details.
+- Future refactors retain a compact safety net around behavior instead of
+  implementation details.
