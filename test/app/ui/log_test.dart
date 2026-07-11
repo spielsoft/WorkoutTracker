@@ -39,24 +39,98 @@ void main() {
     expect(tester.widget<TextField>(_field('Weight')).controller!.text, '225');
   });
 
-  testWidgets('shows the newest non-empty set from the latest prior block', (
+  testWidgets('uses the newest non-empty set across gaps and trailing blanks', (
     tester,
   ) async {
-    await tester.pumpWidget(_app(actions: _LogActions()));
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 2', 'Week 1', '', '', ''],
+          setLabels: const ['S1', 'S1', 'S2', 'S3', 'S4'],
+          values: const ['40x5@8', '30x5@7', '', '35x5@8', ''],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
 
     await tester.tap(find.text('Training details'));
     await tester.pumpAndSettle();
 
     expect(find.text('Latest history: 35x5@8'), findsOneWidget);
   });
+
+  testWidgets('uses the newest prior block when several contain history', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 3', 'Week 2', 'Week 1'],
+          setLabels: const ['S1', 'S1', 'S1'],
+          values: const ['300x5@8', '200x5@8', '100x5@8'],
+          selectedBlock: 'Week 3',
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Training details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Latest history: 200x5@8'), findsOneWidget);
+  });
+
+  testWidgets('excludes the selected block from latest history', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 2', 'Week 1'],
+          setLabels: const ['S1', 'S1'],
+          values: const ['999x5@9', '35x5@8'],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Training details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Latest history: 35x5@8'), findsOneWidget);
+    expect(find.textContaining('999x5@9'), findsNothing);
+  });
+
+  testWidgets('omits latest history when no prior block has data', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 1'],
+          setLabels: const ['S1'],
+          values: const ['40x5@8'],
+          selectedBlock: 'Week 1',
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Training details'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Latest history:'), findsNothing);
+  });
 }
 
-Widget _app({required LogActions actions}) {
+Widget _app({required LogActions actions, LogView? view}) {
   return MaterialApp(
     home: Scaffold(
       body: ListView(
         padding: const EdgeInsets.all(24),
-        children: [LogScreen(view: _view(), actions: actions)],
+        children: [LogScreen(view: view ?? _view(), actions: actions)],
       ),
     ),
   );
@@ -145,6 +219,45 @@ LogView _view() {
     activeSheet: setup.activeSheet,
     sheetLabel: 'Development Workouts',
     target: setup.loggingTarget!,
+  );
+}
+
+LogView _historyView({
+  required List<String> labels,
+  required List<String> setLabels,
+  required List<String> values,
+  required String selectedBlock,
+}) {
+  final active = parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, ...labels],
+        [...List.filled(activeSheetFixedColumns.length, ''), ...setLabels],
+        [
+          'Squat',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}',
+          'Legs',
+          '',
+          ...values,
+        ],
+      ],
+    ),
+  );
+  return LogView(
+    isBusy: false,
+    activeSheet: active,
+    sheetLabel: 'Development Workouts',
+    target: WorkoutLoggingTarget(
+      blockLabel: selectedBlock,
+      primaryRow: 3,
+      selectedRow: 3,
+    ),
   );
 }
 
