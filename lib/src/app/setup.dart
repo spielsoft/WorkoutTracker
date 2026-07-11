@@ -186,10 +186,12 @@ class SetupScreen extends StatelessWidget {
       header: header,
       overview: overview,
       onOpenExercise: (row) => actions.setup(OpenSetupLog(row)),
-      onAddPrimary: selectedWorkout == null
+      onAddPrimary: view.isBusy || selectedWorkout == null
           ? null
           : () => actions.setup(AddSetupPrimary(selectedWorkout)),
-      onAddBackup: (slot) => actions.setup(AddSetupBackup(slot)),
+      onAddBackup: view.isBusy
+          ? null
+          : (slot) => actions.setup(AddSetupBackup(slot)),
       onDeleteExercise: view.isBusy ? null : (slot) => _delete(context, slot),
       onReorderExercises: view.isBusy ? null : actions.reorder,
       compact: true,

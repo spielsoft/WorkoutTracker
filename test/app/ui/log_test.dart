@@ -26,17 +26,68 @@ void main() {
     expect(save.fields, {'Weight': '225', 'Reps': '5', 'RPE': '8'});
   });
 
-  testWidgets('keeps failed input visible and reports the screen-local error', (
+  testWidgets(
+    'keeps failed input visible and reports the command-owner error',
+    (tester) async {
+      final actions = _LogActions(succeeds: false);
+      final view = _view();
+      await tester.pumpWidget(_app(actions: actions, view: view));
+
+      await tester.enterText(_field('Weight'), '225');
+      await tester.tap(find.text('Save set'));
+      await tester.pump();
+      await tester.pumpWidget(
+        _app(
+          actions: actions,
+          view: _viewState(
+            view,
+            error:
+                'Unable to save set: saved set was not visible after refresh.',
+          ),
+        ),
+      );
+
+      expect(
+        find.text(
+          'Unable to save set: saved set was not visible after refresh.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('225'), findsOneWidget);
+    },
+  );
+
+  testWidgets('typed pending state disables every set mutation', (
     tester,
   ) async {
-    await tester.pumpWidget(_app(actions: _LogActions(succeeds: false)));
+    final view = _historyView(
+      labels: const ['Week 2'],
+      setLabels: const ['S1'],
+      values: const ['225x5@8'],
+      selectedBlock: 'Week 2',
+    );
+    await tester.pumpWidget(
+      _app(actions: _LogActions(), view: _viewState(view, isBusy: true)),
+    );
 
-    await tester.enterText(_field('Weight'), '225');
-    await tester.tap(find.text('Save set'));
-    await tester.pump();
-
-    expect(find.text('Unable to save set. Try again.'), findsOneWidget);
-    expect(find.text('225'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save set'))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<IconButton>(find.byKey(const ValueKey('save-S1')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<IconButton>(find.byKey(const ValueKey('clear-S1')))
+          .onPressed,
+      isNull,
+    );
   });
 
   testWidgets('uses the newest non-empty set across gaps and trailing blanks', (
@@ -219,6 +270,16 @@ LogView _view() {
     activeSheet: setup.activeSheet,
     sheetLabel: 'Development Workouts',
     target: setup.loggingTarget!,
+  );
+}
+
+LogView _viewState(LogView view, {bool isBusy = false, String? error}) {
+  return LogView(
+    isBusy: isBusy,
+    error: error,
+    activeSheet: view.activeSheet,
+    sheetLabel: view.sheetLabel,
+    target: view.target,
   );
 }
 

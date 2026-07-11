@@ -199,6 +199,7 @@ class _AppShellSt extends State<AppShell> {
                           LogView() => _feature(
                             view,
                             LogScreen(view: view, actions: _flow.loaded),
+                            showError: false,
                           ),
                           SetupView() ||
                           WorkoutView() ||
@@ -219,19 +220,25 @@ class _AppShellSt extends State<AppShell> {
     );
   }
 
-  Widget _feature(AppView view, Widget screen, {bool fill = false}) {
+  Widget _feature(
+    AppView view,
+    Widget screen, {
+    bool fill = false,
+    bool showError = true,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (view.error case final error?) ...[
-          IssuePanel(
-            icon: Icons.error_outline,
-            title: 'Connection or validation failed',
-            lines: [error],
-            tone: IssueTone.error,
-          ),
-          const SizedBox(height: 16),
-        ],
+        if (showError)
+          if (view.error case final error?) ...[
+            IssuePanel(
+              icon: Icons.error_outline,
+              title: 'Connection or validation failed',
+              lines: [error],
+              tone: IssueTone.error,
+            ),
+            const SizedBox(height: 16),
+          ],
         if (fill) Expanded(child: screen) else screen,
       ],
     );

@@ -44,8 +44,6 @@ class LogScreen extends StatefulWidget {
 
 class _LogScreenSt extends State<LogScreen> {
   late final LoggingFlow _flow;
-  bool _isWriting = false;
-  String? _writeError;
 
   @override
   void initState() {
@@ -88,71 +86,31 @@ class _LogScreenSt extends State<LogScreen> {
   }
 
   Future<void> _saveSet() async {
-    if (_isWriting) {
-      return;
-    }
+    if (widget.view.isBusy) return;
     final plan = _flow.planSetSave();
-    if (plan == null) {
-      return;
-    }
+    if (plan == null) return;
 
-    await _runWrite(() async {
-      final saved = await widget.actions.execute(plan);
-      if (!saved) {
-        return false;
-      }
+    final saved = await widget.actions.execute(plan);
+    if (saved) {
       _flow.clearNewSets();
-      return true;
-    });
-  }
-
-  Future<bool> _runWrite(Future<bool> Function() action) async {
-    if (_isWriting) {
-      return false;
-    }
-    setState(() {
-      _isWriting = true;
-      _writeError = null;
-    });
-    var saved = false;
-    try {
-      saved = await action();
-      return saved;
-    } on Object {
-      return false;
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isWriting = false;
-          _writeError = saved ? null : 'Unable to save set. Try again.';
-        });
-      }
     }
   }
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
-    await _runWrite(() async {
-      return widget.actions.execute(_flow.planRawSetEdit(entry));
-    });
+    if (widget.view.isBusy) return;
+    await widget.actions.execute(_flow.planRawSetEdit(entry));
   }
 
   Future<void> _saveSetEdit(RowHistoryEntry entry) async {
-    if (_isWriting) {
-      return;
-    }
+    if (widget.view.isBusy) return;
     final plan = _flow.planSetEdit(entry);
-    if (plan == null) {
-      return;
-    }
-    await _runWrite(() async {
-      return widget.actions.execute(plan);
-    });
+    if (plan == null) return;
+    await widget.actions.execute(plan);
   }
 
   Future<void> _clearSet(RowHistoryEntry entry) async {
-    await _runWrite(() async {
-      return widget.actions.execute(_flow.planSetClear(entry));
-    });
+    if (widget.view.isBusy) return;
+    await widget.actions.execute(_flow.planSetClear(entry));
   }
 
   @override
@@ -268,12 +226,12 @@ class _LogScreenSt extends State<LogScreen> {
           _StructuredSetEditor(
             logFormat: loggingContext.logFormat,
             controllers: viewModel.newSetCtrls,
-            isBusy: _isWriting,
+            isBusy: widget.view.isBusy,
             onSave: _saveSet,
           ),
-          if (_writeError != null) ...[
+          if (widget.view.error case final error?) ...[
             const SizedBox(height: 8),
-            _InlineLoggingError(message: _writeError!),
+            _InlineLoggingError(message: error),
           ],
           const SizedBox(height: 16),
           SetProgressStrip(
@@ -293,7 +251,7 @@ class _LogScreenSt extends State<LogScreen> {
                   entry: entry,
                   fieldLabels: fieldLabels,
                   controllers: viewModel.loggedCtrls[entry.setNumber]!,
-                  isBusy: _isWriting,
+                  isBusy: widget.view.isBusy,
                   onSave: () => _saveSetEdit(entry),
                   onClear: () => _clearSet(entry),
                 )
@@ -301,7 +259,7 @@ class _LogScreenSt extends State<LogScreen> {
                 _LoggedSetEditor(
                   entry: entry,
                   controller: viewModel.rawCtrls[entry.setNumber]!,
-                  isBusy: _isWriting,
+                  isBusy: widget.view.isBusy,
                   onSave: () => _saveRawSet(entry),
                   onClear: () => _clearSet(entry),
                 ),

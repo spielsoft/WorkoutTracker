@@ -151,7 +151,10 @@ void main() {
 
     expect(service.appliedPlans, hasLength(1));
     expect(find.byKey(const ValueKey('logging-write-error')), findsOneWidget);
-    expect(find.text('Unable to save set. Try again.'), findsOneWidget);
+    expect(
+      find.text('Unable to save set: Bad state: network unavailable'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
@@ -93,4 +95,113 @@ void main() {
       expect(flow.view, isA<SetupView>());
     },
   );
+
+  test(
+    'serializes loaded mutations across routes while read-only navigation remains available',
+    () async {
+      final access = _CmdAccess(_activeReport());
+      final flow = AppFlow(svc: access, initialText: 'spreadsheet-id');
+      addTearDown(flow.dispose);
+      await flow.run(const ValidateSheet());
+
+      final firstWrite = access.blockNext();
+      final first = flow.loaded.execute(const RepairAllCmd());
+
+      expect(flow.view, isA<SetupView>());
+      expect(flow.view.isBusy, isTrue);
+
+      await flow.loaded.setup(const OpenExerciseLibrary());
+      expect(flow.view, isA<LibraryView>());
+      expect(flow.view.isBusy, isTrue);
+
+      final second = await flow.loaded.reorder(
+        const ReorderIntent(fromIndex: 0, toIndex: 1),
+      );
+
+      expect(second, isFalse);
+      expect(access.commands, hasLength(1));
+
+      firstWrite.complete(access.report);
+      expect(await first, isTrue);
+      expect(flow.view.isBusy, isFalse);
+    },
+  );
+
+  test('releases loaded mutation state after failure and success', () async {
+    final access = _CmdAccess(_activeReport());
+    final flow = AppFlow(svc: access, initialText: 'spreadsheet-id');
+    addTearDown(flow.dispose);
+    await flow.run(const ValidateSheet());
+
+    final failedWrite = access.blockNext();
+    final failed = flow.loaded.execute(const RepairAllCmd());
+
+    expect(flow.view.isBusy, isTrue);
+    failedWrite.completeError(StateError('write failed'));
+    expect(await failed, isFalse);
+    expect(flow.view.isBusy, isFalse);
+    expect(flow.view.error, contains('write failed'));
+
+    final successfulWrite = access.blockNext();
+    final successful = flow.loaded.execute(const RepairAllCmd());
+
+    expect(flow.view.isBusy, isTrue);
+    successfulWrite.complete(access.report);
+    expect(await successful, isTrue);
+    expect(flow.view.isBusy, isFalse);
+    expect(flow.view.error, isNull);
+    expect(access.commands, hasLength(2));
+  });
+}
+
+ValReport _activeReport() {
+  return ValReport(
+    spreadsheetId: 'spreadsheet-id',
+    activeSheet: parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ],
+      ),
+    ),
+  );
+}
+
+final class _CmdAccess implements WbkAccess {
+  _CmdAccess(this.report);
+
+  final ValReport report;
+  final commands = <WbkCmd>[];
+  Completer<ValReport>? _next;
+
+  Completer<ValReport> blockNext() {
+    return _next = Completer<ValReport>();
+  }
+
+  @override
+  WbkSess open(String sheetId) => _CmdSess(this, sheetId);
+
+  Future<ValReport> execute(WbkCmd cmd) {
+    commands.add(cmd);
+    final next = _next;
+    _next = null;
+    return next?.future ?? Future.value(report);
+  }
+}
+
+final class _CmdSess implements WbkSess {
+  const _CmdSess(this._access, this.sheetId);
+
+  final _CmdAccess _access;
+
+  @override
+  final String sheetId;
+
+  @override
+  Future<ValReport> execute(WbkCmd cmd) => _access.execute(cmd);
+
+  @override
+  Future<ValReport> read() async => _access.report;
 }

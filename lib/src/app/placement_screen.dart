@@ -81,6 +81,7 @@ class PlacementScreen extends StatelessWidget {
           _PlaceForm(
             exercises: view.exercises,
             initialExercise: null,
+            isBusy: view.isBusy,
             onSubmit: (draft) => actions.place(draft.exercise, draft.metadata),
             onSubmitAndAddAnother: (draft) =>
                 actions.place(draft.exercise, draft.metadata, keepAdding: true),
@@ -154,12 +155,14 @@ class _PlaceForm extends StatefulWidget {
   const _PlaceForm({
     required this.exercises,
     required this.initialExercise,
+    required this.isBusy,
     required this.onSubmit,
     required this.onSubmitAndAddAnother,
   });
 
   final List<CanonicalExercise> exercises;
   final CanonicalExercise? initialExercise;
+  final bool isBusy;
   final ValueChanged<_ExercisePlacementDraft> onSubmit;
   final Future<bool> Function(_ExercisePlacementDraft draft)
   onSubmitAndAddAnother;
@@ -388,7 +391,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
           children: [
             FilledButton.icon(
               key: const ValueKey('place-existing-exercise'),
-              onPressed: selectedExercise == null
+              onPressed: widget.isBusy || selectedExercise == null
                   ? null
                   : () => widget.onSubmit(
                       _ExercisePlacementDraft(
@@ -401,7 +404,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
             ),
             OutlinedButton.icon(
               key: const ValueKey('place-existing-exercise-add-another'),
-              onPressed: selectedExercise == null
+              onPressed: widget.isBusy || selectedExercise == null
                   ? null
                   : () async {
                       final added = await widget.onSubmitAndAddAnother(

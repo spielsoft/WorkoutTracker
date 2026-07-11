@@ -94,7 +94,9 @@ class WorkoutScreen extends StatelessWidget {
               : IconButton.filled(
                   key: const ValueKey('add-primary-exercise'),
                   tooltip: 'Add to workout',
-                  onPressed: () => actions.workout(AddWorkoutPrimary(workout)),
+                  onPressed: view.isBusy
+                      ? null
+                      : () => actions.workout(AddWorkoutPrimary(workout)),
                   icon: const Icon(Icons.add_outlined),
                 ),
         ),
@@ -114,7 +116,9 @@ class WorkoutScreen extends StatelessWidget {
       header: header,
       overview: overview,
       onOpenExercise: (row) => actions.workout(OpenWorkoutLog(row)),
-      onAddBackup: (slot) => actions.workout(AddWorkoutBackup(slot)),
+      onAddBackup: view.isBusy
+          ? null
+          : (slot) => actions.workout(AddWorkoutBackup(slot)),
       onDeleteExercise: view.isBusy ? null : (slot) => _delete(context, slot),
       onReorderExercises: view.isBusy ? null : actions.reorder,
       showTitle: false,

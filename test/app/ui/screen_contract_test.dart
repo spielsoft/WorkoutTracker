@@ -353,6 +353,106 @@ void main() {
     expect(find.text('Legs workout'), findsOneWidget);
     expect(find.byTooltip('Back to workout'), findsOneWidget);
   });
+
+  testWidgets('typed pending state disables loaded mutation launch controls', (
+    tester,
+  ) async {
+    final setup = _setup();
+
+    await tester.pumpWidget(
+      _boundedApp(
+        SetupScreen(
+          view: SetupView(isBusy: true, setup: setup, sheetLabel: 'Training'),
+          actions: _SetupActions(),
+        ),
+      ),
+    );
+    expect(
+      find.byKey(const ValueKey('add-primary-exercise-from-setup')),
+      findsNothing,
+    );
+    expect(find.byTooltip('Exercise actions for Squat'), findsNothing);
+
+    await tester.pumpWidget(
+      _boundedApp(
+        WorkoutScreen(
+          view: WorkoutView(isBusy: true, setup: setup, sheetLabel: 'Training'),
+          actions: _WorkoutActions(),
+        ),
+      ),
+    );
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byKey(const ValueKey('add-primary-exercise')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(find.byTooltip('Exercise actions for Squat'), findsNothing);
+
+    await tester.pumpWidget(
+      _boundedApp(
+        ExerciseLibraryScreen(
+          view: LibraryView(
+            isBusy: true,
+            exercises: setup.activeSheet.canonicalExercises,
+            sheetLabel: 'Training',
+            highlightedRow: null,
+          ),
+          actions: _LibraryActions(),
+        ),
+      ),
+    );
+    expect(find.byKey(const ValueKey('add-canonical-exercise')), findsNothing);
+  });
+
+  testWidgets('typed pending state disables placement submission', (
+    tester,
+  ) async {
+    final exercises = _setup().activeSheet.canonicalExercises;
+    final actions = _PlacementActions();
+    PlacementScreen screen(bool isBusy) => PlacementScreen(
+      view: PlacementView(
+        isBusy: isBusy,
+        exercises: exercises,
+        sheetLabel: 'Training',
+        intent: const PlaceIntent.primary(workout: 'Legs'),
+        origin: PlaceOrigin.workout,
+      ),
+      actions: actions,
+    );
+
+    await tester.pumpWidget(_app(screen(false)));
+    await tester.tap(
+      find.widgetWithText(
+        DropdownButtonFormField<CanonicalExercise>,
+        'Choose exercise',
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Squat').last);
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(_app(screen(true)));
+
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('place-existing-exercise')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.byKey(const ValueKey('place-existing-exercise-add-another')),
+          )
+          .onPressed,
+      isNull,
+    );
+  });
 }
 
 final class _LibraryActions implements LibraryActions {

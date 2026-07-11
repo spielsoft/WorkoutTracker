@@ -7,7 +7,7 @@ intentionally excluded.
 ## Progress
 
 - [x] Slice 1: Make exercise log-format authoring safe and understandable
-- [ ] Slice 2: Serialize loaded-workbook mutations
+- [x] Slice 2: Serialize loaded-workbook mutations
 - [ ] Slice 3: Unify workout home and native navigation
 - [ ] Slice 4: Streamline phone set entry
 - [ ] Slice 5: Make logged-set editing compact and recoverable
@@ -65,14 +65,14 @@ read-only navigation available where appropriate.
 
 ### Acceptance criteria
 
-- [ ] All loaded-workbook mutations use one command gate.
-- [ ] A second mutation cannot begin while the first is pending.
-- [ ] Pending state is visible through the existing typed screen read models.
-- [ ] Relevant mutation controls disable consistently while pending.
-- [ ] Success and failure both release pending state exactly once.
-- [ ] Existing stale-write expectations and workbook-session behavior remain
+- [x] All loaded-workbook mutations use one command gate.
+- [x] A second mutation cannot begin while the first is pending.
+- [x] Pending state is visible through the existing typed screen read models.
+- [x] Relevant mutation controls disable consistently while pending.
+- [x] Success and failure both release pending state exactly once.
+- [x] Existing stale-write expectations and workbook-session behavior remain
       authoritative.
-- [ ] Tests assert the app-owned command contract rather than simulated Google
+- [x] Tests assert the app-owned command contract rather than simulated Google
       behavior or private counter state.
 
 ### Blocked by

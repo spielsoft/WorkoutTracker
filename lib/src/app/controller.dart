@@ -23,8 +23,8 @@ class AppCtrl extends ChangeNotifier {
   final List<String> _pendingWorkouts = [];
   int? _loggingPrimaryRow;
   int? _selectedLoggingRow;
-  bool _isBusy = false;
-  int _busyActions = 0;
+  var _serviceActions = 0;
+  var _mutationPending = false;
   int _validationEpoch = 0;
   bool _isDisposed = false;
 
@@ -32,7 +32,7 @@ class AppCtrl extends ChangeNotifier {
 
   String? get error => _error;
 
-  bool get isBusy => _isBusy;
+  bool get isBusy => _serviceActions > 0 || _mutationPending;
 
   WorkoutSetupReadModel? get workoutSetup {
     final report = _report;
@@ -150,7 +150,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to create history block',
       action: () async {
         final updatedReport = await _execute(NewHistoryCmd(trimmedLabel));
@@ -197,7 +197,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to repair formulas',
       action: () async {
         _adoptReport(await _execute(const RepairAllCmd()));
@@ -214,7 +214,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to repair formula',
       action: () async {
         _adoptReport(
@@ -235,7 +235,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to save set',
       action: () async {
         _report = await _execute(cmd);
@@ -252,7 +252,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to create exercise',
       action: () async {
         _report = await _execute(CreateExeCmd(exercise));
@@ -273,7 +273,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to update exercise',
       action: () async {
         _report = await _execute(
@@ -297,7 +297,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to add exercise',
       action: () async {
         _report = await _execute(
@@ -334,7 +334,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to reorder exercises',
       action: () async {
         _report = await _execute(ReorderExesCmd(intent));
@@ -353,7 +353,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to reorder workout exercises',
       action: () async {
         _report = await _execute(
@@ -375,7 +375,7 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runServiceAction(
+    return _runMutation(
       failurePrefix: 'Unable to delete exercise',
       action: () async {
         final deleteReport = await _execute(DeleteWorkoutExeCmd(primaryRow));
@@ -468,8 +468,7 @@ class AppCtrl extends ChangeNotifier {
     bool Function()? isCurrent,
   }) async {
     final current = isCurrent ?? () => true;
-    _busyActions += 1;
-    _isBusy = true;
+    _serviceActions += 1;
     if (current()) {
       _error = null;
     }
@@ -494,8 +493,34 @@ class AppCtrl extends ChangeNotifier {
       );
       return false;
     } finally {
-      _busyActions -= 1;
-      _isBusy = _busyActions > 0;
+      _serviceActions -= 1;
+      if (!_isDisposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> _runMutation({
+    required Future<void> Function() action,
+    required String failurePrefix,
+  }) async {
+    if (_mutationPending) return false;
+
+    _mutationPending = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await action();
+      return true;
+    } on Object catch (error) {
+      _error = _formatServiceFailure(
+        failurePrefix: failurePrefix,
+        error: error,
+      );
+      return false;
+    } finally {
+      _mutationPending = false;
       if (!_isDisposed) {
         notifyListeners();
       }
