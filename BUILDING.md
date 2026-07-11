@@ -136,6 +136,8 @@ build/macos/Build/Products/Release/Workout Tracker.app
 When signing is unavailable, compile with Xcode instead:
 
 ```sh
+flutter build macos --release --config-only \
+  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
 cd macos
 xcodebuild -workspace Runner.xcworkspace \
   -scheme Runner \
@@ -147,6 +149,9 @@ xcodebuild -workspace Runner.xcworkspace \
   build
 cd ..
 ```
+
+The `--config-only` step is required after `flutter clean`; it regenerates the
+Flutter input and output file lists consumed by the Xcode workspace.
 
 Inspect the compile-only bundle:
 

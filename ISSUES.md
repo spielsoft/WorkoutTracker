@@ -338,17 +338,17 @@ the Picker branch is created.
 
 ### Acceptance criteria
 
-- [ ] Formatting, static analysis, and the complete default test suite pass.
-- [ ] A clean macOS release bundle and clean unsigned iOS release bundle build
+- [x] Formatting, static analysis, and the complete default test suite pass.
+- [x] A clean macOS release bundle and clean unsigned iOS release bundle build
       successfully and are inspected for retired assets/configuration.
-- [ ] Android is not built or presented as validated; the handoff links to its
+- [x] Android is not built or presented as validated; the handoff links to its
       documented deferred-readiness gaps.
-- [ ] The opt-in live Google flow is either run successfully with user approval
+- [x] The opt-in live Google flow is either run successfully with user approval
       or explicitly reported as pending HITL validation.
-- [ ] The handoff records commit hashes, commands, build artifact locations,
+- [x] The handoff records commit hashes, commands, build artifact locations,
       skipped checks, and remaining risks.
-- [ ] No Picker migration, WebView dependency, or scope reduction is present.
-- [ ] The branch is declared ready for owner-directed merge; the agent does not
+- [x] No Picker migration, WebView dependency, or scope reduction is present.
+- [x] The branch is declared ready for owner-directed merge; the agent does not
       create `new_picker` prematurely.
 - [ ] The owner confirms the merged `main` baseline is the version to test in
       the gym.
