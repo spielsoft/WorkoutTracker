@@ -13,7 +13,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 - [x] Slice 5: Publish accurate support and privacy resources
 - [x] Slice 6: Replace historical setup notes with a public self-build guide
 - [x] Slice 7: Add dependency and continuous-integration gates
-- [ ] Slice 8: Clean the release test suite
+- [x] Slice 8: Clean the release test suite
 - [ ] Slice 9: Produce and hand off the gym-test candidate
 
 ## Slice 1: Apply Apache-2.0 and public project policy
@@ -301,16 +301,16 @@ requirements.
 
 ### Acceptance criteria
 
-- [ ] Tests whose only subject is documentation wording are removed or replaced
+- [x] Tests whose only subject is documentation wording are removed or replaced
       with an appropriate non-test validation step.
-- [ ] Private helpers, incidental callback order, and widget-tree trivia are not
+- [x] Private helpers, incidental callback order, and widget-tree trivia are not
       treated as public contracts.
-- [ ] Fakes assert only this app's requested scopes, adapter calls, plans, and
+- [x] Fakes assert only this app's requested scopes, adapter calls, plans, and
       accepted callback shapes.
-- [ ] Workbook safety, account binding, command serialization, and major user
+- [x] Workbook safety, account binding, command serialization, and major user
       flows retain behavior coverage.
-- [ ] The default suite remains credential-free and fast enough for CI.
-- [ ] The final test inventory explains the purpose of unusual integration or
+- [x] The default suite remains credential-free and fast enough for CI.
+- [x] The final test inventory explains the purpose of unusual integration or
       platform checks.
 
 ### Blocked by

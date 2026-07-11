@@ -464,58 +464,33 @@ void main() {
     );
   });
 
-  testWidgets('reorders workout exercises from the workout list', (
+  testWidgets('auto-scrolls while reordering a long workout list', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = const Size(390, 500);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
 
-    final rows = [
+    final rows = <List<String>>[
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      [
-        'Squat',
-        '3',
-        '5',
-        '8',
-        '3 min',
-        '',
-        '',
-        defaultExerciseLogFormat,
-        'Legs',
-        '',
-        '',
-      ],
-      [
-        'Leg Press',
-        '3',
-        '12',
-        '8',
-        '2 min',
-        '',
-        '',
-        '{Reps}[@]{RPE}',
-        'Legs',
-        'TRUE',
-        '',
-      ],
-      [
-        'Lunge',
-        '2',
-        '10',
-        '7',
-        '90s',
-        '',
-        '',
-        defaultExerciseLogFormat,
-        'Legs',
-        '',
-        '',
-      ],
+      for (var i = 1; i <= 20; i++)
+        [
+          'Exercise $i',
+          '3',
+          '5',
+          '8',
+          '3 min',
+          '',
+          '',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '',
+        ],
     ];
     final validationService = TestValSvc.fromRows(rows);
     final authoringService = ReorderingWorkoutExerciseAuthoringService(rows);
@@ -534,21 +509,21 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.byTooltip('Reorder Squat'), findsOneWidget);
-    expect(find.byIcon(Icons.drag_handle_outlined), findsNWidgets(2));
-
-    await tester.drag(find.byTooltip('Reorder Squat'), const Offset(0, 320));
+    final handle = find.byTooltip('Reorder Exercise 1');
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 500));
+    await tester.pump(const Duration(milliseconds: 200));
+    await gesture.moveBy(const Offset(0, 50));
+    for (var tick = 0; tick < 20; tick++) {
+      await tester.pump(const Duration(milliseconds: 51));
+    }
+    await gesture.up();
     await tester.pumpAndSettle();
 
-    expect(authoringService.reorderIntents, [
-      const ReorderIntent(fromIndex: 0, toIndex: 1),
-    ]);
-    expect(
-      tester.getTopLeft(find.text('Lunge')).dy,
-      lessThan(tester.getTopLeft(find.text('Squat')).dy),
-    );
-    expect(find.text('1 backup'), findsNothing);
-    expect(find.byIcon(Icons.alt_route_outlined), findsOneWidget);
+    expect(authoringService.reorderIntents, hasLength(1));
+    expect(authoringService.reorderIntents.single.fromIndex, 0);
+    expect(authoringService.reorderIntents.single.toIndex, greaterThan(3));
   });
 
   testWidgets(

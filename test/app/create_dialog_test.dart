@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/app.dart';
+import 'package:workout_tracker/contract.dart';
 
 import 'service_fake.dart';
 
 void main() {
-  testWidgets('create sheet name starts selected so typing replaces default', (
-    tester,
-  ) async {
+  testWidgets('typing replaces the generated sheet name', (tester) async {
     final picker = _RecordingSheetPicker();
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
@@ -18,73 +16,40 @@ void main() {
 
     await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
     await tester.pump();
-
     await tester.tap(find.text('Create sheet'));
-    await tester.pump();
-
-    final nameField = find.byKey(const ValueKey('create-spreadsheet-name'));
-    expect(nameField, findsOneWidget);
-
-    final editable = tester.widget<EditableText>(
-      find.descendant(of: nameField, matching: find.byType(EditableText)),
-    );
-    final defaultName = editable.controller.text;
-    expect(defaultName, isNotEmpty);
-    editable.controller.selection = TextSelection.collapsed(
-      offset: defaultName.length,
-    );
-
     await tester.pumpAndSettle();
 
-    final settledEditable = tester.widget<EditableText>(
-      find.descendant(of: nameField, matching: find.byType(EditableText)),
+    final state = TextEditingValue.fromJSON(tester.testTextInput.editingState!);
+    const typed = 'Custom Training Log';
+    final updated = state.text.replaceRange(
+      state.selection.start,
+      state.selection.end,
+      typed,
     );
-    expect(
-      settledEditable.controller.selection,
-      TextSelection(baseOffset: 0, extentOffset: defaultName.length),
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: updated,
+        selection: TextSelection.collapsed(
+          offset: state.selection.start + typed.length,
+        ),
+      ),
     );
-
-    _replaceSelectionWithText(tester, settledEditable, 'Custom Training Log');
     await tester.pump();
     await tester.tap(find.text('Create'));
     await tester.pump();
 
-    expect(picker.createNames, ['Custom Training Log']);
+    expect(picker.createNames, [typed]);
   });
-}
-
-void _replaceSelectionWithText(
-  WidgetTester tester,
-  EditableText editable,
-  String text,
-) {
-  final value = editable.controller.value;
-  final selection = value.selection;
-  final replacement = value.text.replaceRange(
-    selection.start,
-    selection.end,
-    text,
-  );
-  tester.testTextInput.updateEditingValue(
-    TextEditingValue(
-      text: replacement,
-      selection: TextSelection.collapsed(offset: selection.start + text.length),
-    ),
-  );
 }
 
 class _RecordingSheetPicker implements SheetPicker {
   final createNames = <String?>[];
 
   @override
-  PickerAvail get availability {
-    return const PickerAvail.available();
-  }
+  PickerAvail get availability => const PickerAvail.available();
 
   @override
-  Future<SelectedSheet?> chooseSheet() async {
-    return null;
-  }
+  Future<SelectedSheet?> chooseSheet() async => null;
 
   @override
   Future<SelectedSheet?> createSheet({String? name}) async {

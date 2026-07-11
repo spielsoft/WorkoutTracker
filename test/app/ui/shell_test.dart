@@ -32,31 +32,6 @@ void main() {
     }
   });
 
-  testWidgets('centers non-fullscreen screens at the content width limit', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-
-    await tester.pumpWidget(
-      WorkoutTrackerApp(
-        svc: TestValSvc.fromRows([
-          activeSheetFixedColumns,
-          List.filled(activeSheetFixedColumns.length, ''),
-        ]),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final screen = find.byType(SheetScreen);
-    expect(tester.getSize(screen).width, 840);
-    expect(tester.getCenter(screen).dx, 700);
-  });
-
   testWidgets('repair guidance fits a narrow large-text phone', (tester) async {
     tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
@@ -82,6 +57,54 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Fix the active sheet structure'), findsOneWidget);
     expect(find.text('Error'), findsOneWidget);
+  });
+
+  testWidgets('core workflows remain usable at narrow width with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+    final service = TestValSvc(
+      exerciseInventoryParsedSheet([
+        exerciseRow('Squat', description: 'Back squat'),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
+    await tester.tap(find.text('Select'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Legs exercises'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Edit exercise library'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Edit exercises'), findsWidgets);
+
+    await tester.tap(find.byTooltip('Create exercise'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('New exercise'), findsWidgets);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Back to workout'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add to workout'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Choose exercise'), findsOneWidget);
   });
 
   testWidgets('meets Flutter accessibility guidelines across core GUI states', (

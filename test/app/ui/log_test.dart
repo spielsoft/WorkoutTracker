@@ -126,20 +126,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Current S1'), findsOneWidget);
     expect(find.text('Backup'), findsNothing);
-    expect(find.byIcon(Icons.alt_route_outlined), findsOneWidget);
     expect(find.text('Save set'), findsOneWidget);
-  });
-
-  testWidgets('uses one stable role icon when a backup is selected', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_app(actions: _LogActions()));
-
-    await tester.tap(find.text('Leg Press'));
-    await tester.pump();
-
-    expect(find.text('Backup'), findsNothing);
-    expect(find.byIcon(Icons.alt_route_outlined), findsOneWidget);
   });
 
   testWidgets('emits typed row, close, and set-save commands', (tester) async {

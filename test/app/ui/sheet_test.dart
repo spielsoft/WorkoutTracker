@@ -89,46 +89,6 @@ void main() {
     expect((cmds.single as CreateSheet).name, 'Training Log');
   });
 
-  testWidgets('aligns loaded sheet actions to the full-width return action', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(700, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await tester.pumpWidget(
-      _app(
-        _view(
-          showTextFallback: false,
-          account: _account,
-          selectedSheet: const SelectedSheet(
-            spreadsheetId: 'sheet-id',
-            name: 'Training Log',
-            accountEmail: 'athlete@example.com',
-          ),
-          hasLoadedWorkout: true,
-        ),
-        (_) async => const CmdResult.done(),
-      ),
-    );
-
-    final returnRect = tester.getRect(
-      find.byKey(const ValueKey('return-to-selected-workout')),
-    );
-    final changeRect = tester.getRect(
-      find.byKey(const ValueKey('choose-google-spreadsheet')),
-    );
-    final createRect = tester.getRect(
-      find.byKey(const ValueKey('create-google-spreadsheet')),
-    );
-
-    expect(changeRect.left, closeTo(returnRect.left, 0.1));
-    expect(createRect.right, closeTo(returnRect.right, 0.1));
-    expect(changeRect.width, closeTo(createRect.width, 0.1));
-  });
-
   testWidgets(
     'shows account state and emits sign out through the same contract',
     (tester) async {

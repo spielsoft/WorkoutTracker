@@ -59,7 +59,7 @@ void main() {
   });
 
   test('invalid configuration fails before native initialization', () async {
-    final events = _AuthEvents();
+    final events = _InitEvents();
     final gateway = NativeSignInAuthGateway(
       cfg: const GoogleSignInCfg(),
       authEvents: events,
@@ -73,31 +73,9 @@ void main() {
   });
 
   test(
-    'repeated initialization attaches one authentication listener',
+    'reflects native authentication callbacks through account state',
     () async {
-      final events = _AuthEvents();
-      final gateway = NativeSignInAuthGateway(
-        cfg: const GoogleSignInCfg(
-          clientId: 'public-id.apps.googleusercontent.com',
-        ),
-        authEvents: events,
-      );
-
-      await gateway.authorizationHeaders(const []);
-      await gateway.authorizationHeaders(const []);
-
-      expect(events.initCount, 1);
-      expect(events.listenCount, 1);
-
-      gateway.dispose();
-      await events.close();
-    },
-  );
-
-  test(
-    'dispose cancels authentication events and ignores later events',
-    () async {
-      final events = _AuthEvents();
+      final events = _InitEvents();
       final gateway = NativeSignInAuthGateway(
         cfg: const GoogleSignInCfg(
           clientId: 'public-id.apps.googleusercontent.com',
@@ -118,34 +96,30 @@ void main() {
       expect(gateway.currentAccount?.email, 'athlete@example.com');
       expect(notifications, 1);
 
-      gateway.dispose();
-      await Future<void>.delayed(Duration.zero);
-      expect(events.cancelCount, 1);
-
       events.add(GoogleSignInAuthenticationEventSignOut());
       await Future<void>.delayed(Duration.zero);
 
-      expect(gateway.currentAccount?.email, 'athlete@example.com');
-      expect(notifications, 1);
-      expect(events.cancelCount, 1);
+      expect(gateway.currentAccount, isNull);
+      expect(notifications, 2);
 
+      gateway.dispose();
+      events.add(
+        GoogleSignInAuthenticationEventSignIn(
+          user: const _Account(email: 'late@example.com'),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(gateway.currentAccount, isNull);
+      expect(notifications, 2);
       await events.close();
     },
   );
 }
 
-class _AuthEvents implements AuthEvents {
-  _AuthEvents() {
-    _ctrl = StreamController<GoogleSignInAuthenticationEvent>.broadcast(
-      onListen: () => listenCount++,
-      onCancel: () => cancelCount++,
-    );
-  }
-
-  late final StreamController<GoogleSignInAuthenticationEvent> _ctrl;
+class _InitEvents implements AuthEvents {
+  final _events = StreamController<GoogleSignInAuthenticationEvent>.broadcast();
   int initCount = 0;
-  int listenCount = 0;
-  int cancelCount = 0;
 
   @override
   Future<Stream<GoogleSignInAuthenticationEvent>> initialize({
@@ -153,12 +127,12 @@ class _AuthEvents implements AuthEvents {
     String? serverClientId,
   }) async {
     initCount++;
-    return _ctrl.stream;
+    return _events.stream;
   }
 
-  void add(GoogleSignInAuthenticationEvent event) => _ctrl.add(event);
+  void add(GoogleSignInAuthenticationEvent event) => _events.add(event);
 
-  Future<void> close() => _ctrl.close();
+  Future<void> close() => _events.close();
 }
 
 class _Account implements GoogleSignInAccount {
@@ -178,10 +152,10 @@ class _Account implements GoogleSignInAccount {
 
   @override
   GoogleSignInAuthentication get authentication => throw UnsupportedError(
-    'Authentication tokens are not used by this test.',
+    'Authentication tokens are outside this test contract.',
   );
 
   @override
   GoogleSignInAuthorizationClient get authorizationClient =>
-      throw UnsupportedError('Authorization is not used by this test.');
+      throw UnsupportedError('Authorization is outside this test contract.');
 }

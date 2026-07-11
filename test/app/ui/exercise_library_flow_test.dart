@@ -362,15 +362,12 @@ void main() {
     expect(find.textContaining('delete', findRichText: true), findsNothing);
     expect(find.textContaining('Delete', findRichText: true), findsNothing);
     expect(find.byTooltip('Delete exercise'), findsNothing);
-    expect(find.byIcon(Icons.delete_outline), findsNothing);
-    expect(find.byType(Dismissible), findsNothing);
-    expect(find.byType(PopupMenuButton), findsNothing);
   });
 
-  testWidgets('reorders canonical exercises from the exercise manager', (
+  testWidgets('auto-scrolls while reordering a long exercise library', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = const Size(390, 500);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -378,9 +375,8 @@ void main() {
     });
 
     final exercises = [
-      exerciseRow('Squat', description: 'Back squat'),
-      exerciseRow('Bench Press', description: 'Competition bench'),
-      exerciseRow('Cable Row', description: 'Seated cable row'),
+      for (var i = 1; i <= 20; i++)
+        exerciseRow('Exercise $i', description: 'Description $i'),
     ];
     final validationService = TestValSvc(
       exerciseInventoryParsedSheet(exercises),
@@ -403,22 +399,20 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Reorder Squat'), findsOneWidget);
-    expect(find.byIcon(Icons.drag_handle_outlined), findsNWidgets(3));
-
-    await tester.drag(find.byTooltip('Reorder Squat'), const Offset(0, 170));
+    final handle = find.byTooltip('Reorder Exercise 1');
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 500));
+    await tester.pump(const Duration(milliseconds: 200));
+    await gesture.moveBy(const Offset(0, 50));
+    for (var tick = 0; tick < 20; tick++) {
+      await tester.pump(const Duration(milliseconds: 51));
+    }
+    await gesture.up();
     await tester.pumpAndSettle();
 
-    expect(authoringService.reorderIntents, [
-      const ReorderIntent(fromIndex: 0, toIndex: 2),
-    ]);
-    expect(
-      tester.getTopLeft(find.text('Bench Press')).dy,
-      lessThan(tester.getTopLeft(find.text('Cable Row')).dy),
-    );
-    expect(
-      tester.getTopLeft(find.text('Cable Row')).dy,
-      lessThan(tester.getTopLeft(find.text('Squat')).dy),
-    );
+    expect(authoringService.reorderIntents, hasLength(1));
+    expect(authoringService.reorderIntents.single.fromIndex, 0);
+    expect(authoringService.reorderIntents.single.toIndex, greaterThan(3));
   });
 }
