@@ -11,6 +11,7 @@ typedef SheetLoad = Future<List<SheetEntry>> Function(String query);
 const _sheetMimeType = 'application/vnd.google-apps.spreadsheet';
 const _recentPageSize = 25;
 const _searchPageSize = 50;
+const _unnamedSheet = 'Untitled spreadsheet';
 
 class SheetViewReq {
   const SheetViewReq({required this.load, this.accountEmail});
@@ -58,7 +59,7 @@ class SelectedSheet {
       return path;
     }
     final trimmedName = name.trim();
-    return trimmedName.isEmpty ? id : trimmedName;
+    return trimmedName.isEmpty ? _unnamedSheet : trimmedName;
   }
 
   Map<String, Object?> toJson() {
@@ -228,7 +229,7 @@ SheetEntry? _sheetEntry(drive.File file) {
   final name = file.name?.trim();
   return SheetEntry(
     id: id,
-    name: name == null || name.isEmpty ? id : name,
+    name: name == null || name.isEmpty ? _unnamedSheet : name,
     webViewLink: file.webViewLink ?? sheetUrl(id),
     owner: _ownerLabel(file),
     modifiedAt: file.modifiedTime,

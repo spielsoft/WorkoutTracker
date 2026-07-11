@@ -9,6 +9,15 @@ import 'package:workout_tracker/sheets.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('unnamed sheet selections use a human-readable label', () {
+    const selected = SelectedSheet(
+      spreadsheetId: 'opaque-google-drive-id',
+      name: '   ',
+    );
+
+    expect(selected.displayLabel, 'Untitled spreadsheet');
+  });
+
   test(
     'disabled spreadsheet picker reports both actions unavailable',
     () async {
@@ -123,6 +132,24 @@ void main() {
       'viewedByMeTime desc,modifiedTime desc,name_natural',
     );
     expect(client.requests.single.queryParameters['pageSize'], '25');
+  });
+
+  test('drive picker gives unnamed files a human-readable name', () async {
+    final client = _DriveListClient(
+      files: const [
+        {'id': 'opaque-google-drive-id', 'name': ''},
+      ],
+    );
+    final picker = DriveSheetPicker(
+      googleAccess: _RecordingApiAccess(client),
+      showPicker: (req) async {
+        final sheets = await req.load('');
+        expect(sheets.single.name, 'Untitled spreadsheet');
+        return null;
+      },
+    );
+
+    await picker.chooseSheet();
   });
 
   test(
