@@ -26,22 +26,22 @@ void main() {
       expect(setup.setup.selectedWorkout, 'Legs');
       expect(setup.setup.selectedHistoryBlock, 'Week 1');
 
-      await flow.run(const OpenWorkout());
+      await flow.loaded.setup(const OpenSelectedWorkout());
       expect(flow.view, isA<WorkoutView>());
 
-      await flow.run(const OpenLog(3));
+      await flow.loaded.workout(const OpenWorkoutLog(3));
       final log = flow.view as LogView;
       expect(log.target.primaryRow, 3);
       expect(log.target.selectedRow, 3);
 
-      await flow.run(const CloseLog());
+      await flow.loaded.close();
       expect(flow.view, isA<WorkoutView>());
 
-      await flow.run(const AddPrimary('Legs'));
+      await flow.loaded.setup(const AddSetupPrimary('Legs'));
       final placement = flow.view as PlacementView;
       expect(placement.intent.kind, PlaceKind.primary);
       expect(placement.intent.workout, 'Legs');
-      expect(placement.returnRoute, AppRoute.setup);
+      expect(placement.origin, PlaceOrigin.setup);
     },
   );
 
@@ -62,14 +62,14 @@ void main() {
       expect((flow.view as SheetView).sheetText, ' spreadsheet-id ');
       await flow.run(const ValidateSheet());
 
-      await flow.run(const OpenLibrary());
+      await flow.loaded.setup(const OpenExerciseLibrary());
       expect(flow.view, isA<LibraryView>());
 
-      await flow.run(const OpenExerciseCreate());
+      await flow.loaded.create();
       final create = flow.view as CreateExerciseView;
-      expect(create.returnRoute, AppRoute.library);
+      expect(create.origin, CreateOrigin.library);
 
-      await flow.run(const CloseExerciseCreate());
+      await flow.loaded.close();
       expect(flow.view, isA<LibraryView>());
 
       await flow.run(const ReturnToSheet());

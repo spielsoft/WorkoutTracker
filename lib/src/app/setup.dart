@@ -3,17 +3,28 @@ import 'package:workout_tracker/contract.dart';
 
 import 'controller.dart';
 import 'repair.dart';
-import 'ui/flow.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/name_dialog.dart';
 import 'workout.dart';
+import 'ui/view.dart';
+
+final class SetupView extends LoadedView {
+  const SetupView({
+    required super.isBusy,
+    required this.setup,
+    required super.sheetLabel,
+    super.error,
+  });
+
+  final WorkoutSetupReadModel setup;
+}
 
 const _addWorkoutValue = '__workout_tracker_add_workout__';
 const _addHistoryValue = '__workout_tracker_add_history_block__';
 
 abstract interface class SetupActions {
-  Future<void> run(SetupAction action);
+  Future<void> setup(SetupAction action);
 
   Future<bool> reorder(ReorderIntent intent);
 }
@@ -114,11 +125,11 @@ class SetupScreen extends StatelessWidget {
                 title: view.sheetLabel,
                 compactTitle: true,
                 backTooltip: 'Back to sheet selection',
-                onBack: () => actions.run(const BackToSheets()),
+                onBack: () => actions.setup(const BackToSheets()),
                 trailing: IconButton.filledTonal(
                   key: const ValueKey('open-exercise-manager'),
                   tooltip: 'Edit exercise library',
-                  onPressed: () => actions.run(const OpenExerciseLibrary()),
+                  onPressed: () => actions.setup(const OpenExerciseLibrary()),
                   icon: const Icon(Icons.fitness_center_outlined),
                 ),
               ),
@@ -140,7 +151,7 @@ class SetupScreen extends StatelessWidget {
                           selected: selectedWorkout,
                           progress: setup.progressByWorkout,
                           onChanged: (value) =>
-                              actions.run(ChooseWorkout(value)),
+                              actions.setup(ChooseWorkout(value)),
                           onAdd: view.isBusy
                               ? null
                               : () => _addWorkout(context),
@@ -152,7 +163,7 @@ class SetupScreen extends StatelessWidget {
                           blocks: setup.historyBlocks,
                           selected: setup.selectedHistoryBlock,
                           onChanged: (value) =>
-                              actions.run(ChooseHistory(value)),
+                              actions.setup(ChooseHistory(value)),
                           onAdd: view.isBusy
                               ? null
                               : () => _addHistory(context),
@@ -167,7 +178,7 @@ class SetupScreen extends StatelessWidget {
                 key: const ValueKey('select-workout-setup'),
                 onPressed: overview == null
                     ? null
-                    : () => actions.run(const OpenSelectedWorkout()),
+                    : () => actions.setup(const OpenSelectedWorkout()),
                 icon: const Icon(Icons.check_circle_outline),
                 label: const Text('Select'),
               ),
@@ -176,11 +187,11 @@ class SetupScreen extends StatelessWidget {
                 WorkoutList(
                   key: const ValueKey('compact-workout-overview'),
                   overview: overview,
-                  onOpenExercise: (row) => actions.run(OpenSetupLog(row)),
+                  onOpenExercise: (row) => actions.setup(OpenSetupLog(row)),
                   onAddPrimary: selectedWorkout == null
                       ? null
-                      : () => actions.run(AddSetupPrimary(selectedWorkout)),
-                  onAddBackup: (slot) => actions.run(AddSetupBackup(slot)),
+                      : () => actions.setup(AddSetupPrimary(selectedWorkout)),
+                  onAddBackup: (slot) => actions.setup(AddSetupBackup(slot)),
                   onDeleteExercise: view.isBusy
                       ? null
                       : (slot) => _delete(context, slot),
@@ -197,7 +208,7 @@ class SetupScreen extends StatelessWidget {
   Future<void> _addWorkout(BuildContext context) async {
     final name = await _prompt(context, 'Add workout', 'Workout name');
     if (name != null) {
-      await actions.run(CreateWorkout(name));
+      await actions.setup(CreateWorkout(name));
     }
   }
 
@@ -208,7 +219,7 @@ class SetupScreen extends StatelessWidget {
       'History block label',
     );
     if (name != null) {
-      await actions.run(CreateHistory(name));
+      await actions.setup(CreateHistory(name));
     }
   }
 
@@ -227,7 +238,7 @@ class SetupScreen extends StatelessWidget {
 
   Future<void> _delete(BuildContext context, WorkoutOverviewSlot slot) async {
     if (await confirmWorkoutDelete(context, slot)) {
-      await actions.run(DeleteSetupExercise(slot.sheetRowNumber));
+      await actions.setup(DeleteSetupExercise(slot.sheetRowNumber));
     }
   }
 }

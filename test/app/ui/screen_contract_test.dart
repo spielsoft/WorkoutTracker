@@ -110,7 +110,7 @@ void main() {
           view: CreateExerciseView(
             isBusy: false,
             sheetLabel: 'Training',
-            returnRoute: AppRoute.library,
+            origin: CreateOrigin.library,
           ),
           actions: actions,
         ),
@@ -175,7 +175,7 @@ void main() {
             exercises: _setup().activeSheet.canonicalExercises,
             sheetLabel: 'Training',
             intent: const PlaceIntent.primary(workout: 'Legs'),
-            returnRoute: AppRoute.workout,
+            origin: PlaceOrigin.workout,
           ),
           actions: actions,
         ),
@@ -246,7 +246,7 @@ final class _PlacementActions implements PlacementActions {
   Future<void> close() async {}
 
   @override
-  Future<bool> save(
+  Future<bool> place(
     CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata, {
     bool keepAdding = false,
@@ -261,7 +261,7 @@ final class _SetupActions implements SetupActions {
   final seen = <SetupAction>[];
 
   @override
-  Future<void> run(SetupAction action) async {
+  Future<void> setup(SetupAction action) async {
     seen.add(action);
   }
 
@@ -273,7 +273,7 @@ final class _WorkoutActions implements WorkoutActions {
   final seen = <WorkoutAction>[];
 
   @override
-  Future<void> run(WorkoutAction action) async {
+  Future<void> workout(WorkoutAction action) async {
     seen.add(action);
   }
 

@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
-import 'ui/flow.dart';
+import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/status.dart';
+
+final class LibraryView extends LoadedView {
+  const LibraryView({
+    required super.isBusy,
+    required this.exercises,
+    required super.sheetLabel,
+    required this.highlightedRow,
+    super.error,
+  });
+
+  final List<CanonicalExercise> exercises;
+  final int? highlightedRow;
+}
 
 abstract interface class LibraryActions {
   Future<void> close();

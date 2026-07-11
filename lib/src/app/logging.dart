@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
+import 'controller.dart';
 import 'logging_flow.dart';
 import 'validation_core.dart';
-import 'ui/flow.dart';
+import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/status.dart';
 
 const _segmentRadius = 8.0;
+
+final class LogView extends LoadedView {
+  const LogView({
+    required super.isBusy,
+    required this.activeSheet,
+    required super.sheetLabel,
+    required this.target,
+    super.error,
+  });
+
+  final ParsedActiveSheet activeSheet;
+  final WorkoutLoggingTarget target;
+}
 
 abstract interface class LogActions {
   Future<void> close();

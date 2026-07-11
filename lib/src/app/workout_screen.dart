@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
+import 'controller.dart';
 import 'repair.dart';
-import 'ui/flow.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 import 'workout.dart';
+import 'ui/view.dart';
+
+final class WorkoutView extends LoadedView {
+  const WorkoutView({
+    required super.isBusy,
+    required this.setup,
+    required super.sheetLabel,
+    super.error,
+  });
+
+  final WorkoutSetupReadModel setup;
+}
 
 abstract interface class WorkoutActions {
-  Future<void> run(WorkoutAction action);
+  Future<void> workout(WorkoutAction action);
 
   Future<bool> reorder(ReorderIntent intent);
 }
@@ -81,14 +93,14 @@ class WorkoutScreen extends StatelessWidget {
                 subtitle: title,
                 compactTitle: true,
                 backTooltip: 'Back to workout setup',
-                onBack: () => actions.run(const BackToWorkoutSetup()),
+                onBack: () => actions.workout(const BackToWorkoutSetup()),
                 trailing: workout == null
                     ? null
                     : IconButton.filled(
                         key: const ValueKey('add-primary-exercise'),
                         tooltip: 'Add to workout',
                         onPressed: () =>
-                            actions.run(AddWorkoutPrimary(workout)),
+                            actions.workout(AddWorkoutPrimary(workout)),
                         icon: const Icon(Icons.add_outlined),
                       ),
               ),
@@ -97,8 +109,9 @@ class WorkoutScreen extends StatelessWidget {
                 WorkoutList(
                   key: const ValueKey('full-workout-overview'),
                   overview: overview,
-                  onOpenExercise: (row) => actions.run(OpenWorkoutLog(row)),
-                  onAddBackup: (slot) => actions.run(AddWorkoutBackup(slot)),
+                  onOpenExercise: (row) => actions.workout(OpenWorkoutLog(row)),
+                  onAddBackup: (slot) =>
+                      actions.workout(AddWorkoutBackup(slot)),
                   onDeleteExercise: view.isBusy
                       ? null
                       : (slot) => _delete(context, slot),
@@ -114,7 +127,7 @@ class WorkoutScreen extends StatelessWidget {
 
   Future<void> _delete(BuildContext context, WorkoutOverviewSlot slot) async {
     if (await confirmWorkoutDelete(context, slot)) {
-      await actions.run(DeleteWorkoutRow(slot.sheetRowNumber));
+      await actions.workout(DeleteWorkoutRow(slot.sheetRowNumber));
     }
   }
 }

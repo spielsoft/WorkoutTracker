@@ -1,14 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
-import 'ui/flow.dart';
+import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
+
+enum PlaceKind { primary, backup }
+
+enum PlaceOrigin { setup, workout }
+
+class PlaceIntent {
+  const PlaceIntent.primary({required this.workout})
+    : kind = PlaceKind.primary,
+      primaryRow = null,
+      primaryExercise = null;
+
+  const PlaceIntent.backup({
+    required this.workout,
+    required this.primaryRow,
+    required this.primaryExercise,
+  }) : kind = PlaceKind.backup;
+
+  final PlaceKind kind;
+  final String workout;
+  final int? primaryRow;
+  final String? primaryExercise;
+}
+
+final class PlacementView extends LoadedView {
+  const PlacementView({
+    required super.isBusy,
+    required this.exercises,
+    required super.sheetLabel,
+    required this.intent,
+    required this.origin,
+    super.error,
+  });
+
+  final List<CanonicalExercise> exercises;
+  final PlaceIntent intent;
+  final PlaceOrigin origin;
+}
 
 abstract interface class PlacementActions {
   Future<void> close();
 
-  Future<bool> save(
+  Future<bool> place(
     CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata, {
     bool keepAdding = false,
@@ -33,7 +70,7 @@ class PlacementScreen extends StatelessWidget {
             title: view.sheetLabel,
             subtitle: isBackup ? 'Add backup exercise' : 'Add to workout',
             compactTitle: true,
-            backTooltip: view.returnRoute == AppRoute.setup
+            backTooltip: view.origin == PlaceOrigin.setup
                 ? 'Back to workout setup'
                 : 'Back to exercises',
             onBack: actions.close,
@@ -42,9 +79,9 @@ class PlacementScreen extends StatelessWidget {
           _PlaceForm(
             exercises: view.exercises,
             initialExercise: null,
-            onSubmit: (draft) => actions.save(draft.exercise, draft.metadata),
+            onSubmit: (draft) => actions.place(draft.exercise, draft.metadata),
             onSubmitAndAddAnother: (draft) =>
-                actions.save(draft.exercise, draft.metadata, keepAdding: true),
+                actions.place(draft.exercise, draft.metadata, keepAdding: true),
           ),
         ],
       ),

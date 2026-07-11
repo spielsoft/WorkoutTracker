@@ -13,4 +13,6 @@ export 'src/app/setup.dart';
 export 'src/app/workout_screen.dart';
 export 'src/app/ui/flow.dart';
 export 'src/app/ui/sheet.dart';
+export 'src/app/ui/view.dart';
+export 'src/app/ui/loaded_flow.dart';
 export 'src/app/shell.dart';

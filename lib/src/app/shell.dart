@@ -1,8 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:workout_tracker/contract.dart';
-
 import 'state_store.dart';
 import 'validation.dart';
 import 'selection.dart';
@@ -16,6 +14,7 @@ import 'setup.dart';
 import 'workout_screen.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
+import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 
 class WorkoutTrackerApp extends StatelessWidget {
@@ -154,47 +153,39 @@ class _AppShellSt extends State<AppShell> {
                         ),
                         SetupView() => SetupScreen(
                           view: view,
-                          actions: _SetupFlowActions(_flow),
+                          actions: _flow.loaded,
                         ),
                         WorkoutView() => WorkoutScreen(
                           view: view,
-                          actions: _WorkoutFlowActions(_flow),
+                          actions: _flow.loaded,
                         ),
                         LibraryView() => _feature(
                           view,
                           ExerciseLibraryScreen(
                             view: view,
-                            actions: _LibraryFlowActions(_flow),
+                            actions: _flow.loaded,
                           ),
                         ),
                         CreateExerciseView() => _feature(
                           view,
                           CreateExerciseScreen(
                             view: view,
-                            actions: _CreateExerciseFlowActions(_flow),
+                            actions: _flow.loaded,
                           ),
                         ),
                         EditExerciseView() => _feature(
                           view,
-                          EditExerciseScreen(
-                            view: view,
-                            actions: _EditExerciseFlowActions(_flow),
-                          ),
+                          EditExerciseScreen(view: view, actions: _flow.loaded),
                         ),
                         PlacementView() => _feature(
                           view,
-                          PlacementScreen(
-                            view: view,
-                            actions: _PlacementFlowActions(_flow),
-                          ),
+                          PlacementScreen(view: view, actions: _flow.loaded),
                         ),
                         LogView() => _feature(
                           view,
-                          LogScreen(
-                            view: view,
-                            actions: _LogFlowActions(_flow),
-                          ),
+                          LogScreen(view: view, actions: _flow.loaded),
                         ),
+                        _ => throw StateError('Unsupported app view $view'),
                       },
                     ),
                   ],
@@ -224,142 +215,4 @@ class _AppShellSt extends State<AppShell> {
       ],
     );
   }
-}
-
-final class _SetupFlowActions implements SetupActions {
-  const _SetupFlowActions(this.flow);
-
-  final UiFlow flow;
-
-  @override
-  Future<void> run(SetupAction action) async {
-    await flow.run(switch (action) {
-      BackToSheets() => const ReturnToSheet(),
-      OpenExerciseLibrary() => const OpenLibrary(),
-      ChooseWorkout(:final workout) => SelectWorkout(workout),
-      ChooseHistory(:final block) => SelectHistory(block),
-      CreateWorkout(:final name) => AddWorkout(name),
-      CreateHistory(:final label) => AddHistory(label),
-      OpenSelectedWorkout() => const OpenWorkout(),
-      OpenSetupLog(:final primaryRow) => OpenLog(primaryRow),
-      AddSetupPrimary(:final workout) => AddPrimary(workout),
-      AddSetupBackup(:final slot) => AddBackup(slot),
-      DeleteSetupExercise(:final primaryRow) => DeleteWorkoutExercise(
-        primaryRow,
-      ),
-    });
-  }
-
-  @override
-  Future<bool> reorder(ReorderIntent intent) async {
-    return (await flow.run(ReorderWorkout(intent))).ok;
-  }
-}
-
-final class _WorkoutFlowActions implements WorkoutActions {
-  const _WorkoutFlowActions(this.flow);
-
-  final UiFlow flow;
-
-  @override
-  Future<void> run(WorkoutAction action) async {
-    await flow.run(switch (action) {
-      BackToWorkoutSetup() => const BackToSetup(),
-      AddWorkoutPrimary(:final workout) => AddPrimary(workout),
-      OpenWorkoutLog(:final primaryRow) => OpenLog(primaryRow),
-      AddWorkoutBackup(:final slot) => AddBackup(slot),
-      DeleteWorkoutRow(:final primaryRow) => DeleteWorkoutExercise(primaryRow),
-    });
-  }
-
-  @override
-  Future<bool> reorder(ReorderIntent intent) async {
-    return (await flow.run(ReorderWorkout(intent))).ok;
-  }
-}
-
-final class _LibraryFlowActions implements LibraryActions {
-  const _LibraryFlowActions(this.flow);
-
-  final UiFlow flow;
-
-  @override
-  Future<void> close() async => flow.run(const CloseLibrary());
-
-  @override
-  Future<void> create() async => flow.run(const OpenExerciseCreate());
-
-  @override
-  Future<void> edit(CanonicalExercise exercise) async =>
-      flow.run(OpenExerciseEdit(exercise));
-
-  @override
-  Future<bool> reorder(ReorderIntent intent) async =>
-      (await flow.run(ReorderExercises(intent))).ok;
-}
-
-final class _CreateExerciseFlowActions implements CreateExerciseActions {
-  const _CreateExerciseFlowActions(this.flow);
-
-  final UiFlow flow;
-
-  @override
-  Future<void> close() async => flow.run(const CloseExerciseCreate());
-
-  @override
-  Future<bool> save(ExerciseDef exercise) async => (await flow.run(
-    SaveExercise(exercise: exercise, name: exercise.exercise),
-  )).ok;
-}
-
-final class _EditExerciseFlowActions implements EditExerciseActions {
-  const _EditExerciseFlowActions(this.flow);
-
-  final UiFlow flow;
-
-  @override
-  Future<void> close() async => flow.run(const CloseExerciseEdit());
-
-  @override
-  Future<bool> save(ExerciseDef exercise) async =>
-      (await flow.run(SaveExerciseEdit(exercise))).ok;
-}
-
-final class _PlacementFlowActions implements PlacementActions {
-  const _PlacementFlowActions(this.flow);
-
-  final UiFlow flow;
-
-  @override
-  Future<void> close() async => flow.run(const CloseExerciseCreate());
-
-  @override
-  Future<bool> save(
-    CanonicalExercise exercise,
-    WorkoutPlacementMetadata metadata, {
-    bool keepAdding = false,
-  }) async => (await flow.run(
-    SavePlacement(
-      exercise: exercise,
-      metadata: metadata,
-      keepAdding: keepAdding,
-    ),
-  )).ok;
-}
-
-final class _LogFlowActions implements LogActions {
-  const _LogFlowActions(this.flow);
-
-  final UiFlow flow;
-
-  @override
-  Future<void> close() async => flow.run(const CloseLog());
-
-  @override
-  Future<bool> execute(WbkCmd cmd) async =>
-      (await flow.run(ExecuteWbk(cmd))).ok;
-
-  @override
-  Future<void> selectRow(int sheetRow) async =>
-      flow.run(SelectLogRow(sheetRow));
 }

@@ -3,9 +3,100 @@ import 'package:flutter/material.dart';
 import '../account.dart';
 import '../repair.dart';
 import '../selection.dart';
-import 'flow.dart';
+import '../validation.dart';
+import '../workspace.dart';
+import 'view.dart';
 import 'shared/a11y.dart';
 import 'shared/name_dialog.dart';
+
+final class SheetView extends AppView {
+  const SheetView({
+    required super.isBusy,
+    required this.sheetText,
+    required this.selectedSheet,
+    required this.availability,
+    required this.showAvailability,
+    required this.showTextFallback,
+    required this.hasLoadedWorkout,
+    required this.report,
+    required this.account,
+    required this.hasPicker,
+    required this.showAccount,
+    this.accountMismatch,
+    super.error,
+  });
+
+  final String sheetText;
+  final SelectedSheet? selectedSheet;
+  final PickerAvail availability;
+  final bool showAvailability;
+  final bool showTextFallback;
+  final bool hasLoadedWorkout;
+  final ValReport? report;
+  final GoogleAccountProfile? account;
+  final bool hasPicker;
+  final bool showAccount;
+  final AcctMismatch? accountMismatch;
+}
+
+sealed class SheetCmd {
+  const SheetCmd();
+}
+
+final class SetSheetText extends SheetCmd {
+  const SetSheetText(this.text);
+
+  final String text;
+}
+
+final class ValidateSheet extends SheetCmd {
+  const ValidateSheet();
+}
+
+final class ChooseSheet extends SheetCmd {
+  const ChooseSheet();
+}
+
+final class SignIn extends SheetCmd {
+  const SignIn();
+}
+
+final class CreateSheet extends SheetCmd {
+  const CreateSheet(this.name);
+
+  final String name;
+}
+
+final class SignOut extends SheetCmd {
+  const SignOut();
+}
+
+final class ConfirmAccount extends SheetCmd {
+  const ConfirmAccount();
+}
+
+final class ReturnToSheet extends SheetCmd {
+  const ReturnToSheet();
+}
+
+final class ReturnToWorkout extends SheetCmd {
+  const ReturnToWorkout();
+}
+
+final class RepairAll extends SheetCmd {
+  const RepairAll();
+}
+
+final class RepairOne extends SheetCmd {
+  const RepairOne({required this.activeRow, required this.exerciseRow});
+
+  final int activeRow;
+  final int exerciseRow;
+}
+
+final class OpenSheet extends SheetCmd {
+  const OpenSheet();
+}
 
 class SheetScreen extends StatefulWidget {
   const SheetScreen({required this.view, required this.run, super.key});
