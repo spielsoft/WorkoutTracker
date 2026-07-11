@@ -10,7 +10,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 - [x] Slice 2: Make builder-owned Google configuration safe and complete
 - [x] Slice 3: Make mobile state persistence durable
 - [x] Slice 4: Exercise production composition in live Google validation
-- [ ] Slice 5: Publish accurate support and privacy resources
+- [x] Slice 5: Publish accurate support and privacy resources
 - [ ] Slice 6: Replace historical setup notes with a public self-build guide
 - [ ] Slice 7: Add dependency and continuous-integration gates
 - [ ] Slice 8: Clean the release test suite
@@ -181,19 +181,19 @@ callback or Firebase-data claim remains.
 
 ### Acceptance criteria
 
-- [ ] The owner supplies or approves a public support/privacy contact channel.
-- [ ] Support content gives users a concrete way to request help and report a
+- [x] The owner supplies or approves a public support/privacy contact channel.
+- [x] Support content gives users a concrete way to request help and report a
       problem.
-- [ ] Privacy content distinguishes local app state, Google account identity,
+- [x] Privacy content distinguishes local app state, Google account identity,
       Google Sheet data, and static Firebase Hosting.
-- [ ] The current scopes and their purposes are stated accurately for the
+- [x] The current scopes and their purposes are stated accurately for the
       source-MVP implementation.
-- [ ] The pages explain deletion/revocation options without promising behavior
+- [x] The pages explain deletion/revocation options without promising behavior
       the app or Google does not provide.
-- [ ] No retired hosted Picker, callback, server token storage, or app backend
+- [x] No retired hosted Picker, callback, server token storage, or app backend
       is implied.
-- [ ] Tests check destinations and essential disclosures, not exact prose.
-- [ ] The deployed pages are manually compared with the checked-in resources.
+- [x] Tests check destinations and essential disclosures, not exact prose.
+- [x] The deployed pages are manually compared with the checked-in resources.
 
 ### Blocked by
 

@@ -4,53 +4,93 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('Firebase Hosting static site artifacts', () {
-    test(
-      'publish product support and privacy pages without Firebase placeholder content',
-      () {
-        final supportPage = File('public/index.html');
-        final privacyPage = File('public/privacy.html');
+  group('Firebase Hosting static site', () {
+    late String support;
+    late String privacy;
 
-        expect(supportPage.existsSync(), isTrue);
-        expect(privacyPage.existsSync(), isTrue);
+    setUpAll(() {
+      support = _html('public/index.html');
+      privacy = _html('public/privacy.html');
+    });
 
-        final supportHtml = supportPage.readAsStringSync();
-        final privacyHtml = privacyPage.readAsStringSync();
-        final combinedHtml = '$supportHtml\n$privacyHtml';
+    test('publishes connected support and privacy destinations', () {
+      expect(_hrefs(support), contains('/privacy.html'));
+      expect(_hrefs(privacy), contains('/'));
 
-        expect(supportHtml, contains('WorkoutTracker'));
-        expect(supportHtml, contains('user-owned Google Sheet'));
-        expect(supportHtml, contains('support'));
+      const contact = 'mailto:ian.spielman@gmail.com';
+      expect(_hrefs(support), contains(contact));
+      expect(_hrefs(privacy), contains(contact));
 
-        expect(privacyHtml, contains('Privacy Policy'));
-        expect(privacyHtml, contains('user-owned Google Sheet'));
-        expect(privacyHtml, contains('WorkoutTracker server'));
-        expect(privacyHtml, contains('Google authorization'));
+      final text = support.toLowerCase();
+      expect(text, contains('help'));
+      expect(text, contains('report'));
+    });
 
-        for (final placeholderText in [
-          'Welcome to Firebase Hosting',
-          'Firebase Hosting Setup Complete',
-          'Firebase SDK Loading',
-          "Now it's time to go build something extraordinary",
-        ]) {
-          expect(combinedHtml, isNot(contains(placeholderText)));
-        }
+    test('discloses the data boundaries and current Google access', () {
+      final text = privacy.toLowerCase();
 
-        expect(combinedHtml, isNot(contains('/__/firebase/')));
-        expect(combinedHtml, isNot(contains('firebase-app-compat')));
-      },
-    );
+      for (final disclosure in [
+        'native google sign-in',
+        'custom in-app chooser',
+        'google account identity',
+        'local app state',
+        'user-owned google sheet',
+        'static support and privacy pages',
+      ]) {
+        expect(text, contains(disclosure), reason: 'Missing $disclosure');
+      }
 
-    test('describes the hosted static pages without SPA fallback behavior', () {
-      final firebaseConfig =
+      expect(
+        privacy,
+        contains('https://www.googleapis.com/auth/drive.metadata.readonly'),
+      );
+      expect(privacy, contains('https://www.googleapis.com/auth/spreadsheets'));
+      expect(text, contains('discover'));
+      expect(text, contains('read and write'));
+    });
+
+    test('provides deletion and revocation controls', () {
+      final text = privacy.toLowerCase();
+
+      expect(text, contains('delete'));
+      expect(text, contains('google account'));
+      expect(text, contains('revoke'));
+      expect(text, contains('local'));
+    });
+
+    test('contains no hosted auth flow or Firebase data client', () {
+      final html = '$support\n$privacy'.toLowerCase();
+
+      for (final unsafe in [
+        '<script',
+        '<form',
+        '/callback',
+        'access_token',
+        'refresh_token',
+        'picker callback',
+        'server token',
+        'app backend',
+        'workout backend',
+        '/__/firebase/',
+        'firebase-app-compat',
+      ]) {
+        expect(html, isNot(contains(unsafe)), reason: 'Found $unsafe');
+      }
+
+      expect(html, contains('firebase hosting'));
+      expect(html, contains('static'));
+    });
+
+    test('publishes only the static pages without SPA rewrites', () {
+      final cfg =
           jsonDecode(File('firebase.json').readAsStringSync())
               as Map<String, Object?>;
-      final firebaseRc =
+      final rc =
           jsonDecode(File('.firebaserc').readAsStringSync())
               as Map<String, Object?>;
 
       expect(
-        firebaseRc,
+        rc,
         containsPair(
           'projects',
           containsPair('default', 'workouttracker-16285'),
@@ -58,7 +98,7 @@ void main() {
       );
 
       expect(
-        firebaseConfig,
+        cfg,
         containsPair(
           'hosting',
           allOf(
@@ -73,16 +113,24 @@ void main() {
         ),
       );
 
-      final publishedFiles = Directory('public')
+      final files = Directory('public')
           .listSync(recursive: true)
           .whereType<File>()
           .map((file) => file.path)
           .toSet();
 
-      expect(
-        publishedFiles,
-        {'public/index.html', 'public/privacy.html'},
-      );
+      expect(files, {'public/index.html', 'public/privacy.html'});
     });
   });
 }
+
+String _html(String path) {
+  final file = File(path);
+  expect(file.existsSync(), isTrue, reason: 'Missing $path');
+  return file.readAsStringSync();
+}
+
+Set<String> _hrefs(String html) => RegExp(
+  '''href=["']([^"']+)["']''',
+  caseSensitive: false,
+).allMatches(html).map((match) => match.group(1)!).toSet();

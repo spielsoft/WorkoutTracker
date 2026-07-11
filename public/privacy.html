@@ -117,6 +117,10 @@
         margin-top: 8px;
       }
 
+      code {
+        overflow-wrap: anywhere;
+      }
+
       footer {
         padding: 28px 0 44px;
         border-top: 1px solid var(--line);
@@ -142,10 +146,11 @@
         <a href="/">Support</a>
       </nav>
       <h1>WorkoutTracker Privacy Policy</h1>
-      <p class="updated">Effective date: June 28, 2026</p>
+      <p class="updated">Effective date: July 11, 2026</p>
       <p class="summary">
         WorkoutTracker stores durable workout data in a user-owned Google Sheet,
-        not in a WorkoutTracker server or separate WorkoutTracker database.
+        while limited app state is stored locally on your device. The app
+        communicates directly with Google APIs.
       </p>
     </header>
 
@@ -153,58 +158,98 @@
       <section>
         <h2>Overview</h2>
         <p>
-          WorkoutTracker is a gym workout logging app that uses Google
-          authorization so you can select, create, read, and write a workout
-          spreadsheet in your Google Drive. The selected Google Sheet is the
-          durable record for your workout data.
+          WorkoutTracker uses native Google Sign-In for account access. Its
+          custom in-app chooser uses the Google Drive API to discover Google
+          Sheets. The app then uses the Google Sheets API to create, validate,
+          read, and write the Sheet you choose. This chooser runs in the app;
+          these hosted pages do not participate in sign-in or sheet selection.
         </p>
       </section>
 
       <section>
-        <h2>Data You Store</h2>
-        <p>
-          Workout data, exercise names, workout targets, notes, and set history
-          are stored in the Google Sheet you choose or create. WorkoutTracker
-          does not copy that workout history into an app-operated cloud database.
-        </p>
-      </section>
-
-      <section>
-        <h2>Google Authorization</h2>
-        <p>
-          The app requests Google authorization to let you sign in, choose or
-          create a spreadsheet, validate the sheet layout, and read or write the
-          selected workout spreadsheet. Google may show your account identity
-          during sign-in so you can confirm the account you are using.
-        </p>
-      </section>
-
-      <section>
-        <h2>What WorkoutTracker Does Not Operate</h2>
+        <h2>Data and Storage</h2>
         <ul>
-          <li>No WorkoutTracker account database is created for you.</li>
-          <li>No WorkoutTracker server stores your durable workout history.</li>
-          <li>No Firebase Realtime Database, Firestore, Storage, or Analytics SDK is loaded by these public pages.</li>
-          <li>Firebase Hosting is used only to publish static support and privacy pages.</li>
+          <li>
+            <strong>Google account identity:</strong> Google Sign-In provides
+            your email address and may provide your display name and profile
+            photo so the app can show and bind the active account.
+          </li>
+          <li>
+            <strong>Local app state:</strong> the app stores application state
+            in its platform application-support directory. This can include the
+            selected Sheet's ID, name, link, account email, the last-entered
+            Sheet identifier or link, and the last workout and history choices.
+          </li>
+          <li>
+            <strong>User-owned Google Sheet:</strong> workout data, exercise
+            names, targets, notes, and set history remain in the Sheet you
+            choose or create in your Google Drive. That Sheet is the durable
+            source of truth.
+          </li>
+          <li>
+            <strong>Hosted pages:</strong> Firebase Hosting publishes only
+            these static support and privacy pages. The pages do not load a
+            Firebase database, storage, authentication, or analytics client.
+          </li>
         </ul>
       </section>
 
       <section>
-        <h2>Your Control</h2>
+        <h2>Google Authorization Scopes</h2>
+        <ul>
+          <li>
+            <code>https://www.googleapis.com/auth/drive.metadata.readonly</code>
+            lets the custom chooser discover recent or searched Google Sheets
+            and read their file metadata. It does not grant Drive file-content
+            access.
+          </li>
+          <li>
+            <code>https://www.googleapis.com/auth/spreadsheets</code> lets the
+            app create, validate, read and write spreadsheet content needed for
+            workout authoring and logging.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>How the App Uses Data</h2>
         <p>
-          Because the Google Sheet is owned by your Google account, you can view,
-          edit, export, share, or delete it through Google Drive and Google
-          Sheets. Removing app access in your Google Account stops future app
-          access to your Google data, subject to Google's account and Drive
-          behavior.
+          Account identity is used to display the signed-in account and prevent
+          a saved Sheet from silently moving to another account. Sheet metadata
+          is used to present chooser results. Spreadsheet content is used to
+          validate the workbook, show workouts and history, and apply edits you
+          request. WorkoutTracker does not use this data for advertising or
+          sell it. The project maintainer does not receive it through these
+          hosted pages.
         </p>
+      </section>
+
+      <section>
+        <h2>Deletion and Revocation</h2>
+        <ul>
+          <li>
+            Sign out in WorkoutTracker to clear its saved workspace selection
+            and locally cached workspace state.
+          </li>
+          <li>
+            View, edit, export, share, or delete your user-owned Google Sheet in
+            Google Drive or Google Sheets. Deleting app-local state does not
+            delete the Sheet.
+          </li>
+          <li>
+            Revoke WorkoutTracker's Google access from the third-party access
+            controls in your Google Account. Revocation stops future authorized
+            app requests but does not delete your Sheet or other Google data.
+          </li>
+        </ul>
       </section>
 
       <section>
         <h2>Support</h2>
         <p>
-          For privacy or support questions, use the contact channel from the
-          store listing or distribution page where you received WorkoutTracker.
+          For privacy questions, access requests, or support, email
+          <a href="mailto:ian.spielman@gmail.com">ian.spielman@gmail.com</a>.
+          Do not include Google credentials or private workout data.
         </p>
       </section>
     </main>

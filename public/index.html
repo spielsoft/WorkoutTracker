@@ -53,15 +53,13 @@
         padding-bottom: 52px;
       }
 
-      nav a,
-      footer a {
+      a {
         color: var(--accent);
         font-weight: 650;
         text-decoration: none;
       }
 
-      nav a:hover,
-      footer a:hover {
+      a:hover {
         text-decoration: underline;
       }
 
@@ -159,8 +157,8 @@
       <h1>Fast workout logging over your own spreadsheet.</h1>
       <p class="lede">
         WorkoutTracker is a lightweight gym logging app for people who want a
-        focused phone and desktop interface without giving up their human-readable
-        workout sheet.
+        focused phone and desktop interface without giving up their
+        human-readable workout sheet.
       </p>
       <p class="notice">
         Durable workout data is stored in a user-owned Google Sheet in the
@@ -174,9 +172,10 @@
         <section>
           <h2>What It Does</h2>
           <p>
-            The app helps select or create a workout spreadsheet, validate the
-            sheet layout, choose workouts and history blocks, and write compact
-            set notation back to visible sheet cells.
+            After native Google Sign-In, the app uses a custom in-app chooser
+            to find or create a workout spreadsheet. It validates the sheet,
+            presents workouts and history, and writes compact set notation back
+            to visible cells.
           </p>
         </section>
 
@@ -191,9 +190,10 @@
         <section>
           <h2>Support</h2>
           <p>
-            For support, use the contact channel from the store listing or the
-            distribution page where you received WorkoutTracker. Include your
-            platform, app version, and a short description of the issue.
+            <a href="mailto:ian.spielman@gmail.com">Email WorkoutTracker support</a>
+            to request help or report a problem. Include your platform, app
+            version, what you expected, and what happened. Do not send Google
+            credentials or private workout data.
           </p>
         </section>
       </div>
@@ -201,10 +201,19 @@
       <section aria-labelledby="data-model-heading">
         <h2 id="data-model-heading">Data Model</h2>
         <ul>
-          <li>Workout rows and history live in the first tab of the selected spreadsheet.</li>
-          <li>Canonical exercise metadata lives in the sheet's Exercises tab.</li>
+          <li>
+            Workout rows and history live in the first tab of the selected
+            spreadsheet.
+          </li>
+          <li>
+            Canonical exercise metadata lives in the sheet's Exercises tab.
+          </li>
           <li>Unparseable set cells are preserved as text instead of discarded.</li>
-          <li>Firebase Hosting serves these public pages only; it is not used as a workout backend.</li>
+          <li>
+            Firebase Hosting serves only these static support and privacy
+            pages. The app communicates directly with Google APIs from your
+            device.
+          </li>
         </ul>
       </section>
     </main>
