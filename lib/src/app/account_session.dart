@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -37,20 +39,46 @@ abstract interface class SignInAuthGateway implements GoogleAccountSession {
   Future<Map<String, String>?> authorizationHeaders(List<String> scopes);
 }
 
+abstract interface class AuthEvents {
+  Future<Stream<GoogleSignInAuthenticationEvent>> initialize({
+    String? clientId,
+    String? serverClientId,
+  });
+}
+
 class NativeSignInAuthGateway extends ChangeNotifier
     implements SignInAuthGateway {
-  NativeSignInAuthGateway({
-    this.clientId = googleClientId,
-    this.serverClientId = googleServerClientId,
+  factory NativeSignInAuthGateway({
+    String clientId = googleClientId,
+    String serverClientId = googleServerClientId,
     GoogleSignIn? signIn,
-  }) : _signIn = signIn ?? GoogleSignIn.instance;
+    AuthEvents? authEvents,
+  }) {
+    final native = signIn ?? GoogleSignIn.instance;
+    return NativeSignInAuthGateway._(
+      native,
+      authEvents ?? _NativeAuthEvents(native),
+      clientId: clientId,
+      serverClientId: serverClientId,
+    );
+  }
+
+  NativeSignInAuthGateway._(
+    this._signIn,
+    this._authEvents, {
+    required this.clientId,
+    required this.serverClientId,
+  });
 
   final String clientId;
   final String serverClientId;
   final GoogleSignIn _signIn;
+  final AuthEvents _authEvents;
   Future<void>? _initialization;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _authSub;
   GoogleSignInAccount? _account;
   GoogleAccountProfile? _currentAccountProfile;
+  bool _disposed = false;
 
   @override
   GoogleAccountProfile? get currentAccount => _currentAccountProfile;
@@ -133,22 +161,27 @@ class NativeSignInAuthGateway extends ChangeNotifier
   }
 
   Future<void> _initialize() async {
-    await _signIn.initialize(
+    final events = await _authEvents.initialize(
       clientId: _optional(clientId),
       serverClientId: _optional(serverClientId),
     );
-    _signIn.authenticationEvents.listen((event) {
-      switch (event) {
-        case GoogleSignInAuthenticationEventSignIn(:final user):
-          _setAccount(user);
-        case GoogleSignInAuthenticationEventSignOut():
-          _setAccount(null);
-      }
-    });
+    if (_disposed) {
+      return;
+    }
+    _authSub ??= events.listen(_handleAuthEvent);
+  }
+
+  void _handleAuthEvent(GoogleSignInAuthenticationEvent event) {
+    switch (event) {
+      case GoogleSignInAuthenticationEventSignIn(:final user):
+        _setAccount(user);
+      case GoogleSignInAuthenticationEventSignOut():
+        _setAccount(null);
+    }
   }
 
   void _setAccount(GoogleSignInAccount? account) {
-    if (_account == account) {
+    if (_disposed || _account == account) {
       return;
     }
     _account = account;
@@ -173,5 +206,37 @@ class NativeSignInAuthGateway extends ChangeNotifier
   static String? _optional(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    final authSub = _authSub;
+    _authSub = null;
+    if (authSub != null) {
+      unawaited(authSub.cancel());
+    }
+    super.dispose();
+  }
+}
+
+class _NativeAuthEvents implements AuthEvents {
+  const _NativeAuthEvents(this._signIn);
+
+  final GoogleSignIn _signIn;
+
+  @override
+  Future<Stream<GoogleSignInAuthenticationEvent>> initialize({
+    String? clientId,
+    String? serverClientId,
+  }) async {
+    await _signIn.initialize(
+      clientId: clientId,
+      serverClientId: serverClientId,
+    );
+    return _signIn.authenticationEvents;
   }
 }
