@@ -4,6 +4,109 @@ import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 
 void main() {
+  testWidgets('keeps phone set entry in task order with targets nearby', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(_app(actions: _LogActions()));
+
+    final fields = ['Weight', 'Reps', 'RPE'].map(_field).toList();
+    final save = find.text('Save set');
+
+    expect(find.text('Plan 3 x 5 @ 8'), findsOneWidget);
+    expect(find.text('Rest 3 min'), findsOneWidget);
+    expect(
+      tester.getTopLeft(fields[0]).dy,
+      lessThan(tester.getTopLeft(fields[1]).dy),
+    );
+    expect(
+      tester.getTopLeft(fields[1]).dy,
+      lessThan(tester.getTopLeft(fields[2]).dy),
+    );
+    expect(
+      tester.getBottomLeft(fields[2]).dy,
+      lessThan(tester.getTopLeft(save).dy),
+    );
+    expect(
+      (tester.getTopLeft(fields[0]).dy -
+              tester.getBottomLeft(find.text('Rest 3 min')).dy)
+          .abs(),
+      lessThan(80),
+    );
+  });
+
+  testWidgets(
+    'keyboard advances in format order and Done saves decimal and text values',
+    (tester) async {
+      final actions = _LogActions();
+      await tester.pumpWidget(_app(actions: actions, view: _literalView()));
+
+      final load = _field('Load');
+      final effort = _field('Effort');
+      final cue = _field('Cue');
+
+      await tester.tap(load);
+      await tester.enterText(load, '102.5');
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pump();
+      expect(
+        tester.widget<EditableText>(_editable(effort)).focusNode.hasFocus,
+        isTrue,
+      );
+
+      await tester.enterText(effort, '7.5');
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pump();
+      expect(
+        tester.widget<EditableText>(_editable(cue)).focusNode.hasFocus,
+        isTrue,
+      );
+
+      await tester.enterText(cue, 'grindy today');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      final save = actions.cmds.single as SaveSetCmd;
+      expect(save.fields, {
+        'Load': '102.5',
+        'Effort': '7.5',
+        'Cue': 'grindy today',
+      });
+    },
+  );
+
+  testWidgets('keeps desktop set entry compact in the shared flow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(_app(actions: _LogActions()));
+
+    final controls = [
+      _field('Weight'),
+      _field('Reps'),
+      _field('RPE'),
+      find.text('Save set'),
+    ];
+    final centers = controls.map(tester.getCenter).toList();
+
+    expect(centers.map((point) => point.dy).toSet(), hasLength(1));
+    for (var i = 1; i < centers.length; i += 1) {
+      expect(centers[i - 1].dx, lessThan(centers[i].dx));
+    }
+  });
+
   testWidgets('emits typed row, close, and set-save commands', (tester) async {
     final actions = _LogActions();
     await tester.pumpWidget(_app(actions: actions));
@@ -322,6 +425,44 @@ LogView _historyView({
   );
 }
 
+LogView _literalView() {
+  final active = parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Carry',
+          '3',
+          '20 m',
+          '7.5',
+          '90s',
+          '',
+          '',
+          '{Load}[x]{Effort}[; ]{Cue}',
+          'Conditioning',
+          '',
+          '',
+        ],
+      ],
+    ),
+  );
+  return LogView(
+    isBusy: false,
+    activeSheet: active,
+    sheetLabel: 'Development Workouts',
+    target: const WorkoutLoggingTarget(
+      blockLabel: 'Week 1',
+      primaryRow: 3,
+      selectedRow: 3,
+    ),
+  );
+}
+
 Finder _field(String label) {
   return find.bySemanticsLabel(label);
+}
+
+Finder _editable(Finder field) {
+  return find.descendant(of: field, matching: find.byType(EditableText));
 }

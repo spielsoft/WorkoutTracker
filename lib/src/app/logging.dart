@@ -223,6 +223,11 @@ class _LogScreenSt extends State<LogScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
+          _ExerciseContextPanel(
+            context: loggingContext,
+            latestHistoryValue: _latestHistoryValue(priorHistoryBlocks),
+          ),
+          const SizedBox(height: 12),
           _StructuredSetEditor(
             logFormat: loggingContext.logFormat,
             controllers: viewModel.newSetCtrls,
@@ -263,11 +268,6 @@ class _LogScreenSt extends State<LogScreen> {
                   onSave: () => _saveRawSet(entry),
                   onClear: () => _clearSet(entry),
                 ),
-          const SizedBox(height: 16),
-          _ExerciseContextPanel(
-            context: loggingContext,
-            latestHistoryValue: _latestHistoryValue(priorHistoryBlocks),
-          ),
           const SizedBox(height: 16),
           _RecentHistoryPanel(blocks: priorHistoryBlocks),
         ],
@@ -519,11 +519,14 @@ class _StructuredSetEditor extends StatelessWidget {
       );
     }
 
-    TextField field(String label) {
+    TextField field(String label, int index) {
+      final isLast = index == fieldLabels.length - 1;
       return TextField(
         key: ValueKey('set-field-$label'),
         controller: controllers[label],
-        keyboardType: TextInputType.number,
+        keyboardType: TextInputType.text,
+        textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
+        onSubmitted: isLast ? (_) => onSave() : null,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -531,57 +534,31 @@ class _StructuredSetEditor extends StatelessWidget {
       );
     }
 
-    Widget accessibleField(String label) {
+    Widget accessibleField(String label, int index) {
       return A11yTextField(
         label: 'New set $label',
         valueListenable: controllers[label],
-        child: field(label),
+        child: field(label, index),
       );
-    }
-
-    List<Widget> compactFields() {
-      return [for (final label in fieldLabels) accessibleField(label)];
-    }
-
-    List<Widget> wideFields() {
-      return [
-        for (final label in fieldLabels)
-          SizedBox(width: 112, child: accessibleField(label)),
-      ];
     }
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 520) {
-          final compactFieldWidgets = compactFields();
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              saveButton(),
-              const SizedBox(height: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (
-                    var index = 0;
-                    index < compactFieldWidgets.length;
-                    index++
-                  ) ...[
-                    compactFieldWidgets[index],
-                    if (index < compactFieldWidgets.length - 1)
-                      const SizedBox(height: 12),
-                  ],
-                ],
-              ),
-            ],
-          );
-        }
-
+        final fieldWidth = constraints.maxWidth < 520
+            ? constraints.maxWidth
+            : 112.0;
         return Wrap(
           spacing: 12,
           runSpacing: 12,
           crossAxisAlignment: WrapCrossAlignment.center,
-          children: [...wideFields(), saveButton()],
+          children: [
+            for (var i = 0; i < fieldLabels.length; i += 1)
+              SizedBox(
+                width: fieldWidth,
+                child: accessibleField(fieldLabels[i], i),
+              ),
+            saveButton(),
+          ],
         );
       },
     );

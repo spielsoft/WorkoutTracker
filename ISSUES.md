@@ -9,7 +9,7 @@ intentionally excluded.
 - [x] Slice 1: Make exercise log-format authoring safe and understandable
 - [x] Slice 2: Serialize loaded-workbook mutations
 - [x] Slice 3: Unify workout home and native navigation
-- [ ] Slice 4: Streamline phone set entry
+- [x] Slice 4: Streamline phone set entry
 - [ ] Slice 5: Make logged-set editing compact and recoverable
 - [ ] Slice 6: Add scalable exercise-library search
 - [ ] Slice 7: Complete responsive light and dark visual polish
@@ -136,16 +136,16 @@ field text without inferring semantics from field labels.
 
 ### Acceptance criteria
 
-- [ ] At phone width, structured fields appear before the primary Save action.
-- [ ] Target and rest information stays visible near the active editor.
-- [ ] Keyboard Next advances through structured fields in format order.
-- [ ] The final keyboard action can submit a non-empty valid set.
-- [ ] Decimal values and non-numeric literal field values can both be entered.
-- [ ] Saving retains existing write planning, pending-state, error, and
+- [x] At phone width, structured fields appear before the primary Save action.
+- [x] Target and rest information stays visible near the active editor.
+- [x] Keyboard Next advances through structured fields in format order.
+- [x] The final keyboard action can submit a non-empty valid set.
+- [x] Decimal values and non-numeric literal field values can both be entered.
+- [x] Saving retains existing write planning, pending-state, error, and
       next-set behavior.
-- [ ] Desktop layout remains compact without introducing a separate execution
+- [x] Desktop layout remains compact without introducing a separate execution
       path.
-- [ ] Focused widget tests cover task order and keyboard submission through the
+- [x] Focused widget tests cover task order and keyboard submission through the
       public logging action interface.
 
 ### Blocked by
