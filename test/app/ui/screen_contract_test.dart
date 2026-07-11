@@ -41,9 +41,65 @@ void main() {
       ),
     );
 
+    expect(find.text('Open log'), findsNothing);
     await tester.tap(find.text('Squat'));
 
     expect((actions.seen.single as OpenWorkoutLog).primaryRow, 3);
+  });
+
+  testWidgets('exercise library auto-scrolls while reordering at an edge', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final actions = _LibraryActions();
+    final exercises = [
+      for (var index = 0; index < 20; index++)
+        CanonicalExercise(
+          sheetRowNumber: index + 2,
+          exercise: 'Exercise ${index + 1}',
+        ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(24),
+            child: ExerciseLibraryScreen(
+              view: LibraryView(
+                isBusy: false,
+                exercises: exercises,
+                sheetLabel: 'Training',
+                highlightedRow: null,
+              ),
+              actions: actions,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final scrollable = find.descendant(
+      of: find.byType(ExerciseLibraryScreen),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scrollable).position;
+    final handle = find.byTooltip('Reorder Exercise 1');
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 500));
+    await tester.pump(const Duration(milliseconds: 200));
+    await gesture.moveBy(const Offset(0, 50));
+    for (var tick = 0; tick < 20; tick++) {
+      await tester.pump(const Duration(milliseconds: 51));
+    }
+
+    expect(position.pixels, greaterThan(0));
+    await gesture.up();
   });
 
   testWidgets('workout execution exposes typed backup and back actions', (
@@ -51,7 +107,7 @@ void main() {
   ) async {
     final actions = _WorkoutActions();
     await tester.pumpWidget(
-      _app(
+      _boundedApp(
         WorkoutScreen(
           view: WorkoutView(
             isBusy: false,
@@ -79,7 +135,7 @@ void main() {
   testWidgets('exercise library exposes only library actions', (tester) async {
     final actions = _LibraryActions();
     await tester.pumpWidget(
-      _app(
+      _boundedApp(
         ExerciseLibraryScreen(
           view: LibraryView(
             isBusy: false,
@@ -131,6 +187,36 @@ void main() {
     await tester.tap(submit);
 
     expect(actions.saved!.exercise, 'Romanian Deadlift');
+  });
+
+  testWidgets('blank exercise defaults keep their labels on the border', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        CreateExerciseScreen(
+          view: const CreateExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            origin: CreateOrigin.library,
+          ),
+          actions: _CreateActions(),
+        ),
+      ),
+    );
+    final field = find.byKey(
+      const ValueKey('exercise-authoring-default-tempo'),
+    );
+    await tester.scrollUntilVisible(
+      field,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    final fieldRect = tester.getRect(field);
+    final labelRect = tester.getRect(find.text('Default tempo'));
+    expect(labelRect.center.dy, lessThan(fieldRect.top + 18));
   });
 
   testWidgets('exercise editing exposes only edit actions', (tester) async {
@@ -290,6 +376,14 @@ Widget _app(Widget child) {
   return MaterialApp(
     home: Scaffold(
       body: ListView(padding: const EdgeInsets.all(24), children: [child]),
+    ),
+  );
+}
+
+Widget _boundedApp(Widget child) {
+  return MaterialApp(
+    home: Scaffold(
+      body: Padding(padding: const EdgeInsets.all(24), child: child),
     ),
   );
 }

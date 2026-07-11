@@ -167,18 +167,6 @@ class _WorkoutOverviewTile extends StatelessWidget {
               onSelected: _handleExerciseAction,
             ),
           );
-    final openLogButton = Semantics(
-      button: true,
-      label: 'Open logging for ${slot.exercise}',
-      child: Tooltip(
-        message: 'Open logging for ${slot.exercise}',
-        child: TextButton.icon(
-          onPressed: () => onOpenExercise(slot.sheetRowNumber),
-          icon: const Icon(Icons.edit_note_outlined),
-          label: const Text('Open log'),
-        ),
-      ),
-    );
     return GestureDetector(
       excludeFromSemantics: true,
       onSecondaryTapDown: !hasExerciseActions
@@ -198,7 +186,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: InkWell(
-            excludeFromSemantics: true,
+            excludeFromSemantics: false,
             borderRadius: BorderRadius.circular(8),
             onTap: () => onOpenExercise(slot.sheetRowNumber),
             child: Padding(
@@ -246,11 +234,6 @@ class _WorkoutOverviewTile extends StatelessWidget {
                             ],
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: openLogButton,
-                        ),
                       ],
                     )
                   : Column(
@@ -294,11 +277,6 @@ class _WorkoutOverviewTile extends StatelessWidget {
                               ),
                             ],
                           ],
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: openLogButton,
                         ),
                         if (slot.backups.isNotEmpty) ...[
                           const SizedBox(height: 8),

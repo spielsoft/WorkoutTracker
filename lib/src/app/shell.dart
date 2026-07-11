@@ -141,6 +141,25 @@ class _AppShellSt extends State<AppShell> {
               listenable: _flow,
               builder: (context, _) {
                 final view = _flow.view;
+                if (view case LibraryView()) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 840),
+                        child: _feature(
+                          view,
+                          ExerciseLibraryScreen(
+                            view: view,
+                            actions: _flow.loaded,
+                          ),
+                          fill: true,
+                        ),
+                      ),
+                    ),
+                  );
+                }
                 return ListView(
                   padding: const EdgeInsets.all(24),
                   children: [
@@ -158,13 +177,6 @@ class _AppShellSt extends State<AppShell> {
                         WorkoutView() => WorkoutScreen(
                           view: view,
                           actions: _flow.loaded,
-                        ),
-                        LibraryView() => _feature(
-                          view,
-                          ExerciseLibraryScreen(
-                            view: view,
-                            actions: _flow.loaded,
-                          ),
                         ),
                         CreateExerciseView() => _feature(
                           view,
@@ -185,6 +197,9 @@ class _AppShellSt extends State<AppShell> {
                           view,
                           LogScreen(view: view, actions: _flow.loaded),
                         ),
+                        LibraryView() => throw StateError(
+                          'Library view must use its scrolling layout.',
+                        ),
                         _ => throw StateError('Unsupported app view $view'),
                       },
                     ),
@@ -198,7 +213,7 @@ class _AppShellSt extends State<AppShell> {
     );
   }
 
-  Widget _feature(AppView view, Widget screen) {
+  Widget _feature(AppView view, Widget screen, {bool fill = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -211,7 +226,7 @@ class _AppShellSt extends State<AppShell> {
           ),
           const SizedBox(height: 16),
         ],
-        screen,
+        if (fill) Expanded(child: screen) else screen,
       ],
     );
   }

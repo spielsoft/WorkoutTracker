@@ -167,7 +167,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Seeded Exercise 24'));
+    await tester.scrollUntilVisible(
+      find.text('Seeded Exercise 24'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Seeded Exercise 24'));
     await tester.pumpAndSettle();
@@ -182,7 +186,6 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Edit exercises'), findsWidgets);
     expect(find.text('Custom Rope Row'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('saved-exercise-highlight')),

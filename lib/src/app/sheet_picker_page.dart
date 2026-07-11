@@ -225,12 +225,8 @@ class _ErrorCard extends StatelessWidget {
 }
 
 String? _subtitle(SheetEntry item) {
-  final parts = <String>[
-    if (item.owner case final String owner when owner.trim().isNotEmpty)
-      owner.trim(),
-    item.id,
-  ];
-  return parts.isEmpty ? null : parts.join('  •  ');
+  final owner = item.owner?.trim();
+  return owner == null || owner.isEmpty ? null : owner;
 }
 
 String? _timeLabel(SheetEntry item) {

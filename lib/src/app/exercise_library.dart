@@ -29,7 +29,7 @@ abstract interface class LibraryActions {
   Future<bool> reorder(ReorderIntent intent);
 }
 
-class ExerciseLibraryScreen extends StatelessWidget {
+class ExerciseLibraryScreen extends StatefulWidget {
   const ExerciseLibraryScreen({
     required this.view,
     required this.actions,
@@ -40,56 +40,94 @@ class ExerciseLibraryScreen extends StatelessWidget {
   final LibraryActions actions;
 
   @override
-  Widget build(BuildContext context) {
-    final exercises = view.exercises;
-    final highlightedRow = view.highlightedRow;
-    if (highlightedRow != null) {
+  State<ExerciseLibraryScreen> createState() => _ExerciseLibraryScreenSt();
+}
+
+class _ExerciseLibraryScreenSt extends State<ExerciseLibraryScreen> {
+  final _scrollCtrl = ScrollController();
+  final _highlightKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _showHighlight();
+  }
+
+  @override
+  void didUpdateWidget(covariant ExerciseLibraryScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.view.highlightedRow != widget.view.highlightedRow) {
+      _showHighlight();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _showHighlight() {
+    final row = widget.view.highlightedRow;
+    if (row == null) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollCtrl.hasClients) {
+        return;
+      }
+      final exercises = widget.view.exercises;
+      final index = exercises.indexWhere((item) => item.sheetRowNumber == row);
+      if (index < 0) {
+        return;
+      }
+      final lastIndex = exercises.length - 1;
+      final ratio = lastIndex == 0 ? 0.0 : index / lastIndex;
+      _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent * ratio);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final highlightedContext = _highlightedExerciseKey.currentContext;
-        if (highlightedContext != null) {
+        final context = _highlightKey.currentContext;
+        if (mounted && context != null) {
           Scrollable.ensureVisible(
-            highlightedContext,
+            context,
             alignment: 0.5,
             duration: const Duration(milliseconds: 1),
           );
         }
       });
-    }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final view = widget.view;
+    final actions = widget.actions;
+    final exercises = view.exercises;
+    final highlightedRow = view.highlightedRow;
+    final header = _LibraryHeader(
+      view: view,
+      onClose: actions.close,
+      onCreate: actions.create,
+    );
     return A11yScreen(
       label: 'Edit exercise library',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ScreenHeader(
-            title: view.sheetLabel,
-            subtitle: 'Edit exercises',
-            compactTitle: true,
-            backTooltip: 'Back to workout setup',
-            onBack: actions.close,
-            trailing: view.isBusy
-                ? null
-                : IconButton.filled(
-                    key: const ValueKey('add-canonical-exercise'),
-                    tooltip: 'Create exercise',
-                    onPressed: actions.create,
-                    icon: const Icon(Icons.add_outlined),
-                  ),
-          ),
-          const SizedBox(height: 16),
-          Text('Edit exercises', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          if (exercises.isEmpty)
-            const StCallout(
-              state: VisualSt.current,
-              icon: Icons.fitness_center_outlined,
-              title: 'No exercises in this sheet.',
-              children: [Text('The exercise library is empty.')],
+      child: exercises.isEmpty
+          ? ListView(
+              controller: _scrollCtrl,
+              children: [
+                header,
+                const StCallout(
+                  state: VisualSt.current,
+                  icon: Icons.fitness_center_outlined,
+                  title: 'No exercises in this sheet.',
+                  children: [Text('The exercise library is empty.')],
+                ),
+              ],
             )
-          else
-            ReorderableListView.builder(
+          : ReorderableListView.builder(
+              scrollController: _scrollCtrl,
+              key: const PageStorageKey('exercise-library'),
+              header: header,
               buildDefaultDragHandles: false,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
               itemCount: exercises.length,
               onReorderItem: view.isBusy
                   ? (_, _) {}
@@ -103,7 +141,7 @@ class ExerciseLibraryScreen extends StatelessWidget {
                 final isHighlighted = exercise.sheetRowNumber == highlightedRow;
                 return Padding(
                   key: isHighlighted
-                      ? _highlightedExerciseKey
+                      ? _highlightKey
                       : ValueKey(
                           'canonical-exercise-${exercise.sheetRowNumber}',
                         ),
@@ -118,13 +156,48 @@ class ExerciseLibraryScreen extends StatelessWidget {
                 );
               },
             ),
-        ],
-      ),
     );
   }
 }
 
-final _highlightedExerciseKey = GlobalKey();
+class _LibraryHeader extends StatelessWidget {
+  const _LibraryHeader({
+    required this.view,
+    required this.onClose,
+    required this.onCreate,
+  });
+
+  final LibraryView view;
+  final VoidCallback onClose;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ScreenHeader(
+          title: view.sheetLabel,
+          subtitle: 'Edit exercises',
+          compactTitle: true,
+          backTooltip: 'Back to workout setup',
+          onBack: onClose,
+          trailing: view.isBusy
+              ? null
+              : IconButton.filled(
+                  key: const ValueKey('add-canonical-exercise'),
+                  tooltip: 'Create exercise',
+                  onPressed: onCreate,
+                  icon: const Icon(Icons.add_outlined),
+                ),
+        ),
+        const SizedBox(height: 16),
+        Text('Edit exercises', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
 
 class _ExerciseInventoryRow extends StatelessWidget {
   const _ExerciseInventoryRow({
