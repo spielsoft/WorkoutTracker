@@ -7,7 +7,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 ## Progress
 
 - [x] Slice 1: Apply Apache-2.0 and public project policy
-- [ ] Slice 2: Make builder-owned Google configuration safe and complete
+- [x] Slice 2: Make builder-owned Google configuration safe and complete
 - [ ] Slice 3: Make mobile state persistence durable
 - [ ] Slice 4: Exercise production composition in live Google validation
 - [ ] Slice 5: Publish accurate support and privacy resources
@@ -68,21 +68,21 @@ behavior. Document Android as deferred rather than partially preparing it.
 
 ### Acceptance criteria
 
-- [ ] One documented local directory owns real Google Cloud exports and build
+- [x] One documented local directory owns real Google Cloud exports and build
       configuration for every supported platform.
-- [ ] Example files describe every required value without containing usable
+- [x] Example files describe every required value without containing usable
       owner credentials or secrets.
-- [ ] Git ignore rules cover real JSON exports, platform service files,
+- [x] Git ignore rules cover real JSON exports, platform service files,
       generated values, and other credential-bearing artifacts.
-- [ ] Tracked iOS and macOS configuration no longer makes the owner's OAuth
+- [x] Tracked iOS and macOS configuration no longer makes the owner's OAuth
       clients the implicit default for forks.
-- [ ] Android is explicitly marked not release-ready, with its missing network,
+- [x] Android is explicitly marked not release-ready, with its missing network,
       package/signing, OAuth, SDK, and device-validation work listed as deferred.
-- [ ] Missing or malformed configuration produces an actionable pre-login
+- [x] Missing or malformed configuration produces an actionable pre-login
       error without printing credential content.
-- [ ] The guide explains Google API enablement, consent-screen test users, and
+- [x] The guide explains Google API enablement, consent-screen test users, and
       builder ownership of quotas and verification.
-- [ ] Focused tests cover configuration presence and errors without asserting
+- [x] Focused tests cover configuration presence and errors without asserting
       platform-file trivia.
 
 ### Blocked by

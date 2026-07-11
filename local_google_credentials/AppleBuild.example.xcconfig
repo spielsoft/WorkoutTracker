@@ -1,0 +1,5 @@
+// Copy this file to AppleBuild.xcconfig and replace every placeholder.
+WORKOUT_TRACKER_BUNDLE_ID = com.YOUR_ORGANIZATION.workouttracker
+WORKOUT_TRACKER_GOOGLE_CLIENT_ID = YOUR_NATIVE_CLIENT_ID.apps.googleusercontent.com
+WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.YOUR_NATIVE_CLIENT_ID
+DEVELOPMENT_TEAM = YOUR_APPLE_TEAM_ID

@@ -1,3 +1,6 @@
-// Replace these with values from GoogleService-Info.plist for the iOS app.
-WORKOUT_TRACKER_GOOGLE_CLIENT_ID = 657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk.apps.googleusercontent.com
-WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.657151291920-5j2u9pdgrn9b99nrk4np4dcnooal2ksk
+// Sanitized defaults keep the project inspectable before local setup.
+WORKOUT_TRACKER_BUNDLE_ID = com.example.workouttracker
+WORKOUT_TRACKER_GOOGLE_CLIENT_ID =
+WORKOUT_TRACKER_GOOGLE_REVERSED_CLIENT_ID =
+DEVELOPMENT_TEAM =
+#include? "../../local_google_credentials/AppleBuild.xcconfig"

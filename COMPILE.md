@@ -11,7 +11,9 @@ other desktop targets are not release-ready.
   and matching Google OAuth clients. Do not reuse another builder's team or
   credentials.
 - Follow [`docs/google_sheets_development_auth.md`](docs/google_sheets_development_auth.md)
-  for local Google configuration.
+  to create the ignored local Google configuration files. All runtime-capable
+  Flutter commands below require
+  `local_google_credentials/flutter_dart_defines.json`.
 
 ## Clean Setup
 
@@ -31,7 +33,8 @@ both; another clean removes prior outputs.
 With signing configured:
 
 ```sh
-flutter build macos --release
+flutter build macos --release \
+  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
 ```
 
 For a local compile-only bundle when signing is unavailable:
@@ -70,7 +73,8 @@ is suitable for compilation checks, not distribution.
 Build an unsigned release bundle:
 
 ```sh
-flutter build ios --release --no-codesign
+flutter build ios --release --no-codesign \
+  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
 ```
 
 Artifact:
@@ -83,7 +87,8 @@ It is not device-installable until signed. For a signed archive/IPA with valid
 Apple distribution configuration:
 
 ```sh
-flutter build ipa --release
+flutter build ipa --release \
+  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
 ```
 
 Artifacts are written under `build/ios/archive/` and `build/ios/ipa/`. Resolve

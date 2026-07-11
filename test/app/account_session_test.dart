@@ -5,11 +5,83 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:workout_tracker/app.dart';
 
 void main() {
+  group('GoogleSignInCfg', () {
+    test('accepts a native OAuth client ID', () {
+      const cfg = GoogleSignInCfg(
+        clientId: 'public-id.apps.googleusercontent.com',
+      );
+
+      expect(cfg.validate, returnsNormally);
+    });
+
+    test('missing client ID names the key and setup guide', () {
+      const cfg = GoogleSignInCfg();
+
+      expect(
+        cfg.validate,
+        throwsA(
+          isA<GoogleSignInCfgError>()
+              .having(
+                (error) => error.toString(),
+                'message',
+                contains(googleClientIdDef),
+              )
+              .having(
+                (error) => error.toString(),
+                'guide',
+                contains('docs/google_sheets_development_auth.md'),
+              ),
+        ),
+      );
+    });
+
+    test('malformed client ID does not expose its value', () {
+      const bad = 'private-builder-value';
+      const cfg = GoogleSignInCfg(clientId: bad);
+
+      expect(
+        cfg.validate,
+        throwsA(
+          isA<GoogleSignInCfgError>()
+              .having(
+                (error) => error.toString(),
+                'message',
+                contains(googleClientIdDef),
+              )
+              .having(
+                (error) => error.toString(),
+                'contents',
+                isNot(contains(bad)),
+              ),
+        ),
+      );
+    });
+  });
+
+  test('invalid configuration fails before native initialization', () async {
+    final events = _AuthEvents();
+    final gateway = NativeSignInAuthGateway(
+      cfg: const GoogleSignInCfg(),
+      authEvents: events,
+    );
+
+    await expectLater(gateway.signIn(), throwsA(isA<GoogleSignInCfgError>()));
+    expect(events.initCount, 0);
+
+    gateway.dispose();
+    await events.close();
+  });
+
   test(
     'repeated initialization attaches one authentication listener',
     () async {
       final events = _AuthEvents();
-      final gateway = NativeSignInAuthGateway(authEvents: events);
+      final gateway = NativeSignInAuthGateway(
+        cfg: const GoogleSignInCfg(
+          clientId: 'public-id.apps.googleusercontent.com',
+        ),
+        authEvents: events,
+      );
 
       await gateway.authorizationHeaders(const []);
       await gateway.authorizationHeaders(const []);
@@ -26,7 +98,12 @@ void main() {
     'dispose cancels authentication events and ignores later events',
     () async {
       final events = _AuthEvents();
-      final gateway = NativeSignInAuthGateway(authEvents: events);
+      final gateway = NativeSignInAuthGateway(
+        cfg: const GoogleSignInCfg(
+          clientId: 'public-id.apps.googleusercontent.com',
+        ),
+        authEvents: events,
+      );
       var notifications = 0;
       gateway.addListener(() => notifications++);
 

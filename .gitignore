@@ -34,8 +34,14 @@ migrate_working_dir/
 /coverage/
 .firebase/
 
-# Local Google credential exports and API keys.
-local_google_credentials/*.json
+# Local Google credential exports and generated build values. Only sanitized
+# examples and their README are tracked.
+local_google_credentials/*
+!local_google_credentials/README.md
+!local_google_credentials/*.example.json
+!local_google_credentials/*.example.xcconfig
+**/GoogleService-Info.plist
+**/google-services.json
 
 # Local agent transcript/cache artifacts.
 .subagent-tools/

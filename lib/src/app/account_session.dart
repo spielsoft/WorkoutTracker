@@ -7,6 +7,54 @@ const googleClientIdDef = 'WORKOUT_TRACKER_GOOGLE_CLIENT_ID';
 const googleClientId = String.fromEnvironment(googleClientIdDef);
 const googleServerClientIdDef = 'WORKOUT_TRACKER_GOOGLE_SERVER_CLIENT_ID';
 const googleServerClientId = String.fromEnvironment(googleServerClientIdDef);
+const googleCfgGuide = 'docs/google_sheets_development_auth.md';
+
+final class GoogleSignInCfgError implements Exception {
+  const GoogleSignInCfgError(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+class GoogleSignInCfg {
+  const GoogleSignInCfg({this.clientId = '', this.serverClientId = ''});
+
+  final String clientId;
+  final String serverClientId;
+
+  void validate() {
+    _validateClientId(googleClientIdDef, clientId, required: true);
+    _validateClientId(googleServerClientIdDef, serverClientId, required: false);
+  }
+
+  static void _validateClientId(
+    String key,
+    String value, {
+    required bool required,
+  }) {
+    final id = value.trim();
+    if (id.isEmpty && !required) return;
+    if (id.isEmpty) {
+      throw GoogleSignInCfgError(
+        'Missing $key. Follow $googleCfgGuide before logging in.',
+      );
+    }
+    if (!RegExp(
+      r'^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$',
+    ).hasMatch(id)) {
+      throw GoogleSignInCfgError(
+        'Malformed $key. Follow $googleCfgGuide before logging in.',
+      );
+    }
+  }
+}
+
+const googleSignInCfg = GoogleSignInCfg(
+  clientId: googleClientId,
+  serverClientId: googleServerClientId,
+);
 
 class GoogleAccountProfile {
   const GoogleAccountProfile({
@@ -49,8 +97,7 @@ abstract interface class AuthEvents {
 class NativeSignInAuthGateway extends ChangeNotifier
     implements SignInAuthGateway {
   factory NativeSignInAuthGateway({
-    String clientId = googleClientId,
-    String serverClientId = googleServerClientId,
+    GoogleSignInCfg cfg = googleSignInCfg,
     GoogleSignIn? signIn,
     AuthEvents? authEvents,
   }) {
@@ -58,20 +105,13 @@ class NativeSignInAuthGateway extends ChangeNotifier
     return NativeSignInAuthGateway._(
       native,
       authEvents ?? _NativeAuthEvents(native),
-      clientId: clientId,
-      serverClientId: serverClientId,
+      cfg,
     );
   }
 
-  NativeSignInAuthGateway._(
-    this._signIn,
-    this._authEvents, {
-    required this.clientId,
-    required this.serverClientId,
-  });
+  NativeSignInAuthGateway._(this._signIn, this._authEvents, this._cfg);
 
-  final String clientId;
-  final String serverClientId;
+  final GoogleSignInCfg _cfg;
   final GoogleSignIn _signIn;
   final AuthEvents _authEvents;
   Future<void>? _initialization;
@@ -161,9 +201,10 @@ class NativeSignInAuthGateway extends ChangeNotifier
   }
 
   Future<void> _initialize() async {
+    _cfg.validate();
     final events = await _authEvents.initialize(
-      clientId: _optional(clientId),
-      serverClientId: _optional(serverClientId),
+      clientId: _optional(_cfg.clientId),
+      serverClientId: _optional(_cfg.serverClientId),
     );
     if (_disposed) {
       return;
