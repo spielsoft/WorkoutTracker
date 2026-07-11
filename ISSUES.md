@@ -1,21 +1,22 @@
-# Remaining Workout UI and Interaction Issues
+# Source MVP Release Issues
 
-This plan implements the remaining non-simple work described in
-`ISSUES_PRD.md`. Localized findings already fixed before the PRD was written are
-intentionally excluded.
+This plan implements `ISSUES_PRD.md` while deliberately retaining the current
+custom Flutter chooser. Complete it on the current branch. Do not begin
+`ISSUES_PICKER.md` here.
 
 ## Progress
 
-- [x] Slice 1: Make exercise log-format authoring safe and understandable
-- [x] Slice 2: Serialize loaded-workbook mutations
-- [x] Slice 3: Unify workout home and native navigation
-- [x] Slice 4: Streamline phone set entry
-- [x] Slice 5: Make logged-set editing compact and recoverable
-- [x] Slice 6: Add scalable exercise-library search
-- [x] Slice 7: Complete responsive light and dark visual polish
-- [x] Slice 8: Clean up tests and run the release gate
+- [ ] Slice 1: Apply Apache-2.0 and public project policy
+- [ ] Slice 2: Make builder-owned Google configuration safe and complete
+- [ ] Slice 3: Make mobile state persistence durable
+- [ ] Slice 4: Exercise production composition in live Google validation
+- [ ] Slice 5: Publish accurate support and privacy resources
+- [ ] Slice 6: Replace historical setup notes with a public self-build guide
+- [ ] Slice 7: Add dependency and continuous-integration gates
+- [ ] Slice 8: Clean the release test suite
+- [ ] Slice 9: Produce and hand off the gym-test candidate
 
-## Slice 1: Make exercise log-format authoring safe and understandable
+## Slice 1: Apply Apache-2.0 and public project policy
 
 ### Type
 
@@ -23,24 +24,25 @@ intentionally excluded.
 
 ### What to build
 
-Turn the literal log-format field into a guided, workbook-safe authoring
-experience. Users should see concise syntax help, immediate validation, and a
-representative output preview. Invalid formats must remain local to the draft
-and must also be rejected by the write-planning contract. Protect changed
-exercise drafts from accidental dismissal.
+Apply the decided Apache-2.0 license and add the minimum durable policy needed
+for public use and contributions. Separate code licensing from product naming,
+document DCO-based contributions, provide private security-reporting guidance,
+and record direct third-party license obligations without claiming ownership of
+dependencies.
 
 ### Acceptance criteria
 
-- [x] Valid literal formats show a representative preview before submission.
-- [x] Invalid formats show focused, human-readable feedback beside the field.
-- [x] Create and edit actions cannot submit an invalid format.
-- [x] The public planner rejects an invalid application-authored format without
-      emitting a write.
-- [x] Attempting to leave a changed create or edit draft requires explicit
-      discard confirmation; unchanged forms close immediately.
-- [x] Valid create and edit flows preserve current workbook behavior.
-- [x] Behavior tests exercise the public parser/planner and visible form
-      behavior without duplicating parser internals.
+- [ ] The repository contains the canonical Apache License 2.0 text.
+- [ ] The README identifies Apache-2.0 accurately and links to the license.
+- [ ] Contribution guidance requires compatible contributions and DCO sign-off.
+- [ ] Trademark guidance prevents forks from implying endorsement while
+      preserving Apache rights.
+- [ ] Security guidance provides a real private reporting method and supported
+      release expectations.
+- [ ] Direct runtime dependencies and their license families are inventoried
+      from authoritative package metadata.
+- [ ] No policy claims exclusive commercial rights that conflict with
+      Apache-2.0.
 
 ### Blocked by
 
@@ -48,9 +50,9 @@ None - can start immediately.
 
 ### User stories covered
 
-- PRD user stories 7-11.
+- PRD user stories 1-6.
 
-## Slice 2: Serialize loaded-workbook mutations
+## Slice 2: Make builder-owned Google configuration safe and complete
 
 ### Type
 
@@ -58,22 +60,30 @@ None - can start immediately.
 
 ### What to build
 
-Put every loaded-workbook mutation behind one authoritative single-flight
-command owner. It should expose consistent pending and failure state, prevent
-overlapping commands regardless of which screen launched them, and leave safe
-read-only navigation available where appropriate.
+Turn local Google configuration into a reproducible public-builder contract.
+Provide sanitized templates, ignore real exports and generated platform values,
+validate missing configuration before login, and complete the platform
+requirements for iOS and macOS. Preserve the current chooser and its scope
+behavior. Document Android as deferred rather than partially preparing it.
 
 ### Acceptance criteria
 
-- [x] All loaded-workbook mutations use one command gate.
-- [x] A second mutation cannot begin while the first is pending.
-- [x] Pending state is visible through the existing typed screen read models.
-- [x] Relevant mutation controls disable consistently while pending.
-- [x] Success and failure both release pending state exactly once.
-- [x] Existing stale-write expectations and workbook-session behavior remain
-      authoritative.
-- [x] Tests assert the app-owned command contract rather than simulated Google
-      behavior or private counter state.
+- [ ] One documented local directory owns real Google Cloud exports and build
+      configuration for every supported platform.
+- [ ] Example files describe every required value without containing usable
+      owner credentials or secrets.
+- [ ] Git ignore rules cover real JSON exports, platform service files,
+      generated values, and other credential-bearing artifacts.
+- [ ] Tracked iOS and macOS configuration no longer makes the owner's OAuth
+      clients the implicit default for forks.
+- [ ] Android is explicitly marked not release-ready, with its missing network,
+      package/signing, OAuth, SDK, and device-validation work listed as deferred.
+- [ ] Missing or malformed configuration produces an actionable pre-login
+      error without printing credential content.
+- [ ] The guide explains Google API enablement, consent-screen test users, and
+      builder ownership of quotas and verification.
+- [ ] Focused tests cover configuration presence and errors without asserting
+      platform-file trivia.
 
 ### Blocked by
 
@@ -81,9 +91,9 @@ None - can start immediately.
 
 ### User stories covered
 
-- PRD user stories 12-14.
+- PRD user stories 7-16.
 
-## Slice 3: Unify workout home and native navigation
+## Slice 3: Make mobile state persistence durable
 
 ### Type
 
@@ -91,37 +101,33 @@ None - can start immediately.
 
 ### What to build
 
-Replace the duplicate setup/workout destinations with one workout home that
-contains workout selection, history selection, progress, and the interactive
-exercise list. Remove the generic Select transition. Represent feature
-navigation with a typed native page stack so in-app Back, Android system Back,
-and iOS back gestures return to the page that actually launched the feature.
+Store application state in the platform-supported application-support location
+on mobile and desktop. Preserve serialized restore, explicit failure reporting,
+and account-to-sheet binding. Remove environment-variable guesses and silent
+temporary-directory fallbacks from production behavior.
 
 ### Acceptance criteria
 
-- [x] Workout and history selectors update the exercise list immediately.
-- [x] The duplicate workout-list destination and generic Select action are
-      removed.
-- [x] Logging, placement, library, create, and edit pages return to their actual
-      origin through page history rather than origin flags.
-- [x] Android-style back dispatch follows the page stack before allowing app
-      exit.
-- [x] iOS feature pages participate in normal back navigation.
-- [x] Sheet selection remains the parent destination of workout home.
-- [x] AppShell composes pages without interpreting feature or workbook
+- [ ] Production state paths come from a supported platform application-data
+      provider on iOS and macOS.
+- [ ] Saving and restoring a selected sheet survives a normal restart.
+- [ ] A storage failure is observable through the existing application status
+      flow and never silently switches to temporary storage.
+- [ ] Account mismatch still requires explicit reselection or confirmation.
+- [ ] Restore remains serialized against login, logout, choose, and create
       commands.
-- [x] Navigation tests assert visible destinations and back behavior rather
-      than internal route enum values.
+- [ ] Public store tests cover successful persistence, corrupt input, and I/O
+      failure without pinning the provider implementation.
 
 ### Blocked by
 
-- Slice 2: Serialize loaded-workbook mutations.
+None - can start immediately.
 
 ### User stories covered
 
-- PRD user stories 1-6 and 14.
+- PRD user stories 17-19.
 
-## Slice 4: Streamline phone set entry
+## Slice 4: Exercise production composition in live Google validation
 
 ### Type
 
@@ -129,104 +135,75 @@ and iOS back gestures return to the page that actually launched the feature.
 
 ### What to build
 
-Make the active set the primary phone task. Keep target sets, reps, RPE, and
-rest visible near the editor; order fields before Save; support efficient
-next/done keyboard flow; and accept both decimal values and arbitrary literal
-field text without inferring semantics from field labels.
+Refactor the opt-in live Google integration so it enters through the same
+account, scoped access, workspace restoration, workbook session, validation,
+and logging command interfaces as the application. Keep the development-sheet
+reset harness explicit and make the runnable device command truthful.
 
 ### Acceptance criteria
 
-- [x] At phone width, structured fields appear before the primary Save action.
-- [x] Target and rest information stays visible near the active editor.
-- [x] Keyboard Next advances through structured fields in format order.
-- [x] The final keyboard action can submit a non-empty valid set.
-- [x] Decimal values and non-numeric literal field values can both be entered.
-- [x] Saving retains existing write planning, pending-state, error, and
-      next-set behavior.
-- [x] Desktop layout remains compact without introducing a separate execution
-      path.
-- [x] Focused widget tests cover task order and keyboard submission through the
-      public logging action interface.
+- [ ] The live test uses production application composition rather than a
+      separately assembled authorization and adapter path.
+- [ ] Without the opt-in environment flag, the test skips before login or any
+      Google request.
+- [ ] With the flag, the command identifies a supported device target and the
+      destructive development sheet clearly.
+- [ ] A successful run selects or resolves the fixture, validates it, performs
+      a representative logged-set write, rereads the result, and resets the
+      fixture.
+- [ ] Cancellation, missing credentials, and reset failure are reported
+      distinctly.
+- [ ] Local tests cover only the app-owned integration entry contract; they do
+      not simulate Google success as proof.
 
 ### Blocked by
 
-- Slice 2: Serialize loaded-workbook mutations.
-- Slice 3: Unify workout home and native navigation.
-
-### User stories covered
-
-- PRD user stories 15-20.
-
-## Slice 5: Make logged-set editing compact and recoverable
-
-### Type
-
-`AFK`
-
-### What to build
-
-Render saved sets as compact summaries and expand only the set being edited.
-Clearing a set should use the normal workbook command path and offer an undo
-action that restores the exact previous raw value through existing stale-write
-protections.
-
-### Acceptance criteria
-
-- [x] Logged sets are compact summaries by default on phone and desktop.
-- [x] Tapping an edit action expands only the selected set.
-- [x] Saving or cancelling collapses the editor without changing other sets.
-- [x] Clearing a set provides a visible, time-limited Undo action.
-- [x] Undo restores the exact prior raw cell value through the normal command
-      interface.
-- [x] Failed clear or undo operations preserve clear error feedback and do not
-      claim success.
-- [x] Training details and the new-set editor are not pushed below multiple
-      expanded saved-set forms.
-- [x] Behavior tests cover formatted and raw sets, clear, undo, stale rejection,
-      and one-editor-at-a-time behavior.
-
-### Blocked by
-
-- Slice 2: Serialize loaded-workbook mutations.
-- Slice 4: Streamline phone set entry.
+- Slice 2: Make builder-owned Google configuration safe and complete.
+- Slice 3: Make mobile state persistence durable.
 
 ### User stories covered
 
 - PRD user stories 20-23.
 
-## Slice 6: Add scalable exercise-library search
+## Slice 5: Publish accurate support and privacy resources
 
 ### Type
 
-`AFK`
+`HITL`
 
 ### What to build
 
-Add local search by exercise display name and description while retaining
-canonical sheet order. Searching must not create a second ordering model, and
-reordering must be unavailable while a filter hides part of the library.
+Make the hosted support and privacy surface suitable for a public source MVP.
+Describe the present native login, custom chooser, Google APIs, local state, and
+user-owned Sheet accurately. Replace placeholder contact language with an
+owner-approved support and privacy contact, and ensure no retired Picker
+callback or Firebase-data claim remains.
 
 ### Acceptance criteria
 
-- [x] Search matches display names and descriptions case-insensitively.
-- [x] Results remain in canonical sheet order.
-- [x] A clear empty-result state explains that no exercise matched.
-- [x] Clearing search restores the full list and canonical order.
-- [x] Reorder handles and reorder commands are unavailable while filtered.
-- [x] Newly created or edited highlighted exercises remain discoverable after
-      returning to the library.
-- [x] Tests cover matching, empty results, clearing, order preservation, and
-      filtered reorder protection through visible behavior.
+- [ ] The owner supplies or approves a public support/privacy contact channel.
+- [ ] Support content gives users a concrete way to request help and report a
+      problem.
+- [ ] Privacy content distinguishes local app state, Google account identity,
+      Google Sheet data, and static Firebase Hosting.
+- [ ] The current scopes and their purposes are stated accurately for the
+      source-MVP implementation.
+- [ ] The pages explain deletion/revocation options without promising behavior
+      the app or Google does not provide.
+- [ ] No retired hosted Picker, callback, server token storage, or app backend
+      is implied.
+- [ ] Tests check destinations and essential disclosures, not exact prose.
+- [ ] The deployed pages are manually compared with the checked-in resources.
 
 ### Blocked by
 
-- Slice 3: Unify workout home and native navigation.
+- Slice 2: Make builder-owned Google configuration safe and complete.
 
 ### User stories covered
 
 - PRD user stories 24-26.
 
-## Slice 7: Complete responsive light and dark visual polish
+## Slice 6: Replace historical setup notes with a public self-build guide
 
 ### Type
 
@@ -234,40 +211,43 @@ reordering must be unavailable while a filter hides part of the library.
 
 ### What to build
 
-Add a system-following dark theme and make custom workout state colors adapt to
-the active color scheme. Review the completed workout home, logging,
-authoring, placement, library, picker, and repair states at narrow phone, large
-text, normal desktop, and wide desktop sizes. Correct hierarchy, wrapping,
-clipping, and action placement without creating platform-specific screen
-implementations.
+Create a concise clone-to-run and clean-release guide for technically inclined
+macOS and iOS builders. Derive it from successful commands and the new local
+configuration contract. Identify Android scaffolding as not release-ready.
+Remove, archive, or label historical store notes so they cannot override source
+code and verified instructions.
 
 ### Acceptance criteria
 
-- [x] The app follows system light and dark appearance.
-- [x] Logged, current, backup, warning, and error states meet contrast guidance
-      in both themes.
-- [x] Core screens remain usable at narrow phone width and with large text.
-- [x] Desktop content retains intentional density and maximum width.
-- [x] Primary actions remain visually ordered after responsive wrapping.
-- [x] No status relies on color alone.
-- [x] Accessibility guideline tests pass for representative light and dark
-      states.
-- [x] A visual smoke pass covers the main macOS flow and representative phone
-      widget sizes.
+- [ ] A new user can identify prerequisites, clone, install dependencies,
+      configure Google, run tests, and build a supported target in order.
+- [ ] iOS and macOS signing, bundle identity, OAuth configuration, and clean
+      release commands are described without the owner's team identity.
+- [ ] Android is clearly deferred, with known missing SDK, package/signing,
+      OAuth, network, build, and physical-device validation work summarized.
+- [ ] Supported, experimentally viable, and currently unvalidated platforms
+      are distinguished.
+- [ ] The source-MVP authorization limitations and future Picker plan are
+      stated plainly.
+- [ ] Historical store documentation is removed or marked non-authoritative;
+      no current guide cites it as evidence.
+- [ ] Commands, paths, bundle names, and opt-in live-test invocation match the
+      repository and a clean local run.
+- [ ] Documentation correctness is reviewed manually rather than enforced with
+      brittle prose tests.
 
 ### Blocked by
 
-- Slice 1: Make exercise log-format authoring safe and understandable.
-- Slice 3: Unify workout home and native navigation.
-- Slice 4: Streamline phone set entry.
-- Slice 5: Make logged-set editing compact and recoverable.
-- Slice 6: Add scalable exercise-library search.
+- Slice 1: Apply Apache-2.0 and public project policy.
+- Slice 2: Make builder-owned Google configuration safe and complete.
+- Slice 4: Exercise production composition in live Google validation.
+- Slice 5: Publish accurate support and privacy resources.
 
 ### User stories covered
 
 - PRD user stories 27-29.
 
-## Slice 8: Clean up tests and run the release gate
+## Slice 7: Add dependency and continuous-integration gates
 
 ### Type
 
@@ -275,35 +255,109 @@ implementations.
 
 ### What to build
 
-Use the `test-cleanup` skill to remove temporary TDD scaffolding and rewrite
-tests that pin widget structure, private navigation state, or command-owner
-implementation. Retain the smallest durable behavior suite, then run the full
-static, test, accessibility, and clean release-build gate.
+Review direct and platform-resolved dependencies, take compatible fixes, and
+add a small public continuous-integration workflow. The default gate should
+catch formatting, analysis, and local behavior regressions without requiring
+Google credentials. Document versioning and release-note expectations for later
+GitHub releases.
 
 ### Acceptance criteria
 
-- [x] The `test-cleanup` skill is used for this slice.
-- [x] Tests assert public screen behavior, command contracts, or workbook plans
-      rather than private helpers and widget-tree trivia.
-- [x] Redundant TDD-only cases are removed or consolidated.
-- [x] Safety coverage remains for invalid-format rejection, command
-      serialization, navigation/back behavior, set clear/undo, and filtered
-      reorder protection.
-- [x] The complete Flutter test suite passes.
-- [x] Static analysis and diff checks pass.
-- [x] A clean macOS release build passes.
-- [x] A clean unsigned iOS release build passes.
+- [ ] Direct dependencies and important platform implementations are checked
+      against current authoritative release notes.
+- [ ] Compatible crash, security, and correctness fixes are adopted and tested.
+- [ ] CI runs formatting verification, static analysis, and the default Flutter
+      test suite without Google credentials.
+- [ ] Live Google validation remains outside the default CI path.
+- [ ] Platform build jobs are included only where unsigned runners can execute
+      them reliably; omitted builds have a documented local gate.
+- [ ] The repository defines versioning, changelog, and GitHub release
+      expectations without publishing app bundles.
+- [ ] CI and dependency changes do not introduce a Firebase application backend
+      or centralized credentials.
 
 ### Blocked by
 
-- Slice 1: Make exercise log-format authoring safe and understandable.
-- Slice 2: Serialize loaded-workbook mutations.
-- Slice 3: Unify workout home and native navigation.
-- Slice 4: Streamline phone set entry.
-- Slice 5: Make logged-set editing compact and recoverable.
-- Slice 6: Add scalable exercise-library search.
-- Slice 7: Complete responsive light and dark visual polish.
+- Slice 1: Apply Apache-2.0 and public project policy.
+- Slice 2: Make builder-owned Google configuration safe and complete.
 
 ### User stories covered
 
-- PRD user story 30 and the complete release-readiness goal.
+- PRD user stories 30-33.
+
+## Slice 8: Clean the release test suite
+
+### Type
+
+`AFK`
+
+### What to build
+
+Use the `test-cleanup` skill to remove temporary TDD scaffolding and tests that
+assert documentation prose, private widget structure, or invented third-party
+behavior. Retain the smallest durable safety net around workbook contracts,
+application commands, public screen behavior, configuration, and release
+requirements.
+
+### Acceptance criteria
+
+- [ ] Tests whose only subject is documentation wording are removed or replaced
+      with an appropriate non-test validation step.
+- [ ] Private helpers, incidental callback order, and widget-tree trivia are not
+      treated as public contracts.
+- [ ] Fakes assert only this app's requested scopes, adapter calls, plans, and
+      accepted callback shapes.
+- [ ] Workbook safety, account binding, command serialization, and major user
+      flows retain behavior coverage.
+- [ ] The default suite remains credential-free and fast enough for CI.
+- [ ] The final test inventory explains the purpose of unusual integration or
+      platform checks.
+
+### Blocked by
+
+- Slices 1-7.
+
+### User stories covered
+
+- PRD user story 34.
+- PRD testing decisions.
+
+## Slice 9: Produce and hand off the gym-test candidate
+
+### Type
+
+`HITL`
+
+### What to build
+
+Run the complete clean release gate on the current branch, inspect the produced
+bundles, and hand the exact candidate to the owner. This slice stops before any
+Picker work. After the owner directs the merge to `main`, the owner will test
+that version in the gym and ordinary defects will be repaired on `main` before
+the Picker branch is created.
+
+### Acceptance criteria
+
+- [ ] Formatting, static analysis, and the complete default test suite pass.
+- [ ] A clean macOS release bundle and clean unsigned iOS release bundle build
+      successfully and are inspected for retired assets/configuration.
+- [ ] Android is not built or presented as validated; the handoff links to its
+      documented deferred-readiness gaps.
+- [ ] The opt-in live Google flow is either run successfully with user approval
+      or explicitly reported as pending HITL validation.
+- [ ] The handoff records commit hashes, commands, build artifact locations,
+      skipped checks, and remaining risks.
+- [ ] No Picker migration, WebView dependency, or scope reduction is present.
+- [ ] The branch is declared ready for owner-directed merge; the agent does not
+      create `new_picker` prematurely.
+- [ ] The owner confirms the merged `main` baseline is the version to test in
+      the gym.
+
+### Blocked by
+
+- Slice 8: Clean the release test suite.
+
+### User stories covered
+
+- PRD user story 35.
+- PRD release sequencing.

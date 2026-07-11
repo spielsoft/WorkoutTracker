@@ -1,110 +1,104 @@
-# Compile Release App Bundles
+# Apple Release Builds
 
-These commands build release artifacts from the repository root. They are not
-debug builds.
+WorkoutTracker currently prepares macOS and iOS release bundles. Android and
+other desktop targets are not release-ready.
 
 ## Prerequisites
 
-- Xcode is installed and its license has been accepted.
-- Apple signing is configured in Xcode for team `K77H93FM2M` and bundle ID
-  `com.spielman.workouttracker` when producing signed deployment artifacts.
-  IPA export requires an Apple account in Xcode, an iOS Distribution
-  certificate, and a matching provisioning profile.
+- Install Flutter and Xcode; accept the Xcode license.
+- Run `flutter doctor` and resolve Apple toolchain failures.
+- Configure a developer-owned Apple team, bundle identifiers, signing assets,
+  and matching Google OAuth clients. Do not reuse another builder's team or
+  credentials.
+- Follow [`docs/google_sheets_development_auth.md`](docs/google_sheets_development_auth.md)
+  for local Google configuration.
 
-## Clean Build Setup
+## Clean Setup
 
-Remove previous outputs, then restore dependencies before either platform
-build:
+From the repository root:
 
 ```sh
 flutter clean
 flutter pub get
 ```
 
-Do not omit `flutter pub get` after `flutter clean`. It regenerates the
-ephemeral Swift package used by the macOS and iOS projects. Build macOS before
-iOS if both bundles should remain under `build/`, because another
-`flutter clean` removes both outputs.
+`flutter pub get` is required after cleaning because it regenerates Flutter's
+ephemeral Apple dependencies. If both bundles are needed, clean once and build
+both; another clean removes prior outputs.
 
-## macOS `.app`
+## macOS
 
-Build the signed release macOS application bundle when the configured Apple
-account and provisioning profile are available:
+With signing configured:
 
 ```sh
 flutter build macos --release
 ```
 
-If Xcode reports that no matching provisioning profile is available, build the
-same release-mode app bundle without code signing:
+For a local compile-only bundle when signing is unavailable:
 
 ```sh
 cd macos
-xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath ../build/macos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= build
+xcodebuild -workspace Runner.xcworkspace \
+  -scheme Runner \
+  -configuration Release \
+  -derivedDataPath ../build/macos \
+  CODE_SIGNING_ALLOWED=NO \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGN_IDENTITY= \
+  build
 cd ..
 ```
 
-The app bundle is written to:
+Artifact:
 
 ```text
 build/macos/Build/Products/Release/Workout Tracker.app
 ```
 
-Verify that the bundle is structurally complete after either signed or
-unsigned compilation:
+Validate a local unsigned build:
 
 ```sh
 scripts/validate_macos_app_bundle.sh --compile-only \
   "build/macos/Build/Products/Release/Workout Tracker.app"
 ```
 
-For a distribution candidate, omit `--compile-only`. Strict validation then
-requires a trusted signature:
+Omit `--compile-only` for a signed distribution candidate. An unsigned bundle
+is suitable for compilation checks, not distribution.
 
-```sh
-scripts/validate_macos_app_bundle.sh \
-  "build/macos/Build/Products/Release/Workout Tracker.app"
-```
+## iOS
 
-The unsigned fallback is a release app bundle, but it must be signed before
-distribution outside local development.
-
-## iOS `.app` Bundle
-
-Build the release iOS application bundle without code signing:
+Build an unsigned release bundle:
 
 ```sh
 flutter build ios --release --no-codesign
 ```
 
-The app bundle is written to:
+Artifact:
 
 ```text
 build/ios/iphoneos/Runner.app
 ```
 
-This produces a release-mode app bundle, but it is not installable on a device
-until it is signed. `Runner.app/Runner` should be an arm64 Mach-O executable.
-
-## iOS Signed Deployment Archive
-
-When a valid Apple development team, signing certificate, and provisioning
-profile are available, build the signed deployment archive:
+It is not device-installable until signed. For a signed archive/IPA with valid
+Apple distribution configuration:
 
 ```sh
 flutter build ipa --release
 ```
 
-The signed IPA is written under:
+Artifacts are written under `build/ios/archive/` and `build/ios/ipa/`. Resolve
+signing failures in Xcode; do not work around them by changing established
+product identity unexpectedly.
 
-```text
-build/ios/ipa/
+## Release Gate
+
+Before handing off a candidate:
+
+```sh
+flutter analyze
+flutter test
 ```
 
-If archive creation succeeds but IPA export fails with missing account,
-certificate, or profile errors, open the generated archive in Xcode and complete
-signing/distribution there:
-
-```text
-build/ios/archive/Runner.xcarchive
-```
+Then perform the clean builds above and report whether signing and live Google
+validation were completed or intentionally skipped. Live test instructions are
+in [`docs/testing.md`](docs/testing.md).
