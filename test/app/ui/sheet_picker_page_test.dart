@@ -28,6 +28,38 @@ void main() {
     expect(find.textContaining('Athlete'), findsOneWidget);
     expect(find.textContaining(opaqueId), findsNothing);
   });
+
+  testWidgets('failed search replaces stale results with retry guidance', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _PickerLauncher(
+          req: SheetViewReq(
+            load: (query) async {
+              if (query == 'legs') {
+                throw StateError('connection lost');
+              }
+              return const [SheetEntry(id: 'morning-id', name: 'Morning Log')];
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Choose'));
+    await tester.pumpAndSettle();
+    expect(find.text('Morning Log'), findsOneWidget);
+
+    await tester.enterText(find.byType(SearchBar), 'legs');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Picker unavailable'), findsOneWidget);
+    expect(find.textContaining('connection lost'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Morning Log'), findsNothing);
+  });
 }
 
 class _PickerLauncher extends StatelessWidget {

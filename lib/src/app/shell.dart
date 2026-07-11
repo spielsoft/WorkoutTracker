@@ -169,39 +169,45 @@ class _AppShellSt extends State<AppShell> {
                 return ListView(
                   padding: const EdgeInsets.all(24),
                   children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 840),
-                      child: switch (view) {
-                        SheetView() => SheetScreen(
-                          view: view,
-                          run: (cmd) => _flow.run(cmd),
-                        ),
-                        CreateExerciseView() => _feature(
-                          view,
-                          CreateExerciseScreen(
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 840),
+                        child: switch (view) {
+                          SheetView() => SheetScreen(
                             view: view,
-                            actions: _flow.loaded,
+                            run: (cmd) => _flow.run(cmd),
                           ),
-                        ),
-                        EditExerciseView() => _feature(
-                          view,
-                          EditExerciseScreen(view: view, actions: _flow.loaded),
-                        ),
-                        PlacementView() => _feature(
-                          view,
-                          PlacementScreen(view: view, actions: _flow.loaded),
-                        ),
-                        LogView() => _feature(
-                          view,
-                          LogScreen(view: view, actions: _flow.loaded),
-                        ),
-                        SetupView() ||
-                        WorkoutView() ||
-                        LibraryView() => throw StateError(
-                          'This view must use its full-screen layout.',
-                        ),
-                        _ => throw StateError('Unsupported app view $view'),
-                      },
+                          CreateExerciseView() => _feature(
+                            view,
+                            CreateExerciseScreen(
+                              view: view,
+                              actions: _flow.loaded,
+                            ),
+                          ),
+                          EditExerciseView() => _feature(
+                            view,
+                            EditExerciseScreen(
+                              view: view,
+                              actions: _flow.loaded,
+                            ),
+                          ),
+                          PlacementView() => _feature(
+                            view,
+                            PlacementScreen(view: view, actions: _flow.loaded),
+                          ),
+                          LogView() => _feature(
+                            view,
+                            LogScreen(view: view, actions: _flow.loaded),
+                          ),
+                          SetupView() ||
+                          WorkoutView() ||
+                          LibraryView() => throw StateError(
+                            'This view must use its full-screen layout.',
+                          ),
+                          _ => throw StateError('Unsupported app view $view'),
+                        },
+                      ),
                     ),
                   ],
                 );

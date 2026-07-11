@@ -7,6 +7,31 @@ import '../service_fake.dart';
 import '../../support/widget.dart';
 
 void main() {
+  testWidgets('centers non-fullscreen screens at the content width limit', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        svc: TestValSvc.fromRows([
+          activeSheetFixedColumns,
+          List.filled(activeSheetFixedColumns.length, ''),
+        ]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final screen = find.byType(SheetScreen);
+    expect(tester.getSize(screen).width, 840);
+    expect(tester.getCenter(screen).dx, 700);
+  });
+
   testWidgets('meets Flutter accessibility guidelines across core GUI states', (
     tester,
   ) async {

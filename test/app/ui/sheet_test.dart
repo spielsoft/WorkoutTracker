@@ -60,6 +60,12 @@ void main() {
 
     expect(choose.onPressed, isNull);
     expect(create.onPressed, isNull);
+    expect(
+      find.text(
+        'Log in from the account menu to choose or create a workout sheet.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('collects a name before creating a sheet', (tester) async {

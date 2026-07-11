@@ -59,6 +59,7 @@ class _SheetPickerPageState extends State<_SheetPickerPage> {
     if (mounted) {
       setState(() {
         _err = null;
+        _items = const [];
         _isLoading = true;
       });
     }
@@ -134,7 +135,7 @@ class _SheetPickerPageState extends State<_SheetPickerPage> {
   }
 
   Widget _body(BuildContext context, String query) {
-    if (_err case final String err when _items.isEmpty) {
+    if (_err case final String err) {
       return _ErrorCard(message: err, onRetry: () => _load(query));
     }
     if (_isLoading && _items.isEmpty) {
