@@ -60,28 +60,23 @@ Real exports and local values belong under:
 local_google_credentials/
 ```
 
-All real exports and generated Apple/Dart values there are git-ignored. Start
-from its checked-in example files; see
+All real exports and generated Apple values there are git-ignored. Start from
+its checked-in example file; see
 [`local_google_credentials/README.md`](../local_google_credentials/README.md)
-for the copy commands. Runtime configuration recognizes:
-
-```text
-WORKOUT_TRACKER_GOOGLE_CLIENT_ID
-WORKOUT_TRACKER_GOOGLE_SERVER_CLIENT_ID
-```
-
-The native client ID is required; the server client ID is optional because the
-app has no token-handling backend. The app validates the same Dart values it
-passes to Google Sign-In before attempting account restore or login. Missing
-or malformed configuration names the key and this guide without printing the
-configured value.
+for the copy command.
 
 Both iOS and macOS load the builder's bundle ID, Apple team, client ID, and
 reversed-client build settings from the ignored
 `local_google_credentials/AppleBuild.xcconfig`. Their tracked `Info.plist`
-files expose the client settings to the sign-in SDK. Keep that file's client ID
-identical to `WORKOUT_TRACKER_GOOGLE_CLIENT_ID` in the ignored Dart defines
-file.
+files expose the client settings directly to the sign-in SDK. Normal Apple
+builds and runs need no credential command-line arguments.
+
+Optional `WORKOUT_TRACKER_GOOGLE_CLIENT_ID` and
+`WORKOUT_TRACKER_GOOGLE_SERVER_CLIENT_ID` Dart defines remain available for a
+platform or diagnostic run that cannot use native configuration. When omitted,
+the app deliberately passes no override and lets the Apple SDK read
+`Info.plist`. When supplied, malformed IDs are rejected without printing their
+values.
 
 ## Apple Builder Setup
 

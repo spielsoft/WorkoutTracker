@@ -42,8 +42,7 @@ fixture writes:
 
 ```sh
 WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
-  flutter test integration_test/live_logging_flow_test.dart -d macos \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+  flutter test integration_test/live_logging_flow_test.dart -d macos
 ```
 
 This command targets the supported macOS app and destructively resets the

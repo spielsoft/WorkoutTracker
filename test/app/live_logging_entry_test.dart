@@ -65,7 +65,7 @@ void main() {
       await expectLater(entry.run(_set), throwsA(isA<LiveLoginCancelled>()));
     });
 
-    test('reports missing credentials distinctly', () async {
+    test('reports account configuration failures distinctly', () async {
       final workspace = WorkspaceCtrl(
         accountSession: _Account(cfgError: true),
         picker: _Picker(_Account()),
@@ -109,7 +109,7 @@ class _Account extends ChangeNotifier implements GoogleAccountSession {
   Future<bool> signIn({List<String> scopes = const []}) async {
     if (cfgError) {
       throw const GoogleSignInCfgError(
-        'Missing WORKOUT_TRACKER_GOOGLE_CLIENT_ID.',
+        'Malformed WORKOUT_TRACKER_GOOGLE_CLIENT_ID.',
       );
     }
     if (cancel) return false;

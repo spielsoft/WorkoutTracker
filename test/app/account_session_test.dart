@@ -14,25 +14,10 @@ void main() {
       expect(cfg.validate, returnsNormally);
     });
 
-    test('missing client ID names the key and setup guide', () {
+    test('allows Apple to load its native client ID from Info.plist', () {
       const cfg = GoogleSignInCfg();
 
-      expect(
-        cfg.validate,
-        throwsA(
-          isA<GoogleSignInCfgError>()
-              .having(
-                (error) => error.toString(),
-                'message',
-                contains(googleClientIdDef),
-              )
-              .having(
-                (error) => error.toString(),
-                'guide',
-                contains('docs/google_sheets_development_auth.md'),
-              ),
-        ),
-      );
+      expect(cfg.validate, returnsNormally);
     });
 
     test('malformed client ID does not expose its value', () {
@@ -58,15 +43,32 @@ void main() {
     });
   });
 
-  test('invalid configuration fails before native initialization', () async {
+  test('malformed Dart override fails before native initialization', () async {
+    final events = _InitEvents();
+    final gateway = NativeSignInAuthGateway(
+      cfg: const GoogleSignInCfg(clientId: 'malformed-client'),
+      authEvents: events,
+    );
+
+    await expectLater(gateway.signIn(), throwsA(isA<GoogleSignInCfgError>()));
+    expect(events.initCount, 0);
+
+    gateway.dispose();
+    await events.close();
+  });
+
+  test('empty Dart overrides defer client configuration to Apple', () async {
     final events = _InitEvents();
     final gateway = NativeSignInAuthGateway(
       cfg: const GoogleSignInCfg(),
       authEvents: events,
     );
 
-    await expectLater(gateway.signIn(), throwsA(isA<GoogleSignInCfgError>()));
-    expect(events.initCount, 0);
+    await gateway.authorizationHeaders(const []);
+
+    expect(events.initCount, 1);
+    expect(events.clientId, isNull);
+    expect(events.serverClientId, isNull);
 
     gateway.dispose();
     await events.close();
@@ -120,6 +122,8 @@ void main() {
 class _InitEvents implements AuthEvents {
   final _events = StreamController<GoogleSignInAuthenticationEvent>.broadcast();
   int initCount = 0;
+  String? clientId;
+  String? serverClientId;
 
   @override
   Future<Stream<GoogleSignInAuthenticationEvent>> initialize({
@@ -127,6 +131,8 @@ class _InitEvents implements AuthEvents {
     String? serverClientId,
   }) async {
     initCount++;
+    this.clientId = clientId;
+    this.serverClientId = serverClientId;
     return _events.stream;
   }
 

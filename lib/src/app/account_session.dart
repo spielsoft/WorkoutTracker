@@ -25,22 +25,13 @@ class GoogleSignInCfg {
   final String serverClientId;
 
   void validate() {
-    _validateClientId(googleClientIdDef, clientId, required: true);
-    _validateClientId(googleServerClientIdDef, serverClientId, required: false);
+    _validateClientId(googleClientIdDef, clientId);
+    _validateClientId(googleServerClientIdDef, serverClientId);
   }
 
-  static void _validateClientId(
-    String key,
-    String value, {
-    required bool required,
-  }) {
+  static void _validateClientId(String key, String value) {
     final id = value.trim();
-    if (id.isEmpty && !required) return;
-    if (id.isEmpty) {
-      throw GoogleSignInCfgError(
-        'Missing $key. Follow $googleCfgGuide before logging in.',
-      );
-    }
+    if (id.isEmpty) return;
     if (!RegExp(
       r'^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$',
     ).hasMatch(id)) {

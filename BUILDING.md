@@ -48,11 +48,9 @@ Every builder owns their Google Cloud project, consent screen, quotas, native
 OAuth clients, and any verification obligations. The repository owner's Cloud
 project and credentials are not a shared service for source builds.
 
-Create the ignored local files from the sanitized examples:
+Create the ignored local file from the sanitized example:
 
 ```sh
-cp local_google_credentials/flutter_dart_defines.example.json \
-  local_google_credentials/flutter_dart_defines.json
 cp local_google_credentials/AppleBuild.example.xcconfig \
   local_google_credentials/AppleBuild.xcconfig
 ```
@@ -65,9 +63,9 @@ For each Apple target, choose a unique bundle identifier and a developer-owned
 Apple team, then create a matching native Google OAuth client. The ignored
 `AppleBuild.xcconfig` supplies `WORKOUT_TRACKER_BUNDLE_ID`, `DEVELOPMENT_TEAM`,
 the client ID, and its reversed-client URL scheme to both Apple projects. Keep
-that client ID identical to `WORKOUT_TRACKER_GOOGLE_CLIENT_ID` in the ignored
-Dart-defines file. Open `ios/Runner.xcworkspace` or
-`macos/Runner.xcworkspace` in Xcode to resolve signing and provisioning.
+that file local; normal Apple run and build commands load it automatically.
+Open `ios/Runner.xcworkspace` or `macos/Runner.xcworkspace` in Xcode to resolve
+signing and provisioning.
 
 Follow [`docs/google_sheets_development_auth.md`](docs/google_sheets_development_auth.md)
 for the complete configuration contract. Do not commit real exports, generated
@@ -94,16 +92,14 @@ bundle inspection cannot be established reliably by that unsigned Linux job.
 Run macOS with local configuration:
 
 ```sh
-flutter run -d macos \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+flutter run -d macos
 ```
 
 For iOS, list devices, select a signed physical device, and substitute its ID:
 
 ```sh
 flutter devices
-flutter run --release -d <device-id> \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+flutter run --release -d <device-id>
 ```
 
 A signed physical-device run is required for release-facing iOS login
@@ -123,8 +119,7 @@ flutter pub get
 With macOS signing configured:
 
 ```sh
-flutter build macos --release \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+flutter build macos --release
 ```
 
 The artifact is:
@@ -136,8 +131,7 @@ build/macos/Build/Products/Release/Workout Tracker.app
 When signing is unavailable, compile with Xcode instead:
 
 ```sh
-flutter build macos --release --config-only \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+flutter build macos --release --config-only
 cd macos
 xcodebuild -workspace Runner.xcworkspace \
   -scheme Runner \
@@ -168,8 +162,7 @@ notarization, or distribution readiness.
 Build the unsigned iOS release bundle:
 
 ```sh
-flutter build ios --release --no-codesign \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+flutter build ios --release --no-codesign
 ```
 
 The compile-only artifact is:
@@ -182,8 +175,7 @@ It is not device-installable and does not validate Google login. With valid
 Apple distribution signing, create an archive and IPA instead:
 
 ```sh
-flutter build ipa --release \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+flutter build ipa --release
 ```
 
 Flutter writes results under `build/ios/archive/` and `build/ios/ipa/`. Resolve
@@ -198,8 +190,7 @@ only with explicit approval and a prepared macOS login session:
 
 ```sh
 WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
-  flutter test integration_test/live_logging_flow_test.dart -d macos \
-  --dart-define-from-file=local_google_credentials/flutter_dart_defines.json
+  flutter test integration_test/live_logging_flow_test.dart -d macos
 ```
 
 Without the environment flag, the test skips before authentication. Report a
