@@ -51,3 +51,15 @@ Apple release commands and artifact locations are in
 | Google account and chooser architecture | [`docs/google_sheets_development_auth.md`](docs/google_sheets_development_auth.md) |
 | UI accessibility contract | [`docs/accessibility.md`](docs/accessibility.md) |
 | Apple release builds | [`COMPILE.md`](COMPILE.md) |
+
+## Project Policy
+
+WorkoutTracker is licensed under the
+[Apache License 2.0](LICENSE). The license permits use, modification, and
+distribution, including commercial use, subject to its terms. Project names
+and branding are addressed separately in [TRADEMARKS.md](TRADEMARKS.md).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the DCO-based contribution workflow,
+[SECURITY.md](SECURITY.md) for private vulnerability reporting and supported
+release expectations, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for
+the direct runtime dependency license inventory.

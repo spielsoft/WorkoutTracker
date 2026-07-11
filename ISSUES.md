@@ -6,7 +6,7 @@ custom Flutter chooser. Complete it on the current branch. Do not begin
 
 ## Progress
 
-- [ ] Slice 1: Apply Apache-2.0 and public project policy
+- [x] Slice 1: Apply Apache-2.0 and public project policy
 - [ ] Slice 2: Make builder-owned Google configuration safe and complete
 - [ ] Slice 3: Make mobile state persistence durable
 - [ ] Slice 4: Exercise production composition in live Google validation
@@ -32,16 +32,16 @@ dependencies.
 
 ### Acceptance criteria
 
-- [ ] The repository contains the canonical Apache License 2.0 text.
-- [ ] The README identifies Apache-2.0 accurately and links to the license.
-- [ ] Contribution guidance requires compatible contributions and DCO sign-off.
-- [ ] Trademark guidance prevents forks from implying endorsement while
+- [x] The repository contains the canonical Apache License 2.0 text.
+- [x] The README identifies Apache-2.0 accurately and links to the license.
+- [x] Contribution guidance requires compatible contributions and DCO sign-off.
+- [x] Trademark guidance prevents forks from implying endorsement while
       preserving Apache rights.
-- [ ] Security guidance provides a real private reporting method and supported
+- [x] Security guidance provides a real private reporting method and supported
       release expectations.
-- [ ] Direct runtime dependencies and their license families are inventoried
+- [x] Direct runtime dependencies and their license families are inventoried
       from authoritative package metadata.
-- [ ] No policy claims exclusive commercial rights that conflict with
+- [x] No policy claims exclusive commercial rights that conflict with
       Apache-2.0.
 
 ### Blocked by
