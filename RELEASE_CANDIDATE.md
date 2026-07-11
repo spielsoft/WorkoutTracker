@@ -33,7 +33,9 @@ The source baseline is ready for owner-directed review and merge. No merge,
 | Default tests | `flutter test` | Passed: 292 tests after the local-credential regression repair. |
 | macOS Release | `flutter build macos --release` | Passed with the ignored local Apple configuration loaded automatically. |
 | macOS inspection | `scripts/validate_macos_app_bundle.sh --compile-only "build/macos/Build/Products/Release/Workout Tracker.app"` plus compiled-plist comparison | Passed bundle structure; client ID, reversed URL scheme, bundle ID, and team match the ignored local configuration. The bundle is signed, but this machine does not trust the local certificate chain. |
-| iOS Release | `flutter build ios --release --no-codesign` | Passed: unsigned arm64 device Release bundle with the ignored local client ID, reversed URL scheme, and bundle ID. |
+| iOS Release | `flutter build ios --release` | Passed: signed arm64 device Release bundle with the ignored local client ID, reversed URL scheme, and bundle ID. |
+| iOS signing | `codesign --verify --deep --strict` plus embedded-profile inspection | Passed: valid signature and development profile for the configured bundle; the connected iPhone is included in the profile. |
+| iOS installation | `xcrun devicectl device install app` | Passed on the connected physical iPhone. |
 | Bundle/source audit | Inspected metadata, assets, binaries, dependency declarations, and changed paths | Passed for source-MVP boundaries: no owner OAuth/team values, Picker migration, `drive.file`, WebView, hosted callback, Firebase data SDK/backend, debug kernel, or Android build change was found. |
 
 Clean only once before the two Apple builds so that both final artifacts remain
@@ -44,13 +46,14 @@ must never be printed or committed.
 ## Expected Artifact Locations
 
 - macOS: `build/macos/Build/Products/Release/Workout Tracker.app`
-- unsigned iOS: `build/ios/iphoneos/Runner.app`
+- signed iOS development app: `build/ios/iphoneos/Runner.app`
 
 - macOS bundle: 52.0 MB, universal arm64/x86_64 Mach-O, signed with a locally
   untrusted certificate chain, bundle ID `com.spielman.workouttracker`, version
   `1.0.0` build `1`.
-- iOS bundle: approximately 21 MB (Flutter reported 21.9 MB), arm64 Mach-O,
-  unsigned, bundle ID `com.spielman.workouttracker`, version `1.0.0` build `1`.
+- iOS bundle: 22.0 MB, signed arm64 Mach-O with an embedded development
+  profile containing the connected iPhone, bundle ID
+  `com.spielman.workouttracker`, version `1.0.0` build `1`.
 
 Both bundles contain nonempty Google client ID and reversed-client URL settings
 that match the ignored `local_google_credentials/AppleBuild.xcconfig`. Normal
@@ -66,9 +69,10 @@ defines file or command-line flag.
   running. Completing native Google account interaction remains a user/HITL
   check. The local certificate chain is not trusted, so distribution validation
   remains pending.
-- Signed iOS installation, physical-device login, and provisioning: pending;
-  the required release artifact for this source gate is compile-only and
-  unsigned.
+- Signed iOS installation and provisioning: passed on the connected iPhone.
+  First launch is pending the phone's one-time explicit trust of the refreshed
+  personal-development profile. Physical-device Google login remains a
+  user/HITL check.
 - Firebase Hosting deployment/manual production-page comparison belongs to
   the already completed support/privacy slice and is not repeated by this
   release build gate.
@@ -88,8 +92,9 @@ candidate.
 
 ## Remaining Risks Before Gym Test
 
-- Native Google client configuration is present in both local artifacts, but a
-  real account login remains a user/HITL validation.
+- Native Google client configuration is present in both local artifacts, and
+  signed iOS installation is proven. A real account login remains a user/HITL
+  validation.
 - Real Google/OAuth behavior remains unverified until the owner approves and
   completes the destructive live test.
 - An unsigned or locally untrusted Apple build proves compilation and bundle

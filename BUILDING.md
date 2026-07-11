@@ -159,20 +159,63 @@ unsigned macOS bundle proves compilation and bundle structure only; it does not
 establish stable keychain access, native Google login, launch on another Mac,
 notarization, or distribution readiness.
 
-Build the unsigned iOS release bundle:
+Build a signed Release app for registered development devices:
 
 ```sh
-flutter build ios --release --no-codesign
+flutter build ios --release
 ```
 
-The compile-only artifact is:
+The installable artifact is:
 
 ```text
 build/ios/iphoneos/Runner.app
 ```
 
-It is not device-installable and does not validate Google login. With valid
-Apple distribution signing, create an archive and IPA instead:
+Before installation, confirm it has both a valid signature and an embedded
+development profile:
+
+```sh
+codesign --verify --deep --strict build/ios/iphoneos/Runner.app
+test -f build/ios/iphoneos/Runner.app/embedded.mobileprovision
+```
+
+Install it through Xcode or Flutter:
+
+```sh
+flutter install --release -d <device-id>
+```
+
+After the first install from a personal development team, iOS may require a
+one-time trust action before launch. On the phone, open **Settings > General >
+VPN & Device Management**, select the developer app entry for the signing
+account, and trust it. Developer Mode must also be enabled under **Settings >
+Privacy & Security**. These device security decisions cannot be completed from
+the Mac.
+
+If Xcode reports that the profile cannot be installed on the phone, open
+`ios/Runner.xcworkspace`, select the phone as the destination, confirm
+automatic signing for the local team, and use **Product > Run** once. This
+registers the device or refreshes the development profile. Rebuild afterward.
+
+When signing is unavailable and only a compilation check is needed, build an
+unsigned iOS release bundle instead:
+
+```sh
+flutter build ios --release --no-codesign
+```
+
+This command writes to the same artifact path and therefore replaces any
+previously signed app. It cannot be installed on a device and must not be
+handed to Xcode as an installation candidate.
+
+The compile-only artifact remains:
+
+```text
+build/ios/iphoneos/Runner.app
+```
+
+For distribution rather than registered-device testing, create an archive and
+IPA with valid Apple distribution signing:
 
 ```sh
 flutter build ipa --release
