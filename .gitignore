@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+.firebase/
 
 # Local Google credential exports and API keys.
 local_google_credentials/*.json
