@@ -401,14 +401,14 @@ class _ExercisesColumnIndexes {
     }
 
     return _ExercisesColumnIndexes(
-      exercise: indexes['Exercise'] ?? 0,
-      description: indexes['Description'] ?? 1,
-      defaultSets: indexes['Default Sets'] ?? 2,
-      defaultReps: indexes['Default Reps'] ?? 3,
-      defaultRpe: indexes['Default RPE'] ?? 4,
-      defaultRest: indexes['Default Rest'] ?? 5,
-      defaultTempo: indexes['Default Tempo'] ?? 6,
-      notes: indexes['Notes'] ?? 7,
+      exercise: indexes['Exercise']!,
+      description: indexes['Description']!,
+      defaultSets: indexes['Default Sets']!,
+      defaultReps: indexes['Default Reps']!,
+      defaultRpe: indexes['Default RPE']!,
+      defaultRest: indexes['Default Rest']!,
+      defaultTempo: indexes['Default Tempo']!,
+      notes: indexes['Notes']!,
       logFormat: indexes['Log Format']!,
     );
   }
