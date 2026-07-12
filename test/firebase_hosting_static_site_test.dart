@@ -16,7 +16,7 @@ void main() {
     });
 
     test('connects every public page and the approved contact', () {
-      const contact = 'mailto:ian.spielman@gmail.com';
+      const contact = 'mailto:ian.b.spielman@gmail.com';
       const repo = 'https://github.com/ispielman/WorkoutTracker';
       const oldRepo = 'https://github.com/ispielma/WorkoutTracker';
 
@@ -68,7 +68,7 @@ void main() {
       }
 
       expect(support, contains('Email support'));
-      expect(_hrefs(support), contains('mailto:ian.spielman@gmail.com'));
+      expect(_hrefs(support), contains('mailto:ian.b.spielman@gmail.com'));
     });
 
     test('shows the real workout screen instead of a fabricated preview', () {

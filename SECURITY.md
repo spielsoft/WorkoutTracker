@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Do not open a public issue for a suspected vulnerability. Report it privately
-by email to [ian.spielman@gmail.com](mailto:ian.spielman@gmail.com) with the
+by email to [ian.b.spielman@gmail.com](mailto:ian.b.spielman@gmail.com) with the
 subject `WorkoutTracker security report`. Include the affected version or
 commit, impact, reproduction steps, and any suggested mitigation. Do not
 include real Google credentials, access tokens, or personal workout data.
