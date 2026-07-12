@@ -5,8 +5,8 @@ import 'package:workout_tracker/sheets.dart';
 void main() {
   test('dry run is allowlisted and reports unmappable legacy values', () async {
     final client = _Client(
-      activeRows: _activeRows(format: '{Seconds}[@]{RPE}'),
-      exerciseRows: _exerciseRows(format: '{Seconds}[@]{RPE}'),
+      activeRows: _activeRows(format: '{Distance}[@]{RPE}'),
+      exerciseRows: _exerciseRows(format: '{Distance}[@]{RPE}'),
     );
     final migrator = LegacyFieldMigrator(
       client: client,
@@ -17,8 +17,30 @@ void main() {
     final report = await migrator.dryRun('approved');
     expect(report.canApply, isFalse);
     expect(report.changes, hasLength(2));
-    expect(report.blockers.join(' '), contains('cannot map'));
+    expect(report.blockers.join(' '), contains('does not declare Reps'));
     expect(client.applied, isFalse);
+  });
+
+  test('maps the legacy Reps prescription into Seconds exactly', () async {
+    final client = _Client(
+      activeRows: _activeRows(
+        format: '{Seconds}[s@]{RPE}',
+        reps: '30-45s/side',
+      ),
+      exerciseRows: _exerciseRows(
+        format: '{Seconds}[s@]{RPE}',
+        reps: '30-45s/side',
+      ),
+    );
+
+    final report = await LegacyFieldMigrator(
+      client: client,
+      allowedSpreadsheetIds: const ['approved'],
+    ).migrate('approved', confirmed: true);
+
+    expect(report.wasApplied, isTrue);
+    expect(client.activeRows[2][4], '30-45s/sides@8');
+    expect(client.exerciseRows[1][7], '30-45s/sides@8');
   });
 
   test('migrates approved rows and leaves history text untouched', () async {
@@ -116,39 +138,42 @@ void main() {
   });
 }
 
-List<List<String>> _activeRows({String format = '{Weight}[x]{Reps}[@]{RPE}'}) =>
-    [
-      [
-        'Exercise',
-        'Sets',
-        'Reps',
-        'RPE',
-        'Rest',
-        'Tempo',
-        'Notes',
-        'Log Format',
-        'Workout',
-        'is_backup',
-        'Week 1',
-      ],
-      [...List.filled(10, ''), 'S1'],
-      [
-        'Squat',
-        '3',
-        '5',
-        '8',
-        '2 min',
-        '2-1-1',
-        'Stay braced.',
-        format,
-        'Legs',
-        '',
-        'raw notes from paper',
-      ],
-    ];
+List<List<String>> _activeRows({
+  String format = '{Weight}[x]{Reps}[@]{RPE}',
+  String reps = '5',
+}) => [
+  [
+    'Exercise',
+    'Sets',
+    'Reps',
+    'RPE',
+    'Rest',
+    'Tempo',
+    'Notes',
+    'Log Format',
+    'Workout',
+    'is_backup',
+    'Week 1',
+  ],
+  [...List.filled(10, ''), 'S1'],
+  [
+    'Squat',
+    '3',
+    reps,
+    '8',
+    '2 min',
+    '2-1-1',
+    'Stay braced.',
+    format,
+    'Legs',
+    '',
+    'raw notes from paper',
+  ],
+];
 
 List<List<String>> _exerciseRows({
   String format = '{Weight}[x]{Reps}[@]{RPE}',
+  String reps = '5',
 }) => [
   const [
     'Exercise',
@@ -161,7 +186,7 @@ List<List<String>> _exerciseRows({
     'Notes',
     'Log Format',
   ],
-  ['Squat', 'Back squat', '3', '5', '8', '2 min', '2-1-1', '', format],
+  ['Squat', 'Back squat', '3', reps, '8', '2 min', '2-1-1', '', format],
 ];
 
 class _Client implements SheetsWorkbookClient {

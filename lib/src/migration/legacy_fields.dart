@@ -240,7 +240,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
       formatText,
       reps: row[2],
       rpe: row[3],
-      location: 'active row ${index + 1}',
+      location: _rowLabel('active', index + 1, row[0]),
       blockers: blockers,
     );
     if (row[0].trim().isNotEmpty) {
@@ -283,7 +283,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
       formatText,
       reps: row[3],
       rpe: row[4],
-      location: 'Exercises row ${index + 1}',
+      location: _rowLabel('Exercises', index + 1, row[0]),
       blockers: blockers,
     );
     if (row[0].trim().isNotEmpty) {
@@ -341,20 +341,36 @@ String _legacyValues(
     blockers.add('$location has an invalid Log Format.');
     return '';
   }
-  if (reps.trim().isNotEmpty && !parsed.fieldLabels.contains('Reps')) {
-    blockers.add('$location has Reps that cannot map to its Log Format.');
+  final repsField = parsed.fieldLabels.contains('Reps')
+      ? 'Reps'
+      : parsed.fieldLabels.contains('Seconds')
+      ? 'Seconds'
+      : null;
+  if (reps.trim().isNotEmpty && repsField == null) {
+    blockers.add(
+      '$location has legacy Reps "$reps" but Log Format "$formatText" '
+      'does not declare Reps.',
+    );
   }
   if (rpe.trim().isNotEmpty && !parsed.fieldLabels.contains('RPE')) {
-    blockers.add('$location has RPE that cannot map to its Log Format.');
+    blockers.add(
+      '$location has legacy RPE "$rpe" but Log Format "$formatText" '
+      'does not declare RPE.',
+    );
   }
   return parsed.renderValues({
     for (final label in parsed.fieldLabels)
       label: switch (label) {
-        'Reps' => reps,
+        _ when label == repsField => reps,
         'RPE' => rpe,
         _ => '',
       },
   });
+}
+
+String _rowLabel(String tab, int row, String exercise) {
+  final name = exercise.trim();
+  return name.isEmpty ? '$tab row $row' : '$tab row $row ($name)';
 }
 
 void _writeRow(

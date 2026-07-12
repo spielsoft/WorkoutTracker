@@ -1,6 +1,6 @@
 # Release Test Inventory
 
-The default credential-free gate is `flutter test`. It contains 219 tests in
+The default credential-free gate is `flutter test`. It contains 220 tests in
 40 files and is organized by public contract:
 
 | Contract | Test files | Purpose |

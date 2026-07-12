@@ -12,9 +12,7 @@ void main() {
   final enabled =
       Platform.environment['WORKOUT_TRACKER_RUN_LEGACY_FIELD_MIGRATION'] == '1';
 
-  testWidgets('dry-runs or explicitly applies the owner field migration', (
-    _,
-  ) async {
+  test('dry-runs or explicitly applies the owner field migration', () async {
     final spreadsheetId = Platform
         .environment['WORKOUT_TRACKER_LEGACY_MIGRATION_SPREADSHEET_ID']
         ?.trim();

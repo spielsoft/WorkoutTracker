@@ -213,9 +213,9 @@ the MVP contract.
       Drive files.
 - [x] Dry-run output identifies proposed column changes, exercises/rows mapped,
       and every nonblank legacy value that cannot be represented by its format.
-- [x] Legacy Reps and RPE values map only when those exact labels exist in the
-      row's resolved Log Format; unmappable nonblank values block that workbook
-      rather than being discarded.
+- [x] Legacy Reps maps to `Reps` when declared and otherwise to the explicit
+      v1 duration alias `Seconds`; legacy RPE maps only to `RPE`. Other
+      unmappable nonblank values block that workbook rather than being discarded.
 - [x] Default-format rows resolve Weight/Reps/RPE, preserve Reps/RPE, and create
       a blank Weight target/default.
 - [x] Canonical defaults, row-local targets, formulas, raw and unparseable

@@ -71,6 +71,8 @@ The pre-MVP app recognizes an exact unversioned legacy workbook and offers a
 confirmed **Convert old sheet** action. It dry-runs first, rereads before
 writing, stamps version `0.9`, and revalidates the converted workbook. Other
 damaged or versioned workbooks remain on the normal repair path.
+The v1 converter preserves legacy Reps text under `Reps`, or under the explicit
+`Seconds` alias used by timed exercises; it does not guess arbitrary fields.
 
 Before migrating an owner workbook, make a disposable copy and run the
 temporary field migrator in dry-run mode:
