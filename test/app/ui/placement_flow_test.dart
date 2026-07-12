@@ -194,7 +194,7 @@ void main() {
     },
   );
 
-  testWidgets('requires choosing an exercise before placing it in a workout', (
+  testWidgets('offers creation before requiring an existing exercise', (
     tester,
   ) async {
     final activeSheet = parseActiveSheet(
@@ -257,6 +257,24 @@ void main() {
 
     expect(find.text('Add to workout'), findsWidgets);
     expect(find.text('Add exercise'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('create-exercise-from-placement')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('create-exercise-from-placement')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('New exercise'), findsWidgets);
+    expect(find.text('Save exercise'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add to workout'), findsWidgets);
+    expect(find.text('Legs workout'), findsOneWidget);
 
     await tester.ensureVisible(
       find.byKey(const ValueKey('place-existing-exercise')),

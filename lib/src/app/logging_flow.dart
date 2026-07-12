@@ -15,7 +15,7 @@ class LoggingFlow {
        _blockLabel = blockLabel,
        _primaryRow = primaryRow,
        _selectedRow = selectedRow {
-    _syncCtrls(_context);
+    _syncCtrls(_context, prefillNewSet: true);
   }
 
   ParsedActiveSheet _activeSheet;
@@ -52,11 +52,15 @@ class LoggingFlow {
     required int primaryRow,
     required int selectedRow,
   }) {
+    final targetChanged =
+        _blockLabel != blockLabel ||
+        _primaryRow != primaryRow ||
+        _selectedRow != selectedRow;
     _activeSheet = activeSheet;
     _blockLabel = blockLabel;
     _primaryRow = primaryRow;
     _selectedRow = selectedRow;
-    _syncCtrls(_context);
+    _syncCtrls(_context, prefillNewSet: targetChanged);
   }
 
   SaveSetCmd? planSetSave() {
@@ -121,12 +125,6 @@ class LoggingFlow {
 
   void discardSetEdits() => _syncLoggedCtrls(_context);
 
-  void clearNewSets() {
-    for (final controller in _newSetCtrls.values) {
-      controller.clear();
-    }
-  }
-
   void dispose() {
     for (final controller in _newSetCtrls.values) {
       controller.dispose();
@@ -149,12 +147,18 @@ class LoggingFlow {
     );
   }
 
-  void _syncCtrls(ExerciseLoggingContext context) {
-    _syncNewSetCtrls(context);
+  void _syncCtrls(
+    ExerciseLoggingContext context, {
+    required bool prefillNewSet,
+  }) {
+    _syncNewSetCtrls(context, prefill: prefillNewSet);
     _syncLoggedCtrls(context);
   }
 
-  void _syncNewSetCtrls(ExerciseLoggingContext context) {
+  void _syncNewSetCtrls(
+    ExerciseLoggingContext context, {
+    required bool prefill,
+  }) {
     final labels = switch (context.logFormat) {
       ParsedLogFormat(:final fieldLabels) => fieldLabels.toSet(),
       InvalidLogFormat() => <String>{},
@@ -168,6 +172,47 @@ class LoggingFlow {
     for (final label in labels) {
       _newSetCtrls.putIfAbsent(label, TextEditingController.new);
     }
+    if (prefill) {
+      _prefillNewSet(context);
+    }
+  }
+
+  void _prefillNewSet(ExerciseLoggingContext context) {
+    final entry = _lastResult(context);
+    final values = switch (entry?.logEntry) {
+      FormattedLogEntry(:final fieldValues) => fieldValues,
+      _ => const <String, String>{},
+    };
+    for (final MapEntry(key: label, value: controller)
+        in _newSetCtrls.entries) {
+      controller.text = values[label] ?? '';
+    }
+  }
+
+  RowHistoryEntry? _lastResult(ExerciseLoggingContext context) {
+    final current = _lastNonEmpty(context.selectedHistory);
+    if (current != null) {
+      return current;
+    }
+    for (final block in context.recentHistoryBlocks) {
+      if (block.label == context.selectedHistory.label) {
+        continue;
+      }
+      final entry = _lastNonEmpty(block);
+      if (entry != null) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  RowHistoryEntry? _lastNonEmpty(RowHistoryBlock block) {
+    for (final entry in block.entries.reversed) {
+      if (entry.rawValue.trim().isNotEmpty) {
+        return entry;
+      }
+    }
+    return null;
   }
 
   void _syncLoggedCtrls(ExerciseLoggingContext context) {

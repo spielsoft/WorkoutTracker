@@ -125,7 +125,7 @@ flutter build macos --release
 The artifact is:
 
 ```text
-build/macos/Build/Products/Release/Workout Tracker.app
+build/macos/Build/Products/Release/WorkoutTracker.app
 ```
 
 When signing is unavailable, compile with Xcode instead:
@@ -151,7 +151,7 @@ Inspect the compile-only bundle:
 
 ```sh
 scripts/validate_macos_app_bundle.sh --compile-only \
-  "build/macos/Build/Products/Release/Workout Tracker.app"
+  "build/macos/Build/Products/Release/WorkoutTracker.app"
 ```
 
 Omit `--compile-only` when inspecting a signed distribution candidate. An

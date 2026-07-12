@@ -1,188 +1,222 @@
-# Source MVP Release Readiness PRD
+# Human-Friendly Workout Sheets PRD
 
 ## Problem Statement
 
-WorkoutTracker is close to its functional MVP, but the repository is not yet a
-safe, reproducible public source release. A technically inclined user cannot
-currently clone the repository, supply their own Google configuration, and
-reliably build the supported applications from the checked-in instructions.
-Some platform configuration is developer-specific, application state storage
-is based on desktop environment guesses, and the live Google test does not
-exercise the same composition used by the application. Android has additional
-known networking, OAuth, signing, and toolchain gaps; it will be documented as
-not release-ready rather than partially prepared in this milestone.
+WorkoutTracker treats a user-owned Google Sheet as durable workout data, but
+the active tab it creates and maintains is optimized for machine safety rather
+than comfortable human use. Generated sheets lack the frozen panes, sensible
+column widths, grouped history headers, and visible workout sections that make
+a training program easy to scan or edit directly in Google Sheets.
 
-The project also lacks the legal and operational material expected of a public
-repository. Apache-2.0 has been selected but is not yet applied. Contribution,
-security, notices, release, and third-party dependency expectations are not
-documented. Support and privacy pages contain placeholder contact language and
-must describe the current application accurately. Existing build and store
-documentation was produced during several obsolete authorization designs and
-cannot be treated as authoritative.
+The current parser also decides that a row is an exercise primarily because its
+Exercise cell is non-empty. That makes ordinary human annotations risky: a
+label typed in the first column may be interpreted as workout data unless the
+row happens to use a recognized merge. Empty rows are ignored today, but row
+identity should be explicit rather than inferred from content or formatting.
 
-The current custom Flutter sheet chooser is acceptable only for the first
-source-distributed MVP, where each builder supplies and controls their own
-Google Cloud project. Its sensitive and restricted scopes remain unsuitable
-for a centrally authorized, unrestricted store release. Replacing that chooser
-with Google Picker is deliberately isolated in `ISSUES_PICKER_PRD.md` and must
-not destabilize this release baseline.
+Formatting and semantic data have different ownership. WorkoutTracker should
+make a sane attempt to format structures it creates or extends, while user
+values and unrelated annotation rows remain safe. Manual changes to formatting
+on the active tab are allowed but unsupported: they may be replaced when an
+operation must restructure the affected rows or columns. Unaffected formatting
+should remain untouched where the Sheets API permits it. Extra retired tabs
+must be allowed, preserved, and ignored for now.
 
 ## Solution
 
-Publish a source-first MVP baseline that is legally clear, reproducibly
-buildable, honestly documented, and validated through the same application
-interfaces used at runtime.
+Introduce a new active-sheet schema whose final fixed metadata column is a
+narrow `is_exercise` marker immediately before history. A literal `x` means the
+row is an exercise; a blank marker means the row is not exercise data,
+regardless of visible text. Unknown non-empty marker values are blocking schema
+damage rather than input to guess about.
 
-Apply Apache-2.0 and add lightweight contribution, security, trademark, and
-third-party notice guidance. Establish one documented local configuration
-location containing checked-in examples but git-ignored real Google
-credentials. Validate required values early with actionable errors, remove
-developer-specific values from tracked release configuration, and complete the
-minimum platform networking and signing setup needed by public builders.
+Workout headings are durable annotation rows. They have a blank
+`is_exercise`, show the workout name in the visible Exercise area, and carry
+the workout identity in the existing Workout metadata column. This lets an
+empty workout survive deletion of its final exercise and a later reload.
+Ordinary annotation or spacing rows leave both machine-owned fields blank and
+are ignored and preserved.
 
-Use platform application-support storage for local account/sheet state. Make
-the opt-in live Google test enter through the production account, workspace,
-validation, and logging composition while retaining explicit protection around
-the writable development sheet. Update support/privacy resources and public
-build documentation from current source behavior, not from historical store
-notes.
+Generate an approachable active tab with two frozen header rows, fixed
+metadata frozen before horizontally scrolling history, deliberate widths and
+text wrapping modeled on the reference sheet, de-emphasized machine columns, a
+very narrow centered exercise-marker column, vertically grouped fixed headers,
+horizontally merged history labels, and grey workout heading rows. Omit the
+example workbook's obsolete Starting point column and visible `Backup:`
+prefixes; backup identity remains in `is_backup`.
 
-Add a small continuous-integration and release gate that runs static analysis,
-behavioral tests, configuration checks, and feasible clean builds. Finish by
-cleaning tests that only assert documentation text or implementation details.
-The completed branch becomes the gym-test candidate. It is merged to `main`
-only after validation; gym findings are repaired and accepted on `main` before
-the separate Picker branch is created.
+Formatting is best-effort and local. New workbooks receive the full default
+style. Adding a workout, exercise, history block, or set formats only the new
+structure and any merge directly affected by that insertion. Deletion and
+reordering use structural operations where practical so formatting moves with
+owned rows, and they do not broadly reformat surviving content. WorkoutTracker
+does not interpret colors, fonts, borders, or widths as schema.
+
+Existing WorkoutTracker workbooks receive an explicit, expectation-checked
+upgrade. The upgrade inserts `is_exercise` at the fixed-metadata boundary,
+marks only rows accepted by the legacy parser, leaves unrecognized and empty
+rows unmarked, creates durable workout headings, and applies the default active
+tab layout without changing workout history values or unrelated tabs. A failed
+or stale upgrade performs no unsafe follow-up writes.
 
 ## User Stories
 
-1. As a source user, I want to understand the license before cloning or contributing, so that I know what I may do with the project.
-2. As the project owner, I want Apache-2.0 applied consistently, so that use and contributions have clear terms.
-3. As the project owner, I want the product name and branding treated separately from the code license, so that forks do not imply endorsement.
-4. As a contributor, I want a concise contribution workflow, so that I can submit a compatible change.
-5. As a security reporter, I want a private reporting path, so that vulnerabilities are not disclosed prematurely.
-6. As a source user, I want an inventory of direct third-party dependencies and their licenses, so that redistribution obligations are understandable.
-7. As a source user, I want one documented local Google configuration directory, so that setup is discoverable.
-8. As a source user, I want example configuration files without real credentials, so that I know the required shape.
-9. As the project owner, I want real credential exports excluded from git, so that secrets and local project material are not published accidentally.
-10. As a source user, I want the application to detect missing configuration before opening a broken login flow, so that setup errors are actionable.
-11. As an iOS builder, I want instructions for creating an OAuth client matching my bundle and signing identity, so that native login works.
-12. As a macOS builder, I want instructions for OAuth, signing, entitlements, and clean release builds, so that the app bundle works outside a debug session.
-13. As an Android builder, I want the repository to state plainly that Android is not release-ready and list the known missing work, so that I do not mistake Flutter scaffolding for support.
-14. As the project owner, I want Android readiness deferred as one coherent future effort, so that this release is not delayed by an unvalidated platform.
-15. As a source builder, I want to understand that my Google Cloud project and consent screen are my responsibility, so that the repository does not imply access through the owner's production credentials.
-16. As the project owner, I want the current chooser explicitly classified as source-MVP-only, so that it is not accidentally submitted as the final store authorization design.
-17. As a mobile user, I want account and selected-sheet state stored in a platform-supported application directory, so that restart behavior is reliable.
-18. As a user, I want persistence failures surfaced without silently switching to temporary storage, so that lost selections are not surprising.
-19. As a user switching Google accounts, I want persisted sheet ownership checks preserved, so that another account never inherits a saved selection silently.
-20. As a maintainer, I want the live integration test to use production account and workspace orchestration, so that it detects composition regressions.
-21. As a maintainer, I want the live test disabled unless explicitly enabled, so that normal tests never modify a real sheet.
-22. As a maintainer, I want the live test command to name its required target device, so that it can actually be reproduced.
-23. As a maintainer, I want the development sheet reset after live validation, so that repeated runs start from a known state.
-24. As a prospective user, I want an accurate privacy page, so that I understand the data stored locally and in Google Sheets.
-25. As a user needing help, I want an actual support contact, so that the support page is useful.
-26. As the project owner, I want hosted pages to describe only currently deployed behavior, so that obsolete Picker callbacks and backend implications do not return.
-27. As a source user, I want a short clone-to-build guide, so that I can install the app without reconstructing internal history.
-28. As a source user, I want supported and unvalidated platforms distinguished, so that platform claims are honest.
-29. As a maintainer, I want stale or contradictory release documents removed or clearly archived, so that source code and current guides remain authoritative.
-30. As a maintainer, I want dependency updates reviewed and tested, so that known platform fixes are not needlessly missed.
-31. As a contributor, I want continuous integration to reject analysis and test failures, so that the public default branch remains usable.
-32. As the project owner, I want a repeatable clean release gate, so that deleted assets cannot survive incremental builds.
-33. As the project owner, I want release notes and versioning expectations, so that later GitHub releases are traceable.
-34. As a maintainer, I want tests to protect behavior rather than prose or private structure, so that documentation and refactoring remain inexpensive.
-35. As a gym user, I want the accepted current version frozen before authorization experiments begin, so that Picker work cannot obscure ordinary workout bugs.
+1. As a user creating a workout sheet, I want it to look organized immediately, so that I can use it directly in Google Sheets without manual cleanup.
+2. As a gym user, I want workout names shown as grey section headings, so that I can scan a long program quickly.
+3. As a sheet user, I want the metadata and header rows frozen, so that exercise identity remains visible while I scroll through history.
+4. As a sheet user, I want history labels merged over their set columns, so that S1, S2, and later sets are visibly grouped under the correct block.
+5. As a sheet user, I want useful widths and wrapped notes, so that important content is readable without constant resizing.
+6. As a sheet user, I want machine-only columns visually de-emphasized, so that workout content remains the focus.
+7. As a user, I want the exercise marker at the final metadata boundary, so that it does not interrupt the human-readable workout fields.
+8. As a user, I want the exercise marker column narrow and centered, so that its `x` values consume almost no screen space.
+9. As a user adding a workout, I want its heading persisted immediately, so that an empty workout survives reloads.
+10. As a user deleting the last exercise, I want the empty workout to remain selected and represented in the sheet, so that the app does not silently switch workouts.
+11. As a user adding an exercise, I want it inserted into the selected workout section, so that the physical sheet remains grouped.
+12. As a user adding a backup, I want its clean exercise name retained, so that the sheet does not duplicate backup state in visible prose.
+13. As a user adding a history block, I want its header and first set column formatted consistently with existing history.
+14. As a user adding another set, I want the new column included in the visible history group, so that the block remains understandable.
+15. As a user inserting an empty row, I want WorkoutTracker to ignore and preserve it, so that spacing is safe.
+16. As a user adding a note or section annotation, I want it ignored when it is not marked as an exercise, so that visible text is not mistaken for workout data.
+17. As a user changing cell formatting, I want unrelated operations to leave it alone where possible, so that small personal adjustments are not needlessly destroyed.
+18. As a user, I accept that formatting in a structurally affected range may be normalized, so that the app can keep generated structure coherent.
+19. As a user reordering exercises, I want formatting to travel with owned rows where practical, so that row presentation does not become detached from its exercise.
+20. As a user deleting an exercise, I want only that exercise and its backups removed, so that intervening annotations and other formatting remain.
+21. As a user with retired tabs, I want them preserved and ignored, so that old programs remain available for reference.
+22. As a user, I want the first tab to remain the active workout for this release, so that extra tabs do not create ambiguous selection rules.
+23. As an existing user, I want a safe upgrade from the legacy WorkoutTracker schema, so that I do not need to rebuild my workout history.
+24. As an existing user, I want the upgrade to mark only rows already accepted as exercises, so that annotations do not become data during migration.
+25. As an existing user, I want stale or malformed workbooks blocked before migration writes, so that an upgrade cannot corrupt the source of truth.
+26. As a direct sheet editor, I want copied exercise rows to retain their marker, so that ordinary copy-and-edit workflows continue to work.
+27. As a direct sheet editor, I want an unknown exercise marker rejected clearly, so that typographical mistakes are not interpreted unpredictably.
+28. As a maintainer, I want formatting concerns outside the semantic parser, so that style changes cannot alter workout meaning.
+29. As a maintainer, I want adapter tests to prove the app's requested values, dimensions, merges, and formats without pretending to prove Google behavior.
+30. As the project owner, I want a live visual acceptance pass on representative sheets, so that the generated layout is confirmed in Google Sheets before release.
+31. As the project owner, I want to approve a disposable prototype sheet before production integration, so that widths and visual hierarchy are grounded in the real Google Sheets renderer.
 
 ## Implementation Decisions
 
-- Apache-2.0 is the repository license. Add the canonical license text and
-  concise notice, contribution, security, trademark, and third-party material.
-- Begin with Developer Certificate of Origin sign-off rather than a contributor
-  license agreement. A CLA is unnecessary unless future proprietary
-  relicensing becomes a real requirement.
-- Keep the present custom Flutter chooser for this source MVP only. Do not
-  change its authorization architecture or scope set in this plan.
-- Every public builder supplies a separate Google Cloud project and native
-  OAuth clients. The owner's Cloud project is not a shared public credential
-  service.
-- Use one local configuration directory for credential exports and generated
-  build values. Track templates and documentation; ignore concrete JSON,
-  platform service files, generated values, and secrets.
-- OAuth client IDs are identifiers rather than secrets, but owner-specific
-  release values should not be the default configuration for forks.
-- Configuration validation must report the missing key and the setup guide to
-  follow. It must not dump credential content.
-- Do not implement Android readiness in this plan. Document the missing SDK
-  validation, release networking, package/signing identity, OAuth client, and
-  physical-device testing as deferred work.
-- Use a platform application-support provider for state paths. Do not infer
-  mobile storage from `HOME`, `APPDATA`, or a temporary-directory fallback.
-- Preserve the existing serialized workspace restoration and account-binding
-  rules when changing storage.
-- The live Google test should compose the production account session, scoped
-  access, workspace/session behavior, and public logging commands. Test-only
-  sheet reset remains an explicit harness around that flow.
-- Live Google validation remains opt-in and destructive only to the named
-  development fixture. Local fakes prove only application-owned interfaces.
-- Support and privacy pages remain static hosted resources. They are not an app
-  backend and must not claim that Firebase stores workout data.
-- Public documentation is derived from code, platform configuration, and
-  successful commands. Historical store documentation is an audit target, not
-  an authority.
-- CI should prioritize analysis and the fast local suite on every change.
-  Platform builds may use separate jobs where runner availability and signing
-  constraints allow them.
-- Release validation uses clean build outputs for macOS and unsigned iOS. Never
-  validate deletion through an incremental bundle alone.
-- The first plan ends with a tested candidate and handoff. Merging to `main`,
-  gym testing, and accepting gym repairs occur before creating `new_picker`.
-- Do not add Picker implementation, WebView dependencies, Picker callbacks, or
-  `drive.file` migration work under this PRD.
+- The active tab's fixed columns, in order, are Exercise, Sets, Reps, RPE,
+  Rest, Tempo, Notes, Log Format, Workout, is_backup, and is_exercise. History
+  begins immediately after is_exercise.
+- `is_exercise` accepts only blank or the literal `x`. The parser reads an
+  exercise only when this marker is `x`; a non-empty Exercise cell alone has no
+  semantic meaning.
+- A workout heading has a blank exercise marker and a non-empty Workout value.
+  Its visible label occupies the human-readable Exercise area. Other unmarked
+  rows with no Workout identity are annotations and are ignored.
+- Exercise rows retain Workout and is_backup as the authoritative grouping
+  metadata. Visible text never carries a `Backup:` prefix.
+- The first tab remains the active workout tab and the Exercises tab retains
+  its current canonical role. Every other tab is ignored and never mutated by
+  active-workout commands.
+- The generated active tab uses two header rows. Fixed metadata headers may be
+  vertically merged; each history label is horizontally merged over its set
+  columns and set labels remain in the second row.
+- Freeze the two header rows and the fixed metadata band. Machine-oriented
+  columns may be hidden or visually de-emphasized; is_exercise remains the
+  final, narrow metadata column before history.
+- Treat column proportions as intentional presentation behavior. Initial pixel
+  widths should closely follow the reference: Exercise 250, Sets 80, Reps 96,
+  RPE 96, Rest 96, Tempo 96, Notes 330, is_exercise 28, and every history set
+  column 128. Hidden machine columns may retain practical internal widths
+  because they do not participate in the visible layout.
+- Exercise is wide enough for ordinary names but may truncate exceptionally
+  long names; Notes is the dominant wrapped-text column; target fields stay
+  compact; history columns remain uniform as blocks grow. Do not add the
+  reference workbook's wide Starting point column.
+- Grey workout headings are merged only across a stable visible metadata
+  range. New history columns receive matching heading-row fill without
+  requiring full-width workout-row merges to be rebuilt.
+- Default styling includes the specified widths, wrapping for descriptive text,
+  clear header emphasis, restrained borders, and accessible contrast. Exact
+  width constants are an intentional presentation contract; incidental request
+  order remains an implementation detail.
+- Formatting is app-owned but applied narrowly after initialization. Manual
+  formatting is unsupported and may be replaced inside a structurally affected
+  range; the app must not normalize the entire workbook after ordinary writes.
+- Colors, fonts, borders, widths, frozen panes, hidden state, and merges are not
+  inputs to workout parsing. The presentation layer consumes explicit semantic
+  structure and emits Sheets formatting requests.
+- Creating a workout becomes a durable workbook mutation that writes and
+  formats its heading. Deleting the final exercise does not delete that heading.
+- Primary exercise placement targets the selected workout section. Backup
+  placement remains adjacent to its parent primary.
+- Prefer row or dimension moves when reordering so row formatting moves with
+  the owned data. User annotation rows are not silently converted, cleared, or
+  included in deletion plans.
+- History insertion applies default format only to new columns and directly
+  affected header merges. Unrelated history blocks are not reformatted.
+- Legacy upgrade is explicit and uses the same reread, expectation, write, and
+  refreshed-report safety model as other workbook mutations.
+- Legacy recognition exists only inside the versioned upgrade path. Normal
+  post-upgrade parsing does not fall back to Exercise-cell inference.
+- Existing values, formulas, raw history text, empty rows, annotations, and
+  extra tabs survive migration unless a user explicitly chooses an operation
+  that removes them.
+- Before production formatting integration, use isolated prototype code to
+  create a disposable representative Google Sheet containing the proposed
+  schema, multiple workouts, primary and backup rows, notes, and multiple
+  history blocks. Owner approval of that real sheet locks the presentation
+  constants and may update this PRD before implementation continues.
+- Prototype success proves visual design only. It does not bypass production
+  session safety, adapter, migration, or behavioral acceptance requirements.
 
 ## Testing Decisions
 
-- Test configuration behavior through a public loader/validator using example,
-  missing, and malformed inputs. Do not assert secret values or private parser
-  helpers.
-- Test state persistence through its public store contract using controlled
-  directories and observable restore/save failures.
-- Keep account-binding and startup serialization tests around the public
-  workspace state and commands.
-- Do not add Android readiness tests. Documentation should state the known gaps
-  and avoid implying that generated Flutter scaffolding has been validated.
-- Refactor the live Google integration test so its entry point uses production
-  composition. Only a real opt-in run can establish Google behavior.
-- Verify static support/privacy resources for required destinations and basic
-  safety properties. Do not test exact documentation prose.
-- CI runs static analysis and the default Flutter suite. The release gate also
-  runs clean supported-platform builds and bundle inspection.
-- Use the `test-cleanup` skill near the end. Remove tests that assert docs,
-  filenames without runtime significance, private widget structure, or canned
-  third-party behavior. Retain durable sheet-contract, command, screen, and
-  configuration behavior tests.
-- Record commands and outcomes in the final handoff. A skipped live test must
-  be reported as skipped, never as passing Google integration.
+- Test the new schema through public parsing, validation, planning, workbook
+  session, and screen contracts. Do not test private classification helpers.
+- Keep fixtures with empty rows, visible annotations in the Exercise column,
+  workout headings, primary exercises, backups, and unparseable raw history.
+- Prove that only `x` rows become exercises, headings create durable workouts,
+  blanks are ignored, and unknown marker values block writes.
+- Test legacy upgrade from representative valid workbooks and assert the
+  refreshed workbook retains formulas, raw history, ignored rows, and tab
+  identity.
+- Adapter tests may assert essential request ranges and formatting operations,
+  including freezes, the intentional pixel widths, hidden/de-emphasized
+  columns, merges, and grey heading treatment. Avoid brittle assertions about
+  every generated request or documentation prose.
+- Test additions and removals through observable workbook results. Ensure
+  unaffected annotations and rows survive rather than asserting internal call
+  order.
+- Test that ordinary value writes do not include broad formatting updates and
+  that structural formatting requests target only newly created or directly
+  affected ranges.
+- Fakes prove WorkoutTracker's request contract only. A final opt-in live check
+  must inspect a new workbook, a migrated workbook, history growth, exercise
+  deletion, and retained extra tabs in Google Sheets.
+- Run an early HITL prototype review before production integration. It must
+  exercise the actual Sheets renderer and explicitly approve or revise widths,
+  wrapping, freezes, hidden columns, merges, and workout-heading treatment.
+- Use the test-cleanup skill after implementation to remove TDD scaffolding and
+  retain the smallest durable behavior suite.
 
 ## Out of Scope
 
-- Replacing the current chooser with Google Picker.
-- Reducing authorization to `drive.file`.
-- Adding a WebView or hosted Picker surface.
-- Central OAuth verification for unrestricted store users.
-- App Store or Play Store submission.
-- Shipping signed public app bundles in the first GitHub MVP.
-- New workout features, coaching, timers, notifications, or a separate data
-  backend.
-- Solving gym-test findings before the user has performed that test.
-- Android networking, OAuth configuration, signing, builds, device validation,
-  Picker integration, or release-readiness claims.
+- Importing the referenced example workbook as a supported schema.
+- Retaining its Starting point column or visible `Backup:` name prefixes.
+- Treating arbitrary colors, fonts, borders, widths, or merges as semantic data.
+- Guaranteeing that every manual formatting change survives a structural edit.
+- A user-facing formatting editor or theme chooser.
+- Using retired tabs as the top-level workout organization model.
+- Selecting an active workout tab other than the first tab.
+- Adding new workout, history-block, or set deletion features solely for this
+  layout project.
+- Google Picker replacement or any work in the preserved Picker plans.
+- Android release readiness or new app-store packaging work.
 
 ## Further Notes
 
-This plan is intentionally conservative. It makes the current implementation a
-credible public source release without confusing that milestone with the later
-store authorization design.
+The referenced workbook is a visual model, not a migration source. The target
+is a similarly readable sheet that retains WorkoutTracker's safe formula,
+metadata, and history contracts.
 
-After every slice is complete and validated, stop for the owner-directed merge
-to `main`. The owner will test that exact baseline in the gym. All resulting
-repairs must land and be accepted on `main`. Only then should a new branch named
-`new_picker` be created from `main` and the work in `ISSUES_PICKER.md` begin.
+The prototype review is deliberately early and separate from final live
+acceptance. The first locks visual reality before production integration; the
+last proves that application workflows preserve it.
+
+Manual formatting is not prohibited in Google Sheets. It is simply outside the
+compatibility guarantee. The implementation should preserve it whenever that
+falls naturally out of targeted value writes and structural row moves, while
+favoring deterministic, understandable behavior over complex formatting
+provenance logic.

@@ -42,6 +42,8 @@ final class PlacementView extends LoadedView {
 abstract interface class PlacementActions {
   Future<void> close();
 
+  Future<void> create();
+
   Future<bool> place(
     CanonicalExercise exercise,
     WorkoutPlacementMetadata metadata, {
@@ -77,6 +79,7 @@ class PlacementScreen extends StatelessWidget {
             exercises: view.exercises,
             initialExercise: null,
             isBusy: view.isBusy,
+            onCreate: actions.create,
             onSubmit: (draft) => actions.place(draft.exercise, draft.metadata),
             onSubmitAndAddAnother: (draft) =>
                 actions.place(draft.exercise, draft.metadata, keepAdding: true),
@@ -149,6 +152,7 @@ class _PlaceForm extends StatefulWidget {
     required this.exercises,
     required this.initialExercise,
     required this.isBusy,
+    required this.onCreate,
     required this.onSubmit,
     required this.onSubmitAndAddAnother,
   });
@@ -156,6 +160,7 @@ class _PlaceForm extends StatefulWidget {
   final List<CanonicalExercise> exercises;
   final CanonicalExercise? initialExercise;
   final bool isBusy;
+  final Future<void> Function() onCreate;
   final ValueChanged<_ExercisePlacementDraft> onSubmit;
   final Future<bool> Function(_ExercisePlacementDraft draft)
   onSubmitAndAddAnother;
@@ -382,6 +387,12 @@ class _PlaceFormSt extends State<_PlaceForm> {
           spacing: 8,
           runSpacing: 8,
           children: [
+            OutlinedButton.icon(
+              key: const ValueKey('create-exercise-from-placement'),
+              onPressed: widget.isBusy ? null : () => widget.onCreate(),
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text('New exercise'),
+            ),
             FilledButton.icon(
               key: const ValueKey('place-existing-exercise'),
               onPressed: widget.isBusy || selectedExercise == null

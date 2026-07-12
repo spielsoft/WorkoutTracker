@@ -4,51 +4,6 @@ import 'a11y.dart';
 
 enum VisualSt { logged, current, warning, error }
 
-class SetProgressStrip extends StatelessWidget {
-  const SetProgressStrip({
-    required this.loggedSetNumbers,
-    required this.currentSetNumber,
-    required this.totalSetCount,
-    super.key,
-  });
-
-  final Set<int> loggedSetNumbers;
-  final int currentSetNumber;
-  final int totalSetCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = totalSetCount < currentSetNumber
-        ? currentSetNumber
-        : totalSetCount;
-    final logged = loggedSetNumbers.length;
-    return A11yStatus(
-      label: 'Workout progress: $logged of $total sets logged.',
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          StChip(
-            state: VisualSt.logged,
-            label: 'Progress $logged/$total',
-            emphasized: true,
-          ),
-          for (var setNumber = 1; setNumber <= total; setNumber += 1)
-            if (loggedSetNumbers.contains(setNumber))
-              StChip(state: VisualSt.logged, label: 'Logged S$setNumber')
-            else if (setNumber == currentSetNumber)
-              StChip(
-                state: VisualSt.current,
-                label: 'Current S$setNumber',
-                emphasized: true,
-              ),
-        ],
-      ),
-    );
-  }
-}
-
 class StChip extends StatelessWidget {
   const StChip({
     required this.state,

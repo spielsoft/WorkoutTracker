@@ -32,7 +32,7 @@ The source baseline is ready for owner-directed review and merge. No merge,
 | Analysis | `flutter analyze` | Passed: no issues. |
 | Default tests | `flutter test` | Passed: 292 tests after the local-credential regression repair. |
 | macOS Release | `flutter build macos --release` | Passed with the ignored local Apple configuration loaded automatically. |
-| macOS inspection | `scripts/validate_macos_app_bundle.sh --compile-only "build/macos/Build/Products/Release/Workout Tracker.app"` plus compiled-plist comparison | Passed bundle structure; client ID, reversed URL scheme, bundle ID, and team match the ignored local configuration. The bundle is signed, but this machine does not trust the local certificate chain. |
+| macOS inspection | `scripts/validate_macos_app_bundle.sh --compile-only "build/macos/Build/Products/Release/WorkoutTracker.app"` plus compiled-plist comparison | Passed bundle structure; client ID, reversed URL scheme, bundle ID, and team match the ignored local configuration. The bundle is signed, but this machine does not trust the local certificate chain. |
 | iOS Release | `flutter build ios --release` | Passed: signed arm64 device Release bundle with the ignored local client ID, reversed URL scheme, and bundle ID. |
 | iOS signing | `codesign --verify --deep --strict` plus embedded-profile inspection | Passed: valid signature and development profile for the configured bundle; the connected iPhone is included in the profile. |
 | iOS installation | `xcrun devicectl device install app` | Passed on the connected physical iPhone. |
@@ -45,7 +45,7 @@ must never be printed or committed.
 
 ## Expected Artifact Locations
 
-- macOS: `build/macos/Build/Products/Release/Workout Tracker.app`
+- macOS: `build/macos/Build/Products/Release/WorkoutTracker.app`
 - signed iOS development app: `build/ios/iphoneos/Runner.app`
 
 - macOS bundle: 52.0 MB, universal arm64/x86_64 Mach-O, signed with a locally

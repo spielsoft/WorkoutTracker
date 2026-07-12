@@ -10,10 +10,13 @@ import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/role.dart';
-import 'ui/shared/status.dart';
 
 const _segmentRadius = 8.0;
 const _undoWindow = Duration(seconds: 5);
+const _numberKeyboard = TextInputType.numberWithOptions(
+  decimal: true,
+  signed: true,
+);
 
 final class LogView extends LoadedView {
   const LogView({
@@ -98,10 +101,7 @@ class _LogScreenSt extends State<LogScreen> {
     final plan = _flow.planSetSave();
     if (plan == null) return;
 
-    final saved = await widget.actions.execute(plan);
-    if (saved) {
-      _flow.clearNewSets();
-    }
+    await widget.actions.execute(plan);
   }
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
@@ -185,19 +185,9 @@ class _LogScreenSt extends State<LogScreen> {
     final viewModel = _flow.viewModel;
     final loggingContext = viewModel.context;
     final selectedChoice = loggingContext.selectedChoice;
-    final loggedSetNumbers = {
-      for (final entry in viewModel.loggedEntries) entry.setNumber,
-    };
     final priorHistoryBlocks = loggingContext.recentHistoryBlocks
         .where((block) => block.label != loggingContext.selectedHistory.label)
         .toList();
-    final plannedSetCount = int.tryParse(loggingContext.targets.sets.trim());
-    final visibleSetCount = loggingContext.selectedHistory.entries.length;
-    final totalSetCount = plannedSetCount != null && plannedSetCount > 0
-        ? plannedSetCount
-        : visibleSetCount < viewModel.nextSetNumber
-        ? viewModel.nextSetNumber
-        : visibleSetCount;
 
     return A11yScreen(
       label: 'Log ${selectedChoice.exercise}',
@@ -282,10 +272,7 @@ class _LogScreenSt extends State<LogScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          _ExerciseContextPanel(
-            context: loggingContext,
-            latestHistoryValue: _latestHistoryValue(priorHistoryBlocks),
-          ),
+          _ExerciseContextPanel(context: loggingContext),
           const SizedBox(height: 12),
           _StructuredSetEditor(
             logFormat: loggingContext.logFormat,
@@ -297,12 +284,6 @@ class _LogScreenSt extends State<LogScreen> {
             const SizedBox(height: 8),
             _InlineLoggingError(message: error),
           ],
-          const SizedBox(height: 16),
-          SetProgressStrip(
-            loggedSetNumbers: loggedSetNumbers,
-            currentSetNumber: viewModel.nextSetNumber,
-            totalSetCount: totalSetCount,
-          ),
           const SizedBox(height: 16),
           Text('Logged sets', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -346,17 +327,6 @@ class _LogScreenSt extends State<LogScreen> {
   }
 }
 
-String? _latestHistoryValue(List<RowHistoryBlock> blocks) {
-  for (final block in blocks) {
-    for (final entry in block.entries.reversed) {
-      if (entry.rawValue.trim().isNotEmpty) {
-        return entry.rawValue;
-      }
-    }
-  }
-  return null;
-}
-
 class _InlineLoggingError extends StatelessWidget {
   const _InlineLoggingError({required this.message});
 
@@ -391,13 +361,9 @@ class _InlineLoggingError extends StatelessWidget {
 }
 
 class _ExerciseContextPanel extends StatelessWidget {
-  const _ExerciseContextPanel({
-    required this.context,
-    required this.latestHistoryValue,
-  });
+  const _ExerciseContextPanel({required this.context});
 
   final ExerciseLoggingContext context;
-  final String? latestHistoryValue;
 
   @override
   Widget build(BuildContext context) {
@@ -407,28 +373,27 @@ class _ExerciseContextPanel extends StatelessWidget {
       if (targets.tempo.trim().isNotEmpty) 'Tempo ${targets.tempo}',
     ];
     return DecoratedBox(
+      key: const ValueKey('training-details'),
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: _CompactExpansionSection(
-        title: 'Training details',
-        summaryLines: [
-          'Plan ${targets.sets} x ${targets.reps} @ ${targets.rpe}',
-          if (summaryParts.isNotEmpty) summaryParts.join(' | '),
-        ],
-        children: [
-          Text(
-            'Target: ${targets.sets} sets x ${targets.reps} @ ${targets.rpe}',
-          ),
-          if (this.context.rest.trim().isNotEmpty)
-            Text('Rest: ${this.context.rest}'),
-          if (targets.tempo.trim().isNotEmpty) Text('Tempo: ${targets.tempo}'),
-          if (this.context.notes.trim().isNotEmpty)
-            Text('Notes: ${this.context.notes}'),
-          if (latestHistoryValue != null)
-            Text('Latest history: $latestHistoryValue'),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Training details',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text('Plan ${targets.sets} x ${targets.reps} @ ${targets.rpe}'),
+            if (summaryParts.isNotEmpty) Text(summaryParts.join(' | ')),
+            if (this.context.notes.trim().isNotEmpty)
+              Text('Notes: ${this.context.notes}'),
+          ],
+        ),
       ),
     );
   }
@@ -594,7 +559,7 @@ class _StructuredSetEditor extends StatelessWidget {
       return TextField(
         key: ValueKey('set-field-$label'),
         controller: controllers[label],
-        keyboardType: TextInputType.text,
+        keyboardType: _numberKeyboard,
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
         onSubmitted: isLast ? (_) => onSave() : null,
         decoration: InputDecoration(
@@ -778,7 +743,7 @@ class _LoggedSetFields extends StatelessWidget {
         child: TextField(
           key: ValueKey('logged-${entry.setLabel}-field-$label'),
           controller: controllers[label],
-          keyboardType: TextInputType.text,
+          keyboardType: _numberKeyboard,
           decoration: InputDecoration(
             labelText: label,
             border: const OutlineInputBorder(),

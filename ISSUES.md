@@ -1,171 +1,21 @@
-# Source MVP Release Issues
+# Human-Friendly Workout Sheet Issues
 
-This plan implements `ISSUES_PRD.md` while deliberately retaining the current
-custom Flutter chooser. Complete it on the current branch. Do not begin
-`ISSUES_PICKER.md` here.
+This plan implements `ISSUES_PRD.md`. It does not modify or begin the separate
+Picker plan.
 
 ## Progress
 
-- [x] Slice 1: Apply Apache-2.0 and public project policy
-- [x] Slice 2: Make builder-owned Google configuration safe and complete
-- [x] Slice 3: Make mobile state persistence durable
-- [x] Slice 4: Exercise production composition in live Google validation
-- [x] Slice 5: Publish accurate support and privacy resources
-- [x] Slice 6: Replace historical setup notes with a public self-build guide
-- [x] Slice 7: Add dependency and continuous-integration gates
-- [x] Slice 8: Clean the release test suite
-- [ ] Slice 9: Produce and hand off the gym-test candidate
+- [ ] Slice 1: Prototype and approve the real sheet layout
+- [ ] Slice 2: Upgrade legacy workbooks to explicit exercise rows
+- [ ] Slice 3: Create a styled human-readable workbook
+- [ ] Slice 4: Persist and style workout sections
+- [ ] Slice 5: Preserve annotations through exercise mutation
+- [ ] Slice 6: Keep history blocks readable as they grow
+- [ ] Slice 7: Enforce workbook and formatting isolation
+- [ ] Slice 8: Clean the completed behavior test suite
+- [ ] Slice 9: Validate the integrated layout in live Google Sheets
 
-## Slice 1: Apply Apache-2.0 and public project policy
-
-### Type
-
-`AFK`
-
-### What to build
-
-Apply the decided Apache-2.0 license and add the minimum durable policy needed
-for public use and contributions. Separate code licensing from product naming,
-document DCO-based contributions, provide private security-reporting guidance,
-and record direct third-party license obligations without claiming ownership of
-dependencies.
-
-### Acceptance criteria
-
-- [x] The repository contains the canonical Apache License 2.0 text.
-- [x] The README identifies Apache-2.0 accurately and links to the license.
-- [x] Contribution guidance requires compatible contributions and DCO sign-off.
-- [x] Trademark guidance prevents forks from implying endorsement while
-      preserving Apache rights.
-- [x] Security guidance provides a real private reporting method and supported
-      release expectations.
-- [x] Direct runtime dependencies and their license families are inventoried
-      from authoritative package metadata.
-- [x] No policy claims exclusive commercial rights that conflict with
-      Apache-2.0.
-
-### Blocked by
-
-None - can start immediately.
-
-### User stories covered
-
-- PRD user stories 1-6.
-
-## Slice 2: Make builder-owned Google configuration safe and complete
-
-### Type
-
-`AFK`
-
-### What to build
-
-Turn local Google configuration into a reproducible public-builder contract.
-Provide sanitized templates, ignore real exports and generated platform values,
-validate missing configuration before login, and complete the platform
-requirements for iOS and macOS. Preserve the current chooser and its scope
-behavior. Document Android as deferred rather than partially preparing it.
-
-### Acceptance criteria
-
-- [x] One documented local directory owns real Google Cloud exports and build
-      configuration for every supported platform.
-- [x] Example files describe every required value without containing usable
-      owner credentials or secrets.
-- [x] Git ignore rules cover real JSON exports, platform service files,
-      generated values, and other credential-bearing artifacts.
-- [x] Tracked iOS and macOS configuration no longer makes the owner's OAuth
-      clients the implicit default for forks.
-- [x] Android is explicitly marked not release-ready, with its missing network,
-      package/signing, OAuth, SDK, and device-validation work listed as deferred.
-- [x] Missing or malformed configuration produces an actionable pre-login
-      error without printing credential content.
-- [x] The guide explains Google API enablement, consent-screen test users, and
-      builder ownership of quotas and verification.
-- [x] Focused tests cover configuration presence and errors without asserting
-      platform-file trivia.
-
-### Blocked by
-
-None - can start immediately.
-
-### User stories covered
-
-- PRD user stories 7-16.
-
-## Slice 3: Make mobile state persistence durable
-
-### Type
-
-`AFK`
-
-### What to build
-
-Store application state in the platform-supported application-support location
-on mobile and desktop. Preserve serialized restore, explicit failure reporting,
-and account-to-sheet binding. Remove environment-variable guesses and silent
-temporary-directory fallbacks from production behavior.
-
-### Acceptance criteria
-
-- [x] Production state paths come from a supported platform application-data
-      provider on iOS and macOS.
-- [x] Saving and restoring a selected sheet survives a normal restart.
-- [x] A storage failure is observable through the existing application status
-      flow and never silently switches to temporary storage.
-- [x] Account mismatch still requires explicit reselection or confirmation.
-- [x] Restore remains serialized against login, logout, choose, and create
-      commands.
-- [x] Public store tests cover successful persistence, corrupt input, and I/O
-      failure without pinning the provider implementation.
-
-### Blocked by
-
-None - can start immediately.
-
-### User stories covered
-
-- PRD user stories 17-19.
-
-## Slice 4: Exercise production composition in live Google validation
-
-### Type
-
-`AFK`
-
-### What to build
-
-Refactor the opt-in live Google integration so it enters through the same
-account, scoped access, workspace restoration, workbook session, validation,
-and logging command interfaces as the application. Keep the development-sheet
-reset harness explicit and make the runnable device command truthful.
-
-### Acceptance criteria
-
-- [x] The live test uses production application composition rather than a
-      separately assembled authorization and adapter path.
-- [x] Without the opt-in environment flag, the test skips before login or any
-      Google request.
-- [x] With the flag, the command identifies a supported device target and the
-      destructive development sheet clearly.
-- [x] A successful run selects or resolves the fixture, validates it, performs
-      a representative logged-set write, rereads the result, and resets the
-      fixture.
-- [x] Cancellation, missing credentials, and reset failure are reported
-      distinctly.
-- [x] Local tests cover only the app-owned integration entry contract; they do
-      not simulate Google success as proof.
-
-### Blocked by
-
-- Slice 2: Make builder-owned Google configuration safe and complete.
-- Slice 3: Make mobile state persistence durable.
-
-### User stories covered
-
-- PRD user stories 20-23.
-
-## Slice 5: Publish accurate support and privacy resources
+## Slice 1: Prototype and approve the real sheet layout
 
 ### Type
 
@@ -173,37 +23,48 @@ reset harness explicit and make the runnable device command truthful.
 
 ### What to build
 
-Make the hosted support and privacy surface suitable for a public source MVP.
-Describe the present native login, custom chooser, Google APIs, local state, and
-user-owned Sheet accurately. Replace placeholder contact language with an
-owner-approved support and privacy contact, and ensure no retired Picker
-callback or Firebase-data claim remains.
+Use isolated prototype code to create a disposable Google Sheet that renders
+the proposed schema and presentation before those choices are integrated into
+production. Populate it with at least two workout headings, primary and backup
+exercises, short and long names, wrapped notes, an empty annotation row, and
+multiple history blocks with several sets. The owner reviews the actual Sheets
+UI and either approves the design or records revised constants in the PRD and
+issue plan. Production formatting slices remain blocked until this review is
+accepted.
 
 ### Acceptance criteria
 
-- [x] The owner supplies or approves a public support/privacy contact channel.
-- [x] Support content gives users a concrete way to request help and report a
-      problem.
-- [x] Privacy content distinguishes local app state, Google account identity,
-      Google Sheet data, and static Firebase Hosting.
-- [x] The current scopes and their purposes are stated accurately for the
-      source-MVP implementation.
-- [x] The pages explain deletion/revocation options without promising behavior
-      the app or Google does not provide.
-- [x] No retired hosted Picker, callback, server token storage, or app backend
-      is implied.
-- [x] Tests check destinations and essential disclosures, not exact prose.
-- [x] The deployed pages are manually compared with the checked-in resources.
+- [ ] The prototype creates only an owner-approved disposable workbook or copy
+      and cannot target an ordinary workout sheet accidentally.
+- [ ] The prototype uses the proposed fixed-column order, final narrow
+      `is_exercise` column, clean backup names, and no Starting point column.
+- [ ] The rendered sheet includes two frozen header rows, the frozen metadata
+      band, hidden or de-emphasized machine fields, vertical fixed-header
+      grouping, merged history labels, and grey workout headings.
+- [ ] The initial width trial uses Exercise 250 px, Sets 80 px, Reps 96 px, RPE
+      96 px, Rest 96 px, Tempo 96 px, Notes 330 px, `is_exercise` 28 px, and
+      128 px history columns.
+- [ ] Representative long exercise names, wrapped notes, at least two workouts,
+      a backup, an empty workout, and multi-set history are visible during the
+      review.
+- [ ] The owner explicitly approves or revises widths, wrapping, merges,
+      freezes, hidden-column treatment, colors, borders, and row heights in the
+      real Google Sheets renderer.
+- [ ] Approved constants and any changed behavior are recorded in
+      `ISSUES_PRD.md` and the remaining acceptance criteria before production
+      integration begins.
+- [ ] The prototype is identified as visual evidence only and is not treated as
+      proof of production parsing, migration, or write safety.
 
 ### Blocked by
 
-- Slice 2: Make builder-owned Google configuration safe and complete.
+None - can start immediately.
 
 ### User stories covered
 
-- PRD user stories 24-26.
+- PRD user stories 1-8, 11-14, 30-31.
 
-## Slice 6: Replace historical setup notes with a public self-build guide
+## Slice 2: Upgrade legacy workbooks to explicit exercise rows
 
 ### Type
 
@@ -211,43 +72,49 @@ callback or Firebase-data claim remains.
 
 ### What to build
 
-Create a concise clone-to-run and clean-release guide for technically inclined
-macOS and iOS builders. Derive it from successful commands and the new local
-configuration contract. Identify Android scaffolding as not release-ready.
-Remove, archive, or label historical store notes so they cannot override source
-code and verified instructions.
+Introduce the versioned active-sheet contract whose final fixed metadata
+column is `is_exercise`. Normal parsing treats only literal `x` rows as
+exercises, treats blank rows as non-exercise annotations, and rejects unknown
+markers. Preserve existing users through an explicit upgrade flow: recognize a
+valid legacy WorkoutTracker workbook, block ordinary mutations until the user
+chooses upgrade, insert the marker at the metadata/history boundary, mark only
+legacy-validated exercise rows, create durable workout declarations, reread,
+and expose the upgraded workbook through the ordinary workout screen.
 
 ### Acceptance criteria
 
-- [x] A new user can identify prerequisites, clone, install dependencies,
-      configure Google, run tests, and build a supported target in order.
-- [x] iOS and macOS signing, bundle identity, OAuth configuration, and clean
-      release commands are described without the owner's team identity.
-- [x] Android is clearly deferred, with known missing SDK, package/signing,
-      OAuth, network, build, and physical-device validation work summarized.
-- [x] Supported, experimentally viable, and currently unvalidated platforms
-      are distinguished.
-- [x] The source-MVP authorization limitations and future Picker plan are
-      stated plainly.
-- [x] Historical store documentation is removed or marked non-authoritative;
-      no current guide cites it as evidence.
-- [x] Commands, paths, bundle names, and opt-in live-test invocation match the
-      repository and a clean local run.
-- [x] Documentation correctness is reviewed manually rather than enforced with
-      brittle prose tests.
+- [ ] The required fixed columns end with `is_backup`, `is_exercise`, followed
+      immediately by history columns.
+- [ ] Only rows containing the literal `x` marker are parsed as exercises;
+      non-empty visible text on an unmarked row is ignored.
+- [ ] Blank markers are accepted and unknown non-empty markers are blocking
+      schema damage that prevents workout writes.
+- [ ] Workout heading rows carry Workout identity without being parsed as
+      exercises, so a workout with no exercises remains selectable after a
+      reread.
+- [ ] A structurally valid legacy workbook reaches an explicit upgrade state
+      rather than being reported as generic damage or written through using
+      guessed positions.
+- [ ] Upgrade inserts the marker before existing history, tags only rows
+      accepted by the legacy parser, and preserves formulas, raw history text,
+      unrecognized rows, and history labels.
+- [ ] The upgrade uses the loaded-session reread and expectation checks; stale
+      source rows or headers reject the operation without partial follow-up
+      writes.
+- [ ] After a successful refreshed report, the existing UI proceeds through
+      the new schema without a second selection or login.
+- [ ] Public behavior tests cover new parsing, damage, upgrade success, stale
+      rejection, and the visible upgrade flow.
 
 ### Blocked by
 
-- Slice 1: Apply Apache-2.0 and public project policy.
-- Slice 2: Make builder-owned Google configuration safe and complete.
-- Slice 4: Exercise production composition in live Google validation.
-- Slice 5: Publish accurate support and privacy resources.
+- Slice 1: Prototype and approve the real sheet layout.
 
 ### User stories covered
 
-- PRD user stories 27-29.
+- PRD user stories 7, 9-10, 15-16, 23-27.
 
-## Slice 7: Add dependency and continuous-integration gates
+## Slice 3: Create a styled human-readable workbook
 
 ### Type
 
@@ -255,37 +122,51 @@ code and verified instructions.
 
 ### What to build
 
-Review direct and platform-resolved dependencies, take compatible fixes, and
-add a small public continuous-integration workflow. The default gate should
-catch formatting, analysis, and local behavior regressions without requiring
-Google credentials. Document versioning and release-note expectations for later
-GitHub releases.
+Make the existing Create sheet path initialize the new schema and its default
+presentation in one complete workflow. The generated active tab should expose
+two clear frozen header rows, a frozen metadata band before history, the
+reference sheet's deliberate width proportions and wrapping, de-emphasized
+machine columns, and a narrow centered exercise marker. Fixed headers and
+future history columns must have a coherent two-level layout without
+introducing Starting point or visible backup prose.
 
 ### Acceptance criteria
 
-- [x] Direct dependencies and important platform implementations are checked
-      against current authoritative release notes.
-- [x] Compatible crash, security, and correctness fixes are adopted and tested.
-- [x] CI runs formatting verification, static analysis, and the default Flutter
-      test suite without Google credentials.
-- [x] Live Google validation remains outside the default CI path.
-- [x] Platform build jobs are included only where unsigned runners can execute
-      them reliably; omitted builds have a documented local gate.
-- [x] The repository defines versioning, changelog, and GitHub release
-      expectations without publishing app bundles.
-- [x] CI and dependency changes do not introduce a Firebase application backend
-      or centralized credentials.
+- [ ] A newly created workbook validates immediately under the explicit-marker
+      schema and contains a compatible Exercises tab.
+- [ ] The active tab freezes both header rows and the complete fixed metadata
+      band before history.
+- [ ] Initial visible widths closely match the agreed reference proportions:
+      Exercise 250 px, Sets 80 px, Reps 96 px, RPE 96 px, Rest 96 px, Tempo
+      96 px, Notes 330 px, `is_exercise` 28 px, and each history set 128 px.
+- [ ] Exercise and Notes use appropriate wrapping/overflow behavior; machine
+      fields are hidden or de-emphasized and `is_exercise` is the final narrow,
+      centered metadata column.
+- [ ] Fixed headers occupy a coherent two-row presentation and remain readable
+      through the value parser after merges are applied.
+- [ ] Header emphasis, borders, text treatment, and contrast produce a sane
+      default rather than attempting to copy every detail of the reference
+      workbook.
+- [ ] The template does not add Starting point or prepend `Backup:` to exercise
+      names.
+- [ ] Workbook initialization applies presentation only to the two owned tabs
+      and never deletes or formats unrelated tabs.
+- [ ] Adapter tests verify the intentional pixel-width requests plus essential
+      freeze, merge, hidden-state, and format boundaries without pinning
+      incidental request order.
+- [ ] The ordinary Create sheet UI returns the refreshed, usable workbook after
+      initialization succeeds and reports a distinct failure if styling or
+      initialization cannot complete.
 
 ### Blocked by
 
-- Slice 1: Apply Apache-2.0 and public project policy.
-- Slice 2: Make builder-owned Google configuration safe and complete.
+- Slice 2: Upgrade legacy workbooks to explicit exercise rows.
 
 ### User stories covered
 
-- PRD user stories 30-33.
+- PRD user stories 1, 3, 5-8, 12, 28-29.
 
-## Slice 8: Clean the release test suite
+## Slice 4: Persist and style workout sections
 
 ### Type
 
@@ -293,36 +174,214 @@ GitHub releases.
 
 ### What to build
 
-Use the `test-cleanup` skill to remove temporary TDD scaffolding and tests that
-assert documentation prose, private widget structure, or invented third-party
-behavior. Retain the smallest durable safety net around workbook contracts,
-application commands, public screen behavior, configuration, and release
-requirements.
+Make workout creation a durable workbook command rather than session-only
+state. Creating a workout inserts a heading that stores its identity in the
+Workout metadata, leaves the exercise marker blank, and receives the default
+grey section treatment. Primary placement writes an `x` row inside the chosen
+section; backup placement remains adjacent to its parent. The resulting sheet
+and refreshed UI should retain an empty workout and group later additions under
+the correct visible heading.
 
 ### Acceptance criteria
 
-- [x] Tests whose only subject is documentation wording are removed or replaced
-      with an appropriate non-test validation step.
-- [x] Private helpers, incidental callback order, and widget-tree trivia are not
-      treated as public contracts.
-- [x] Fakes assert only this app's requested scopes, adapter calls, plans, and
-      accepted callback shapes.
-- [x] Workbook safety, account binding, command serialization, and major user
-      flows retain behavior coverage.
-- [x] The default suite remains credential-free and fast enough for CI.
-- [x] The final test inventory explains the purpose of unusual integration or
-      platform checks.
+- [ ] Creating a workout writes a durable heading and returns a refreshed
+      report before the command is considered successful.
+- [ ] The heading shows the workout name, carries the same identity in Workout,
+      has a blank exercise marker, and is ignored as an exercise.
+- [ ] New headings use a restrained grey, emphasized style and a merge across a
+      stable visible metadata range rather than the changing history width.
+- [ ] A newly created empty workout remains selectable after a full reread or
+      application restart.
+- [ ] Adding a primary inserts it into the selected workout section, marks it
+      `x`, and does not append it after a later workout section.
+- [ ] Adding a backup marks it `x`, sets `is_backup`, keeps its canonical name
+      free of visible backup prose, and preserves adjacency to its parent.
+- [ ] Adding rows formats only the new heading or exercise row and does not
+      broadly restyle existing workout rows.
+- [ ] Existing pending-workout fallback state is removed or reduced so the
+      durable sheet, not a controller-only list, owns empty workouts.
+- [ ] Public controller and screen tests demonstrate create, reload, placement,
+      and empty-workout behavior through the normal commands.
 
 ### Blocked by
 
-- Slices 1-7.
+- Slice 2: Upgrade legacy workbooks to explicit exercise rows.
+- Slice 3: Create a styled human-readable workbook.
 
 ### User stories covered
 
-- PRD user story 34.
-- PRD testing decisions.
+- PRD user stories 2, 9-12, 15-16.
 
-## Slice 9: Produce and hand off the gym-test candidate
+## Slice 5: Preserve annotations through exercise mutation
+
+### Type
+
+`AFK`
+
+### What to build
+
+Update deletion and reordering to use explicit row ownership. Exercise and
+backup rows move or disappear without consuming unmarked empty rows, notes, or
+workout headings. Prefer dimension moves where they safely carry row formatting
+with the exercise; limit value updates and formatting requests to the rows that
+must change. Deleting the final exercise leaves its durable workout heading and
+the selected empty workout intact.
+
+### Acceptance criteria
+
+- [ ] Deletion targets only the selected marked primary and its marked backups,
+      even when unmarked rows occur between them.
+- [ ] Empty rows and visible annotation rows survive exercise deletion with
+      their values intact.
+- [ ] Deleting the last exercise leaves the workout heading, selection, and
+      empty exercise list intact after reread.
+- [ ] Reordering uses structural row movement where practical so existing row
+      formatting travels with owned exercise data.
+- [ ] Reordering never turns an unmarked annotation into an exercise or clears
+      it as a side effect.
+- [ ] Stale marker, workout, backup, formula, or row expectations reject the
+      mutation before writes proceed.
+- [ ] Unaffected rows receive no formatting normalization request during delete
+      or reorder operations.
+- [ ] Public planning, session, and UI tests cover annotations around primaries
+      and backups, formatted-row moves, final-exercise deletion, and stale
+      rejection.
+
+### Blocked by
+
+- Slice 4: Persist and style workout sections.
+
+### User stories covered
+
+- PRD user stories 10, 15-20, 28.
+
+## Slice 6: Keep history blocks readable as they grow
+
+### Type
+
+`AFK`
+
+### What to build
+
+Extend the existing history creation and next-set growth commands so new
+history columns receive the default width, header treatment, and grouping.
+Each block label occupies the first header row and is merged over its S columns;
+set labels remain in the second row. Formatting changes must stay inside the
+new columns and the directly affected block-header merge, while workout heading
+fill extends into newly inserted history columns.
+
+### Acceptance criteria
+
+- [ ] Creating a history block inserts S1 at the fixed-metadata boundary and
+      applies the default history header, 128 px width, alignment, and text
+      format.
+- [ ] Adding S2 or later extends the selected block's header merge and preserves
+      the correct set-label sequence.
+- [ ] The semantic history parser still discovers unique block labels and
+      consecutive set columns from the two header rows.
+- [ ] New history cells remain text-formatted so literal workout notation is
+      not coerced by Sheets.
+- [ ] New columns receive workout-heading background treatment without
+      rebuilding full-width merges or restyling existing exercise values.
+- [ ] Unrelated history blocks, annotations, and retired tabs receive no format
+      or merge requests.
+- [ ] If the target header changed since planning, expectation checks reject
+      the structural write rather than merging the wrong columns.
+- [ ] Public command and adapter tests cover first-block creation, multiple
+      blocks, set growth, reread, stale rejection, and request scope.
+
+### Blocked by
+
+- Slice 3: Create a styled human-readable workbook.
+- Slice 4: Persist and style workout sections.
+
+### User stories covered
+
+- PRD user stories 3-4, 13-14, 17-18, 29.
+
+## Slice 7: Enforce workbook and formatting isolation
+
+### Type
+
+`AFK`
+
+### What to build
+
+Close the preservation boundary across all completed workflows. Extra retired
+tabs remain visible in Google Sheets but are absent from workout parsing and
+never become write or formatting targets. Formatting remains presentation
+output, not parser input. Add a small request-scope guard so ordinary value
+writes cannot accidentally acquire workbook-wide unmerge, clear, or repeat
+format behavior.
+
+### Acceptance criteria
+
+- [ ] The first tab is the active workout, Exercises is located by exact title,
+      and all other tabs are ignored for parsing and mutation.
+- [ ] Selecting, validating, logging, authoring, migrating, and formatting an
+      active workout never deletes, renames, clears, reorders, or formats a
+      retired tab.
+- [ ] Fonts, colors, borders, widths, frozen panes, hidden state, and formatting
+      changes cannot change which rows parse as exercises.
+- [ ] Ordinary set logging and cell repair send only value/formula operations
+      and no broad presentation requests.
+- [ ] Structural presentation requests are limited to new or directly affected
+      active-tab ranges.
+- [ ] Workbook initialization is the only path allowed to apply the complete
+      default format, and only for app-created owned tabs.
+- [ ] Tests use multiple-tab snapshots and observable operation targets rather
+      than asserting private filtering helpers.
+- [ ] The domain and testing guidance documents the explicit marker, ignored
+      annotations, best-effort formatting guarantee, and retired-tab rule once,
+      without duplicating implementation instructions.
+
+### Blocked by
+
+- Slices 1-6.
+
+### User stories covered
+
+- PRD user stories 15-18, 21-22, 28-29.
+
+## Slice 8: Clean the completed behavior test suite
+
+### Type
+
+`AFK`
+
+### What to build
+
+Use the `test-cleanup` skill to remove temporary TDD scaffolding and rewrite
+tests that pin request order, private planners, exact widget trees, or cosmetic
+constants without protecting behavior. Retain the smallest durable suite for
+schema upgrade, explicit exercise ownership, preserved annotations, generated
+layout contracts, workout grouping, history growth, and tab isolation.
+
+### Acceptance criteria
+
+- [ ] Almost all tests that existed only to drive internal implementation are
+      removed or replaced by public parser, session, adapter, or screen
+      behavior tests.
+- [ ] Essential formatting tests assert semantic request ranges and outcomes,
+      not every request object or exact operation order.
+- [ ] Exact colors and dimensions are tested only where they are intentional
+      public presentation constants.
+- [ ] Schema damage, unsafe write prevention, raw history preservation, and
+      stale expectation coverage remain intact.
+- [ ] Annotation, empty-workout, history grouping, and retired-tab behavior
+      retain focused regression coverage.
+- [ ] The default test suite remains credential-free and passes with static
+      analysis.
+
+### Blocked by
+
+- Slice 7: Enforce workbook and formatting isolation.
+
+### User stories covered
+
+- PRD user stories 28-29.
+
+## Slice 9: Validate the integrated layout in live Google Sheets
 
 ### Type
 
@@ -330,34 +389,41 @@ requirements.
 
 ### What to build
 
-Run the complete clean release gate on the current branch, inspect the produced
-bundles, and hand the exact candidate to the owner. This slice stops before any
-Picker work. After the owner directs the merge to `main`, the owner will test
-that version in the gym and ordinary defects will be repaired on `main` before
-the Picker branch is created.
+Run the final opt-in acceptance pass against Google Sheets with the owner
+present. Create a new workbook, upgrade a copy of a representative legacy
+WorkoutTracker workbook, add workouts and history, delete and reorder
+exercises, and visually compare the result with the agreed reference style.
+Confirm that annotations and retired tabs survive before declaring the plan
+complete.
 
 ### Acceptance criteria
 
-- [x] Formatting, static analysis, and the complete default test suite pass.
-- [x] A clean macOS release bundle and clean unsigned iOS release bundle build
-      successfully and are inspected for retired assets/configuration.
-- [x] Android is not built or presented as validated; the handoff links to its
-      documented deferred-readiness gaps.
-- [x] The opt-in live Google flow is either run successfully with user approval
-      or explicitly reported as pending HITL validation.
-- [x] The handoff records commit hashes, commands, build artifact locations,
-      skipped checks, and remaining risks.
-- [x] No Picker migration, WebView dependency, or scope reduction is present.
-- [x] The branch is declared ready for owner-directed merge; the agent does not
-      create `new_picker` prematurely.
-- [ ] The owner confirms the merged `main` baseline is the version to test in
-      the gym.
+- [ ] The owner approves the generated sheet's hierarchy, widths, wrapping,
+      frozen panes, history grouping, and workout headings on desktop Sheets.
+- [ ] The owner compares the visible proportions with the reference and
+      confirms the wide Exercise and Notes columns, compact target columns,
+      28 px marker, and uniform 128 px history columns are comfortable.
+- [ ] A newly created sheet remains usable through WorkoutTracker after visual
+      inspection or harmless manual formatting changes.
+- [ ] A copied legacy workbook upgrades without losing formulas, raw history,
+      annotations, empty rows, or unrelated tabs.
+- [ ] Adding a workout, primary, backup, history block, and later set produces
+      coherent formatting in the real Sheets UI.
+- [ ] Deleting the final exercise leaves a visible, selected empty workout;
+      deleting and reordering other exercises preserves unrelated annotations
+      and formatting to the agreed MVP extent.
+- [ ] The marker column is positioned immediately before history and is narrow
+      enough not to distract from workout data.
+- [ ] Retired tabs are manually confirmed unchanged.
+- [ ] Any live-test fixture writes are opt-in, restricted to an approved copy,
+      and reset or retained according to the owner's instruction.
+- [ ] Static analysis, the full local suite, and the required supported Apple
+      build gates pass after the visual acceptance changes.
 
 ### Blocked by
 
-- Slice 8: Clean the release test suite.
+- Slice 8: Clean the completed behavior test suite.
 
 ### User stories covered
 
-- PRD user story 35.
-- PRD release sequencing.
+- PRD user stories 1-31, with emphasis on user stories 30-31.

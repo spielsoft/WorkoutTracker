@@ -5,7 +5,7 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = Workout Tracker
+PRODUCT_NAME = WorkoutTracker
 
 // Sanitized defaults keep the project inspectable before local setup.
 WORKOUT_TRACKER_BUNDLE_ID = com.example.workouttracker

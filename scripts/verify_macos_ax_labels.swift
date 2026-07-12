@@ -71,7 +71,7 @@ func line(for element: AXUIElement) -> String {
 
 func runningWorkoutTracker() -> NSRunningApplication? {
   NSWorkspace.shared.runningApplications.first {
-    $0.localizedName == "Workout Tracker"
+    $0.localizedName == "WorkoutTracker"
   }
 }
 
@@ -95,7 +95,7 @@ func scan(appElement: AXUIElement, frame: CGRect) -> Set<String> {
 }
 
 guard let app = runningWorkoutTracker() else {
-  fputs("Workout Tracker is not running.\n", stderr)
+  fputs("WorkoutTracker is not running.\n", stderr)
   exit(1)
 }
 
@@ -105,7 +105,7 @@ guard
   let window = windows.first,
   let frame = frame(of: window)
 else {
-  fputs("Could not locate a Workout Tracker AX window frame.\n", stderr)
+  fputs("Could not locate a WorkoutTracker AX window frame.\n", stderr)
   exit(1)
 }
 

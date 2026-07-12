@@ -43,45 +43,49 @@ void main() {
     );
   });
 
-  testWidgets(
-    'keyboard advances in format order and Done saves decimal and text values',
-    (tester) async {
-      final actions = _LogActions();
-      await tester.pumpWidget(_app(actions: actions, view: _literalView()));
+  testWidgets('keyboard advances in format order and saves decimal values', (
+    tester,
+  ) async {
+    final actions = _LogActions();
+    await tester.pumpWidget(_app(actions: actions, view: _literalView()));
 
-      final load = _field('Load');
-      final effort = _field('Effort');
-      final cue = _field('Cue');
+    final load = _field('Load');
+    final effort = _field('Effort');
+    final cue = _field('Cue');
 
-      await tester.tap(load);
-      await tester.enterText(load, '102.5');
-      await tester.testTextInput.receiveAction(TextInputAction.next);
-      await tester.pump();
+    for (final label in ['Load', 'Effort', 'Cue']) {
       expect(
-        tester.widget<EditableText>(_editable(effort)).focusNode.hasFocus,
-        isTrue,
+        tester
+            .widget<TextField>(find.byKey(ValueKey('set-field-$label')))
+            .keyboardType,
+        const TextInputType.numberWithOptions(decimal: true, signed: true),
       );
+    }
 
-      await tester.enterText(effort, '7.5');
-      await tester.testTextInput.receiveAction(TextInputAction.next);
-      await tester.pump();
-      expect(
-        tester.widget<EditableText>(_editable(cue)).focusNode.hasFocus,
-        isTrue,
-      );
+    await tester.tap(load);
+    await tester.enterText(load, '102.5');
+    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await tester.pump();
+    expect(
+      tester.widget<EditableText>(_editable(effort)).focusNode.hasFocus,
+      isTrue,
+    );
 
-      await tester.enterText(cue, 'grindy today');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pump();
+    await tester.enterText(effort, '7.5');
+    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await tester.pump();
+    expect(
+      tester.widget<EditableText>(_editable(cue)).focusNode.hasFocus,
+      isTrue,
+    );
 
-      final save = actions.cmds.single as SaveSetCmd;
-      expect(save.fields, {
-        'Load': '102.5',
-        'Effort': '7.5',
-        'Cue': 'grindy today',
-      });
-    },
-  );
+    await tester.enterText(cue, '9');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    final save = actions.cmds.single as SaveSetCmd;
+    expect(save.fields, {'Load': '102.5', 'Effort': '7.5', 'Cue': '9'});
+  });
 
   testWidgets('keeps desktop set entry compact in the shared flow', (
     tester,
@@ -124,7 +128,9 @@ void main() {
     await tester.pumpWidget(_app(actions: _LogActions()));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Current S1'), findsOneWidget);
+    expect(find.text('Next set S1'), findsOneWidget);
+    expect(find.text('Progress 0/3'), findsNothing);
+    expect(find.text('Current S1'), findsNothing);
     expect(find.text('Backup'), findsNothing);
     expect(find.text('Save set'), findsOneWidget);
   });
@@ -149,6 +155,68 @@ void main() {
     expect(save.blockLabel, 'Week 2');
     expect(save.sheetRow, 3);
     expect(save.fields, {'Weight': '225', 'Reps': '5', 'RPE': '8'});
+  });
+
+  testWidgets(
+    'prefills a new set from the latest result in the current block',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          actions: _LogActions(),
+          view: _historyView(
+            labels: const ['Week 2', '', 'Week 1'],
+            setLabels: const ['S1', 'S2', 'S1'],
+            values: const ['135x5@8', '', '125x4@7'],
+            selectedBlock: 'Week 2',
+          ),
+        ),
+      );
+
+      expect(
+        tester
+            .widget<EditableText>(_editable(_field('Weight')))
+            .controller
+            .text,
+        '135',
+      );
+      expect(
+        tester.widget<EditableText>(_editable(_field('Reps'))).controller.text,
+        '5',
+      );
+      expect(
+        tester.widget<EditableText>(_editable(_field('RPE'))).controller.text,
+        '8',
+      );
+    },
+  );
+
+  testWidgets('prefills a new set from the latest prior-block result', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 2', 'Week 1', '', ''],
+          setLabels: const ['S1', 'S1', 'S2', 'S3'],
+          values: const ['', '120x5@7', '', '125x4@8'],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
+
+    expect(
+      tester.widget<EditableText>(_editable(_field('Weight'))).controller.text,
+      '125',
+    );
+    expect(
+      tester.widget<EditableText>(_editable(_field('Reps'))).controller.text,
+      '4',
+    );
+    expect(
+      tester.widget<EditableText>(_editable(_field('RPE'))).controller.text,
+      '8',
+    );
   });
 
   testWidgets(
@@ -260,7 +328,7 @@ void main() {
     expect(actions.cmds.single, isA<EditSetCmd>());
   });
 
-  testWidgets('saved custom-format fields accept decimal and literal edits', (
+  testWidgets('saved structured fields use numeric entry and accept decimals', (
     tester,
   ) async {
     final actions = _LogActions();
@@ -270,7 +338,7 @@ void main() {
         view: _historyView(
           labels: const ['Week 2'],
           setLabels: const ['S1'],
-          values: const ['102.5x7.5; smooth'],
+          values: const ['102.5x7.5; 2'],
           selectedBlock: 'Week 2',
           logFormat: '{Load}[x]{Effort}[; ]{Cue}',
         ),
@@ -281,17 +349,19 @@ void main() {
     await tester.pump();
     final cue = find.bySemanticsLabel('S1 Cue');
 
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('logged-S1-field-Cue')))
+          .keyboardType,
+      const TextInputType.numberWithOptions(decimal: true, signed: true),
+    );
     await tester.enterText(find.bySemanticsLabel('S1 Load'), '103.25');
-    await tester.enterText(cue, 'grindy today');
+    await tester.enterText(cue, '3');
     await tester.tap(find.byTooltip('Save structured set'));
     await tester.pump();
 
     final edit = actions.cmds.single as EditSetCmd;
-    expect(edit.fields, {
-      'Load': '103.25',
-      'Effort': '7.5',
-      'Cue': 'grindy today',
-    });
+    expect(edit.fields, {'Load': '103.25', 'Effort': '7.5', 'Cue': '3'});
   });
 
   testWidgets('clear offers time-limited undo with exact raw restoration', (
@@ -392,91 +462,6 @@ void main() {
 
     expect(find.text('S1 was not restored.'), findsOneWidget);
     expect(find.text('S1 restored.'), findsNothing);
-  });
-
-  testWidgets('uses the newest non-empty set across gaps and trailing blanks', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _app(
-        actions: _LogActions(),
-        view: _historyView(
-          labels: const ['Week 2', 'Week 1', '', '', ''],
-          setLabels: const ['S1', 'S1', 'S2', 'S3', 'S4'],
-          values: const ['40x5@8', '30x5@7', '', '35x5@8', ''],
-          selectedBlock: 'Week 2',
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Training details'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Latest history: 35x5@8'), findsOneWidget);
-  });
-
-  testWidgets('uses the newest prior block when several contain history', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _app(
-        actions: _LogActions(),
-        view: _historyView(
-          labels: const ['Week 3', 'Week 2', 'Week 1'],
-          setLabels: const ['S1', 'S1', 'S1'],
-          values: const ['300x5@8', '200x5@8', '100x5@8'],
-          selectedBlock: 'Week 3',
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Training details'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Latest history: 200x5@8'), findsOneWidget);
-  });
-
-  testWidgets('excludes the selected block from latest history', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _app(
-        actions: _LogActions(),
-        view: _historyView(
-          labels: const ['Week 2', 'Week 1'],
-          setLabels: const ['S1', 'S1'],
-          values: const ['999x5@9', '35x5@8'],
-          selectedBlock: 'Week 2',
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Training details'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Latest history: 35x5@8'), findsOneWidget);
-    expect(find.text('Latest history: 999x5@9'), findsNothing);
-  });
-
-  testWidgets('omits latest history when no prior block has data', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _app(
-        actions: _LogActions(),
-        view: _historyView(
-          labels: const ['Week 1'],
-          setLabels: const ['S1'],
-          values: const ['40x5@8'],
-          selectedBlock: 'Week 1',
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Training details'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Latest history:'), findsNothing);
   });
 }
 

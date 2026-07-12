@@ -94,6 +94,27 @@ void main() {
     expect(service.appliedPlans, hasLength(1));
     expect(service.appliedPlans.single.cellUpdates.single.value, '155x6@8');
     expect(find.text('Next set S2'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+          .controller
+          ?.text,
+      '155',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Reps')))
+          .controller
+          ?.text,
+      '6',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-RPE')))
+          .controller
+          ?.text,
+      '8',
+    );
   });
 
   testWidgets('does not launch duplicate Save set actions while pending', (
@@ -222,7 +243,7 @@ void main() {
     },
   );
 
-  testWidgets('compresses logging context and history until expanded', (
+  testWidgets('shows static logging context and expandable history', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 900);
@@ -274,22 +295,20 @@ void main() {
     expect(find.text('Target: 3 sets x 40 @ 8'), findsNothing);
     expect(find.text('Rest: 90s'), findsNothing);
     expect(find.text('Tempo: Smooth'), findsNothing);
-    expect(find.text('Notes: Stay tall.'), findsNothing);
+    expect(find.text('Notes: Stay tall.'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('training-details')),
+        matching: find.byType(ExpansionTile),
+      ),
+      findsNothing,
+    );
     expect(find.text('Recent history'), findsOneWidget);
     expect(find.text('Week 1: 30@7, 35@8'), findsOneWidget);
     expect(find.text('Week 1'), findsNothing);
     expect(find.text('Week 1 S1: 30@7'), findsNothing);
     expect(find.text('S1: 30@7'), findsNothing);
     expect(find.text('S2: 35@8'), findsNothing);
-
-    await tester.tap(find.text('Training details'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Target: 3 sets x 40 @ 8'), findsOneWidget);
-    expect(find.text('Rest: 90s'), findsOneWidget);
-    expect(find.text('Tempo: Smooth'), findsOneWidget);
-    expect(find.text('Notes: Stay tall.'), findsOneWidget);
-    expect(find.text('Latest history: 35@8'), findsOneWidget);
 
     await tester.tap(find.text('Recent history'));
     await tester.pumpAndSettle();
@@ -298,67 +317,67 @@ void main() {
     expect(find.text('S2: 35@8'), findsOneWidget);
   });
 
-  testWidgets(
-    'presents progress states and the backup role in the logging flow',
-    (tester) async {
-      tester.view.physicalSize = const Size(390, 1200);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+  testWidgets('presents the next set and backup role in the logging flow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      final service = TestValSvc.fromRows([
-        [...activeSheetFixedColumns, 'Week 1'],
-        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
-        [
-          'Pull Up',
-          '3',
-          '8',
-          '8',
-          '2 min',
-          '',
-          'Full hang.',
-          '{Reps}',
-          'Upper',
-          '',
-          '12',
-          '',
-        ],
-        [
-          'Front Plank',
-          '3',
-          '45s',
-          '8',
-          '60s',
-          '',
-          'Brace hard.',
-          '{Seconds}[s@]{RPE}',
-          'Upper',
-          'TRUE',
-          '',
-          '',
-        ],
-      ]);
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+      [
+        'Pull Up',
+        '3',
+        '8',
+        '8',
+        '2 min',
+        '',
+        'Full hang.',
+        '{Reps}',
+        'Upper',
+        '',
+        '12',
+        '',
+      ],
+      [
+        'Front Plank',
+        '3',
+        '45s',
+        '8',
+        '60s',
+        '',
+        'Brace hard.',
+        '{Seconds}[s@]{RPE}',
+        'Upper',
+        'TRUE',
+        '',
+        '',
+      ],
+    ]);
 
-      await tester.pumpWidget(
-        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
-      );
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
 
-      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-      await tester.pump();
-      await tester.pump();
-      await tester.tap(find.text('Pull Up'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Pull Up'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Progress 1/3'), findsOneWidget);
-      expect(find.text('Logged S1'), findsOneWidget);
-      expect(find.text('Current S2'), findsOneWidget);
-      expect(find.text('Backup'), findsNothing);
-      expect(find.byIcon(Icons.alt_route_outlined), findsOneWidget);
-      expect(find.text('Front Plank'), findsOneWidget);
-    },
-  );
+    expect(find.text('Next set S2'), findsOneWidget);
+    expect(find.text('Progress 1/3'), findsNothing);
+    expect(find.text('Logged S1'), findsNothing);
+    expect(find.text('Current S2'), findsNothing);
+    expect(find.text('Backup'), findsNothing);
+    expect(find.byIcon(Icons.alt_route_outlined), findsOneWidget);
+    expect(find.text('Front Plank'), findsOneWidget);
+  });
 
   testWidgets(
     'switching to a backup row refreshes structured labels and parsed values',
