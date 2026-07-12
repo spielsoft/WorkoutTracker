@@ -1,11 +1,59 @@
 import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/sheets.dart';
 
+import '../app/auth_client.dart';
+
+abstract interface class FieldMigrator {
+  Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId);
+
+  Future<LegacyFieldMigrationReport> migrate(
+    String spreadsheetId, {
+    required bool confirmed,
+  });
+}
+
+class GoogleFieldMigrator implements FieldMigrator {
+  const GoogleFieldMigrator(this._google);
+
+  final ApiAccess _google;
+
+  @override
+  Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId) {
+    return _run(spreadsheetId, (migrator) => migrator.dryRun(spreadsheetId));
+  }
+
+  @override
+  Future<LegacyFieldMigrationReport> migrate(
+    String spreadsheetId, {
+    required bool confirmed,
+  }) {
+    return _run(
+      spreadsheetId,
+      (migrator) => migrator.migrate(spreadsheetId, confirmed: confirmed),
+    );
+  }
+
+  Future<T> _run<T>(
+    String spreadsheetId,
+    Future<T> Function(LegacyFieldMigrator migrator) action,
+  ) {
+    return _google.run(
+      scopes: GoogleApisWbkClient.writeScopes,
+      action: (resources) => action(
+        LegacyFieldMigrator(
+          client: GoogleApisWbkClient(resources.sheetsApi),
+          allowedSpreadsheetIds: [spreadsheetId],
+        ),
+      ),
+    );
+  }
+}
+
 /// Temporary owner-only migration for pre-MVP Reps/RPE workbook columns.
 ///
 /// Keep all legacy recognition in this file and delete it, with its tests,
 /// before the MVP release.
-class LegacyFieldMigrator {
+class LegacyFieldMigrator implements FieldMigrator {
   LegacyFieldMigrator({
     required this.client,
     required Iterable<String> allowedSpreadsheetIds,
@@ -14,12 +62,14 @@ class LegacyFieldMigrator {
   final SheetsWorkbookClient client;
   final Set<String> _allowedIds;
 
+  @override
   Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId) async {
     _requireAllowed(spreadsheetId);
     final workbook = await _read(spreadsheetId);
     return _plan(spreadsheetId, workbook).report;
   }
 
+  @override
   Future<LegacyFieldMigrationReport> migrate(
     String spreadsheetId, {
     required bool confirmed,
@@ -81,6 +131,7 @@ class LegacyFieldMigrator {
       exercises: snapshot.sheets.firstWhere(
         (sheet) => sheet.sheet.title == 'Exercises',
       ),
+      schemaMetadata: metadata.metadataByKey(workbookSchemaKey),
     );
   }
 }
@@ -92,6 +143,7 @@ class LegacyFieldMigrationReport {
     required this.activeRowCount,
     required Iterable<String> changes,
     required Iterable<String> blockers,
+    required this.recognized,
     this.wasApplied = false,
     this.refreshedSheet,
   }) : changes = List<String>.unmodifiable(changes),
@@ -102,6 +154,7 @@ class LegacyFieldMigrationReport {
   final int activeRowCount;
   final List<String> changes;
   final List<String> blockers;
+  final bool recognized;
   final bool wasApplied;
   final ParsedActiveSheet? refreshedSheet;
 
@@ -114,6 +167,7 @@ class LegacyFieldMigrationReport {
         activeRowCount: activeRowCount,
         changes: changes,
         blockers: blockers,
+        recognized: recognized,
         wasApplied: true,
         refreshedSheet: sheet,
       );
@@ -127,10 +181,15 @@ class _LegacyPlan {
 }
 
 class _LegacyWorkbook {
-  const _LegacyWorkbook({required this.active, required this.exercises});
+  const _LegacyWorkbook({
+    required this.active,
+    required this.exercises,
+    required this.schemaMetadata,
+  });
 
   final SheetsGridSnapshot active;
   final SheetsGridSnapshot exercises;
+  final SheetsDeveloperMetadata? schemaMetadata;
 }
 
 _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
@@ -141,6 +200,13 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
     'Active: replace Reps/RPE with Targets and add is_exercise.',
     'Exercises: replace Default Reps/Default RPE with Default Values.',
   ];
+  final schemaMetadata = workbook.schemaMetadata;
+  if (schemaMetadata != null) {
+    blockers.add(
+      'Sheet declares WorkoutTracker version ${schemaMetadata.value}; '
+      'only unversioned legacy sheets use this conversion.',
+    );
+  }
   if (activeRows.isEmpty || !_samePrefix(activeRows.first, _legacyActive)) {
     blockers.add('Active tab does not have the legacy field header.');
   }
@@ -156,6 +222,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
         activeRowCount: 0,
         changes: changes,
         blockers: blockers,
+        recognized: false,
       ),
       operations: const [],
     );
@@ -240,6 +307,14 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
       columnCount: 1,
     ),
   );
+  operations.add(
+    SheetsMetadataWrite(
+      sheet: workbook.active.sheet,
+      key: workbookSchemaKey,
+      value: workbookSchemaVersion,
+      metadataId: schemaMetadata?.id,
+    ),
+  );
 
   return _LegacyPlan(
     report: LegacyFieldMigrationReport(
@@ -248,6 +323,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
       activeRowCount: activeCount,
       changes: changes,
       blockers: blockers,
+      recognized: true,
     ),
     operations: operations,
   );
@@ -334,7 +410,12 @@ bool _sameWorkbook(_LegacyWorkbook left, _LegacyWorkbook right) {
   return _sameRows(left.active.rows, right.active.rows) &&
       _sameRows(left.exercises.rows, right.exercises.rows) &&
       _sameFormulas(left.active.cellFormulas, right.active.cellFormulas) &&
-      _sameFormulas(left.exercises.cellFormulas, right.exercises.cellFormulas);
+      _sameFormulas(
+        left.exercises.cellFormulas,
+        right.exercises.cellFormulas,
+      ) &&
+      left.schemaMetadata?.id == right.schemaMetadata?.id &&
+      left.schemaMetadata?.value == right.schemaMetadata?.value;
 }
 
 bool _sameRows(List<List<String>> left, List<List<String>> right) {

@@ -3,6 +3,18 @@
 The selected Google Sheet is WorkoutTracker's durable data. The app must leave
 it useful to a person working directly in Google Sheets.
 
+## Workbook Version
+
+WorkoutTracker stores a document-visible Google Sheets developer-metadata
+entry named `workouttracker.schema_version`. The current pre-MVP workbook
+version is `0.9`; the MVP contract will be `1.0`. An absent key identifies the
+original legacy workbook format.
+
+The version selects a migration path but never replaces structural validation.
+Headers, values, formulas, and writable columns must still satisfy the declared
+version's contract before ordinary writes. New workbooks and successful legacy
+conversions receive the current version token.
+
 ## Required Tabs and Headers
 
 The first tab is the active workout sheet. Its fixed columns must appear in

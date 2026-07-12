@@ -18,9 +18,10 @@ widths.
 9. Preview text is rendered from the values currently entered by the user rather than canned samples.
 10. Bundled exercises have non-empty, sensible Sets, Rest, and Tempo plus format-matching dynamic defaults.
 11. Legacy migration is owner-only, expectation-checked, and isolated in one temporary Dart file that will be deleted before MVP release.
-12. No legacy parser fallback, upgrade UI, or migration code ships in the MVP.
-13. Raw historical set text and unparseable saved history remain preserved under the existing contract.
-14. The workbook contract, layout plan, testing guidance, and relevant user documentation must describe the same field-driven model.
+12. The pre-MVP app may expose this exact converter behind explicit confirmation; no legacy parser fallback, conversion UI, or migration code ships in the MVP.
+13. Workbooks use `workouttracker.schema_version`: missing means the original legacy format, `0.9` is the current pre-MVP format, and `1.0` is reserved for MVP.
+14. Raw historical set text and unparseable saved history remain preserved under the existing contract.
+15. The workbook contract, layout plan, testing guidance, and relevant user documentation must describe the same field-driven model.
 
 ## Progress
 
@@ -198,6 +199,10 @@ approved spreadsheet IDs or copies, then uses reread, expectations, writes,
 and refreshed validation. Keep all legacy recognition inside this file so it
 can later absorb the row-marker/layout migration and be deleted wholesale
 before MVP release.
+The pre-MVP app recognizes only an exact unversioned legacy workbook, shows the
+dry-run result, and requires confirmation before invoking it. Successful
+conversion writes workbook version `0.9`; version `1.0` remains reserved for
+the MVP contract.
 
 ### Acceptance criteria
 

@@ -38,6 +38,20 @@ class GoogleApisWbkInit implements WbkInit {
       tab: workbook.activeSheet,
       frozenRowCount: 2,
     );
+    await _workbookClient.applyOperations(
+      spreadsheetId: spreadsheetId,
+      operations: [
+        SheetsMetadataWrite(
+          sheet: SheetsSheetIdentity(
+            sheetId: targets.activeSheet.sheetId,
+            title: targets.activeSheet.title,
+          ),
+          key: workbookSchemaKey,
+          value: workbookSchemaVersion,
+          metadataId: targets.schemaMetadataId,
+        ),
+      ],
+    );
   }
 
   Future<_InitTargets> _ensureTargets(
@@ -105,6 +119,7 @@ class GoogleApisWbkInit implements WbkInit {
     return _InitTargets(
       activeSheet: activeSheet,
       exercisesSheet: exercisesSheet,
+      schemaMetadataId: shape.schemaMetadataId,
     );
   }
 
@@ -145,22 +160,31 @@ class GoogleApisWbkInit implements WbkInit {
         for (final sheet in metadata.sheets)
           _SheetShape(sheetId: sheet.sheetId, title: sheet.title),
       ],
+      schemaMetadataId: metadata.metadataByKey(workbookSchemaKey)?.id,
     );
   }
 }
 
 class _InitTargets {
-  const _InitTargets({required this.activeSheet, required this.exercisesSheet});
+  const _InitTargets({
+    required this.activeSheet,
+    required this.exercisesSheet,
+    required this.schemaMetadataId,
+  });
 
   final _SheetShape activeSheet;
   final _SheetShape exercisesSheet;
+  final int? schemaMetadataId;
 }
 
 class _SpreadsheetShape {
-  _SpreadsheetShape({required Iterable<_SheetShape> sheets})
-    : sheets = List<_SheetShape>.unmodifiable(sheets);
+  _SpreadsheetShape({
+    required Iterable<_SheetShape> sheets,
+    required this.schemaMetadataId,
+  }) : sheets = List<_SheetShape>.unmodifiable(sheets);
 
   final List<_SheetShape> sheets;
+  final int? schemaMetadataId;
 
   bool hasSheetTitle(String title) {
     return sheetByTitle(title) != null;

@@ -1,5 +1,8 @@
 import 'package:googleapis/sheets/v4.dart' as sheets;
 
+const workbookSchemaKey = 'workouttracker.schema_version';
+const workbookSchemaVersion = '0.9';
+
 abstract interface class SheetsWorkbookClient {
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId);
 
@@ -22,10 +25,16 @@ class SheetsSheetIdentity {
 }
 
 class SheetsWorkbookMetadata {
-  SheetsWorkbookMetadata({required Iterable<SheetsSheetIdentity> sheets})
-    : sheets = List<SheetsSheetIdentity>.unmodifiable(sheets);
+  SheetsWorkbookMetadata({
+    required Iterable<SheetsSheetIdentity> sheets,
+    Iterable<SheetsDeveloperMetadata> developerMetadata = const [],
+  }) : sheets = List<SheetsSheetIdentity>.unmodifiable(sheets),
+       developerMetadata = List<SheetsDeveloperMetadata>.unmodifiable(
+         developerMetadata,
+       );
 
   final List<SheetsSheetIdentity> sheets;
+  final List<SheetsDeveloperMetadata> developerMetadata;
 
   SheetsSheetIdentity? sheetByTitle(String title) {
     for (final sheet in sheets) {
@@ -35,6 +44,25 @@ class SheetsWorkbookMetadata {
     }
     return null;
   }
+
+  SheetsDeveloperMetadata? metadataByKey(String key) {
+    for (final item in developerMetadata) {
+      if (item.key == key) return item;
+    }
+    return null;
+  }
+}
+
+class SheetsDeveloperMetadata {
+  const SheetsDeveloperMetadata({
+    required this.id,
+    required this.key,
+    required this.value,
+  });
+
+  final int id;
+  final String key;
+  final String value;
 }
 
 class SheetsGridRead {
@@ -194,6 +222,19 @@ class SheetsColumnMove extends SheetsWorkbookOperation {
   final int toColumn;
 }
 
+class SheetsMetadataWrite extends SheetsWorkbookOperation {
+  const SheetsMetadataWrite({
+    required super.sheet,
+    required this.key,
+    required this.value,
+    this.metadataId,
+  });
+
+  final String key;
+  final String value;
+  final int? metadataId;
+}
+
 class GoogleApisWbkClient implements SheetsWorkbookClient {
   GoogleApisWbkClient(this._api);
 
@@ -205,9 +246,16 @@ class GoogleApisWbkClient implements SheetsWorkbookClient {
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
     final spreadsheet = await _api.spreadsheets.get(
       spreadsheetId,
-      $fields: 'sheets(properties(sheetId,index,title,sheetType))',
+      $fields: [
+        'sheets(properties(sheetId,index,title,sheetType)),',
+        'developerMetadata(metadataId,metadataKey,metadataValue,visibility,',
+        'location(spreadsheet))',
+      ].join(),
     );
-    return SheetsWorkbookMetadata(sheets: _sheetIdentities(spreadsheet));
+    return SheetsWorkbookMetadata(
+      sheets: _sheetIdentities(spreadsheet),
+      developerMetadata: _developerMetadata(spreadsheet),
+    );
   }
 
   @override
@@ -300,7 +348,38 @@ sheets.Request _requestForOperation(SheetsWorkbookOperation operation) {
       count: operation.columnCount,
       destinationNumber: operation.toColumn,
     ),
+    SheetsMetadataWrite() => _metadataRequest(operation),
   };
+}
+
+sheets.Request _metadataRequest(SheetsMetadataWrite operation) {
+  final metadata = sheets.DeveloperMetadata(
+    metadataKey: operation.key,
+    metadataValue: operation.value,
+    visibility: 'DOCUMENT',
+    location: sheets.DeveloperMetadataLocation(spreadsheet: true),
+  );
+  final id = operation.metadataId;
+  if (id == null) {
+    return sheets.Request(
+      createDeveloperMetadata: sheets.CreateDeveloperMetadataRequest(
+        developerMetadata: metadata,
+      ),
+    );
+  }
+  return sheets.Request(
+    updateDeveloperMetadata: sheets.UpdateDeveloperMetadataRequest(
+      dataFilters: [
+        sheets.DataFilter(
+          developerMetadataLookup: sheets.DeveloperMetadataLookup(
+            metadataId: id,
+          ),
+        ),
+      ],
+      developerMetadata: metadata,
+      fields: 'metadataValue',
+    ),
+  );
 }
 
 sheets.Request _insertDimensionRequest({
@@ -447,6 +526,21 @@ List<SheetsSheetIdentity> _sheetIdentities(sheets.Spreadsheet spreadsheet) {
         ),
   ];
 }
+
+List<SheetsDeveloperMetadata> _developerMetadata(
+  sheets.Spreadsheet spreadsheet,
+) => [
+  for (final item in spreadsheet.developerMetadata ?? const [])
+    if (item.metadataId != null &&
+        item.metadataKey != null &&
+        item.metadataValue != null &&
+        item.location?.spreadsheet == true)
+      SheetsDeveloperMetadata(
+        id: item.metadataId!,
+        key: item.metadataKey!,
+        value: item.metadataValue!,
+      ),
+];
 
 List<sheets.Sheet> _sortedApiSheets(sheets.Spreadsheet spreadsheet) {
   return [...?spreadsheet.sheets]..sort((left, right) {

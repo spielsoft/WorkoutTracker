@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:workout_tracker/migration.dart';
 import 'state_store.dart';
 import 'validation.dart';
 import 'selection.dart';
@@ -36,6 +37,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     this.initialText = '',
     this.initialSelection,
     this.picker,
+    this.fieldMigrator,
     this.sheetOpener = const UrlSheetOpener(),
     super.key,
   });
@@ -47,6 +49,7 @@ class WorkoutTrackerApp extends StatelessWidget {
   final String initialText;
   final SelectedSheet? initialSelection;
   final SheetPicker? picker;
+  final FieldMigrator? fieldMigrator;
   final SheetOpener sheetOpener;
 
   @override
@@ -65,6 +68,7 @@ class WorkoutTrackerApp extends StatelessWidget {
         initialText: initialText,
         initialSelection: initialSelection,
         picker: picker,
+        fieldMigrator: fieldMigrator,
         sheetOpener: sheetOpener,
       ),
     );
@@ -94,6 +98,7 @@ class AppShell extends StatefulWidget {
     required this.initialText,
     this.initialSelection,
     this.picker,
+    this.fieldMigrator,
     required this.sheetOpener,
     super.key,
   });
@@ -104,6 +109,7 @@ class AppShell extends StatefulWidget {
   final String initialText;
   final SelectedSheet? initialSelection;
   final SheetPicker? picker;
+  final FieldMigrator? fieldMigrator;
   final SheetOpener sheetOpener;
 
   @override
@@ -125,6 +131,7 @@ class _AppShellSt extends State<AppShell> {
       accountSession: widget.accountSession,
       appStStore: widget.appStStore,
       picker: widget.picker,
+      fieldMigrator: widget.fieldMigrator,
       sheetOpener: widget.sheetOpener,
       initialText: widget.initialText,
       initialSelection: widget.initialSelection,

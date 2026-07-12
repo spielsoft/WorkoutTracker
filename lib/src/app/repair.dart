@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
+import 'package:workout_tracker/migration.dart';
 
 import 'validation.dart';
 import 'ui/shared/status.dart';
@@ -12,6 +13,8 @@ class ValidationSummary extends StatelessWidget {
     this.onRepairFormulas,
     this.onRepairFormulaIssue,
     this.onOpenSpreadsheet,
+    this.fieldMigration,
+    this.onConvertLegacy,
     super.key,
   });
 
@@ -23,6 +26,8 @@ class ValidationSummary extends StatelessWidget {
   })?
   onRepairFormulaIssue;
   final Future<void> Function()? onOpenSpreadsheet;
+  final LegacyFieldMigrationReport? fieldMigration;
+  final Future<void> Function()? onConvertLegacy;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +38,39 @@ class ValidationSummary extends StatelessWidget {
       (issue) => issue.needsChoice,
     );
     final panels = <Widget>[
-      if (report.hasSchemaDamage)
+      if (fieldMigration case final migration?)
+        IssuePanel(
+          icon: Icons.upgrade_outlined,
+          title: migration.canApply
+              ? 'Convert old workout sheet'
+              : 'Old workout sheet needs attention',
+          lines: [
+            if (migration.canApply)
+              'This sheet uses an older WorkoutTracker column layout.',
+            ...migration.changes,
+            if (migration.blockers.isNotEmpty) 'Spreadsheet details',
+            ...migration.blockers,
+          ],
+          action: migration.canApply
+              ? FilledButton.icon(
+                  key: const ValueKey('convert-legacy-sheet'),
+                  onPressed: onConvertLegacy == null
+                      ? null
+                      : () => unawaited(onConvertLegacy!()),
+                  icon: const Icon(Icons.upgrade_outlined),
+                  label: const Text('Convert old sheet'),
+                )
+              : FilledButton.icon(
+                  key: const ValueKey('open-legacy-sheet'),
+                  onPressed: onOpenSpreadsheet == null
+                      ? null
+                      : () => unawaited(onOpenSpreadsheet!()),
+                  icon: const Icon(Icons.open_in_new_outlined),
+                  label: const Text('Open in Google Sheets'),
+                ),
+          tone: migration.canApply ? IssueTone.warning : IssueTone.error,
+        )
+      else if (report.hasSchemaDamage)
         IssuePanel(
           icon: Icons.report_problem_outlined,
           title: 'Fix the active sheet structure',

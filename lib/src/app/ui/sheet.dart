@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker/migration.dart';
 
 import '../account.dart';
 import '../repair.dart';
@@ -23,6 +24,7 @@ final class SheetView extends AppView {
     required this.hasPicker,
     required this.showAccount,
     this.accountMismatch,
+    this.fieldMigration,
     super.error,
   });
 
@@ -37,6 +39,7 @@ final class SheetView extends AppView {
   final bool hasPicker;
   final bool showAccount;
   final AcctMismatch? accountMismatch;
+  final LegacyFieldMigrationReport? fieldMigration;
 }
 
 sealed class SheetCmd {
@@ -98,6 +101,10 @@ final class OpenSheet extends SheetCmd {
   const OpenSheet();
 }
 
+final class ConvertLegacySheet extends SheetCmd {
+  const ConvertLegacySheet();
+}
+
 class SheetScreen extends StatefulWidget {
   const SheetScreen({required this.view, required this.run, super.key});
 
@@ -151,6 +158,34 @@ class _SheetScreenSt extends State<SheetScreen> {
     await widget.run(CreateSheet(name.isEmpty ? initial : name));
   }
 
+  Future<void> _convertLegacySheet() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Convert old workout sheet?'),
+        content: const Text(
+          'WorkoutTracker will update this sheet to the current columns. '
+          'Exercise data, formulas, and workout history will be preserved. '
+          'The sheet is reread before writing and conversion stops if it changed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const ValueKey('confirm-legacy-sheet-conversion'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Convert sheet'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await widget.run(const ConvertLegacySheet());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final view = widget.view;
@@ -197,6 +232,8 @@ class _SheetScreenSt extends State<SheetScreen> {
         if (view.report case final report?)
           ValidationSummary(
             report: report,
+            fieldMigration: view.fieldMigration,
+            onConvertLegacy: view.isBusy ? null : _convertLegacySheet,
             onRepairFormulas: view.isBusy
                 ? null
                 : () async {

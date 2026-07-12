@@ -56,8 +56,9 @@ Existing owner workbooks are converted by the single temporary, allowlisted
 migration module already used for the field-model change. It will be extended
 to mark only rows accepted by the legacy parser, leave unrecognized and empty
 rows unmarked, create durable workout headings, and apply the default layout
-without changing history or unrelated tabs. It is deleted before MVP; there is
-no shipped fallback parser or upgrade UI. A failed or stale migration performs
+without changing history or unrelated tabs. A temporary confirmed owner action
+may invoke it during pre-MVP testing. It is deleted before MVP; there is no
+shipped fallback parser or conversion UI. A failed or stale migration performs
 no unsafe follow-up writes.
 
 ## User Stories

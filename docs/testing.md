@@ -31,6 +31,11 @@ history precedence, raw-history preservation, and stale-write rejection. The
 temporary owner migration and its colocated tests are deleted together before
 MVP release.
 
+Workbook-version coverage verifies that new sheets and successful conversions
+write `workouttracker.schema_version=0.9`, missing metadata selects only the
+original legacy converter, and a declared version is never guessed from
+headers.
+
 Fakes may prove what WorkoutTracker requests or accepts. They do not prove the
 behavior of Google Sign-In, Drive, Sheets, Firebase, OAuth, or Picker.
 
@@ -61,6 +66,11 @@ must reset the fixture after itself; report reset failures and skipped runs
 explicitly.
 
 ## Temporary Owner Migration
+
+The pre-MVP app recognizes an exact unversioned legacy workbook and offers a
+confirmed **Convert old sheet** action. It dry-runs first, rereads before
+writing, stamps version `0.9`, and revalidates the converted workbook. Other
+damaged or versioned workbooks remain on the normal repair path.
 
 Before migrating an owner workbook, make a disposable copy and run the
 temporary field migrator in dry-run mode:

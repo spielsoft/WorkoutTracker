@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/app.dart';
+import 'package:workout_tracker/migration.dart';
 
 import '../service_fake.dart';
 import '../../fixtures/workbook.dart';
@@ -9,6 +10,44 @@ import '../../fixtures/workbook.dart';
 import '../../support/widget.dart';
 
 void main() {
+  testWidgets('converts an exact legacy workbook after confirmation', (
+    tester,
+  ) async {
+    final migrator = _FieldMigrator();
+    final service = RevalidatingValService(
+      reports: [
+        parseWorkbookFixture(loadFixedColumnDamageFixture()),
+        minimalValidParsedSheet(),
+      ],
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        svc: service,
+        fieldMigrator: migrator,
+        initialText: 'legacy-sheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Convert old workout sheet'), findsOneWidget);
+    expect(find.text('Fix the active sheet structure'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('convert-legacy-sheet')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Convert old workout sheet?'), findsOneWidget);
+    expect(migrator.migrateCount, 0);
+    await tester.tap(
+      find.byKey(const ValueKey('confirm-legacy-sheet-conversion')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(migrator.migrateCount, 1);
+    expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
+  });
+
   testWidgets('blocks logging with task-first formula repair guidance', (
     tester,
   ) async {
@@ -637,4 +676,34 @@ void main() {
       findsNothing,
     );
   });
+}
+
+class _FieldMigrator implements FieldMigrator {
+  int migrateCount = 0;
+
+  LegacyFieldMigrationReport _report({bool applied = false}) =>
+      LegacyFieldMigrationReport(
+        spreadsheetId: 'legacy-sheet-id',
+        exerciseCount: 1,
+        activeRowCount: 1,
+        changes: const ['Update legacy columns.', 'Set schema version 0.9.'],
+        blockers: const [],
+        recognized: true,
+        wasApplied: applied,
+      );
+
+  @override
+  Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId) async {
+    return _report();
+  }
+
+  @override
+  Future<LegacyFieldMigrationReport> migrate(
+    String spreadsheetId, {
+    required bool confirmed,
+  }) async {
+    expect(confirmed, isTrue);
+    migrateCount += 1;
+    return _report(applied: true);
+  }
 }

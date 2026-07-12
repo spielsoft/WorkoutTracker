@@ -75,10 +75,11 @@ None - can start immediately.
 Introduce the active-sheet contract whose final fixed metadata column is
 `is_exercise`. Normal parsing treats only literal `x` rows as exercises,
 treats blank rows as non-exercise annotations, and rejects unknown markers.
-Extend `tool/legacy_field_migration.dart` to insert and populate the marker,
+Extend `lib/src/migration/legacy_fields.dart` to insert and populate the marker,
 create durable workout declarations, and apply the layout for allowlisted
 owner workbooks or approved copies. Keep every legacy rule in that one file;
-ship no upgrade UI or parser fallback, and delete the file before MVP.
+keep its temporary confirmed owner UI separate from normal parsing, and delete
+the file and UI before MVP.
 
 ### Acceptance criteria
 

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/migration.dart';
 import 'package:workout_tracker/sheets.dart';
-
-import '../../tool/legacy_field_migration.dart';
 
 void main() {
   test('dry run is allowlisted and reports unmappable legacy values', () async {
@@ -80,6 +79,22 @@ void main() {
       'Default Values',
     ]);
     expect(client.exerciseRows[1][7], 'x5@8');
+    expect(client.schemaVersion, workbookSchemaVersion);
+  });
+
+  test('does not guess a legacy path for a versioned workbook', () async {
+    final client = _Client(
+      activeRows: _activeRows(),
+      exerciseRows: _exerciseRows(),
+      schemaVersion: workbookSchemaVersion,
+    );
+    final report = await LegacyFieldMigrator(
+      client: client,
+      allowedSpreadsheetIds: const ['approved'],
+    ).dryRun('approved');
+
+    expect(report.recognized, isFalse);
+    expect(report.blockers.join(' '), contains(workbookSchemaVersion));
   });
 
   test('rejects a stale workbook before applying operations', () async {
@@ -154,6 +169,7 @@ class _Client implements SheetsWorkbookClient {
     required List<List<String>> activeRows,
     required List<List<String>> exerciseRows,
     Iterable<SheetsCellFormula> activeFormulas = const [],
+    this.schemaVersion,
     this.mutateBeforeRead,
   }) : activeRows = activeRows.map((row) => [...row]).toList(),
        exerciseRows = exerciseRows.map((row) => [...row]).toList(),
@@ -165,12 +181,23 @@ class _Client implements SheetsWorkbookClient {
   final List<List<String>> exerciseRows;
   final List<SheetsCellFormula> activeFormulas;
   final int? mutateBeforeRead;
+  String? schemaVersion;
   bool applied = false;
   var _readCount = 0;
 
   @override
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
-    return SheetsWorkbookMetadata(sheets: [active, exercises]);
+    return SheetsWorkbookMetadata(
+      sheets: [active, exercises],
+      developerMetadata: [
+        if (schemaVersion case final version?)
+          SheetsDeveloperMetadata(
+            id: 9,
+            key: workbookSchemaKey,
+            value: version,
+          ),
+      ],
+    );
   }
 
   @override
@@ -247,6 +274,8 @@ class _Client implements SheetsWorkbookClient {
               );
             }
           }
+        case SheetsMetadataWrite():
+          schemaVersion = operation.value;
         default:
           throw UnsupportedError('$operation');
       }

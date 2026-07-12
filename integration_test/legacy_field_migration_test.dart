@@ -3,9 +3,8 @@ import 'dart:io' show Platform;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:workout_tracker/app.dart';
+import 'package:workout_tracker/migration.dart';
 import 'package:workout_tracker/sheets.dart';
-
-import '../tool/legacy_field_migration.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

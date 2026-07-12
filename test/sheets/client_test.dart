@@ -116,6 +116,37 @@ void main() {
 
     expect(httpClient.requests, isEmpty);
   });
+
+  test('writes the semantic workbook version as document metadata', () async {
+    final httpClient = _RecordingHttpClient();
+    final workbook = GoogleApisWbkClient(sheets.SheetsApi(httpClient));
+    const active = SheetsSheetIdentity(sheetId: 42, title: 'Workout');
+
+    await workbook.applyOperations(
+      spreadsheetId: 'spreadsheet-id',
+      operations: const [
+        SheetsMetadataWrite(
+          sheet: active,
+          key: workbookSchemaKey,
+          value: workbookSchemaVersion,
+        ),
+      ],
+    );
+
+    final body = jsonDecode(httpClient.requests.single.body) as Map;
+    expect(body['requests'], [
+      {
+        'createDeveloperMetadata': {
+          'developerMetadata': {
+            'location': {'spreadsheet': true},
+            'metadataKey': workbookSchemaKey,
+            'metadataValue': '0.9',
+            'visibility': 'DOCUMENT',
+          },
+        },
+      },
+    ]);
+  });
 }
 
 class _RecordingHttpClient extends http.BaseClient {

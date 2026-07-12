@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:workout_tracker/migration.dart';
 
 import '../controller.dart';
 import '../selection.dart';
@@ -22,6 +23,7 @@ final class AppFlow extends ChangeNotifier {
     GoogleAccountSession? accountSession,
     AppStStore? appStStore,
     SheetPicker? picker,
+    this.fieldMigrator,
     this._sheetOpener = const UrlSheetOpener(),
     String initialText = '',
     SelectedSheet? initialSelection,
@@ -46,9 +48,12 @@ final class AppFlow extends ChangeNotifier {
   final bool _showAccount;
   final bool _hasPicker;
   final SheetOpener _sheetOpener;
+  final FieldMigrator? fieldMigrator;
   late final LoadedFlow loaded;
   bool _showLoaded = false;
   String _sheetText;
+  LegacyFieldMigrationReport? _fieldMigration;
+  bool _migrationPending = false;
 
   AppView get view {
     return pages.last.view;
@@ -58,7 +63,10 @@ final class AppFlow extends ChangeNotifier {
     final report = _ctrl.report;
     final workspace = _workspace.state;
     final busy =
-        _ctrl.isBusy || workspace.isCommandInFlight || workspace.isInitializing;
+        _ctrl.isBusy ||
+        _migrationPending ||
+        workspace.isCommandInFlight ||
+        workspace.isInitializing;
     if (!_showLoaded || report == null || report.hasBlockingIssues) {
       return [
         AppPage(id: _sheetPageId, view: _sheetView(report, workspace, busy)),
@@ -90,6 +98,7 @@ final class AppFlow extends ChangeNotifier {
       hasPicker: _hasPicker,
       showAccount: _showAccount,
       accountMismatch: workspace.accountMismatch,
+      fieldMigration: _fieldMigration,
     );
   }
 
@@ -140,6 +149,7 @@ final class AppFlow extends ChangeNotifier {
         exerciseRow,
       ),
       OpenSheet() => await _openSheet(),
+      ConvertLegacySheet() => await _convertLegacySheet(),
     };
     notifyListeners();
     return result;
@@ -157,9 +167,50 @@ final class AppFlow extends ChangeNotifier {
         ? await _ctrl.validateSelection(_sheetText)
         : await _ctrl.validateSelected(selected);
     final report = _ctrl.report;
+    await _inspectLegacy(report);
     _showLoaded = ok && report != null && !report.hasBlockingIssues;
     if (_showLoaded) loaded.showHome();
     return CmdResult.result(ok);
+  }
+
+  Future<void> _inspectLegacy(ValReport? report) async {
+    _fieldMigration = null;
+    final migrator = fieldMigrator;
+    if (migrator == null || report == null || !report.hasSchemaDamage) return;
+    try {
+      final candidate = await migrator.dryRun(report.sheetId);
+      if (_ctrl.report?.sheetId == report.sheetId && candidate.recognized) {
+        _fieldMigration = candidate;
+      }
+    } on Object {
+      // Ordinary schema guidance remains available when inspection fails.
+    }
+  }
+
+  Future<CmdResult> _convertLegacySheet() async {
+    final report = _ctrl.report;
+    final migration = _fieldMigration;
+    final migrator = fieldMigrator;
+    if (report == null ||
+        migration == null ||
+        migration.spreadsheetId != report.sheetId ||
+        !migration.canApply ||
+        migrator == null) {
+      return const CmdResult.failed('This sheet cannot be converted safely.');
+    }
+
+    _migrationPending = true;
+    notifyListeners();
+    try {
+      await migrator.migrate(report.sheetId, confirmed: true);
+      return _validate();
+    } on Object catch (error) {
+      _ctrl.reportSelectionFailure(error);
+      return CmdResult.failed('Unable to convert old sheet: $error');
+    } finally {
+      _migrationPending = false;
+      notifyListeners();
+    }
   }
 
   Future<CmdResult> _chooseSheet() async {
@@ -204,6 +255,7 @@ final class AppFlow extends ChangeNotifier {
     _ctrl.clearSelection();
     _sheetText = '';
     _showLoaded = false;
+    _fieldMigration = null;
     loaded.reset();
     return const CmdResult.done();
   }
