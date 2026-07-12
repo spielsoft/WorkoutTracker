@@ -92,6 +92,8 @@ void main() {
     });
 
     test('publishes the approved store terms as effective', () {
+      expect(privacy, contains('WorkoutTracker Terms'));
+      expect(privacy, isNot(contains('proposed WorkoutTracker Terms')));
       expect(terms, contains('Effective date: July 11, 2026'));
       expect(terms, isNot(contains('Draft for owner review')));
       expect(terms, isNot(contains('Not in effect')));
