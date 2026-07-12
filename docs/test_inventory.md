@@ -26,6 +26,9 @@ The default credential-free gate is `flutter test`. It contains 216 tests in
   suite. Without `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` it skips before
   login. Only the documented opt-in macOS run establishes live Google behavior,
   and it may reset and write the development Sheet.
+- `integration_test/legacy_field_migration_test.dart` is also excluded. It
+  dry-runs only when explicitly enabled and requires the exact spreadsheet ID
+  again as confirmation before applying the temporary owner migration.
 - Native Apple bundle and accessibility smoke checks are release commands, not
   simulated Dart tests. See `COMPILE.md` and `docs/accessibility.md`.
 - Dynamic-field live acceptance inspects both a conventional Weight/Reps/RPE

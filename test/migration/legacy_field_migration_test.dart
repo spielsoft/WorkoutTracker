@@ -17,6 +17,7 @@ void main() {
     expect(() => migrator.dryRun('other'), throwsStateError);
     final report = await migrator.dryRun('approved');
     expect(report.canApply, isFalse);
+    expect(report.changes, hasLength(2));
     expect(report.blockers.join(' '), contains('cannot map'));
     expect(client.applied, isFalse);
   });
@@ -46,6 +47,7 @@ void main() {
     final report = await migrator.migrate('approved', confirmed: true);
 
     expect(report.wasApplied, isTrue);
+    expect(report.refreshedSheet?.schemaViolations, isEmpty);
     expect(client.activeRows.first.take(10), [
       'Exercise',
       'Sets',

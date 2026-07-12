@@ -60,6 +60,25 @@ Without the environment flag, it must skip before authentication. A live run
 must reset the fixture after itself; report reset failures and skipped runs
 explicitly.
 
+## Temporary Owner Migration
+
+Before migrating an owner workbook, make a disposable copy and run the
+temporary field migrator in dry-run mode:
+
+```sh
+WORKOUT_TRACKER_RUN_LEGACY_FIELD_MIGRATION=1 \
+WORKOUT_TRACKER_LEGACY_MIGRATION_SPREADSHEET_ID=<copied-sheet-id> \
+  flutter test integration_test/legacy_field_migration_test.dart -d macos
+```
+
+Review its listed changes, counts, and blockers. To apply only after explicit
+owner approval, rerun the same command with the exact spreadsheet ID repeated
+as `WORKOUT_TRACKER_CONFIRM_LEGACY_FIELD_MIGRATION`. The allowlist and exact
+confirmation prevent accidental writes to any other workbook. Inspect the copy
+in Google Sheets and in the app before repeating the process for an original.
+Delete the temporary migrator, integration harness, and migration tests after
+all owner workbooks complete the combined field/layout migration.
+
 ## Release Validation
 
 Run the full local suite plus the clean Apple builds required by

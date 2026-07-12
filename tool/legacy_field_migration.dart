@@ -50,7 +50,7 @@ class LegacyFieldMigrator {
         '${parsed.schemaViolations.map((item) => item.message).join(' ')}',
       );
     }
-    return plan.report.applied();
+    return plan.report.applied(parsed);
   }
 
   void _requireAllowed(String spreadsheetId) {
@@ -90,25 +90,33 @@ class LegacyFieldMigrationReport {
     required this.spreadsheetId,
     required this.exerciseCount,
     required this.activeRowCount,
+    required Iterable<String> changes,
     required Iterable<String> blockers,
     this.wasApplied = false,
-  }) : blockers = List<String>.unmodifiable(blockers);
+    this.refreshedSheet,
+  }) : changes = List<String>.unmodifiable(changes),
+       blockers = List<String>.unmodifiable(blockers);
 
   final String spreadsheetId;
   final int exerciseCount;
   final int activeRowCount;
+  final List<String> changes;
   final List<String> blockers;
   final bool wasApplied;
+  final ParsedActiveSheet? refreshedSheet;
 
   bool get canApply => blockers.isEmpty;
 
-  LegacyFieldMigrationReport applied() => LegacyFieldMigrationReport(
-    spreadsheetId: spreadsheetId,
-    exerciseCount: exerciseCount,
-    activeRowCount: activeRowCount,
-    blockers: blockers,
-    wasApplied: true,
-  );
+  LegacyFieldMigrationReport applied(ParsedActiveSheet sheet) =>
+      LegacyFieldMigrationReport(
+        spreadsheetId: spreadsheetId,
+        exerciseCount: exerciseCount,
+        activeRowCount: activeRowCount,
+        changes: changes,
+        blockers: blockers,
+        wasApplied: true,
+        refreshedSheet: sheet,
+      );
 }
 
 class _LegacyPlan {
@@ -129,6 +137,10 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
   final activeRows = workbook.active.rows;
   final exerciseRows = workbook.exercises.rows;
   final blockers = <String>[];
+  const changes = [
+    'Active: replace Reps/RPE with Targets and add is_exercise.',
+    'Exercises: replace Default Reps/Default RPE with Default Values.',
+  ];
   if (activeRows.isEmpty || !_samePrefix(activeRows.first, _legacyActive)) {
     blockers.add('Active tab does not have the legacy field header.');
   }
@@ -142,6 +154,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
         spreadsheetId: spreadsheetId,
         exerciseCount: 0,
         activeRowCount: 0,
+        changes: changes,
         blockers: blockers,
       ),
       operations: const [],
@@ -233,6 +246,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
       spreadsheetId: spreadsheetId,
       exerciseCount: exerciseCount,
       activeRowCount: activeCount,
+      changes: changes,
       blockers: blockers,
     ),
     operations: operations,
