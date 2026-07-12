@@ -17,6 +17,8 @@ void main() {
 
     test('connects every public page and the approved contact', () {
       const contact = 'mailto:ian.spielman@gmail.com';
+      const repo = 'https://github.com/ispielman/WorkoutTracker';
+      const oldRepo = 'https://github.com/ispielma/WorkoutTracker';
 
       expect(
         _hrefs(support),
@@ -24,6 +26,8 @@ void main() {
       );
       expect(_hrefs(privacy), containsAll(['/', '/terms.html', contact]));
       expect(_hrefs(terms), containsAll(['/', '/privacy.html', contact]));
+      expect(_hrefs(support), contains(repo));
+      expect('$support\n$terms', isNot(contains(oldRepo)));
     });
 
     test('has no hosted sign-in or token-handling surface', () {
