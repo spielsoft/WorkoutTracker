@@ -275,12 +275,11 @@ class AppendingExerciseAuthoringService {
       exercise.exercise,
       exercise.description,
       exercise.defaultSets,
-      exercise.defaultReps,
-      exercise.defaultRpe,
       exercise.defaultRest,
       exercise.defaultTempo,
       exercise.notes,
       exercise.resolvedLogFormat,
+      exercise.renderedDefaultValues,
     ]);
     final activeExerciseIndex = _exercises.indexWhere(
       (row) => row.first == 'Squat',
@@ -300,8 +299,8 @@ class AppendingExerciseAuthoringService {
           ),
           CellFormula(
             sheetRowNumber: 3,
-            sheetColumnNumber: 8,
-            formula: '=Exercises!I$activeExerciseRowNumber',
+            sheetColumnNumber: 7,
+            formula: '=Exercises!G$activeExerciseRowNumber',
           ),
         ],
       ),
@@ -376,12 +375,11 @@ class EditingExerciseAuthoringService
       exercise.exercise,
       exercise.description,
       exercise.defaultSets,
-      exercise.defaultReps,
-      exercise.defaultRpe,
       exercise.defaultRest,
       exercise.defaultTempo,
       exercise.notes,
       exercise.resolvedLogFormat,
+      exercise.renderedDefaultValues,
     ];
     return ValReport(
       spreadsheetId: spreadsheetId,
@@ -621,7 +619,18 @@ ParsedActiveSheet minimalValidParsedSheet() {
       rows: [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        [
+          'Squat',
+          '3',
+          '3 min',
+          '',
+          'x5@8',
+          '',
+          defaultExerciseLogFormat,
+          'Legs',
+          '',
+          '',
+        ],
       ],
     ),
   );
@@ -633,7 +642,7 @@ ParsedActiveSheet loggedSetParsedSheet() {
       rows: [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '150x5@8'],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', '150x5@8'],
       ],
     ),
   );
@@ -648,14 +657,14 @@ ParsedActiveSheet twoSetLoggingSheet({required String s2Value}) {
         [
           'Squat',
           '3',
-          '5',
-          '8',
           '3 min',
           '',
+          'x5@8',
           '',
           '',
           'Legs',
           '',
+          'x',
           '150x5@8',
           s2Value,
         ],
@@ -674,8 +683,8 @@ ParsedActiveSheet exerciseInventoryParsedSheet(
     ),
     CellFormula(
       sheetRowNumber: 3,
-      sheetColumnNumber: 8,
-      formula: '=Exercises!I2',
+      sheetColumnNumber: 7,
+      formula: '=Exercises!G2',
     ),
   ],
 }) {
@@ -684,7 +693,7 @@ ParsedActiveSheet exerciseInventoryParsedSheet(
       rows: [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ],
       cellFormulas: cellFormulas,
       exercisesRows: [exercisesSheetColumns, ...exercises],
@@ -708,23 +717,26 @@ List<String> exerciseRow(
   String name, {
   String description = '',
   String defaultSets = '3',
-  String defaultReps = '10',
-  String defaultRpe = '8',
   String defaultRest = '2 min',
-  String defaultTempo = '',
+  String defaultTempo = '2-1-1',
   String notes = '',
   String logFormat = '{Weight}[x]{Reps}[@]{RPE}',
+  Map<String, String> defaultValues = const {
+    'Weight': '',
+    'Reps': '10',
+    'RPE': '8',
+  },
 }) {
+  final parsed = parseLogFormat(logFormat);
   return [
     name,
     description,
     defaultSets,
-    defaultReps,
-    defaultRpe,
     defaultRest,
     defaultTempo,
     notes,
     logFormat,
+    if (parsed is ParsedLogFormat) parsed.renderValues(defaultValues) else '',
   ];
 }
 
@@ -808,7 +820,7 @@ ParsedActiveSheet repairedFormulaDamageFixtureSheet() {
 ParsedActiveSheet repairedFormulaDamageFixtureSheetWithBackupViolation() {
   final fixture = loadFormulaDamageFixture();
   final rows = fixture.activeSheet.rows.map((row) => row.toList()).toList();
-  rows[2][9] = 'TRUE';
+  rows[2][8] = 'TRUE';
   return parseRepairedFormulaDamageFixtureRows(rows);
 }
 
@@ -828,38 +840,8 @@ ParsedActiveSheet parseRepairedFormulaDamageFixtureRows(
         ),
         CellFormula(
           sheetRowNumber: 3,
-          sheetColumnNumber: 2,
-          formula: '=Exercises!C2',
-        ),
-        CellFormula(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 3,
-          formula: '=Exercises!D2',
-        ),
-        CellFormula(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 4,
-          formula: '=Exercises!E2',
-        ),
-        CellFormula(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 5,
-          formula: '=Exercises!F2',
-        ),
-        CellFormula(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 6,
-          formula: '=Exercises!G2',
-        ),
-        CellFormula(
-          sheetRowNumber: 3,
           sheetColumnNumber: 7,
-          formula: '=Exercises!H2',
-        ),
-        CellFormula(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 8,
-          formula: '=Exercises!I2',
+          formula: '=Exercises!G2',
         ),
       ],
     ),

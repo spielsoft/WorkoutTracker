@@ -5,26 +5,25 @@ const defaultWorkoutName = 'Default';
 const activeSheetFixedColumns = [
   'Exercise',
   'Sets',
-  'Reps',
-  'RPE',
   'Rest',
   'Tempo',
+  'Targets',
   'Notes',
   'Log Format',
   'Workout',
   'is_backup',
+  'is_exercise',
 ];
 
 const exercisesSheetColumns = [
   'Exercise',
   'Description',
   'Default Sets',
-  'Default Reps',
-  'Default RPE',
   'Default Rest',
   'Default Tempo',
   'Notes',
   'Log Format',
+  'Default Values',
 ];
 
 const defaultExerciseLogFormat = defaultLogFormat;

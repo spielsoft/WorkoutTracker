@@ -10,7 +10,7 @@ void main() {
   testWidgets('opens an exercise manager inventory in canonical sheet order', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = const Size(390, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -119,12 +119,12 @@ void main() {
 
       expect(find.byTooltip('Clear exercise search'), findsNothing);
       expect(authoringService.createdExercises, [
-        const ExerciseDef(
+        ExerciseDef(
           exercise: 'Romanian Deadlift',
           defaultSets: '3',
-          defaultReps: '10',
-          defaultRpe: '8',
           defaultRest: '2 min',
+          defaultTempo: '2-1-1',
+          defaultValues: const {'Weight': '', 'Reps': '10', 'RPE': '8'},
           logFormat: '{Weight}[x]{Reps}[@]{RPE}',
         ),
       ]);
@@ -142,7 +142,7 @@ void main() {
   testWidgets('keeps an edited exercise visible in a long library', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = const Size(390, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -188,9 +188,12 @@ void main() {
       find.byKey(const ValueKey('exercise-authoring-name')),
       'Custom Rope Row',
     );
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('exercise-authoring-submit')),
+      120,
+      scrollable: find.byType(Scrollable).first,
     );
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
     await tester.pumpAndSettle();
@@ -205,7 +208,7 @@ void main() {
       find.byKey(const ValueKey('saved-exercise-highlight')),
     );
     expect(highlightRect.top, greaterThanOrEqualTo(0));
-    expect(highlightRect.bottom, lessThanOrEqualTo(844));
+    expect(highlightRect.bottom, lessThanOrEqualTo(900));
   });
 
   testWidgets(
@@ -266,13 +269,13 @@ void main() {
       expect(authoringService.updatedExercises, [
         (
           row: 2,
-          exercise: const ExerciseDef(
+          exercise: ExerciseDef(
             exercise: 'High Bar Squat',
             description: 'High bar back squat',
             defaultSets: '3',
-            defaultReps: '10',
-            defaultRpe: '8',
             defaultRest: '2 min',
+            defaultTempo: '2-1-1',
+            defaultValues: const {'Weight': '', 'Reps': '10', 'RPE': '8'},
             logFormat: '{Weight}[x]{Reps}[@]{RPE}',
           ),
         ),
@@ -324,7 +327,15 @@ void main() {
     );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancel'));
+    final cancel = find.widgetWithText(OutlinedButton, 'Cancel');
+    await tester.scrollUntilVisible(
+      cancel,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -100));
+    await tester.pumpAndSettle();
+    await tester.tap(cancel);
     await tester.pumpAndSettle();
     expect(find.text('Discard changes?'), findsOneWidget);
     await tester.tap(find.text('Discard'));

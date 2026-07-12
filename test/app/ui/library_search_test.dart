@@ -9,7 +9,7 @@ void main() {
   ) async {
     await _pumpLibrary(
       tester,
-      exercises: const [
+      exercises: [
         CanonicalExercise(
           sheetRowNumber: 2,
           exercise: 'Overhead Press',
@@ -103,7 +103,7 @@ void main() {
     await _pumpLibrary(
       tester,
       actions: actions,
-      exercises: const [
+      exercises: [
         CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat'),
         CanonicalExercise(sheetRowNumber: 3, exercise: 'Bench Press'),
         CanonicalExercise(sheetRowNumber: 4, exercise: 'Cable Row'),

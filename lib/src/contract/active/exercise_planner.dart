@@ -92,12 +92,11 @@ class _ExerciseWritePlanner {
     _setRowValue(row, columns.exercise, exercise.exercise);
     _setRowValue(row, columns.description, exercise.description);
     _setRowValue(row, columns.defaultSets, exercise.defaultSets);
-    _setRowValue(row, columns.defaultReps, exercise.defaultReps);
-    _setRowValue(row, columns.defaultRpe, exercise.defaultRpe);
     _setRowValue(row, columns.defaultRest, exercise.defaultRest);
     _setRowValue(row, columns.defaultTempo, exercise.defaultTempo);
     _setRowValue(row, columns.notes, exercise.notes);
     _setRowValue(row, logFormatColumn, exercise.resolvedLogFormat);
+    _setRowValue(row, columns.defaultValues, exercise.renderedDefaultValues);
     return row;
   }
 

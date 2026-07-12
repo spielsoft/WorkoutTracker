@@ -52,12 +52,13 @@ reordering use structural operations where practical so formatting moves with
 owned rows, and they do not broadly reformat surviving content. WorkoutTracker
 does not interpret colors, fonts, borders, or widths as schema.
 
-Existing WorkoutTracker workbooks receive an explicit, expectation-checked
-upgrade. The upgrade inserts `is_exercise` at the fixed-metadata boundary,
-marks only rows accepted by the legacy parser, leaves unrecognized and empty
-rows unmarked, creates durable workout headings, and applies the default active
-tab layout without changing workout history values or unrelated tabs. A failed
-or stale upgrade performs no unsafe follow-up writes.
+Existing owner workbooks are converted by the single temporary, allowlisted
+migration module already used for the field-model change. It will be extended
+to mark only rows accepted by the legacy parser, leave unrecognized and empty
+rows unmarked, create durable workout headings, and apply the default layout
+without changing history or unrelated tabs. It is deleted before MVP; there is
+no shipped fallback parser or upgrade UI. A failed or stale migration performs
+no unsafe follow-up writes.
 
 ## User Stories
 
@@ -95,9 +96,10 @@ or stale upgrade performs no unsafe follow-up writes.
 
 ## Implementation Decisions
 
-- The active tab's fixed columns, in order, are Exercise, Sets, Reps, RPE,
-  Rest, Tempo, Notes, Log Format, Workout, is_backup, and is_exercise. History
-  begins immediately after is_exercise.
+- The active tab's fixed columns, in order, are Exercise, Sets, Rest, Tempo,
+  Targets, Notes, Log Format, Workout, is_backup, and is_exercise. History
+  begins immediately after is_exercise. Targets is rendered by the row's Log
+  Format and replaces privileged Reps/RPE metadata columns.
 - `is_exercise` accepts only blank or the literal `x`. The parser reads an
   exercise only when this marker is `x`; a non-empty Exercise cell alone has no
   semantic meaning.
@@ -116,8 +118,8 @@ or stale upgrade performs no unsafe follow-up writes.
   columns may be hidden or visually de-emphasized; is_exercise remains the
   final, narrow metadata column before history.
 - Treat column proportions as intentional presentation behavior. Initial pixel
-  widths should closely follow the reference: Exercise 250, Sets 80, Reps 96,
-  RPE 96, Rest 96, Tempo 96, Notes 330, is_exercise 28, and every history set
+  widths should closely follow the reference: Exercise 250, Sets 80, Rest 96,
+  Tempo 96, Targets 128, Notes 330, is_exercise 28, and every history set
   column 128. Hidden machine columns may retain practical internal widths
   because they do not participate in the visible layout.
 - Exercise is wide enough for ordinary names but may truncate exceptionally
@@ -146,10 +148,10 @@ or stale upgrade performs no unsafe follow-up writes.
   included in deletion plans.
 - History insertion applies default format only to new columns and directly
   affected header merges. Unrelated history blocks are not reformatted.
-- Legacy upgrade is explicit and uses the same reread, expectation, write, and
+- Owner migration is explicit and uses the same reread, expectation, write, and
   refreshed-report safety model as other workbook mutations.
-- Legacy recognition exists only inside the versioned upgrade path. Normal
-  post-upgrade parsing does not fall back to Exercise-cell inference.
+- Legacy recognition exists only inside the temporary migration file. Normal
+  parsing does not fall back to Exercise-cell inference.
 - Existing values, formulas, raw history text, empty rows, annotations, and
   extra tabs survive migration unless a user explicitly chooses an operation
   that removes them.
@@ -169,7 +171,7 @@ or stale upgrade performs no unsafe follow-up writes.
   workout headings, primary exercises, backups, and unparseable raw history.
 - Prove that only `x` rows become exercises, headings create durable workouts,
   blanks are ignored, and unknown marker values block writes.
-- Test legacy upgrade from representative valid workbooks and assert the
+- Test the temporary migration on representative valid workbooks and assert the
   refreshed workbook retains formulas, raw history, ignored rows, and tab
   identity.
 - Adapter tests may assert essential request ranges and formatting operations,

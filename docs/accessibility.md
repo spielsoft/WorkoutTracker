@@ -10,6 +10,9 @@ Accessibility is part of each UI change, not a release-only pass.
 - State conveyed by color, icon, or shape is also present in semantics.
 - Tap targets and text contrast meet Flutter's Android and iOS guidelines.
 - Layout remains usable with large text and narrow mobile widths.
+- Format-generated defaults and targets use stable `Default <field>` and
+  `<field>` names in declaration order; responsive columns must not change
+  keyboard or screen-reader traversal order.
 
 Add a focused semantics test only for a feature-specific contract. The broad
 safety net is `test/app/ui/shell_test.dart`, whose core-state test runs:

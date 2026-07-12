@@ -5,24 +5,23 @@ class WorkoutSlot {
     required this.sheetRowNumber,
     required this.exercise,
     required this.sets,
-    required this.reps,
-    required this.rpe,
     required this.rest,
     required this.tempo,
+    required Map<String, String> targetValues,
     required this.notes,
     required this.logFormat,
     required this.workout,
     required this.isBackup,
     Iterable<WorkoutSlot> backups = const [],
-  }) : backups = List<WorkoutSlot>.unmodifiable(backups);
+  }) : targetValues = Map<String, String>.unmodifiable(targetValues),
+       backups = List<WorkoutSlot>.unmodifiable(backups);
 
   final int sheetRowNumber;
   final String exercise;
   final String sets;
-  final String reps;
-  final String rpe;
   final String rest;
   final String tempo;
+  final Map<String, String> targetValues;
   final String notes;
   final LogFormatParseResult logFormat;
   final String workout;
@@ -34,10 +33,9 @@ class WorkoutSlot {
       sheetRowNumber: sheetRowNumber,
       exercise: exercise,
       sets: sets,
-      reps: reps,
-      rpe: rpe,
       rest: rest,
       tempo: tempo,
+      targetValues: targetValues,
       notes: notes,
       logFormat: logFormat,
       workout: workout,
@@ -53,10 +51,9 @@ class WorkoutSlot {
             sheetRowNumber == other.sheetRowNumber &&
             exercise == other.exercise &&
             sets == other.sets &&
-            reps == other.reps &&
-            rpe == other.rpe &&
             rest == other.rest &&
             tempo == other.tempo &&
+            _stringMapEquals(targetValues, other.targetValues) &&
             notes == other.notes &&
             logFormat == other.logFormat &&
             workout == other.workout &&
@@ -69,10 +66,9 @@ class WorkoutSlot {
     sheetRowNumber,
     exercise,
     sets,
-    reps,
-    rpe,
     rest,
     tempo,
+    Object.hashAll(targetValues.entries),
     notes,
     logFormat,
     workout,
@@ -86,10 +82,9 @@ class WorkoutSlot {
         'sheetRowNumber: $sheetRowNumber, '
         'exercise: $exercise, '
         'sets: $sets, '
-        'reps: $reps, '
-        'rpe: $rpe, '
         'rest: $rest, '
         'tempo: $tempo, '
+        'targetValues: $targetValues, '
         'notes: $notes, '
         'logFormat: $logFormat, '
         'workout: $workout, '

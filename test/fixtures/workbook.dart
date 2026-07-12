@@ -20,7 +20,7 @@ class SheetGridFixture {
     Iterable<SheetCellFormulaFixture> cellFormulas = const [],
     Set<int> mergedFirstColumnRows = const {},
   }) : rows = List<List<String>>.unmodifiable(
-         rows.map((row) => List<String>.unmodifiable(row)),
+         _fieldDrivenRows(name, rows).map(List<String>.unmodifiable),
        ),
        cellFormulas = List<SheetCellFormulaFixture>.unmodifiable(cellFormulas),
        mergedFirstColumnRows = Set.unmodifiable(mergedFirstColumnRows);
@@ -41,6 +41,151 @@ class SheetGridFixture {
     'mergedFirstColumnRows': mergedFirstColumnRows.toList()..sort(),
   };
 }
+
+List<List<String>> _fieldDrivenRows(
+  String sheetName,
+  Iterable<Iterable<String>> source,
+) {
+  final rows = source.map((row) => row.toList()).toList();
+  if (rows.isEmpty) {
+    return rows;
+  }
+  return switch (sheetName) {
+    'Exercises'
+        when _startsWith(rows.first, _legacyExerciseColumns.take(8).toList()) =>
+      [
+        for (var index = 0; index < rows.length; index += 1)
+          if (index == 0)
+            [..._exerciseColumns, ...rows[index].skip(9)]
+          else
+            _exerciseRow(rows[index]),
+      ],
+    _ when _startsWith(rows.first, _legacyActiveColumns) => [
+      for (var index = 0; index < rows.length; index += 1)
+        if (index == 0)
+          [..._activeColumns, ...rows[index].skip(10)]
+        else
+          _activeRow(rows[index]),
+    ],
+    _ => rows,
+  };
+}
+
+bool _startsWith(List<String> row, List<String> prefix) {
+  return row.length >= prefix.length &&
+      List.generate(
+        prefix.length,
+        (index) => row[index] == prefix[index],
+      ).every((matches) => matches);
+}
+
+List<String> _activeRow(List<String> row) {
+  final padded = [
+    ...row,
+    ...List.filled(row.length < 10 ? 10 - row.length : 0, ''),
+  ];
+  final format = padded[7].trim().isEmpty
+      ? '{Weight}[x]{Reps}[@]{RPE}'
+      : padded[7];
+  return [
+    padded[0],
+    padded[1],
+    padded[4],
+    padded[5],
+    _renderLegacyValues(format, reps: padded[2], rpe: padded[3]),
+    padded[6],
+    padded[7],
+    padded[8],
+    padded[9],
+    padded[0].trim().isEmpty ? '' : 'x',
+    ...row.skip(10),
+  ];
+}
+
+List<String> _exerciseRow(List<String> row) {
+  final padded = [
+    ...row,
+    ...List.filled(row.length < 9 ? 9 - row.length : 0, ''),
+  ];
+  final format = padded[8].trim().isEmpty
+      ? '{Weight}[x]{Reps}[@]{RPE}'
+      : padded[8];
+  return [
+    padded[0],
+    padded[1],
+    padded[2],
+    padded[5],
+    padded[6],
+    padded[7],
+    padded[8],
+    _renderLegacyValues(format, reps: padded[3], rpe: padded[4]),
+    ...row.skip(9),
+  ];
+}
+
+String _renderLegacyValues(
+  String format, {
+  required String reps,
+  required String rpe,
+}) {
+  return format
+      .replaceAll('{Weight}', '')
+      .replaceAll('{Height}', '')
+      .replaceAll('{Reps}', reps)
+      .replaceAll('{Seconds}', reps)
+      .replaceAll('{RPE}', rpe)
+      .replaceAll('{Pain}', '')
+      .replaceAllMapped(RegExp(r'\[([^\]]*)\]'), (match) => match.group(1)!);
+}
+
+const _legacyActiveColumns = [
+  'Exercise',
+  'Sets',
+  'Reps',
+  'RPE',
+  'Rest',
+  'Tempo',
+  'Notes',
+  'Log Format',
+  'Workout',
+  'is_backup',
+];
+
+const _activeColumns = [
+  'Exercise',
+  'Sets',
+  'Rest',
+  'Tempo',
+  'Targets',
+  'Notes',
+  'Log Format',
+  'Workout',
+  'is_backup',
+  'is_exercise',
+];
+
+const _legacyExerciseColumns = [
+  'Exercise',
+  'Description',
+  'Default Sets',
+  'Default Reps',
+  'Default RPE',
+  'Default Rest',
+  'Default Tempo',
+  'Notes',
+  'Log Format',
+];
+
+const _exerciseColumns = [
+  'Exercise',
+  'Description',
+  'Default Sets',
+  'Default Rest',
+  'Default Tempo',
+  'Notes',
+  'Log Format',
+  'Default Values',
+];
 
 class SheetCellFormulaFixture {
   const SheetCellFormulaFixture({

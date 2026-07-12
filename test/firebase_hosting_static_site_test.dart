@@ -87,7 +87,11 @@ void main() {
         'DB Step-Up',
         'Save set',
       ]) {
-        expect(support, isNot(contains(fabricated)), reason: 'Found $fabricated');
+        expect(
+          support,
+          isNot(contains(fabricated)),
+          reason: 'Found $fabricated',
+        );
       }
     });
 

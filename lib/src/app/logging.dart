@@ -368,6 +368,10 @@ class _ExerciseContextPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final targets = this.context.targets;
+    final renderedTargets = switch (this.context.logFormat) {
+      ParsedLogFormat format => format.renderValues(targets.values),
+      InvalidLogFormat() => '',
+    };
     final summaryParts = [
       if (this.context.rest.trim().isNotEmpty) 'Rest ${this.context.rest}',
       if (targets.tempo.trim().isNotEmpty) 'Tempo ${targets.tempo}',
@@ -388,7 +392,12 @@ class _ExerciseContextPanel extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
-            Text('Plan ${targets.sets} x ${targets.reps} @ ${targets.rpe}'),
+            Text(
+              [
+                if (targets.sets.trim().isNotEmpty) '${targets.sets} sets',
+                if (renderedTargets.trim().isNotEmpty) renderedTargets,
+              ].join(' | '),
+            ),
             if (summaryParts.isNotEmpty) Text(summaryParts.join(' | ')),
             if (this.context.notes.trim().isNotEmpty)
               Text('Notes: ${this.context.notes}'),

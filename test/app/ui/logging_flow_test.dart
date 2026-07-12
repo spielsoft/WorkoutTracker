@@ -16,18 +16,31 @@ void main() {
       [
         'Squat',
         '3',
-        '5',
-        '8',
         '3 min',
         'Controlled',
+        'x5@8',
         'Stay braced.',
         '',
         'Legs',
         '',
+        'x',
         '',
         '',
       ],
-      ['Bench Press', '4', '6', '8', '3 min', '', '', '', 'Upper', '', '', ''],
+      [
+        'Bench Press',
+        '4',
+        '3 min',
+        '2-1-1',
+        'x6@8',
+        '',
+        '',
+        'Upper',
+        '',
+        'x',
+        '',
+        '',
+      ],
     ]);
 
     await tester.pumpWidget(
@@ -290,7 +303,7 @@ void main() {
     expect(find.text('worked up, grip failed'), findsOneWidget);
     expect(textFieldWithLabel('Raw set text'), findsNothing);
     expect(find.text('Training details'), findsOneWidget);
-    expect(find.text('Plan 3 x 40 @ 8'), findsOneWidget);
+    expect(find.text('3 sets | 40@8'), findsOneWidget);
     expect(find.text('Rest 90s | Tempo Smooth'), findsOneWidget);
     expect(find.text('Target: 3 sets x 40 @ 8'), findsNothing);
     expect(find.text('Rest: 90s'), findsNothing);

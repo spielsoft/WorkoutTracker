@@ -11,7 +11,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
 
     await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));

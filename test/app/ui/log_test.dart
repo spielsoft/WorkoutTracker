@@ -21,7 +21,7 @@ void main() {
     final fields = ['Weight', 'Reps', 'RPE'].map(_field).toList();
     final save = find.text('Save set');
 
-    expect(find.text('Plan 3 x 5 @ 8'), findsOneWidget);
+    expect(find.text('3 sets | x5@8'), findsOneWidget);
     expect(find.text('Rest 3 min'), findsOneWidget);
     expect(
       tester.getTopLeft(fields[0]).dy,
@@ -508,14 +508,14 @@ LogView _view() {
         [
           'Squat',
           '3',
-          '5',
-          '8',
           '3 min',
           '',
+          'x5@8',
           '',
           '{Weight}[x]{Reps}[@]{RPE}',
           'Legs',
           '',
+          'x',
           '',
           '30x5@7',
           '35x5@8',
@@ -523,14 +523,14 @@ LogView _view() {
         [
           'Leg Press',
           '3',
-          '10',
-          '8',
           '2 min',
           '',
+          'x10@8',
           '',
           '{Weight}[x]{Reps}[@]{RPE}',
           'Legs',
           'TRUE',
+          'x',
           '',
           '',
           '',
@@ -589,14 +589,14 @@ LogView _historyView({
         [
           'Squat',
           '3',
-          '5',
-          '8',
           '3 min',
           '',
+          logFormat == '{Weight}[x]{Reps}[@]{RPE}' ? 'x5@8' : '',
           '',
           logFormat,
           'Legs',
           '',
+          'x',
           ...values,
         ],
       ],
@@ -623,14 +623,14 @@ LogView _literalView() {
         [
           'Carry',
           '3',
-          '20 m',
-          '7.5',
           '90s',
+          '',
           '',
           '',
           '{Load}[x]{Effort}[; ]{Cue}',
           'Conditioning',
           '',
+          'x',
           '',
         ],
       ],

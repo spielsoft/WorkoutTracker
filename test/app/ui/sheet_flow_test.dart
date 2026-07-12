@@ -83,8 +83,8 @@ void main() {
       ),
       CellUpdate.formula(
         sheetRowNumber: 3,
-        sheetColumnNumber: 8,
-        value: '=Exercises!I2',
+        sheetColumnNumber: 7,
+        value: '=Exercises!G2',
       ),
     ]);
     expect(find.text('Reconnect exercises to logging rows'), findsNothing);
@@ -135,13 +135,21 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(service.appliedPlans.single.cellUpdates, const [
-      CellUpdate.formula(
-        sheetRowNumber: 3,
-        sheetColumnNumber: 1,
-        value: '=Exercises!A3',
-      ),
-    ]);
+    expect(
+      service.appliedPlans.single.cellUpdates,
+      containsAll(const [
+        CellUpdate.formula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          value: '=Exercises!A3',
+        ),
+        CellUpdate.formula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 7,
+          value: '=Exercises!G3',
+        ),
+      ]),
+    );
   });
 
   testWidgets('shows structural damage as task-first manual repair guidance', (
@@ -234,7 +242,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
 
     await tester.pumpWidget(
@@ -281,7 +289,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
 
     await tester.pumpWidget(
@@ -314,7 +322,7 @@ void main() {
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ]);
 
       await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
@@ -348,7 +356,7 @@ void main() {
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ]);
 
       await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
@@ -405,7 +413,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
 
     await tester.pumpWidget(WorkoutTrackerApp(svc: service, picker: picker));
@@ -428,7 +436,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
 
     await tester.pumpWidget(
@@ -454,7 +462,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
 
     await tester.pumpWidget(
@@ -505,7 +513,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
     final accountSession = FakeGoogleAccountSession(
       const GoogleAccountProfile(
@@ -554,7 +562,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
     final accountSession = FakeGoogleAccountSession(
       const GoogleAccountProfile(
@@ -602,7 +610,7 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ]);
     final accountSession = FakeGoogleAccountSession(
       const GoogleAccountProfile(

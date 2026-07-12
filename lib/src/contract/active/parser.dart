@@ -3,12 +3,17 @@ part of '../active.dart';
 ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   final validateExercises =
       sheet.validateWorkbook || sheet.exercisesRows.isNotEmpty;
-  final exerciseViolations = validateExercises
+  final exerciseHeaderViolations = validateExercises
       ? _exerciseColumnViolations(sheet)
       : const <SchemaViolation>[];
-  final exerciseColumns = validateExercises && exerciseViolations.isEmpty
+  final exerciseColumns = validateExercises && exerciseHeaderViolations.isEmpty
       ? _ExercisesColumnIndexes.fromHeader(sheet.exercisesRows.first)
       : null;
+  final exerciseViolations = [
+    ...exerciseHeaderViolations,
+    if (exerciseColumns != null)
+      ..._exerciseValueViolations(sheet.exercisesRows, exerciseColumns),
+  ];
   if (sheet.rows.isEmpty) {
     return ParsedActiveSheet._(
       slots: const [],
@@ -54,7 +59,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   final historyBlocks = _discoverHistoryBlocks(
     header: sheet.rows.first,
     setHeader: sheet.rows.length > 1 ? sheet.rows[1] : const [],
-    firstHistoryColumn: columns.isBackup + 1,
+    firstHistoryColumn: columns.isExercise + 1,
   );
   final slots = <WorkoutSlot>[];
   final primarySlotBuilders = <_PrimarySlotBuilder>[];
@@ -74,14 +79,16 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
 
     final workout = _cell(row, columns.workout).trim();
     final logFormat = parseLogFormat(_logFormatCell(row, columns));
+    final targetValues = logFormat is ParsedLogFormat
+        ? logFormat.parseValues(_cell(row, columns.targets))
+        : null;
     final slot = WorkoutSlot(
       sheetRowNumber: sheetRowNumber,
       exercise: exercise,
       sets: _cell(row, columns.sets),
-      reps: _cell(row, columns.reps),
-      rpe: _cell(row, columns.rpe),
       rest: _cell(row, columns.rest),
       tempo: _cell(row, columns.tempo),
+      targetValues: targetValues ?? const {},
       notes: _cell(row, columns.notes),
       logFormat: logFormat,
       workout: workout.isEmpty ? defaultWorkoutName : workout,
@@ -95,6 +102,15 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
           sheetRowNumber: slot.sheetRowNumber,
           workout: slot.workout,
           message: 'Invalid Log Format: ${errors.join(' ')}',
+        ),
+      );
+    }
+    if (logFormat is ParsedLogFormat && targetValues == null) {
+      schemaViolations.add(
+        SchemaViolation(
+          sheetRowNumber: slot.sheetRowNumber,
+          workout: slot.workout,
+          message: 'Targets do not match Log Format.',
         ),
       );
     }
@@ -195,6 +211,39 @@ List<SchemaViolation> _exerciseColumnViolations(ActiveSheetInput sheet) {
         message: 'Exercises has an unsupported column "${header[i]}".',
       ),
     );
+  }
+  return violations;
+}
+
+List<SchemaViolation> _exerciseValueViolations(
+  List<List<String>> rows,
+  _ExercisesColumnIndexes columns,
+) {
+  final violations = <SchemaViolation>[];
+  for (var index = 1; index < rows.length; index += 1) {
+    final row = rows[index];
+    if (_cell(row, columns.exercise).trim().isEmpty) continue;
+    final format = parseLogFormat(_cell(row, columns.logFormat));
+    if (format case InvalidLogFormat(:final errors)) {
+      violations.add(
+        SchemaViolation(
+          sheetRowNumber: index + 1,
+          workout: defaultWorkoutName,
+          message: 'Exercises Log Format is invalid: ${errors.join(' ')}',
+        ),
+      );
+      continue;
+    }
+    if (format is ParsedLogFormat &&
+        format.parseValues(_cell(row, columns.defaultValues)) == null) {
+      violations.add(
+        SchemaViolation(
+          sheetRowNumber: index + 1,
+          workout: defaultWorkoutName,
+          message: 'Exercises Default Values do not match Log Format.',
+        ),
+      );
+    }
   }
   return violations;
 }
@@ -344,14 +393,14 @@ class _FixedColumnIndexes {
   const _FixedColumnIndexes({
     required this.exercise,
     required this.sets,
-    required this.reps,
-    required this.rpe,
     required this.rest,
     required this.tempo,
+    required this.targets,
     required this.notes,
     required this.logFormat,
     required this.workout,
     required this.isBackup,
+    required this.isExercise,
   });
 
   factory _FixedColumnIndexes.fromHeader(List<String> header) {
@@ -363,27 +412,27 @@ class _FixedColumnIndexes {
     return _FixedColumnIndexes(
       exercise: indexes['Exercise']!,
       sets: indexes['Sets']!,
-      reps: indexes['Reps']!,
-      rpe: indexes['RPE']!,
       rest: indexes['Rest']!,
       tempo: indexes['Tempo']!,
+      targets: indexes['Targets']!,
       notes: indexes['Notes']!,
       logFormat: indexes['Log Format']!,
       workout: indexes['Workout']!,
       isBackup: indexes['is_backup']!,
+      isExercise: indexes['is_exercise']!,
     );
   }
 
   final int exercise;
   final int sets;
-  final int reps;
-  final int rpe;
   final int rest;
   final int tempo;
+  final int targets;
   final int notes;
   final int logFormat;
   final int workout;
   final int isBackup;
+  final int isExercise;
 }
 
 String _logFormatCell(List<String> row, _FixedColumnIndexes columns) {
@@ -395,12 +444,11 @@ class _ExercisesColumnIndexes {
     required this.exercise,
     required this.description,
     required this.defaultSets,
-    required this.defaultReps,
-    required this.defaultRpe,
     required this.defaultRest,
     required this.defaultTempo,
     required this.notes,
     required this.logFormat,
+    required this.defaultValues,
   });
 
   factory _ExercisesColumnIndexes.fromHeader(List<String> header) {
@@ -413,22 +461,20 @@ class _ExercisesColumnIndexes {
       exercise: indexes['Exercise']!,
       description: indexes['Description']!,
       defaultSets: indexes['Default Sets']!,
-      defaultReps: indexes['Default Reps']!,
-      defaultRpe: indexes['Default RPE']!,
       defaultRest: indexes['Default Rest']!,
       defaultTempo: indexes['Default Tempo']!,
       notes: indexes['Notes']!,
       logFormat: indexes['Log Format']!,
+      defaultValues: indexes['Default Values']!,
     );
   }
 
   final int exercise;
   final int description;
   final int defaultSets;
-  final int defaultReps;
-  final int defaultRpe;
   final int defaultRest;
   final int defaultTempo;
   final int notes;
   final int logFormat;
+  final int defaultValues;
 }

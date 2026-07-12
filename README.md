@@ -16,6 +16,16 @@ The app can:
 It is not a coaching, progression, or program-generation service. Workout data
 is not copied to an application backend.
 
+## Editing the Sheet Directly
+
+Each exercise's `Log Format` declares its logging fields, such as
+`{Weight}[x]{Reps}[@]{RPE}` or `{Seconds}[@]{RPE}`. The `Exercises` tab stores
+matching `Default Values`; active workout rows store independently editable
+`Targets`. Sets, Rest, and Tempo remain fixed metadata. Blank field values are
+valid, but a nonblank Default Values or Targets cell that does not match its
+Log Format blocks app writes until corrected. Unparseable history text remains
+available as raw text.
+
 ## Current Status
 
 macOS and iOS are the prepared source-build targets; the repository does not

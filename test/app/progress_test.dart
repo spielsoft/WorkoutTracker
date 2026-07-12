@@ -12,7 +12,19 @@ void main() {
     final service = TestValSvc.fromRows([
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Split Squat', '3', '8/side', '8', '90s', '', '', '', 'Legs', '', ''],
+      [
+        'Split Squat',
+        '3',
+        '90s',
+        '2-1-1',
+        'x8/side@8',
+        '',
+        '',
+        'Legs',
+        '',
+        'x',
+        '',
+      ],
     ]);
 
     await tester.pumpWidget(
@@ -25,7 +37,7 @@ void main() {
     await tester.tap(find.text('Split Squat'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Plan 3 x 8/side @ 8'), findsOneWidget);
+    expect(find.text('3 sets | x8/side@8'), findsOneWidget);
     expect(find.text('Next set S1'), findsOneWidget);
     expect(find.text('Progress 0/3'), findsNothing);
     expect(find.text('Current S1'), findsNothing);

@@ -14,7 +14,19 @@ void main() {
         svc: TestValSvc.fromRows([
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+          [
+            'Squat',
+            '3',
+            '3 min',
+            '',
+            'x5@8',
+            '',
+            '',
+            'Legs',
+            '',
+            'x',
+            '225x5@8',
+          ],
         ]),
         initialText: 'spreadsheet-id',
       );
@@ -53,7 +65,7 @@ void main() {
         svc: TestValSvc.fromRows([
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+          ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
         ]),
       );
       addTearDown(flow.dispose);
@@ -147,7 +159,7 @@ ValReport _activeReport() {
         rows: [
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+          ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
         ],
       ),
     ),

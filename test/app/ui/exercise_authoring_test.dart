@@ -48,11 +48,10 @@ void main() {
       await enterField('Exercise name', 'Romanian Deadlift');
       await enterField('Description', 'Hip hinge');
       await enterField('Default sets', '4');
-      await enterField('Default reps', '8-10');
-      await enterField('Default RPE', '7.5');
       await enterField('Default rest', '90s');
       await enterField('Default tempo', '3-1-1');
       await enterField('Log format', '{Weight}[x]{Reps}');
+      await enterField('Default Reps', '8-10');
       await enterField('Notes', 'Use straps after warmups.');
 
       await tester.ensureVisible(
@@ -64,12 +63,11 @@ void main() {
       await tester.pump();
 
       expect(authoringService.createdExercises, [
-        const ExerciseDef(
+        ExerciseDef(
           exercise: 'Romanian Deadlift',
           description: 'Hip hinge',
           defaultSets: '4',
-          defaultReps: '8-10',
-          defaultRpe: '7.5',
+          defaultValues: const {'Weight': '', 'Reps': '8-10'},
           defaultRest: '90s',
           defaultTempo: '3-1-1',
           notes: 'Use straps after warmups.',

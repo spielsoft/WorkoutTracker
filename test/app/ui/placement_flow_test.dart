@@ -1,595 +1,117 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/app.dart';
-
-import '../service_fake.dart';
-import '../../support/widget.dart';
+import 'package:workout_tracker/contract.dart';
 
 void main() {
-  testWidgets(
-    'add-to-workout search and placement preserve selected sheet context',
-    (tester) async {
-      final activeSheet = parseActiveSheet(
-        ActiveSheetInput(
-          rows: [
-            [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
-            [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
-            [
-              'Pull Up',
-              '3',
-              '8',
-              '8',
-              '2 min',
-              '',
-              '',
-              '{Reps}',
-              'Legs',
-              '',
-              '',
-              '',
-            ],
-            [
-              'Bench Press',
-              '4',
-              '6',
-              '8',
-              '3 min',
-              '',
-              '',
-              '{Weight}[x]{Reps}[@]{RPE}',
-              'Upper',
-              '',
-              '',
-              '',
-            ],
-          ],
-          cellFormulas: const [
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 1,
-              formula: '=Exercises!A2',
-            ),
-            CellFormula(
-              sheetRowNumber: 3,
-              sheetColumnNumber: 8,
-              formula: '=Exercises!I2',
-            ),
-            CellFormula(
-              sheetRowNumber: 4,
-              sheetColumnNumber: 1,
-              formula: '=Exercises!A3',
-            ),
-            CellFormula(
-              sheetRowNumber: 4,
-              sheetColumnNumber: 8,
-              formula: '=Exercises!I3',
-            ),
-          ],
-          exercisesRows: const [
-            exercisesSheetColumns,
-            [
-              'Pull Up',
-              'Bodyweight pull',
-              '3',
-              '8',
-              '8',
-              '2 min',
-              '',
-              'Full hang.',
-              '{Reps}',
-            ],
-            [
-              'Bench Press',
-              'Competition bench',
-              '4',
-              '6',
-              '8',
-              '3 min',
-              '',
-              '',
-              '{Weight}[x]{Reps}[@]{RPE}',
-            ],
-            [
-              'Romanian Deadlift',
-              'Hip hinge',
-              '3',
-              '10',
-              '7',
-              '2 min',
-              '',
-              '',
-              '{Weight}[x]{Reps}[@]{RPE}',
-            ],
-          ],
-        ),
-      );
-      final store = MemoryAppStStore(
-        null,
-        selectedSheet: const SelectedSheet(
-          spreadsheetId: 'selected-spreadsheet-id',
-          name: '2026 Workouts',
-          drivePath: 'My Drive / Workouts / 2026 Workouts',
-          accountEmail: 'saved@example.com',
-        ),
-      );
-      final service = TestValSvc(activeSheet);
-      final authoringService = WorkoutPlacementRecordingService(activeSheet);
-
-      await tester.pumpWidget(
-        WorkoutTrackerApp(
-          svc: CompositeWorkbookCommandService(
-            validation: service,
-            authoring: authoringService,
-          ),
-          appStStore: store,
-          picker: FakeSheetPicker(),
-        ),
-      );
-      await tester.pump();
-      await tester.pump();
-
-      await tester.tap(find.text('Week 2'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Week 1').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Legs (0/1 started)').first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Upper (0/1 started)').last);
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('exercise-picker-search')),
-        'romanian',
-      );
-      await tester.pump();
-
-      expect(find.byTooltip('Back'), findsOneWidget);
-      await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Upper exercises'), findsOneWidget);
-      expect(find.text('Week 1'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('spreadsheet-selection-input')),
-        findsNothing,
-      );
-      expect(find.text('Return to workout'), findsNothing);
-
-      await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('exercise-picker-search')),
-        'romanian',
-      );
-      await tester.pump();
-      await tester.tap(
-        find.byKey(const ValueKey('existing-exercise-selector')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Romanian Deadlift').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
-      await tester.pumpAndSettle();
-
-      expect(authoringService.placements.single.exercise, 'Romanian Deadlift');
-      expect(authoringService.placements.single.workout, 'Upper');
-      expect(find.text('Upper exercises'), findsOneWidget);
-      expect(find.text('Week 1'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('spreadsheet-selection-input')),
-        findsNothing,
-      );
-      expect(find.text('Return to workout'), findsNothing);
-
-      await tester.tap(find.byTooltip('Back to sheet selection'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('My Drive / Workouts / 2026 Workouts'), findsOneWidget);
-      expect(find.text('Return to workout'), findsOneWidget);
-      expect(find.text('Change sheet'), findsOneWidget);
-    },
-  );
-
-  testWidgets('offers creation before requiring an existing exercise', (
+  testWidgets('placement exposes selected exercise dynamic targets', (
     tester,
   ) async {
-    final activeSheet = parseActiveSheet(
-      ActiveSheetInput(
-        rows: [
-          [...activeSheetFixedColumns, 'Week 1'],
-          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
-        ],
-        cellFormulas: const [
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 1,
-            formula: '=Exercises!A2',
+    final actions = _Actions();
+    await tester.pumpWidget(
+      _app(
+        PlacementScreen(
+          view: PlacementView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            intent: const PlaceIntent.primary(workout: 'Core'),
+            exercises: [
+              CanonicalExercise(
+                sheetRowNumber: 2,
+                exercise: 'Side Plank',
+                defaultSets: '2',
+                defaultRest: '45s',
+                defaultTempo: 'hold',
+                logFormat: '{Seconds}[@]{RPE}',
+                defaultValues: const {'Seconds': '30', 'RPE': '8'},
+              ),
+            ],
           ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 8,
-            formula: '=Exercises!I2',
-          ),
-        ],
-        exercisesRows: const [
-          exercisesSheetColumns,
-          [
-            'Pull Up',
-            'Bodyweight pull',
-            '3',
-            '8',
-            '8',
-            '2 min',
-            '',
-            'Full hang.',
-            '{Reps}',
-          ],
-          [
-            'Dip',
-            'Parallel bar dip',
-            '3',
-            '10',
-            '8',
-            '2 min',
-            '',
-            'Locked out.',
-            '{Reps}',
-          ],
-        ],
+          actions: actions,
+        ),
       ),
     );
-    final service = TestValSvc(activeSheet);
 
+    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Side Plank').last);
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextField, 'Sets'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Rest'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Tempo'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Seconds'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'RPE'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Reps'), findsNothing);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Seconds'), '45');
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('place-existing-exercise')),
+    );
+    await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
+
+    expect(actions.placed.single.exercise, 'Side Plank');
+    expect(actions.placed.single.metadata.targetValues, {
+      'Seconds': '45',
+      'RPE': '8',
+    });
+  });
+
+  testWidgets('backup placement identifies its parent and supports creation', (
+    tester,
+  ) async {
+    final actions = _Actions();
     await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+      _app(
+        PlacementScreen(
+          view: const PlacementView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            intent: PlaceIntent.backup(
+              workout: 'Legs',
+              primaryRow: 3,
+              primaryExercise: 'Squat',
+            ),
+            exercises: [],
+          ),
+          actions: actions,
+        ),
+      ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Add to workout'), findsWidgets);
-    expect(find.text('Add exercise'), findsNothing);
-    expect(
-      find.byKey(const ValueKey('create-exercise-from-placement')),
-      findsOneWidget,
-    );
-
-    await tester.tap(
-      find.byKey(const ValueKey('create-exercise-from-placement')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('New exercise'), findsWidgets);
-    expect(find.text('Save exercise'), findsOneWidget);
-
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-
-    expect(find.text('Add to workout'), findsWidgets);
+    expect(find.text('Backup for Squat'), findsOneWidget);
     expect(find.text('Legs workout'), findsOneWidget);
-
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('place-existing-exercise')),
-    );
-    await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
-    await tester.pump();
-
-    expect(textFieldWithLabel('Sets'), findsNothing);
-
-    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Dip').last);
-    await tester.pumpAndSettle();
-
-    expect(textFieldWithLabel('Sets'), findsOneWidget);
-    expect(textFieldWithLabel('Reps'), findsOneWidget);
-    expect(textFieldWithLabel('RPE'), findsOneWidget);
-
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('place-existing-exercise')),
-    );
-    expect(find.text('Add to workout'), findsWidgets);
-    expect(find.text('Add exercise'), findsNothing);
-  });
-
-  testWidgets('does not choose an exercise from an unopened picker on Return', (
-    tester,
-  ) async {
-    final activeSheet = parseActiveSheet(
-      ActiveSheetInput(
-        rows: [
-          [...activeSheetFixedColumns, 'Week 1'],
-          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
-        ],
-        cellFormulas: const [
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 1,
-            formula: '=Exercises!A2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 8,
-            formula: '=Exercises!I2',
-          ),
-        ],
-        exercisesRows: const [
-          exercisesSheetColumns,
-          [
-            'Bulgarian Split Squat',
-            'Rear-foot elevated split squat',
-            '3',
-            '10',
-            '8',
-            '2 min',
-            '',
-            '',
-            '{Weight}[x]{Reps}[@]{RPE}',
-          ],
-          [
-            'Dip',
-            'Parallel bar dip',
-            '3',
-            '10',
-            '8',
-            '2 min',
-            '',
-            '',
-            '{Reps}',
-          ],
-        ],
-      ),
-    );
-    final service = TestValSvc(activeSheet);
-
-    await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
-    await tester.pumpAndSettle();
-
-    final selector = find.byKey(const ValueKey('exercise-picker-search'));
-    await tester.tap(selector);
-    await tester.pump();
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pumpAndSettle();
-
-    expect(textFieldWithLabel('Sets'), findsNothing);
-    expect(
-      tester
-          .widget<FilledButton>(
-            find.byKey(const ValueKey('place-existing-exercise')),
-          )
-          .onPressed,
-      isNull,
-    );
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await tester.pump();
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pumpAndSettle();
-
-    expect(textFieldWithLabel('Sets'), findsNothing);
-    expect(
-      tester
-          .widget<FilledButton>(
-            find.byKey(const ValueKey('place-existing-exercise')),
-          )
-          .onPressed,
-      isNull,
-    );
-  });
-
-  testWidgets('adds another workout exercise without leaving placement', (
-    tester,
-  ) async {
-    final activeSheet = parseActiveSheet(
-      ActiveSheetInput(
-        rows: [
-          [...activeSheetFixedColumns, 'Week 1'],
-          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
-        ],
-        cellFormulas: const [
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 1,
-            formula: '=Exercises!A2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 8,
-            formula: '=Exercises!I2',
-          ),
-        ],
-        exercisesRows: const [
-          exercisesSheetColumns,
-          [
-            'Bench Press',
-            'Competition bench',
-            '4',
-            '6',
-            '8',
-            '3 min',
-            '',
-            '',
-            '{Weight}[x]{Reps}[@]{RPE}',
-          ],
-          [
-            'Romanian Deadlift',
-            'Hip hinge',
-            '3',
-            '10',
-            '7',
-            '2 min',
-            '',
-            '',
-            '{Weight}[x]{Reps}[@]{RPE}',
-          ],
-        ],
-      ),
-    );
-    final service = TestValSvc(activeSheet);
-    final authoringService = WorkoutPlacementRecordingService(activeSheet);
-
-    await tester.pumpWidget(
-      WorkoutTrackerApp(
-        svc: CompositeWorkbookCommandService(
-          validation: service,
-          authoring: authoringService,
-        ),
-        initialText: 'spreadsheet-id',
-      ),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Bench Press').last);
-    await tester.pumpAndSettle();
     await tester.tap(
-      find.byKey(const ValueKey('place-existing-exercise-add-another')),
+      find.byKey(const ValueKey('create-exercise-from-placement')),
     );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Add to workout'), findsWidgets);
-    expect(
-      find.byKey(const ValueKey('existing-exercise-selector')),
-      findsOneWidget,
-    );
-    expect(textFieldWithLabel('Sets'), findsNothing);
-
-    await tester.enterText(
-      find.byKey(const ValueKey('exercise-picker-search')),
-      'romanian',
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Romanian Deadlift').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
-    await tester.pumpAndSettle();
-
-    expect(authoringService.placements.map((placement) => placement.exercise), [
-      'Bench Press',
-      'Romanian Deadlift',
-    ]);
-    expect(authoringService.placements.map((placement) => placement.workout), [
-      'Legs',
-      'Legs',
-    ]);
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(actions.createCount, 1);
   });
+}
 
-  testWidgets('filters the workout exercise picker before placement', (
-    tester,
-  ) async {
-    final activeSheet = parseActiveSheet(
-      ActiveSheetInput(
-        rows: [
-          [...activeSheetFixedColumns, 'Week 1'],
-          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
-        ],
-        cellFormulas: const [
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 1,
-            formula: '=Exercises!A2',
-          ),
-          CellFormula(
-            sheetRowNumber: 3,
-            sheetColumnNumber: 8,
-            formula: '=Exercises!I2',
-          ),
-        ],
-        exercisesRows: const [
-          exercisesSheetColumns,
-          [
-            'Pull Up',
-            'Bodyweight pull',
-            '3',
-            '8',
-            '8',
-            '2 min',
-            '',
-            'Full hang.',
-            '{Reps}',
-          ],
-          [
-            'Bench Press',
-            'Competition bench',
-            '4',
-            '6',
-            '8',
-            '3 min',
-            '',
-            '',
-            '{Weight}[x]{Reps}[@]{RPE}',
-          ],
-          [
-            'Romanian Deadlift',
-            'Hip hinge',
-            '3',
-            '10',
-            '7',
-            '2 min',
-            '',
-            '',
-            '{Weight}[x]{Reps}[@]{RPE}',
-          ],
-        ],
-      ),
-    );
-    final service = TestValSvc(activeSheet);
+Widget _app(Widget child) {
+  return MaterialApp(
+    theme: ThemeData.dark(),
+    home: Scaffold(body: SingleChildScrollView(child: child)),
+  );
+}
 
-    await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
-    );
+class _Actions implements PlacementActions {
+  final placed = <({String exercise, WorkoutPlacementMetadata metadata})>[];
+  int createCount = 0;
 
-    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
-    await tester.pumpAndSettle();
+  @override
+  Future<void> close() async {}
 
-    await tester.enterText(
-      find.byKey(const ValueKey('exercise-picker-search')),
-      'romanian',
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
-    await tester.pumpAndSettle();
+  @override
+  Future<void> create() async => createCount += 1;
 
-    expect(find.text('Romanian Deadlift'), findsOneWidget);
-    expect(find.text('Bench Press'), findsNothing);
-
-    await tester.tap(find.text('Romanian Deadlift').last);
-    await tester.pumpAndSettle();
-
-    expect(textFieldWithLabel('Sets'), findsOneWidget);
-    expect(textFieldWithLabel('Reps'), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
-    expect(find.text('10'), findsOneWidget);
-  });
+  @override
+  Future<bool> place(
+    CanonicalExercise exercise,
+    WorkoutPlacementMetadata metadata, {
+    bool keepAdding = false,
+  }) async {
+    placed.add((exercise: exercise.exercise, metadata: metadata));
+    return true;
+  }
 }

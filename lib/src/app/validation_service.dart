@@ -364,10 +364,14 @@ bool _sameExercise(CanonicalExercise a, CanonicalExercise b) {
       a.exercise == b.exercise &&
       a.description == b.description &&
       a.defaultSets == b.defaultSets &&
-      a.defaultReps == b.defaultReps &&
-      a.defaultRpe == b.defaultRpe &&
       a.defaultRest == b.defaultRest &&
       a.defaultTempo == b.defaultTempo &&
       a.notes == b.notes &&
-      a.logFormat == b.logFormat;
+      a.logFormat == b.logFormat &&
+      _sameFields(a.defaultValues, b.defaultValues);
+}
+
+bool _sameFields(Map<String, String> a, Map<String, String> b) {
+  if (a.length != b.length) return false;
+  return a.entries.every((entry) => b[entry.key] == entry.value);
 }

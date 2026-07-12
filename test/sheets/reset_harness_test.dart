@@ -30,21 +30,11 @@ void main() {
       expect(activeRows.first, [...activeSheetFixedColumns, 'Week 1']);
       expect(activeRows[1].last, 'S1');
       expect(activeRows[2][0], '=Exercises!A2');
-      expect(activeRows[2][7], '=Exercises!I2');
+      expect(activeRows[2][6], '=Exercises!G2');
       expect(activeRows[2].last, isEmpty);
 
       final exercisesRows = workbook.exercisesSheet.rows;
-      expect(exercisesRows.first, [
-        'Exercise',
-        'Description',
-        'Default Sets',
-        'Default Reps',
-        'Default RPE',
-        'Default Rest',
-        'Default Tempo',
-        'Notes',
-        'Log Format',
-      ]);
+      expect(exercisesRows.first, exercisesSheetColumns);
       final exerciseNames = exercisesRows.skip(1).map((row) => row.first);
       expect(exerciseNames, everyElement(allOf(isA<String>(), isNotEmpty)));
       expect(exerciseNames.toSet(), hasLength(exercisesRows.length - 1));
@@ -53,7 +43,7 @@ void main() {
         everyElement(hasLength(exercisesRows.first.length)),
       );
       expect(
-        exercisesRows.skip(1).map((row) => parseLogFormat(row[8])),
+        exercisesRows.skip(1).map((row) => parseLogFormat(row[6])),
         everyElement(isA<ParsedLogFormat>()),
       );
     },

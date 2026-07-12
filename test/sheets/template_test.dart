@@ -28,18 +28,47 @@ void main() {
         defaults.map((exercise) => parseLogFormat(exercise.resolvedLogFormat)),
         everyElement(isA<ParsedLogFormat>()),
       );
+      for (final exercise in defaults) {
+        expect(
+          exercise.defaultSets.trim(),
+          isNotEmpty,
+          reason: exercise.exercise,
+        );
+        expect(
+          exercise.defaultRest.trim(),
+          isNotEmpty,
+          reason: exercise.exercise,
+        );
+        expect(
+          exercise.defaultTempo.trim(),
+          isNotEmpty,
+          reason: exercise.exercise,
+        );
+        final format =
+            parseLogFormat(exercise.resolvedLogFormat) as ParsedLogFormat;
+        expect(
+          exercise.defaultValues.keys,
+          format.fieldLabels,
+          reason: exercise.exercise,
+        );
+        expect(
+          format.parseValues(exercise.renderedDefaultValues),
+          exercise.defaultValues,
+          reason: exercise.exercise,
+        );
+      }
 
       final workbook = await loadWbkTmpl();
       final exerciseRows = workbook.exercisesSheet.rows.skip(1).toList();
       expect(exerciseRows, hasLength(defaults.length));
-      expect(exerciseRows, everyElement(hasLength(9)));
+      expect(exerciseRows, everyElement(hasLength(8)));
       final sortedDefaultNames =
           [for (final exercise in defaults) exercise.exercise]..sort(
             (left, right) => left.toLowerCase().compareTo(right.toLowerCase()),
           );
       expect(exerciseRows.map((row) => row.first), sortedDefaultNames);
       expect(
-        exerciseRows.map((row) => parseLogFormat(row[8])),
+        exerciseRows.map((row) => parseLogFormat(row[6])),
         everyElement(isA<ParsedLogFormat>()),
       );
     },

@@ -3,10 +3,8 @@
     "exercise": "Smith Machine Reverse Lunge",
     "description": "Smith machine reverse lunge",
     "defaultSets": "3",
-    "defaultReps": "8-10/leg",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Keep front shin vertical to minimize knee shear.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -14,16 +12,20 @@
     ],
     "aliases": [
       "Smith Machine Reverse Lunges"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-10/leg",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "DB Reverse Lunge",
     "description": "Dumbbell reverse lunge",
     "defaultSets": "3",
-    "defaultReps": "8-10/leg",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Backup reverse-lunge option when the Smith machine is busy.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -31,16 +33,20 @@
     ],
     "aliases": [
       "Backup; DB reverse"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-10/leg",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Leg Press",
     "description": "Machine leg press",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "8",
     "defaultRest": "120s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Place feet high and wide; do not lock knees at the top.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -51,16 +57,20 @@
     "aliases": [
       "Backup: Leg press",
       "Leg press [backup]"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Smith Machine RDL",
     "description": "Smith machine Romanian deadlift",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Hinge at the hips and stop when hamstrings are fully stretched.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -69,16 +79,20 @@
     ],
     "aliases": [
       "Smith Machine RDL"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "DB RDL",
     "description": "Dumbbell Romanian deadlift",
     "defaultSets": "3",
-    "defaultReps": "8",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Backup hinge when rack or Smith machine space is unavailable.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -88,14 +102,17 @@
     "aliases": [
       "DB RDL",
       "dB Rm. Deadlift [backup]"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Romanian Deadlift",
     "description": "Romanian deadlift",
     "defaultSets": "3",
-    "defaultReps": "6-8",
-    "defaultRpe": "8",
     "defaultRest": "2m",
     "defaultTempo": "2-1-1",
     "notes": "Feel hamstrings and keep a neutral spine.",
@@ -105,16 +122,20 @@
     ],
     "aliases": [
       "Rom. Deadlift"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "6-8",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Leg Extension",
     "description": "Machine leg extension",
     "defaultSets": "3",
-    "defaultReps": "8",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Quad isolation option inferred from logged leg-extension work.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -122,14 +143,18 @@
     ],
     "aliases": [
       "Let extension"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Squat",
     "description": "Squat",
     "defaultSets": "3",
-    "defaultReps": "5-6",
-    "defaultRpe": "8",
     "defaultRest": "3m",
     "defaultTempo": "3-1-1",
     "notes": "Squat pattern from fall and winter programs.",
@@ -141,14 +166,18 @@
     "aliases": [
       "Squat",
       "Deep Squats"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "5-6",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Lateral Step-Down",
     "description": "Eccentric lateral step-down",
     "defaultSets": "3",
-    "defaultReps": "8/leg",
-    "defaultRpe": "7",
     "defaultRest": "60s",
     "defaultTempo": "3-1-1",
     "notes": "Do not drop; keep knee aligned over toe.",
@@ -160,14 +189,18 @@
     "aliases": [
       "Lateral Step-Down",
       "Lateral Step-Down (eccentric focus)"
-    ]
+    ],
+    "defaultValues": {
+      "Height": "",
+      "Reps": "8/leg",
+      "RPE": "7",
+      "Pain": ""
+    }
   },
   {
     "exercise": "DB Step-Up",
     "description": "Dumbbell step-up",
     "defaultSets": "3",
-    "defaultReps": "8-10/leg",
-    "defaultRpe": "8",
     "defaultRest": "90s",
     "defaultTempo": "3-1-1",
     "notes": "Control the descent to prep knees for downhill hiking.",
@@ -177,16 +210,20 @@
     ],
     "aliases": [
       "DB Step-Ups"
-    ]
+    ],
+    "defaultValues": {
+      "Height": "",
+      "Reps": "8-10/leg",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Box Jump",
     "description": "Clustered box jump",
     "defaultSets": "3",
-    "defaultReps": "(3x3)",
-    "defaultRpe": "7",
     "defaultRest": "15s",
-    "defaultTempo": "",
+    "defaultTempo": "explosive",
     "notes": "Rest 15 seconds after each cluster.",
     "logFormat": "{Height}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -194,14 +231,18 @@
     ],
     "aliases": [
       "Box Jump"
-    ]
+    ],
+    "defaultValues": {
+      "Height": "",
+      "Reps": "(3x3)",
+      "RPE": "7",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Calf Raise",
     "description": "Standing or machine calf raise",
     "defaultSets": "3",
-    "defaultReps": "12-15",
-    "defaultRpe": "9",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Full stretch at the bottom and a one-second pause at the top.",
@@ -212,16 +253,20 @@
     ],
     "aliases": [
       "Calf Raise"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "12-15",
+      "RPE": "9",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Smith Calf Raise",
     "description": "Smith machine calf raise",
     "defaultSets": "3",
-    "defaultReps": "12-15",
-    "defaultRpe": "9",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Pause for one second at the bottom stretch and top squeeze.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -229,16 +274,19 @@
     ],
     "aliases": [
       "Smith Calf Raise"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "12-15",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "Machine Calf Raise",
     "description": "Machine calf raise",
     "defaultSets": "3",
-    "defaultReps": "12-15",
-    "defaultRpe": "9",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Calf raise machine option with controlled pauses.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -246,16 +294,20 @@
     ],
     "aliases": [
       "Machine Calf Raise"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "12-15",
+      "RPE": "9",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Calf Raise (Leg Press)",
     "description": "Leg press machine calf raise",
     "defaultSets": "3",
-    "defaultReps": "12-15",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Backup calf raise using the leg press machine.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
     "sourceTabs": [
@@ -265,14 +317,18 @@
     "aliases": [
       "Backup: Calf raise (leg press machine)",
       "Calf raise (leg press)"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "12-15",
+      "RPE": "8",
+      "Pain": ""
+    }
   },
   {
     "exercise": "Seated Calf Raise",
     "description": "Seated calf raise",
     "defaultSets": "3",
-    "defaultReps": "12-15",
-    "defaultRpe": "9",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Seated calf raise option with controlled stretch and squeeze.",
@@ -282,16 +338,20 @@
     ],
     "aliases": [
       "Seated Calf Raise"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "12-15",
+      "RPE": "9",
+      "Pain": ""
+    }
   },
   {
     "exercise": "DB Incline Bench",
     "description": "Dumbbell incline bench press",
     "defaultSets": "3",
-    "defaultReps": "8-10",
-    "defaultRpe": "8",
     "defaultRest": "120s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Set bench to 30 degrees; retract scapula and lower to upper chest.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -300,16 +360,19 @@
     ],
     "aliases": [
       "DB Incline Bench"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-10",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "DB Flat Bench Press",
     "description": "Dumbbell flat bench press",
     "defaultSets": "3",
-    "defaultReps": "8-12",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Tuck elbows to 45 degrees and press in a slight arc.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -319,16 +382,19 @@
     "aliases": [
       "DB Flat Bench Press",
       "DB Bench Press"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-12",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "DB Skullcrusher",
     "description": "Dumbbell skullcrusher",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Elbow health and arm-size accessory.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -336,16 +402,19 @@
     ],
     "aliases": [
       "DB Skullcrushers"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "DB Lateral Raise",
     "description": "Dumbbell lateral raise",
     "defaultSets": "3",
-    "defaultReps": "12-15",
-    "defaultRpe": "9",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Slight bend in elbows; push dumbbells out toward the walls.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -355,16 +424,19 @@
     "aliases": [
       "DB Seated Lateral Raises",
       "DB Lateral Raise"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "12-15",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "DB Bicep Curl to Overhead Press",
     "description": "Dumbbell curl to overhead press",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "9",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Strict curl, smooth wrist rotation, and no leg drive on the press.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -372,16 +444,19 @@
     ],
     "aliases": [
       "DB Bicep Curl to Overhead Press"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "Seated DB Press",
     "description": "Seated dumbbell press",
     "defaultSets": "3",
-    "defaultReps": "8-10",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Vertical dumbbell press from a seated bench.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -389,16 +464,19 @@
     ],
     "aliases": [
       "Seated DB Press"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-10",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Hammer Curl",
     "description": "Dumbbell hammer curl",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "9",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Neutral grip targeting brachialis and forearms.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -406,16 +484,19 @@
     ],
     "aliases": [
       "Hammer Curls"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "Cable Bicep Curl",
     "description": "Cable bicep curl",
     "defaultSets": "3",
-    "defaultReps": "12-15",
-    "defaultRpe": "9",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Use constant tension and squeeze at the top.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -423,16 +504,19 @@
     ],
     "aliases": [
       "Cable Bicep Curl"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "12-15",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "Cable Tricep Pushdown",
     "description": "Cable rope tricep pushdown",
     "defaultSets": "3",
-    "defaultReps": "10-15",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Keep elbows pinned and flare the rope at the bottom.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -442,14 +526,17 @@
     "aliases": [
       "Cable Rope Tricep Pushdown",
       "Cable Tricep Pushdown"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-15",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Bench Row",
     "description": "Bench-supported dumbbell row",
     "defaultSets": "3",
-    "defaultReps": "8-10",
-    "defaultRpe": "8",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Fall upper-body row variation logged as bench rows.",
@@ -459,16 +546,19 @@
     ],
     "aliases": [
       "Bench rows"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-10",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "DB Chest-Supported Row",
     "description": "Dumbbell chest-supported row",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Set bench to incline and pull elbows toward hips.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -478,16 +568,19 @@
     "aliases": [
       "DB Chest-Supported Row",
       "Chest-Supported DB Row [backup]"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Smith Bent Over Row",
     "description": "Smith machine bent-over row",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "9",
     "defaultRest": "2m",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Keep torso parallel to the floor and squeeze at the top.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -495,16 +588,19 @@
     ],
     "aliases": [
       "Smith Bent Over Row"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "Seated Cable Row",
     "description": "Seated cable row",
     "defaultSets": "3",
-    "defaultReps": "10-12",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Depress shoulders before pulling and keep torso upright.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -512,16 +608,19 @@
     ],
     "aliases": [
       "Seated Cable Row"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-12",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Lat Pulldown",
     "description": "Cable lat pulldown",
     "defaultSets": "3",
-    "defaultReps": "8-12",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Drive elbows down and keep a tall chest.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -531,16 +630,19 @@
     "aliases": [
       "Cable Lat Pulldown",
       "Lat Pulldown"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-12",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Cable Face Pull",
     "description": "Rope cable face pull",
     "defaultSets": "3",
-    "defaultReps": "15-20",
-    "defaultRpe": "9",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Pull the rope to face height and focus on shoulder external rotation.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -552,16 +654,19 @@
       "Rope Cable Face Pulls",
       "Cable Face Pull",
       "Face Pull (rope)"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "15-20",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "Cable Dorsiflexion",
     "description": "Cable dorsiflexion",
     "defaultSets": "3",
-    "defaultReps": "15-20",
-    "defaultRpe": "9",
     "defaultRest": "30s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Snowboarding accessory; elevate foot with a bench or step.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -571,16 +676,19 @@
     "aliases": [
       "Cable Dorsiflexion",
       "Cable Dorsiflexion (ankle strap)"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "15-20",
+      "RPE": "9"
+    }
   },
   {
     "exercise": "Pallof Press",
     "description": "Cable Pallof press",
     "defaultSets": "3",
-    "defaultReps": "10/side",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Brace hard and resist cable rotation.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -592,16 +700,19 @@
       "Cable Pallof Press",
       "Pallof Press",
       "Pallof Press (cable)"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10/side",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Cable Woodchop",
     "description": "Cable woodchop",
     "defaultSets": "3",
-    "defaultReps": "10/side",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Rotate with hips instead of spine.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -609,16 +720,19 @@
     ],
     "aliases": [
       "Cable Woodchop"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10/side",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Floor Plank w/ Shoulder Taps",
     "description": "Floor plank with shoulder taps",
     "defaultSets": "3",
-    "defaultReps": "20 taps",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "controlled",
     "notes": "Keep hips square to the floor; widen feet if needed.",
     "logFormat": "{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -626,16 +740,18 @@
     ],
     "aliases": [
       "Floor Plank w/ Shoulder Taps"
-    ]
+    ],
+    "defaultValues": {
+      "Reps": "20 taps",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Copenhagen Side Plank",
     "description": "Copenhagen side plank",
     "defaultSets": "3",
-    "defaultReps": "20-30s",
-    "defaultRpe": "7-8",
     "defaultRest": "45s",
-    "defaultTempo": "",
+    "defaultTempo": "hold",
     "notes": "Top leg on bench, hips high, body in a straight line.",
     "logFormat": "{Seconds}[@]{RPE}",
     "sourceTabs": [
@@ -644,16 +760,18 @@
     ],
     "aliases": [
       "Copenhagen Side Plank"
-    ]
+    ],
+    "defaultValues": {
+      "Seconds": "20-30s",
+      "RPE": "7-8"
+    }
   },
   {
     "exercise": "Dead Bug",
     "description": "Dead bug core drill",
     "defaultSets": "3",
-    "defaultReps": "10/side",
-    "defaultRpe": "7",
     "defaultRest": "45s",
-    "defaultTempo": "",
+    "defaultTempo": "controlled",
     "notes": "Press lower back into the floor hard.",
     "logFormat": "{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -661,16 +779,18 @@
     ],
     "aliases": [
       "Dead Bug"
-    ]
+    ],
+    "defaultValues": {
+      "Reps": "10/side",
+      "RPE": "7"
+    }
   },
   {
     "exercise": "Dips",
     "description": "Bodyweight dips",
     "defaultSets": "2-3",
-    "defaultReps": "15",
-    "defaultRpe": "8",
     "defaultRest": "90s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Lean torso forward; switch if shoulders pinch.",
     "logFormat": "{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -679,14 +799,16 @@
     ],
     "aliases": [
       "Dips"
-    ]
+    ],
+    "defaultValues": {
+      "Reps": "15",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Russian Twist",
     "description": "Russian twist",
     "defaultSets": "2",
-    "defaultReps": "10/side",
-    "defaultRpe": "8",
     "defaultRest": "60s",
     "defaultTempo": "1-1-1",
     "notes": "Rotational core accessory.",
@@ -696,14 +818,17 @@
     ],
     "aliases": [
       "Russian twist"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10/side",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "DB Overhead Press",
     "description": "Dumbbell overhead press",
     "defaultSets": "2",
-    "defaultReps": "8-10",
-    "defaultRpe": "8",
     "defaultRest": "90s",
     "defaultTempo": "2-0-1",
     "notes": "Strict vertical press.",
@@ -713,16 +838,19 @@
     ],
     "aliases": [
       "DB Overhead Press"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "8-10",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "DB Shoulder Shrug",
     "description": "Dumbbell shoulder shrug",
     "defaultSets": "3",
-    "defaultReps": "10-15",
-    "defaultRpe": "8",
     "defaultRest": "60s",
-    "defaultTempo": "",
+    "defaultTempo": "2-1-1",
     "notes": "Dumbbell shrug accessory.",
     "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
     "sourceTabs": [
@@ -730,14 +858,17 @@
     ],
     "aliases": [
       "DB Shoulder Shrug"
-    ]
+    ],
+    "defaultValues": {
+      "Weight": "",
+      "Reps": "10-15",
+      "RPE": "8"
+    }
   },
   {
     "exercise": "Side Plank",
     "description": "Side plank hold",
     "defaultSets": "2",
-    "defaultReps": "30-45s/side",
-    "defaultRpe": "8",
     "defaultRest": "45s",
     "defaultTempo": "hold",
     "notes": "Anti-lateral-flexion core hold.",
@@ -747,6 +878,10 @@
     ],
     "aliases": [
       "Side Plank"
-    ]
+    ],
+    "defaultValues": {
+      "Seconds": "30-45s/side",
+      "RPE": "8"
+    }
   }
 ]

@@ -61,6 +61,16 @@ void main() {
     expect(invalid.errors, contains('Log formats support one to four fields.'));
   });
 
+  test('rejects duplicate field labels', () {
+    final format = parseLogFormat('{Reps}[x]{Reps}');
+
+    expect(format, isA<InvalidLogFormat>());
+    expect(
+      (format as InvalidLogFormat).errors,
+      contains('Field labels must be unique.'),
+    );
+  });
+
   test('renders field values and literal segments in format order', () {
     final format =
         parseLogFormat('{Weight}[x]{Reps}[@]{RPE}') as ParsedLogFormat;
@@ -92,5 +102,19 @@ void main() {
     final format = parseLogFormat('{A}[,]{B}[,]{C}') as ParsedLogFormat;
 
     expect(format.render({'A': 'left', 'B': '', 'C': 'right'}), 'left,,right');
+  });
+
+  test('round-trips blank and partial field values', () {
+    final format =
+        parseLogFormat('{Weight}[x]{Reps}[@]{RPE}') as ParsedLogFormat;
+
+    expect(format.renderValues(const {}), '');
+    expect(format.parseValues(''), {'Weight': '', 'Reps': '', 'RPE': ''});
+    expect(
+      format.parseValues(
+        format.renderValues(const {'Weight': '', 'Reps': '8-10', 'RPE': '8'}),
+      ),
+      {'Weight': '', 'Reps': '8-10', 'RPE': '8'},
+    );
   });
 }

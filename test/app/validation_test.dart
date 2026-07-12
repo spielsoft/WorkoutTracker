@@ -14,7 +14,7 @@ void main() {
       final rows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ];
       final authClients = <_CloseTrackingAuthClient>[];
       final workbookClient = _CloseTrackingWorkbookClient(
@@ -50,12 +50,12 @@ void main() {
       final activeRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ];
       final refreshedRows = [
         [...activeSheetFixedColumns, 'Week 1', 'Week 2'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', '', ''],
       ];
       final authClients = <_CloseTrackingAuthClient>[];
       final workbookClient = _CloseTrackingWorkbookClient(
@@ -138,7 +138,7 @@ void main() {
 
       await sess.read();
       await sess.execute(const NewHistoryCmd('Week 1'));
-      await sess.execute(const CreateExeCmd(ExerciseDef(exercise: 'Squat')));
+      await sess.execute(CreateExeCmd(ExerciseDef(exercise: 'Squat')));
 
       expect(writeClient.operations, isEmpty);
     }
@@ -148,7 +148,7 @@ void main() {
     final validRows = [
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
     ];
     final readClient = _SequencedSpreadsheetClient([
       _workbookSnapshot(validRows, const [exercisesSheetColumns]),
@@ -170,7 +170,7 @@ void main() {
       final staleRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ];
       final changedRows = [
         [...activeSheetFixedColumns, 'Week 1'],
@@ -272,7 +272,7 @@ void main() {
       final staleRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ];
       final changedRows = [
         [...activeSheetFixedColumns, 'Week 1'],
@@ -310,7 +310,7 @@ void main() {
       final staleRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ];
       final changedRows = [
         [...activeSheetFixedColumns, 'Week 1'],
@@ -348,7 +348,7 @@ void main() {
       expect(rejected.hasBlockingIssues, isTrue);
       expect(
         rejected.manualRepairItems.map((item) => item.problem),
-        contains(contains('Cell row 3 column 8 no longer matches')),
+        contains(contains('Cell row 3 column 7 no longer matches')),
       );
       expect(writeClient.operations, isEmpty);
     },
@@ -378,7 +378,7 @@ void main() {
       final changedRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', '225x5@8'],
       ];
       final readClient = _SequencedSpreadsheetClient([
         _snapshot(staleRows),
@@ -407,12 +407,12 @@ void main() {
       final staleRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ];
       final changedRows = [
         [...activeSheetFixedColumns, 'Unexpected', 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', '', ''],
       ];
       final readClient = _SequencedSpreadsheetClient([
         _snapshot(staleRows),
@@ -439,12 +439,12 @@ void main() {
       final staleRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', '225x5@8'],
       ];
       final changedRows = [
         [...activeSheetFixedColumns, 'Renamed'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '225x5@8'],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', '225x5@8'],
       ];
       final readClient = _SequencedSpreadsheetClient([
         _snapshot(staleRows),
@@ -477,7 +477,7 @@ void main() {
       final activeRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ];
       final updatedActiveRows = [
         [...activeSheetFixedColumns, 'Week 1'],
@@ -536,13 +536,12 @@ void main() {
       final updated = await service.execute(
         UpdateExeCmd(
           selected: report.activeSheet.canonicalExercises.first,
-          exercise: const ExerciseDef(
+          exercise: ExerciseDef(
             exercise: 'High Bar Squat',
             description: 'High bar back squat',
             defaultSets: '3',
-            defaultReps: '5',
-            defaultRpe: '8',
             defaultRest: '3 min',
+            defaultValues: const {'Weight': '', 'Reps': '5', 'RPE': '8'},
             logFormat: '{Weight}[x]{Reps}[@]{RPE}',
           ),
         ),
@@ -568,13 +567,13 @@ void main() {
       final activeRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
         ['Bench Press', '4', '6', '8', '3 min', '', '', '', 'Upper', '', ''],
       ];
       final updatedActiveRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
         ['Bench Press', '4', '6', '8', '3 min', '', '', '', 'Upper', '', ''],
       ];
       final exercisesRows = [
@@ -941,13 +940,13 @@ void main() {
       final activeRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
         ['Leg Press', '3', '12', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
       ];
       final changedRows = [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
         ['Hack Squat', '3', '10', '8', '2 min', '', '', '', 'Legs', 'TRUE', ''],
       ];
       final exercisesRows = [
@@ -1100,12 +1099,11 @@ List<String> _exerciseRow(String exercise, {String description = ''}) {
     exercise,
     description,
     '3',
-    '10',
-    '8',
     '2 min',
-    '',
+    '2-1-1',
     '',
     defaultExerciseLogFormat,
+    'x10@8',
   ];
 }
 
@@ -1114,7 +1112,7 @@ SheetsWorkbookSnapshot _snapshot(List<List<String>> rows) {
     sheets: [
       SheetsGridSnapshot(
         sheet: const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
-        rows: rows,
+        rows: _fieldActiveRows(rows),
       ),
       SheetsGridSnapshot(
         sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
@@ -1133,15 +1131,89 @@ SheetsWorkbookSnapshot _workbookSnapshot(
     sheets: [
       SheetsGridSnapshot(
         sheet: const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
-        rows: activeRows,
+        rows: _fieldActiveRows(activeRows),
         cellFormulas: activeFormulas,
       ),
       SheetsGridSnapshot(
         sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
-        rows: exercisesRows,
+        rows: _fieldExerciseRows(exercisesRows),
       ),
     ],
   );
+}
+
+List<List<String>> _fieldActiveRows(List<List<String>> rows) {
+  if (rows.isEmpty ||
+      rows.first.take(activeSheetFixedColumns.length).join('|') !=
+          activeSheetFixedColumns.join('|')) {
+    return rows;
+  }
+  return [
+    for (var index = 0; index < rows.length; index += 1)
+      if (index < 2 || rows[index].length > 9 && rows[index][9] == 'x')
+        rows[index]
+      else
+        _fieldActiveRow(rows[index]),
+  ];
+}
+
+List<String> _fieldActiveRow(List<String> source) {
+  final row = [
+    ...source,
+    ...List.filled(source.length < 10 ? 10 - source.length : 0, ''),
+  ];
+  final formatText = row[7].trim().isEmpty ? defaultExerciseLogFormat : row[7];
+  final format = parseLogFormat(formatText);
+  final targets = format is ParsedLogFormat
+      ? format.renderValues({
+          for (final label in format.fieldLabels)
+            label: switch (label) {
+              'Reps' || 'Seconds' => row[2],
+              'RPE' => row[3],
+              _ => '',
+            },
+        })
+      : '';
+  return [
+    row[0],
+    row[1],
+    row[4],
+    row[5],
+    targets,
+    row[6],
+    row[7],
+    row[8],
+    row[9],
+    row[0].trim().isEmpty ? '' : 'x',
+    ...source.skip(10),
+  ];
+}
+
+List<List<String>> _fieldExerciseRows(List<List<String>> rows) {
+  if (rows.isEmpty || rows.first.join('|') != exercisesSheetColumns.join('|')) {
+    return rows;
+  }
+  return [
+    rows.first,
+    for (final source in rows.skip(1))
+      if (source.length <= exercisesSheetColumns.length)
+        source
+      else
+        [
+          source[0],
+          source[1],
+          source[2],
+          source[5],
+          source[6],
+          source[7],
+          source[8],
+          (parseLogFormat(source[8]) as ParsedLogFormat).renderValues({
+            'Weight': '',
+            'Reps': source[3],
+            'RPE': source[4],
+          }),
+        ],
+  ];
 }
 
 class _SequencedSpreadsheetClient implements SheetsWorkbookClient {

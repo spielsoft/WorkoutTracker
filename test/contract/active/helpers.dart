@@ -43,6 +43,33 @@ List<String> setLabelRow(List<String> setLabels) {
   return [...List.filled(activeSheetFixedColumns.length, ''), ...setLabels];
 }
 
+List<String> activeRow(
+  String exercise, {
+  String sets = '3',
+  String rest = '2 min',
+  String tempo = '2-1-1',
+  String targets = 'x10@8',
+  String notes = '',
+  String logFormat = '',
+  String workout = 'Default',
+  bool isBackup = false,
+  List<String> history = const [],
+}) {
+  return [
+    exercise,
+    sets,
+    rest,
+    tempo,
+    targets,
+    notes,
+    logFormat,
+    workout == defaultWorkoutName ? '' : workout,
+    isBackup ? 'TRUE' : '',
+    'x',
+    ...history,
+  ];
+}
+
 class ReadableFixtureRow {
   const ReadableFixtureRow({
     required this.sheetRowNumber,

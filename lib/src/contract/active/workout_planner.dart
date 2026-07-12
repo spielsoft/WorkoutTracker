@@ -75,6 +75,7 @@ class _WorkoutRowWritePlanner {
     return _workoutPlacementPlan(
       sheetRowNumber: context.sheet._rows.length + 1,
       exercisesSheetRowNumber: exercisesSheetRowNumber,
+      logFormat: exercise.logFormat,
       workout: workout,
       isBackup: false,
       metadata: metadata,
@@ -98,6 +99,7 @@ class _WorkoutRowWritePlanner {
     return _workoutPlacementPlan(
       sheetRowNumber: context.backupInsertionRowNumber(primary),
       exercisesSheetRowNumber: exercisesSheetRowNumber,
+      logFormat: exercise.logFormat,
       workout: primary.workout,
       isBackup: true,
       parentPrimary: primary,
@@ -131,6 +133,7 @@ class _WorkoutRowWritePlanner {
   ActiveSheetWritePlan _workoutPlacementPlan({
     required int sheetRowNumber,
     required int exercisesSheetRowNumber,
+    required String logFormat,
     required String workout,
     required bool isBackup,
     required WorkoutPlacementMetadata metadata,
@@ -146,6 +149,7 @@ class _WorkoutRowWritePlanner {
       cellUpdates: _placementUpdates(
         sheetRowNumber: sheetRowNumber,
         exercisesSheetRowNumber: exercisesSheetRowNumber,
+        logFormat: logFormat,
         workout: workout,
         isBackup: isBackup,
         metadata: metadata,
@@ -160,6 +164,7 @@ class _WorkoutRowWritePlanner {
   List<CellUpdate> _placementUpdates({
     required int sheetRowNumber,
     required int exercisesSheetRowNumber,
+    required String logFormat,
     required String workout,
     required bool isBackup,
     required WorkoutPlacementMetadata metadata,
@@ -200,13 +205,11 @@ class _WorkoutRowWritePlanner {
       ),
       CellUpdate(
         sheetRowNumber: sheetRowNumber,
-        sheetColumnNumber: activeColumns.reps + 1,
-        value: metadata.reps,
-      ),
-      CellUpdate(
-        sheetRowNumber: sheetRowNumber,
-        sheetColumnNumber: activeColumns.rpe + 1,
-        value: metadata.rpe,
+        sheetColumnNumber: activeColumns.targets + 1,
+        value: switch (parseLogFormat(logFormat)) {
+          ParsedLogFormat format => format.renderValues(metadata.targetValues),
+          InvalidLogFormat() => '',
+        },
       ),
       CellUpdate(
         sheetRowNumber: sheetRowNumber,
@@ -227,6 +230,11 @@ class _WorkoutRowWritePlanner {
         sheetRowNumber: sheetRowNumber,
         sheetColumnNumber: activeColumns.isBackup + 1,
         value: isBackup ? 'TRUE' : '',
+      ),
+      CellUpdate(
+        sheetRowNumber: sheetRowNumber,
+        sheetColumnNumber: activeColumns.isExercise + 1,
+        value: 'x',
       ),
     ];
   }

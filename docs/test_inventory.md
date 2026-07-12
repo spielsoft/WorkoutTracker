@@ -1,15 +1,16 @@
 # Release Test Inventory
 
-The default credential-free gate is `flutter test`. It contains 292 tests in
-39 files and is organized by public contract:
+The default credential-free gate is `flutter test`. It contains 216 tests in
+40 files and is organized by public contract:
 
 | Contract | Test files | Purpose |
 | --- | --- | --- |
-| Workbook schema and models | `test/contract/active/{schema_safety,parser,models,history,healing,plans}_test.dart`, `test/fixtures/workbook_test.dart`, `test/log_format/format_test.dart` | Protect fixed columns, history blocks, formula healing, raw-text preservation, and mutation plans. |
+| Workbook schema and models | `test/contract/active/{schema_safety,parser,models,history,healing,plans}_test.dart`, `test/fixtures/workbook_test.dart`, `test/log_format/format_test.dart` | Protect fixed columns, format-derived defaults and targets, history blocks, formula healing, raw-text preservation, and mutation plans. |
 | Sheets adapters | `test/sheets/{client,read_adapter,write_adapter,template}_test.dart` | Verify the requests and operations this app sends to the Sheets client boundary. They do not establish Google behavior. |
 | Application orchestration | `test/app/{service,validation,controller,workspace,store}_test.dart`, `test/app/ui/flow_test.dart` | Protect validation-before-write, rereads, account binding, persistence failures, restore and command serialization, and public commands. |
 | Account and sheet access | `test/app/{account_session,auth_client,selection,create_dialog}_test.dart`, `test/app/ui/{sheet,sheet_flow,sheet_picker_page}_test.dart` | Protect optional Dart-override validation, Apple-native configuration delegation, accepted native callback shapes, requested scopes, app-owned adapter calls, account mismatch handling, and visible selection flows. Fakes do not establish Google Sign-In or Drive behavior. |
-| Workout and exercise flows | `test/app/{progress,live_logging_entry}_test.dart`, `test/app/ui/{workout_home,logging_flow,log,navigation,placement_flow,exercise_library_flow,exercise_authoring,exercise_screen,library_search}_test.dart` | Protect visible workout logging, raw-set editing, navigation, authoring, placement, reorder auto-scroll, progress, and error recovery. |
+| Workout and exercise flows | `test/app/{progress,live_logging_entry}_test.dart`, `test/app/ui/{workout_home,logging_flow,log,navigation,placement_flow,exercise_library_flow,exercise_authoring,exercise_screen,library_search}_test.dart` | Protect generated default/target fields, target-prefilled logging, raw-set editing, navigation, authoring, placement, reorder auto-scroll, progress, and error recovery. |
+| Temporary owner migration | `test/migration/legacy_field_migration_test.dart` | Proves allowlisting, dry-run blockers, field conversion, and raw-history preservation for the temporary pre-MVP migrator. Delete it with the migrator after owner workbooks are converted. |
 | Shell and accessibility | `test/app/ui/shell_test.dart` | Runs Flutter accessibility guidelines in core states and checks narrow, large-text workflows through visible outcomes. |
 | Hosted-resource safety | `test/firebase_hosting_static_site_test.dart` | Checks required links and contact, absence of hosted auth/token surfaces, and a static no-rewrite Hosting boundary. It does not lock disclosure wording or the exact file inventory. |
 
@@ -27,6 +28,9 @@ The default credential-free gate is `flutter test`. It contains 292 tests in
   and it may reset and write the development Sheet.
 - Native Apple bundle and accessibility smoke checks are release commands, not
   simulated Dart tests. See `COMPILE.md` and `docs/accessibility.md`.
+- Dynamic-field live acceptance inspects both a conventional Weight/Reps/RPE
+  exercise and a non-conventional format in the app and resulting Google
+  Sheet. The local suite proves only WorkoutTracker's contracts.
 
 ## Cleanup Classification
 

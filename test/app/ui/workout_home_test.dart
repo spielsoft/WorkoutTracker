@@ -28,7 +28,7 @@ void main() {
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', '', ''],
         [
           'Bench Press',
           '4',
@@ -95,7 +95,7 @@ void main() {
           'TRUE',
           '45s@8',
         ],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ]);
 
       await tester.pumpWidget(
@@ -124,14 +124,14 @@ void main() {
           [
             'Pull Up',
             '3',
-            '8',
-            '8',
             '2 min',
             '',
+            '8',
             'Full hang.',
             '{Reps}',
             'Upper',
             '',
+            'x',
             '',
           ],
         ],
@@ -143,8 +143,8 @@ void main() {
           ),
           CellFormula(
             sheetRowNumber: 3,
-            sheetColumnNumber: 8,
-            formula: '=Exercises!I2',
+            sheetColumnNumber: 7,
+            formula: '=Exercises!G2',
           ),
         ],
         exercisesRows: const [
@@ -153,23 +153,21 @@ void main() {
             'Pull Up',
             'Bodyweight pull',
             '3',
-            '8',
-            '8',
             '2 min',
-            '',
+            '2-1-1',
             'Full hang.',
             '{Reps}',
+            '8',
           ],
           [
             'Front Plank',
             'Core hold',
             '3',
-            '45',
-            '8',
             '60s',
-            '',
+            'hold',
             'Brace hard.',
             '{Seconds}[s@]{RPE}',
+            '45s@8',
           ],
         ],
       ),
@@ -210,21 +208,21 @@ void main() {
     final rows = [
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
+      ['Pull Up', '3', '2 min', '', 'x8@8', '', '', 'Upper', '', 'x', '8@8'],
       [
         'Lat Pulldown',
         '3',
-        '10',
-        '8',
         '90s',
         '',
+        'x10@8',
         '',
         '',
         'Upper',
         'TRUE',
+        'x',
         '100x10@8',
       ],
-      ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
+      ['Row', '3', '2 min', '', 'x10@8', '', '', 'Upper', '', 'x', '120x10@8'],
     ];
     final service = TestValSvc.fromRows(rows);
     final authoringService = DeletingWorkoutExerciseAuthoringService(rows);
@@ -275,21 +273,21 @@ void main() {
     final rows = [
       [...activeSheetFixedColumns, 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-      ['Pull Up', '3', '8', '8', '2 min', '', '', '', 'Upper', '', '8@8'],
+      ['Pull Up', '3', '2 min', '', 'x8@8', '', '', 'Upper', '', 'x', '8@8'],
       [
         'Lat Pulldown',
         '3',
-        '10',
-        '8',
         '90s',
         '',
+        'x10@8',
         '',
         '',
         'Upper',
         'TRUE',
+        'x',
         '100x10@8',
       ],
-      ['Row', '3', '10', '8', '2 min', '', '', '', 'Upper', '', '120x10@8'],
+      ['Row', '3', '2 min', '', 'x10@8', '', '', 'Upper', '', 'x', '120x10@8'],
     ];
     final service = TestValSvc.fromRows(rows);
     final authoringService = DeletingWorkoutExerciseAuthoringService(rows);
@@ -408,7 +406,7 @@ void main() {
         rows: [
           [...activeSheetFixedColumns, 'Week 1'],
           [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-          ['Pull Up', '3', '8', '8', '2 min', '', '', '{Reps}', 'Legs', '', ''],
+          ['Pull Up', '3', '2 min', '', '8', '', '{Reps}', 'Legs', '', 'x', ''],
         ],
         cellFormulas: const [
           CellFormula(
@@ -418,8 +416,8 @@ void main() {
           ),
           CellFormula(
             sheetRowNumber: 3,
-            sheetColumnNumber: 8,
-            formula: '=Exercises!I2',
+            sheetColumnNumber: 7,
+            formula: '=Exercises!G2',
           ),
         ],
         exercisesRows: const [
@@ -428,12 +426,11 @@ void main() {
             'Pull Up',
             'Bodyweight pull',
             '3',
-            '8',
-            '8',
             '2 min',
-            '',
+            '2-1-1',
             'Full hang.',
             '{Reps}',
+            '8',
           ],
         ],
       ),
@@ -532,7 +529,7 @@ void main() {
       final service = TestValSvc.fromRows([
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ]);
 
       await tester.pumpWidget(

@@ -41,8 +41,8 @@ accepted.
 - [ ] The rendered sheet includes two frozen header rows, the frozen metadata
       band, hidden or de-emphasized machine fields, vertical fixed-header
       grouping, merged history labels, and grey workout headings.
-- [ ] The initial width trial uses Exercise 250 px, Sets 80 px, Reps 96 px, RPE
-      96 px, Rest 96 px, Tempo 96 px, Notes 330 px, `is_exercise` 28 px, and
+- [ ] The initial width trial uses Exercise 250 px, Sets 80 px, Rest 96 px,
+      Tempo 96 px, Targets 128 px, Notes 330 px, `is_exercise` 28 px, and
       128 px history columns.
 - [ ] Representative long exercise names, wrapped notes, at least two workouts,
       a backup, an empty workout, and multi-set history are visible during the
@@ -64,7 +64,7 @@ None - can start immediately.
 
 - PRD user stories 1-8, 11-14, 30-31.
 
-## Slice 2: Upgrade legacy workbooks to explicit exercise rows
+## Slice 2: Migrate owner workbooks to explicit exercise rows
 
 ### Type
 
@@ -72,14 +72,13 @@ None - can start immediately.
 
 ### What to build
 
-Introduce the versioned active-sheet contract whose final fixed metadata
-column is `is_exercise`. Normal parsing treats only literal `x` rows as
-exercises, treats blank rows as non-exercise annotations, and rejects unknown
-markers. Preserve existing users through an explicit upgrade flow: recognize a
-valid legacy WorkoutTracker workbook, block ordinary mutations until the user
-chooses upgrade, insert the marker at the metadata/history boundary, mark only
-legacy-validated exercise rows, create durable workout declarations, reread,
-and expose the upgraded workbook through the ordinary workout screen.
+Introduce the active-sheet contract whose final fixed metadata column is
+`is_exercise`. Normal parsing treats only literal `x` rows as exercises,
+treats blank rows as non-exercise annotations, and rejects unknown markers.
+Extend `tool/legacy_field_migration.dart` to insert and populate the marker,
+create durable workout declarations, and apply the layout for allowlisted
+owner workbooks or approved copies. Keep every legacy rule in that one file;
+ship no upgrade UI or parser fallback, and delete the file before MVP.
 
 ### Acceptance criteria
 
@@ -92,19 +91,20 @@ and expose the upgraded workbook through the ordinary workout screen.
 - [ ] Workout heading rows carry Workout identity without being parsed as
       exercises, so a workout with no exercises remains selectable after a
       reread.
-- [ ] A structurally valid legacy workbook reaches an explicit upgrade state
-      rather than being reported as generic damage or written through using
-      guessed positions.
+- [ ] The temporary migrator accepts only allowlisted owner workbooks or
+      approved copies and produces a dry-run report before mutation.
 - [ ] Upgrade inserts the marker before existing history, tags only rows
       accepted by the legacy parser, and preserves formulas, raw history text,
       unrecognized rows, and history labels.
 - [ ] The upgrade uses the loaded-session reread and expectation checks; stale
       source rows or headers reject the operation without partial follow-up
       writes.
-- [ ] After a successful refreshed report, the existing UI proceeds through
-      the new schema without a second selection or login.
-- [ ] Public behavior tests cover new parsing, damage, upgrade success, stale
-      rejection, and the visible upgrade flow.
+- [ ] After a successful refreshed report, the ordinary parser and UI proceed
+      through the new schema without a fallback path.
+- [ ] Public behavior tests cover new parsing, damage, migration success, and
+      stale rejection; there is no visible upgrade flow to test.
+- [ ] The migration file and its tests are explicitly marked for deletion
+      after all owner sheets complete the combined field/layout migration.
 
 ### Blocked by
 
@@ -137,8 +137,8 @@ introducing Starting point or visible backup prose.
 - [ ] The active tab freezes both header rows and the complete fixed metadata
       band before history.
 - [ ] Initial visible widths closely match the agreed reference proportions:
-      Exercise 250 px, Sets 80 px, Reps 96 px, RPE 96 px, Rest 96 px, Tempo
-      96 px, Notes 330 px, `is_exercise` 28 px, and each history set 128 px.
+      Exercise 250 px, Sets 80 px, Rest 96 px, Tempo 96 px, Targets 128 px,
+      Notes 330 px, `is_exercise` 28 px, and each history set 128 px.
 - [ ] Exercise and Notes use appropriate wrapping/overflow behavior; machine
       fields are hidden or de-emphasized and `is_exercise` is the final narrow,
       centered metadata column.

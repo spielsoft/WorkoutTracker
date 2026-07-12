@@ -42,6 +42,25 @@ class ParsedLogFormat extends LogFormatParseResult {
     return buffer.toString();
   }
 
+  String renderValues(Map<String, String> values) {
+    if (fieldLabels.every((label) => (values[label] ?? '').isEmpty)) {
+      return '';
+    }
+    return render(values);
+  }
+
+  Map<String, String>? parseValues(String text) {
+    if (text.isEmpty) {
+      return Map<String, String>.unmodifiable({
+        for (final label in fieldLabels) label: '',
+      });
+    }
+    return switch (parseLogEntry(this, text)) {
+      FormattedLogEntry(:final fieldValues) => fieldValues,
+      RawLogEntry() => null,
+    };
+  }
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -195,6 +214,13 @@ LogFormatParseResult parseLogFormat(String text) {
   final fieldCount = segments.whereType<LogField>().length;
   if (fieldCount < 1 || fieldCount > 4) {
     return const InvalidLogFormat(['Log formats support one to four fields.']);
+  }
+
+  final labels = [
+    for (final field in segments.whereType<LogField>()) field.label,
+  ];
+  if (labels.toSet().length != labels.length) {
+    return const InvalidLogFormat(['Field labels must be unique.']);
   }
 
   return ParsedLogFormat(segments);

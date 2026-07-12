@@ -24,7 +24,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         EditExerciseScreen(
-          view: const EditExerciseView(
+          view: EditExerciseView(
             isBusy: false,
             sheetLabel: 'Training',
             exercise: CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat'),
@@ -47,7 +47,7 @@ void main() {
         actions: _CreateActions(),
       ),
       EditExerciseScreen(
-        view: const EditExerciseView(
+        view: EditExerciseView(
           isBusy: true,
           sheetLabel: 'Training',
           exercise: CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat'),
@@ -62,7 +62,7 @@ void main() {
     }
   });
 
-  testWidgets('valid formats show syntax help and a representative preview', (
+  testWidgets('valid formats show syntax help and current-value preview', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -83,7 +83,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Use {Field}'), findsOneWidget);
-    expect(find.text('Preview: 100x8@8'), findsOneWidget);
+    expect(find.text('Preview: x10@8'), findsOneWidget);
   });
 
   testWidgets('invalid formats show feedback and cannot create an exercise', (
@@ -128,7 +128,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         EditExerciseScreen(
-          view: const EditExerciseView(
+          view: EditExerciseView(
             isBusy: false,
             sheetLabel: 'Training',
             exercise: CanonicalExercise(
@@ -196,7 +196,7 @@ void main() {
     'changed edit drafts require confirmation but unchanged forms close',
     (tester) async {
       final unchanged = _EditActions();
-      final view = const EditExerciseView(
+      final view = EditExerciseView(
         isBusy: false,
         sheetLabel: 'Training',
         exercise: CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat'),
@@ -219,9 +219,14 @@ void main() {
         'Front Squat',
       );
       final cancel = find.widgetWithText(OutlinedButton, 'Cancel');
-      await tester.ensureVisible(cancel);
+      await tester.scrollUntilVisible(
+        cancel,
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -100));
       await tester.pumpAndSettle();
-      await tester.tap(cancel);
+      await tester.tapAt(tester.getTopLeft(cancel) + const Offset(20, 5));
       await tester.pumpAndSettle();
 
       expect(find.text('Discard changes?'), findsOneWidget);

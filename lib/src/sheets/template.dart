@@ -85,13 +85,12 @@ ExerciseDef _exerciseDefaultFromJson(Object? value) {
   return ExerciseDef(
     exercise: _requiredString(value, 'exercise'),
     description: _optionalString(value, 'description'),
-    defaultSets: _optionalString(value, 'defaultSets'),
-    defaultReps: _optionalString(value, 'defaultReps'),
-    defaultRpe: _optionalString(value, 'defaultRpe'),
-    defaultRest: _optionalString(value, 'defaultRest'),
-    defaultTempo: _optionalString(value, 'defaultTempo'),
+    defaultSets: _requiredString(value, 'defaultSets'),
+    defaultRest: _requiredString(value, 'defaultRest'),
+    defaultTempo: _requiredString(value, 'defaultTempo'),
     notes: _optionalString(value, 'notes'),
     logFormat: _optionalString(value, 'logFormat'),
+    defaultValues: _stringMap(value, 'defaultValues'),
   );
 }
 
@@ -114,16 +113,33 @@ String _optionalString(Map<String, Object?> json, String key) {
   throw FormatException('Exercise default "$key" must be a string.');
 }
 
+Map<String, String> _stringMap(Map<String, Object?> json, String key) {
+  final value = json[key];
+  if (value is! Map<String, Object?>) {
+    throw FormatException('Exercise default "$key" must be an object.');
+  }
+  final strings = <String, String>{};
+  for (final entry in value.entries) {
+    final entryValue = entry.value;
+    if (entryValue is! String) {
+      throw FormatException(
+        'Exercise default "$key.${entry.key}" must be a string.',
+      );
+    }
+    strings[entry.key] = entryValue;
+  }
+  return strings;
+}
+
 List<String> _exerciseRow(ExerciseDef exercise) {
   return [
     exercise.exercise,
     exercise.description,
     exercise.defaultSets,
-    exercise.defaultReps,
-    exercise.defaultRpe,
     exercise.defaultRest,
     exercise.defaultTempo,
     exercise.notes,
     exercise.resolvedLogFormat,
+    exercise.renderedDefaultValues,
   ];
 }

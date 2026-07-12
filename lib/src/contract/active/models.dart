@@ -39,29 +39,27 @@ class WorkoutChoice {
 }
 
 class CanonicalExercise {
-  const CanonicalExercise({
+  CanonicalExercise({
     required this.sheetRowNumber,
     required this.exercise,
     this.description = '',
     this.defaultSets = '',
-    this.defaultReps = '',
-    this.defaultRpe = '',
     this.defaultRest = '',
     this.defaultTempo = '',
     this.notes = '',
     this.logFormat = defaultExerciseLogFormat,
-  });
+    Map<String, String> defaultValues = const {},
+  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues);
 
   final int sheetRowNumber;
   final String exercise;
   final String description;
   final String defaultSets;
-  final String defaultReps;
-  final String defaultRpe;
   final String defaultRest;
   final String defaultTempo;
   final String notes;
   final String logFormat;
+  final Map<String, String> defaultValues;
 
   String get displayName {
     final trimmed = exercise.trim();
@@ -95,17 +93,15 @@ class ExerciseLoggingContext {
 }
 
 class ExerciseTargets {
-  const ExerciseTargets({
+  ExerciseTargets({
     required this.sets,
-    required this.reps,
-    required this.rpe,
     required this.tempo,
-  });
+    required Map<String, String> values,
+  }) : values = Map<String, String>.unmodifiable(values);
 
   final String sets;
-  final String reps;
-  final String rpe;
   final String tempo;
+  final Map<String, String> values;
 }
 
 class RowHistoryBlock {
@@ -175,14 +171,6 @@ class _WorkoutReadModelBuilder {
               sheet._exercisesRows[rowIndex],
               columns.defaultSets,
             ),
-            defaultReps: _cell(
-              sheet._exercisesRows[rowIndex],
-              columns.defaultReps,
-            ),
-            defaultRpe: _cell(
-              sheet._exercisesRows[rowIndex],
-              columns.defaultRpe,
-            ),
             defaultRest: _cell(
               sheet._exercisesRows[rowIndex],
               columns.defaultRest,
@@ -193,6 +181,10 @@ class _WorkoutReadModelBuilder {
             ),
             notes: _cell(sheet._exercisesRows[rowIndex], columns.notes),
             logFormat: _cell(sheet._exercisesRows[rowIndex], columns.logFormat),
+            defaultValues: _defaultValues(
+              sheet._exercisesRows[rowIndex],
+              columns,
+            ),
           ),
     ];
   }
@@ -239,9 +231,8 @@ class _WorkoutReadModelBuilder {
       logFormat: selected.logFormat,
       targets: ExerciseTargets(
         sets: selected.sets,
-        reps: selected.reps,
-        rpe: selected.rpe,
         tempo: selected.tempo,
+        values: selected.targetValues,
       ),
       selectedHistory: _rowHistoryBlock(
         label: blockLabel,
@@ -349,4 +340,13 @@ class _WorkoutReadModelBuilder {
       (column) => _cell(row, column.sheetColumnNumber - 1).trim().isNotEmpty,
     );
   }
+}
+
+Map<String, String> _defaultValues(
+  List<String> row,
+  _ExercisesColumnIndexes columns,
+) {
+  final parsed = parseLogFormat(_cell(row, columns.logFormat));
+  if (parsed is! ParsedLogFormat) return const {};
+  return parsed.parseValues(_cell(row, columns.defaultValues)) ?? const {};
 }

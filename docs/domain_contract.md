@@ -9,13 +9,13 @@ The first tab is the active workout sheet. Its fixed columns must appear in
 this exact order before any history columns:
 
 ```text
-Exercise | Sets | Reps | RPE | Rest | Tempo | Notes | Log Format | Workout | is_backup
+Exercise | Sets | Rest | Tempo | Targets | Notes | Log Format | Workout | is_backup | is_exercise
 ```
 
 The workbook must also contain an `Exercises` tab with exactly these columns:
 
 ```text
-Exercise | Description | Default Sets | Default Reps | Default RPE | Default Rest | Default Tempo | Notes | Log Format
+Exercise | Description | Default Sets | Default Rest | Default Tempo | Notes | Log Format | Default Values
 ```
 
 A missing or empty required tab, missing or reordered required column, or
@@ -24,9 +24,11 @@ column positions must never be guessed.
 
 ## Active Rows and Workouts
 
-An active-sheet row represents an exercise when its first display cell is
-non-empty and not part of a merged human-only first-column row. Other rows are
-ignored.
+An active-sheet row currently represents an exercise when its first display
+cell is non-empty and not part of a merged human-only first-column row. New and
+migrated rows also carry `x` in `is_exercise`; the styled-layout plan will make
+that marker authoritative after the owner migration is complete. Other rows
+are ignored.
 
 - Blank `Workout` means the default workout.
 - Blank `is_backup` means false.
@@ -35,8 +37,16 @@ ignored.
   workout.
 - A backup without such a primary is blocking schema damage.
 
-The active sheet owns workout placement and row-local targets: `Sets`, `Reps`,
-`RPE`, `Rest`, `Tempo`, `Notes`, `Workout`, and `is_backup`.
+The active sheet owns workout placement and row-local metadata: fixed `Sets`,
+`Rest`, and `Tempo`; format-driven `Targets`; plus `Notes`, `Workout`,
+`is_backup`, and `is_exercise`.
+
+`Exercises.Default Values` and active-row `Targets` use their row's `Log
+Format` to render the declared field map into one cell. Labels are exact,
+case-sensitive, unique keys. A blank value is allowed, including a blank
+user-specific Weight alongside populated Reps and RPE. If every declared value
+is blank, the stored cell is blank. A nonblank value that cannot be parsed by
+its paired format is blocking schema damage.
 
 ## Exercise Ownership and Formulas
 
@@ -61,7 +71,7 @@ ownership.
 
 ## History Blocks
 
-History begins immediately after `is_backup` and uses two header rows:
+History begins immediately after `is_exercise` and uses two header rows:
 
 - row 1 starts each block with a unique human label such as `Week 1`;
 - row 2 names its set columns consecutively `S1`, `S2`, and so on.
@@ -87,7 +97,7 @@ The language is literal:
 
 - `{Field}` declares an exact user-authored field label.
 - `[text]` declares text that is always emitted.
-- A format contains one to four fields.
+- A format contains one to four uniquely named fields.
 - Field labels do not imply numeric or application-owned semantics.
 
 Examples:

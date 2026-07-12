@@ -127,26 +127,24 @@ class _AuthoringScreenSt extends State<ExerciseAuthoringScreen> {
 }
 
 class CanonicalExerciseDraft {
-  const CanonicalExerciseDraft({
+  CanonicalExerciseDraft({
     required this.exerciseName,
     required this.description,
     required this.defaultSets,
-    required this.defaultReps,
-    required this.defaultRPE,
+    required Map<String, String> defaultValues,
     required this.defaultRest,
     required this.defaultTempo,
     required this.notes,
     required this.logFormat,
-  });
+  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues);
 
-  static const defaults = CanonicalExerciseDraft(
+  static final defaults = CanonicalExerciseDraft(
     exerciseName: '',
     description: '',
     defaultSets: '3',
-    defaultReps: '10',
-    defaultRPE: '8',
+    defaultValues: const {'Weight': '', 'Reps': '10', 'RPE': '8'},
     defaultRest: '2 min',
-    defaultTempo: '',
+    defaultTempo: '2-1-1',
     notes: '',
     logFormat: defaultExerciseLogFormat,
   );
@@ -156,8 +154,7 @@ class CanonicalExerciseDraft {
       exerciseName: exercise.exercise,
       description: exercise.description,
       defaultSets: exercise.defaultSets,
-      defaultReps: exercise.defaultReps,
-      defaultRPE: exercise.defaultRpe,
+      defaultValues: exercise.defaultValues,
       defaultRest: exercise.defaultRest,
       defaultTempo: exercise.defaultTempo,
       notes: exercise.notes,
@@ -168,8 +165,7 @@ class CanonicalExerciseDraft {
   final String exerciseName;
   final String description;
   final String defaultSets;
-  final String defaultReps;
-  final String defaultRPE;
+  final Map<String, String> defaultValues;
   final String defaultRest;
   final String defaultTempo;
   final String notes;
@@ -181,8 +177,10 @@ class CanonicalExerciseDraft {
       exerciseName: exerciseName.trim(),
       description: description.trim(),
       defaultSets: defaultSets.trim(),
-      defaultReps: defaultReps.trim(),
-      defaultRPE: defaultRPE.trim(),
+      defaultValues: {
+        for (final entry in defaultValues.entries)
+          entry.key: entry.value.trim(),
+      },
       defaultRest: defaultRest.trim(),
       defaultTempo: defaultTempo.trim(),
       notes: notes.trim(),
@@ -198,8 +196,7 @@ class CanonicalExerciseDraft {
       exercise: draft.exerciseName,
       description: draft.description,
       defaultSets: draft.defaultSets,
-      defaultReps: draft.defaultReps,
-      defaultRpe: draft.defaultRPE,
+      defaultValues: draft.defaultValues,
       defaultRest: draft.defaultRest,
       defaultTempo: draft.defaultTempo,
       notes: draft.notes,
@@ -214,8 +211,7 @@ class CanonicalExerciseDraft {
             exerciseName == other.exerciseName &&
             description == other.description &&
             defaultSets == other.defaultSets &&
-            defaultReps == other.defaultReps &&
-            defaultRPE == other.defaultRPE &&
+            _sameStringMap(defaultValues, other.defaultValues) &&
             defaultRest == other.defaultRest &&
             defaultTempo == other.defaultTempo &&
             notes == other.notes &&
@@ -228,8 +224,7 @@ class CanonicalExerciseDraft {
       exerciseName,
       description,
       defaultSets,
-      defaultReps,
-      defaultRPE,
+      Object.hashAll(defaultValues.entries),
       defaultRest,
       defaultTempo,
       notes,
@@ -242,7 +237,7 @@ class ExerciseAuthoringForm extends StatefulWidget {
   const ExerciseAuthoringForm({
     required this.onSubmit,
     required this.mode,
-    this.initialDraft = CanonicalExerciseDraft.defaults,
+    required this.initialDraft,
     this.onCancel,
     this.onChanged,
     this.isBusy = false,
@@ -265,8 +260,8 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _setsCtrl;
-  late final TextEditingController _repsCtrl;
-  late final TextEditingController _rpeCtrl;
+  final _valueCtrls = <String, TextEditingController>{};
+  List<String> _fieldLabels = const [];
   late final TextEditingController _restCtrl;
   late final TextEditingController _tempoCtrl;
   late final TextEditingController _notesCtrl;
@@ -278,8 +273,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _nameCtrl = TextEditingController();
     _descCtrl = TextEditingController();
     _setsCtrl = TextEditingController();
-    _repsCtrl = TextEditingController();
-    _rpeCtrl = TextEditingController();
     _restCtrl = TextEditingController();
     _tempoCtrl = TextEditingController();
     _notesCtrl = TextEditingController();
@@ -300,8 +293,9 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _nameCtrl.dispose();
     _descCtrl.dispose();
     _setsCtrl.dispose();
-    _repsCtrl.dispose();
-    _rpeCtrl.dispose();
+    for (final controller in _valueCtrls.values) {
+      controller.dispose();
+    }
     _restCtrl.dispose();
     _tempoCtrl.dispose();
     _notesCtrl.dispose();
@@ -313,12 +307,11 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _nameCtrl.text = draft.exerciseName;
     _descCtrl.text = draft.description;
     _setsCtrl.text = draft.defaultSets;
-    _repsCtrl.text = draft.defaultReps;
-    _rpeCtrl.text = draft.defaultRPE;
     _restCtrl.text = draft.defaultRest;
     _tempoCtrl.text = draft.defaultTempo;
     _notesCtrl.text = draft.notes;
     _formatCtrl.text = draft.logFormat;
+    _syncValueCtrls(draft.logFormat, values: draft.defaultValues);
   }
 
   void _submit() {
@@ -333,8 +326,9 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       exerciseName: _nameCtrl.text,
       description: _descCtrl.text,
       defaultSets: _setsCtrl.text,
-      defaultReps: _repsCtrl.text,
-      defaultRPE: _rpeCtrl.text,
+      defaultValues: {
+        for (final label in _fieldLabels) label: _valueCtrls[label]?.text ?? '',
+      },
       defaultRest: _restCtrl.text,
       defaultTempo: _tempoCtrl.text,
       notes: _notesCtrl.text,
@@ -345,6 +339,28 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
   void _changed(String _) {
     widget.onChanged?.call(_draft());
     setState(() {});
+  }
+
+  void _formatChanged(String value) {
+    _syncValueCtrls(value);
+    _changed(value);
+  }
+
+  void _syncValueCtrls(String format, {Map<String, String> values = const {}}) {
+    final parsed = parseLogFormat(format);
+    if (parsed is! ParsedLogFormat) {
+      return;
+    }
+    _fieldLabels = parsed.fieldLabels;
+    for (final label in _fieldLabels) {
+      final controller = _valueCtrls.putIfAbsent(
+        label,
+        TextEditingController.new,
+      );
+      if (values.containsKey(label)) {
+        controller.text = values[label] ?? '';
+      }
+    }
   }
 
   String? _formatError(String? value) {
@@ -450,27 +466,13 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                   SizedBox(
                     width: fieldWidth,
                     child: _AuthoringField(
-                      key: const ValueKey('exercise-authoring-default-reps'),
-                      controller: _repsCtrl,
+                      key: const ValueKey('exercise-authoring-default-tempo'),
+                      controller: _tempoCtrl,
                       enabled: !widget.isBusy,
-                      semanticsIdentifier: 'exercise-authoring-default-reps',
-                      labelText: 'Default reps',
-                      icon: Icons.repeat_outlined,
+                      semanticsIdentifier: 'exercise-authoring-default-tempo',
+                      labelText: 'Default tempo',
+                      icon: Icons.graphic_eq_outlined,
                       textInputAction: TextInputAction.next,
-                      onChanged: _changed,
-                    ),
-                  ),
-                  SizedBox(
-                    width: fieldWidth,
-                    child: _AuthoringField(
-                      key: const ValueKey('exercise-authoring-default-rpe'),
-                      controller: _rpeCtrl,
-                      enabled: !widget.isBusy,
-                      semanticsIdentifier: 'exercise-authoring-default-rpe',
-                      labelText: 'Default RPE',
-                      icon: Icons.speed_outlined,
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.number,
                       onChanged: _changed,
                     ),
                   ),
@@ -483,19 +485,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       semanticsIdentifier: 'exercise-authoring-default-rest',
                       labelText: 'Default rest',
                       icon: Icons.timer_outlined,
-                      textInputAction: TextInputAction.next,
-                      onChanged: _changed,
-                    ),
-                  ),
-                  SizedBox(
-                    width: fieldWidth,
-                    child: _AuthoringField(
-                      key: const ValueKey('exercise-authoring-default-tempo'),
-                      controller: _tempoCtrl,
-                      enabled: !widget.isBusy,
-                      semanticsIdentifier: 'exercise-authoring-default-tempo',
-                      labelText: 'Default tempo',
-                      icon: Icons.graphic_eq_outlined,
                       textInputAction: TextInputAction.next,
                       onChanged: _changed,
                     ),
@@ -518,12 +507,12 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                               'separators; use 1–4 fields.',
                           validator: _formatError,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
-                          onChanged: _changed,
+                          onChanged: _formatChanged,
                         ),
                         if (parsedFormat case ParsedLogFormat()) ...[
                           const SizedBox(height: 6),
                           Text(
-                            'Preview: ${parsedFormat.representativeEntry}',
+                            'Preview: ${parsedFormat.renderValues({for (final label in parsedFormat.fieldLabels) label: _valueCtrls[label]?.text ?? ''})}',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: colorScheme.onSurfaceVariant),
                           ),
@@ -535,6 +524,38 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
               );
             },
           ),
+          if (parsedFormat case ParsedLogFormat(:final fieldLabels)) ...[
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final twoColumn = constraints.maxWidth >= 620;
+                final fieldWidth = twoColumn
+                    ? (constraints.maxWidth - 12) / 2
+                    : constraints.maxWidth;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final label in fieldLabels)
+                      SizedBox(
+                        width: fieldWidth,
+                        child: _AuthoringField(
+                          key: ValueKey('exercise-authoring-default-$label'),
+                          controller: _valueCtrls[label]!,
+                          enabled: !widget.isBusy,
+                          semanticsIdentifier:
+                              'exercise-authoring-default-$label',
+                          labelText: 'Default $label',
+                          icon: Icons.tune_outlined,
+                          textInputAction: TextInputAction.next,
+                          onChanged: _changed,
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
           const SizedBox(height: 12),
           A11yTextField(
             identifier: 'exercise-authoring-notes',
@@ -584,6 +605,13 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       ),
     );
   }
+}
+
+bool _sameStringMap(Map<String, String> left, Map<String, String> right) {
+  if (left.length != right.length) {
+    return false;
+  }
+  return left.entries.every((entry) => right[entry.key] == entry.value);
 }
 
 class _AuthoringField extends StatefulWidget {

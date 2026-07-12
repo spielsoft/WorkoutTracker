@@ -22,7 +22,20 @@ void main() {
     await _openRows(tester, [
       [...activeSheetFixedColumns, 'Week 2', 'Week 1'],
       [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S1'],
-      ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', '', '225x5@8'],
+      [
+        'Squat',
+        '3',
+        '3 min',
+        '',
+        'x5@8',
+        '',
+        '',
+        'Legs',
+        '',
+        'x',
+        '',
+        '225x5@8',
+      ],
       [
         'Bench Press',
         '3',
@@ -195,7 +208,7 @@ Future<void> _openWorkout(WidgetTester tester) async {
       rows: [
         [...activeSheetFixedColumns, 'Week 1'],
         [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
-        ['Squat', '3', '5', '8', '3 min', '', '', '', 'Legs', '', ''],
+        ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
       ],
       cellFormulas: const [
         CellFormula(
@@ -205,8 +218,8 @@ Future<void> _openWorkout(WidgetTester tester) async {
         ),
         CellFormula(
           sheetRowNumber: 3,
-          sheetColumnNumber: 8,
-          formula: '=Exercises!I2',
+          sheetColumnNumber: 7,
+          formula: '=Exercises!G2',
         ),
       ],
       exercisesRows: const [

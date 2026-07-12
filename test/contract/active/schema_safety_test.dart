@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/contract.dart';
 
 void main() {
-  const exercise = CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat');
+  final exercise = CanonicalExercise(sheetRowNumber: 2, exercise: 'Squat');
 
   test('malformed active headers cannot produce workbook writes', () {
     final sheet = parseActiveSheet(
@@ -107,10 +107,10 @@ void _expectNoPlans(ParsedActiveSheet sheet, CanonicalExercise exercise) {
   }
 
   final exercisePlans = [
-    sheet.planCanonicalAppend(const ExerciseDef(exercise: 'Deadlift')),
+    sheet.planCanonicalAppend(ExerciseDef(exercise: 'Deadlift')),
     sheet.planCanonicalUpdate(
       selectedExercise: exercise,
-      exercise: const ExerciseDef(exercise: 'Deadlift'),
+      exercise: ExerciseDef(exercise: 'Deadlift'),
     ),
     sheet.planCanonicalReorder(const ReorderIntent(fromIndex: 0, toIndex: 1)),
   ];

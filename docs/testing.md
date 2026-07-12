@@ -25,6 +25,12 @@ Google adapter inputs, application commands, and visible screen behavior.
 Avoid private helpers, exact widget trees, documentation prose, and incidental
 callback order.
 
+For dynamic exercise fields, retain public coverage for unique Log Format
+labels, Default Values and Targets round-trips, target prefill versus saved
+history precedence, raw-history preservation, and stale-write rejection. The
+temporary owner migration and its colocated tests are deleted together before
+MVP release.
+
 Fakes may prove what WorkoutTracker requests or accepts. They do not prove the
 behavior of Google Sign-In, Drive, Sheets, Firebase, OAuth, or Picker.
 
@@ -47,6 +53,8 @@ WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
 
 This command targets the supported macOS app and destructively resets the
 named development Sheet before and after its representative logged-set write.
+Field-model acceptance also inspects a conventional Weight/Reps/RPE row and a
+timed or custom-format row directly in the real Sheet.
 
 Without the environment flag, it must skip before authentication. A live run
 must reset the fixture after itself; report reset failures and skipped runs

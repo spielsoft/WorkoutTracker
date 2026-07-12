@@ -173,11 +173,10 @@ class _PlaceFormSt extends State<_PlaceForm> {
   CanonicalExercise? _selectedExercise;
   late final TextEditingController _searchCtrl;
   late final TextEditingController _setsCtrl;
-  late final TextEditingController _repsCtrl;
-  late final TextEditingController _rpeCtrl;
   late final TextEditingController _restCtrl;
   late final TextEditingController _tempoCtrl;
   late final TextEditingController _notesCtrl;
+  final _targetCtrls = <String, TextEditingController>{};
 
   @override
   void initState() {
@@ -185,8 +184,6 @@ class _PlaceFormSt extends State<_PlaceForm> {
     _searchCtrl = TextEditingController();
     _searchCtrl.addListener(_handleSearch);
     _setsCtrl = TextEditingController();
-    _repsCtrl = TextEditingController();
-    _rpeCtrl = TextEditingController();
     _restCtrl = TextEditingController();
     _tempoCtrl = TextEditingController();
     _notesCtrl = TextEditingController();
@@ -208,11 +205,12 @@ class _PlaceFormSt extends State<_PlaceForm> {
     _searchCtrl.removeListener(_handleSearch);
     _searchCtrl.dispose();
     _setsCtrl.dispose();
-    _repsCtrl.dispose();
-    _rpeCtrl.dispose();
     _restCtrl.dispose();
     _tempoCtrl.dispose();
     _notesCtrl.dispose();
+    for (final controller in _targetCtrls.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -222,11 +220,24 @@ class _PlaceFormSt extends State<_PlaceForm> {
 
   void _loadDefaults(CanonicalExercise? exercise) {
     _setsCtrl.text = exercise?.defaultSets ?? '';
-    _repsCtrl.text = exercise?.defaultReps ?? '';
-    _rpeCtrl.text = exercise?.defaultRpe ?? '';
     _restCtrl.text = exercise?.defaultRest ?? '';
     _tempoCtrl.text = exercise?.defaultTempo ?? '';
     _notesCtrl.text = exercise?.notes ?? '';
+    for (final controller in _targetCtrls.values) {
+      controller.dispose();
+    }
+    _targetCtrls.clear();
+    if (exercise == null) {
+      return;
+    }
+    final format = parseLogFormat(exercise.logFormat);
+    if (format is ParsedLogFormat) {
+      for (final label in format.fieldLabels) {
+        _targetCtrls[label] = TextEditingController(
+          text: exercise.defaultValues[label] ?? '',
+        );
+      }
+    }
   }
 
   void _clearForNext() {
@@ -240,11 +251,13 @@ class _PlaceFormSt extends State<_PlaceForm> {
   WorkoutPlacementMetadata _metadata() {
     return WorkoutPlacementMetadata(
       sets: _setsCtrl.text.trim(),
-      reps: _repsCtrl.text.trim(),
-      rpe: _rpeCtrl.text.trim(),
       rest: _restCtrl.text.trim(),
       tempo: _tempoCtrl.text.trim(),
       notes: _notesCtrl.text.trim(),
+      targetValues: {
+        for (final entry in _targetCtrls.entries)
+          entry.key: entry.value.text.trim(),
+      },
     );
   }
 
@@ -349,18 +362,6 @@ class _PlaceFormSt extends State<_PlaceForm> {
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _MetaField(controller: _repsCtrl, labelText: 'Reps'),
-                  ),
-                  SizedBox(
-                    width: fieldWidth,
-                    child: _MetaField(
-                      controller: _rpeCtrl,
-                      labelText: 'RPE',
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  SizedBox(
-                    width: fieldWidth,
                     child: _MetaField(controller: _restCtrl, labelText: 'Rest'),
                   ),
                   SizedBox(
@@ -377,6 +378,15 @@ class _PlaceFormSt extends State<_PlaceForm> {
                       labelText: 'Notes',
                     ),
                   ),
+                  for (final entry in _targetCtrls.entries)
+                    SizedBox(
+                      width: fieldWidth,
+                      child: _MetaField(
+                        key: ValueKey('placement-target-${entry.key}'),
+                        controller: entry.value,
+                        labelText: entry.key,
+                      ),
+                    ),
                 ],
               );
             },
@@ -443,6 +453,7 @@ class _ExercisePlacementDraft {
 
 class _MetaField extends StatelessWidget {
   const _MetaField({
+    super.key,
     required this.controller,
     required this.labelText,
     this.keyboardType,

@@ -7,8 +7,8 @@ class TestValSvc implements WbkAccess {
 
   TestValSvc.fromRows(List<List<String>> rows)
     : _io = _MemoryWbkIo(
-        activeSheet: parseActiveSheet(ActiveSheetInput(rows: rows)),
-        rows: rows,
+        activeSheet: parseActiveSheet(ActiveSheetInput(rows: _fieldRows(rows))),
+        rows: _fieldRows(rows),
       );
 
   final _MemoryWbkIo _io;
@@ -23,6 +23,49 @@ class TestValSvc implements WbkAccess {
     spreadsheetIds.add(sheetId);
     return ValSess(sheetId: sheetId, io: _io);
   }
+}
+
+List<List<String>> _fieldRows(List<List<String>> rows) {
+  return [
+    for (var index = 0; index < rows.length; index += 1)
+      if (index < 2 || rows[index].length > 9 && rows[index][9] == 'x')
+        [...rows[index]]
+      else
+        _fieldRow(rows[index]),
+  ];
+}
+
+List<String> _fieldRow(List<String> source) {
+  final row = [
+    ...source,
+    ...List.filled(source.length < 10 ? 10 - source.length : 0, ''),
+  ];
+  final formatText = row[7].trim().isEmpty ? defaultExerciseLogFormat : row[7];
+  final format = parseLogFormat(formatText);
+  final targets = format is ParsedLogFormat
+      ? format.renderValues({
+          for (final label in format.fieldLabels)
+            label: switch (label) {
+              'Reps' || 'Seconds' => row[2],
+              'RPE' => row[3],
+              'Weight' || 'Pain' => '',
+              _ => row[2],
+            },
+        })
+      : '';
+  return [
+    row[0],
+    row[1],
+    row[4],
+    row[5],
+    targets,
+    row[6],
+    row[7],
+    row[8],
+    row[9],
+    row[0].trim().isEmpty ? '' : 'x',
+    ...source.skip(10),
+  ];
 }
 
 class _MemoryWbkIo implements WbkIo {

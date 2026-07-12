@@ -181,7 +181,7 @@ class LoggingFlow {
     final entry = _lastResult(context);
     final values = switch (entry?.logEntry) {
       FormattedLogEntry(:final fieldValues) => fieldValues,
-      _ => const <String, String>{},
+      _ => context.targets.values,
     };
     for (final MapEntry(key: label, value: controller)
         in _newSetCtrls.entries) {

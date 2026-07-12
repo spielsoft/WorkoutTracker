@@ -125,30 +125,35 @@ class SetPosition {
 }
 
 class ExerciseDef {
-  const ExerciseDef({
+  ExerciseDef({
     required this.exercise,
     this.description = '',
     this.defaultSets = '',
-    this.defaultReps = '',
-    this.defaultRpe = '',
     this.defaultRest = '',
     this.defaultTempo = '',
     this.notes = '',
     this.logFormat = defaultExerciseLogFormat,
-  });
+    Map<String, String> defaultValues = const {},
+  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues);
 
   final String exercise;
   final String description;
   final String defaultSets;
-  final String defaultReps;
-  final String defaultRpe;
   final String defaultRest;
   final String defaultTempo;
   final String notes;
   final String logFormat;
+  final Map<String, String> defaultValues;
 
   String get resolvedLogFormat {
     return logFormat.trim().isEmpty ? defaultExerciseLogFormat : logFormat;
+  }
+
+  String get renderedDefaultValues {
+    return switch (parseLogFormat(resolvedLogFormat)) {
+      ParsedLogFormat format => format.renderValues(defaultValues),
+      InvalidLogFormat() => '',
+    };
   }
 
   @override
@@ -158,12 +163,11 @@ class ExerciseDef {
             exercise == other.exercise &&
             description == other.description &&
             defaultSets == other.defaultSets &&
-            defaultReps == other.defaultReps &&
-            defaultRpe == other.defaultRpe &&
             defaultRest == other.defaultRest &&
             defaultTempo == other.defaultTempo &&
             notes == other.notes &&
-            logFormat == other.logFormat;
+            logFormat == other.logFormat &&
+            _stringMapEquals(defaultValues, other.defaultValues);
   }
 
   @override
@@ -172,12 +176,11 @@ class ExerciseDef {
       exercise,
       description,
       defaultSets,
-      defaultReps,
-      defaultRpe,
       defaultRest,
       defaultTempo,
       notes,
       logFormat,
+      Object.hashAll(defaultValues.entries),
     );
   }
 
@@ -187,12 +190,11 @@ class ExerciseDef {
         'exercise: $exercise, '
         'description: $description, '
         'defaultSets: $defaultSets, '
-        'defaultReps: $defaultReps, '
-        'defaultRpe: $defaultRpe, '
         'defaultRest: $defaultRest, '
         'defaultTempo: $defaultTempo, '
         'notes: $notes, '
-        'logFormat: $logFormat'
+        'logFormat: $logFormat, '
+        'defaultValues: $defaultValues'
         ')';
   }
 }
@@ -223,19 +225,25 @@ class ReorderIntent {
 class WorkoutPlacementMetadata {
   const WorkoutPlacementMetadata({
     this.sets = '',
-    this.reps = '',
-    this.rpe = '',
     this.rest = '',
     this.tempo = '',
     this.notes = '',
+    this.targetValues = const {},
   });
 
   final String sets;
-  final String reps;
-  final String rpe;
   final String rest;
   final String tempo;
   final String notes;
+  final Map<String, String> targetValues;
+}
+
+bool _stringMapEquals(Map<String, String> left, Map<String, String> right) {
+  if (left.length != right.length) return false;
+  for (final entry in left.entries) {
+    if (right[entry.key] != entry.value) return false;
+  }
+  return true;
 }
 
 class ExercisesWritePlan {
