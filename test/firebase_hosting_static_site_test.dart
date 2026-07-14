@@ -17,7 +17,7 @@ void main() {
 
     test('connects every public page and the approved contact', () {
       const contact = 'mailto:ian.b.spielman@gmail.com';
-      const repo = 'https://github.com/ispielman/WorkoutTracker';
+      const repo = 'https://github.com/spielsoft/WorkoutTracker';
       const oldRepo = 'https://github.com/ispielma/WorkoutTracker';
 
       expect(
@@ -28,6 +28,14 @@ void main() {
       expect(_hrefs(terms), containsAll(['/', '/privacy.html', contact]));
       expect(_hrefs(support), contains(repo));
       expect('$support\n$terms', isNot(contains(oldRepo)));
+    });
+
+    test('identifies SpielSoft as the hosted copyright owner', () {
+      for (final page in [support, privacy, terms]) {
+        expect(page, contains('© 2026 SpielSoft. All rights reserved.'));
+        expect(page, isNot(contains('Ian Spielman')));
+        expect(page, isNot(contains('Ian B. Spielman')));
+      }
     });
 
     test('has no hosted sign-in or token-handling surface', () {

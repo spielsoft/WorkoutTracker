@@ -18,4 +18,4 @@ DEVELOPMENT_TEAM =
 PRODUCT_BUNDLE_IDENTIFIER = $(WORKOUT_TRACKER_BUNDLE_ID)
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 WorkoutTracker contributors.
+PRODUCT_COPYRIGHT = Copyright © 2026 SpielSoft.

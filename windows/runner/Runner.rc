@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "workout_tracker" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "workout_tracker" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.ispielma. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 SpielSoft. All rights reserved." "\0"
             VALUE "OriginalFilename", "workout_tracker.exe" "\0"
             VALUE "ProductName", "workout_tracker" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
