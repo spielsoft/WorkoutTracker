@@ -240,6 +240,55 @@ void main() {
     expect(find.text('Pain (0)'), findsOneWidget);
   });
 
+  testWidgets(
+    'five DB Step-Up fields and save stay reachable without overlap',
+    (tester) async {
+      Future<void> check(Size size, {double textScale = 1}) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        tester.platformDispatcher.textScaleFactorTestValue = textScale;
+        await tester.pumpWidget(
+          _app(actions: _LogActions(), view: _dbStepUpView()),
+        );
+        await tester.pump();
+
+        final controls = <Finder>[
+          for (final label in const [
+            'Height (in)',
+            'Weight (lbs)',
+            'Reps',
+            'RPE',
+            'Pain',
+          ])
+            find.byKey(ValueKey('set-field-$label')),
+          find.widgetWithText(FilledButton, 'Save set S1'),
+        ];
+        expect(tester.takeException(), isNull);
+        for (final control in controls) {
+          await tester.ensureVisible(control);
+          await tester.pump();
+          expect(control.hitTestable(), findsOneWidget);
+        }
+
+        final rects = controls.map(tester.getRect).toList();
+        for (var i = 0; i < rects.length; i += 1) {
+          for (var j = i + 1; j < rects.length; j += 1) {
+            expect(rects[i].overlaps(rects[j]), isFalse);
+          }
+        }
+      }
+
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+        tester.platformDispatcher.clearTextScaleFactorTestValue();
+      });
+
+      await check(const Size(320, 1200), textScale: 2);
+      await check(const Size(900, 700));
+    },
+  );
+
   testWidgets('emits typed row, close, and set-save commands', (tester) async {
     final actions = _LogActions();
     await tester.pumpWidget(_app(actions: actions));
@@ -889,6 +938,41 @@ LogView _targetView({required String targets, String history = ''}) {
           '',
           'x',
           history,
+        ],
+      ],
+    ),
+  );
+  return LogView(
+    isBusy: false,
+    activeSheet: active,
+    sheetLabel: 'Development Workouts',
+    target: const WorkoutLoggingTarget(
+      blockLabel: 'Week 1',
+      primaryRow: 3,
+      selectedRow: 3,
+    ),
+  );
+}
+
+LogView _dbStepUpView() {
+  const format = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
+  final active = parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'DB Step-Up',
+          '3',
+          '90s',
+          '3-1-1',
+          '(12, 15)x8@8,0',
+          'Control the descent.',
+          format,
+          'Legs',
+          '',
+          'x',
+          '',
         ],
       ],
     ),

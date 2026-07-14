@@ -97,4 +97,30 @@ void main() {
 
     expect(exerciseNames, sortedExerciseNames);
   });
+
+  test('seeds DB Step-Up with five numeric values', () async {
+    final workbook = await loadWbkTmpl();
+    final row = workbook.exercisesSheet.rows.singleWhere(
+      (row) => row.first == 'DB Step-Up',
+    );
+
+    expect(row[6], '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}');
+    expect(row[7], '(12, 15)x8@8,0');
+
+    final format = parseLogFormat(row[6]) as ParsedLogFormat;
+    expect(format.fieldLabels, [
+      'Height (in)',
+      'Weight (lbs)',
+      'Reps',
+      'RPE',
+      'Pain',
+    ]);
+    expect(format.parseValues(row[7]), {
+      'Height (in)': '12',
+      'Weight (lbs)': '15',
+      'Reps': '8',
+      'RPE': '8',
+      'Pain': '0',
+    });
+  });
 }

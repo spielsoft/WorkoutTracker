@@ -204,7 +204,7 @@
     "defaultRest": "90s",
     "defaultTempo": "3-1-1",
     "notes": "Control the descent to prep knees for downhill hiking.",
-    "logFormat": "{Height}x{Reps}@{RPE},{Pain}",
+    "logFormat": "({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -212,8 +212,9 @@
       "DB Step-Ups"
     ],
     "defaultValues": {
-      "Height": "12 in",
-      "Reps": "8-10/leg",
+      "Height (in)": "12",
+      "Weight (lbs)": "15",
+      "Reps": "8",
       "RPE": "8",
       "Pain": "0"
     }

@@ -2,7 +2,7 @@
 
 - [x] Slice 1: Use Python-Style Formats in Version 1.0 Workbooks
 - [x] Slice 2: Convert Version 0.9 Formats Safely
-- [ ] Slice 3: Log Five-Field DB Step-Ups in New Workbooks
+- [x] Slice 3: Log Five-Field DB Step-Ups in New Workbooks
 - [ ] Slice 4: Safely Change Formats for Placed Exercises
 - [ ] Slice 5: Normalize Every Provided Exercise Default
 - [ ] Slice 6: Clean Up TDD Tests
@@ -96,17 +96,17 @@ back as structured history on mobile and desktop layouts.
 
 ### Acceptance criteria
 
-- [ ] A failing template behavior test first identifies the missing DB Step-Up Weight field.
-- [ ] DB Step-Up uses exactly `({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}`.
-- [ ] Its defaults are exactly `12`, `15`, `8`, `8`, and `0` in declaration order.
-- [ ] Its rendered default entry is exactly `(12, 15)x8@8,0`.
-- [ ] Placing DB Step-Up copies five valid numeric Targets into the active row.
-- [ ] The logging screen exposes five numeric-keyboard fields in declaration order with stable accessible names.
-- [ ] Saving edited values writes the exact compact notation produced by the format owner rather than UI string assembly.
-- [ ] Rereading the saved cell restores all five numeric field values.
-- [ ] The five-field editor and save action remain reachable without overlap at narrow width, large text, and the supported desktop width.
-- [ ] Existing raw-history preservation and stale-write rejection remain intact.
-- [ ] Focused template, placement, logging, semantics, and write-planning tests pass.
+- [x] A failing template behavior test first identifies the missing DB Step-Up Weight field.
+- [x] DB Step-Up uses exactly `({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}`.
+- [x] Its defaults are exactly `12`, `15`, `8`, `8`, and `0` in declaration order.
+- [x] Its rendered default entry is exactly `(12, 15)x8@8,0`.
+- [x] Placing DB Step-Up copies five valid numeric Targets into the active row.
+- [x] The logging screen exposes five numeric-keyboard fields in declaration order with stable accessible names.
+- [x] Saving edited values writes the exact compact notation produced by the format owner rather than UI string assembly.
+- [x] Rereading the saved cell restores all five numeric field values.
+- [x] The five-field editor and save action remain reachable without overlap at narrow width, large text, and the supported desktop width.
+- [x] Existing raw-history preservation and stale-write rejection remain intact.
+- [x] Focused template, placement, logging, semantics, and write-planning tests pass.
 
 ### Blocked by
 

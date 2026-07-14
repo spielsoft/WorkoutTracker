@@ -7,6 +7,106 @@ import '../service_fake.dart';
 import '../../support/widget.dart';
 
 void main() {
+  testWidgets(
+    'logs and rereads five-field DB Step-Up while preserving raw history',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      const format = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
+      final service = TestValSvc.fromRows([
+        [...activeSheetFixedColumns, 'Week 1', ''],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2'],
+        [
+          'DB Step-Up',
+          '3',
+          '90s',
+          '3-1-1',
+          '(12, 15)x8@8,0',
+          'Control the descent.',
+          format,
+          'Legs',
+          '',
+          'x',
+          '12x8@8,0',
+          '',
+        ],
+      ]);
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+      );
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('DB Step-Up'));
+      await tester.pumpAndSettle();
+
+      const fields = ['Height (in)', 'Weight (lbs)', 'Reps', 'RPE', 'Pain'];
+      for (final label in fields) {
+        final field = find.byKey(ValueKey('set-field-$label'));
+        expect(find.bySemanticsLabel('New set $label'), findsOneWidget);
+        expect(
+          tester.widget<TextField>(field).keyboardType,
+          const TextInputType.numberWithOptions(decimal: true),
+        );
+      }
+      final tops = [
+        for (final label in fields)
+          tester.getTopLeft(find.byKey(ValueKey('set-field-$label'))).dy,
+      ];
+      expect(tops, orderedEquals([...tops]..sort()));
+      expect(find.text('Height (in) (12)'), findsOneWidget);
+      expect(find.text('Weight (lbs) (15)'), findsOneWidget);
+      expect(find.text('Save set S2'), findsOneWidget);
+
+      const edited = {
+        'Height (in)': '14',
+        'Weight (lbs)': '20',
+        'Reps': '10',
+        'RPE': '9',
+        'Pain': '1',
+      };
+      for (final entry in edited.entries) {
+        await tester.enterText(
+          find.byKey(ValueKey('set-field-${entry.key}')),
+          entry.value,
+        );
+      }
+      await tester.ensureVisible(find.text('Save set S2'));
+      await tester.tap(find.text('Save set S2'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(service.appliedPlans, hasLength(1));
+      expect(
+        service.appliedPlans.single.cellUpdates.single.value,
+        '(14, 20)x10@9,1',
+      );
+      for (final entry in edited.entries) {
+        _expectFieldValue(entry.key, entry.value);
+      }
+      expect(find.text('Save set S3'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edit-S1')));
+      await tester.pump();
+      final raw = find.bySemanticsLabel('S1 raw set text');
+      expect(raw, findsOneWidget);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: raw, matching: find.byType(EditableText)),
+            )
+            .controller
+            .text,
+        '12x8@8,0',
+      );
+    },
+  );
+
   testWidgets('renders the main logging flow and sends a save to the service', (
     tester,
   ) async {
