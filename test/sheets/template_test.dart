@@ -52,6 +52,18 @@ void main() {
           reason: exercise.exercise,
         );
         expect(
+          exercise.defaultValues.values.map((value) => value.trim()),
+          everyElement(isNotEmpty),
+          reason: exercise.exercise,
+        );
+        if (format.fieldLabels.contains('Pain')) {
+          expect(
+            exercise.defaultValues['Pain'],
+            '0',
+            reason: exercise.exercise,
+          );
+        }
+        expect(
           format.parseValues(exercise.renderedDefaultValues),
           exercise.defaultValues,
           reason: exercise.exercise,

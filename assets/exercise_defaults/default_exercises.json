@@ -14,10 +14,10 @@
       "Smith Machine Reverse Lunges"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "45 lb",
       "Reps": "8-10/leg",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -35,10 +35,10 @@
       "Backup; DB reverse"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "15 lb",
       "Reps": "8-10/leg",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -59,10 +59,10 @@
       "Leg press [backup]"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "90 lb",
       "Reps": "10-12",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -81,10 +81,10 @@
       "Smith Machine RDL"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "65 lb",
       "Reps": "10-12",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -104,7 +104,7 @@
       "dB Rm. Deadlift [backup]"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "25 lb",
       "Reps": "8",
       "RPE": "8"
     }
@@ -124,10 +124,10 @@
       "Rom. Deadlift"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "65 lb",
       "Reps": "6-8",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -145,10 +145,10 @@
       "Let extension"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "40 lb",
       "Reps": "8",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -168,10 +168,10 @@
       "Deep Squats"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "45 lb",
       "Reps": "5-6",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -191,10 +191,10 @@
       "Lateral Step-Down (eccentric focus)"
     ],
     "defaultValues": {
-      "Height": "",
+      "Height": "6 in",
       "Reps": "8/leg",
       "RPE": "7",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -212,10 +212,10 @@
       "DB Step-Ups"
     ],
     "defaultValues": {
-      "Height": "",
+      "Height": "12 in",
       "Reps": "8-10/leg",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -233,10 +233,10 @@
       "Box Jump"
     ],
     "defaultValues": {
-      "Height": "",
+      "Height": "18 in",
       "Reps": "(3x3)",
       "RPE": "7",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -255,10 +255,10 @@
       "Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "25 lb",
       "Reps": "12-15",
       "RPE": "9",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -276,7 +276,7 @@
       "Smith Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "45 lb",
       "Reps": "12-15",
       "RPE": "9"
     }
@@ -296,10 +296,10 @@
       "Machine Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "50 lb",
       "Reps": "12-15",
       "RPE": "9",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -319,10 +319,10 @@
       "Calf raise (leg press)"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "90 lb",
       "Reps": "12-15",
       "RPE": "8",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -340,10 +340,10 @@
       "Seated Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "25 lb",
       "Reps": "12-15",
       "RPE": "9",
-      "Pain": ""
+      "Pain": "0"
     }
   },
   {
@@ -362,7 +362,7 @@
       "DB Incline Bench"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "20 lb",
       "Reps": "8-10",
       "RPE": "8"
     }
@@ -384,7 +384,7 @@
       "DB Bench Press"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "25 lb",
       "Reps": "8-12",
       "RPE": "8"
     }
@@ -404,7 +404,7 @@
       "DB Skullcrushers"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "10 lb",
       "Reps": "10-12",
       "RPE": "8"
     }
@@ -426,7 +426,7 @@
       "DB Lateral Raise"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "5 lb",
       "Reps": "12-15",
       "RPE": "9"
     }
@@ -446,7 +446,7 @@
       "DB Bicep Curl to Overhead Press"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "10 lb",
       "Reps": "10-12",
       "RPE": "9"
     }
@@ -466,7 +466,7 @@
       "Seated DB Press"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "15 lb",
       "Reps": "8-10",
       "RPE": "8"
     }
@@ -486,7 +486,7 @@
       "Hammer Curls"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "10 lb",
       "Reps": "10-12",
       "RPE": "9"
     }
@@ -506,7 +506,7 @@
       "Cable Bicep Curl"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "20 lb",
       "Reps": "12-15",
       "RPE": "9"
     }
@@ -528,7 +528,7 @@
       "Cable Tricep Pushdown"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "25 lb",
       "Reps": "10-15",
       "RPE": "8"
     }
@@ -548,7 +548,7 @@
       "Bench rows"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "20 lb",
       "Reps": "8-10",
       "RPE": "8"
     }
@@ -570,7 +570,7 @@
       "Chest-Supported DB Row [backup]"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "20 lb",
       "Reps": "10-12",
       "RPE": "8"
     }
@@ -590,7 +590,7 @@
       "Smith Bent Over Row"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "45 lb",
       "Reps": "10-12",
       "RPE": "9"
     }
@@ -610,7 +610,7 @@
       "Seated Cable Row"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "40 lb",
       "Reps": "10-12",
       "RPE": "8"
     }
@@ -632,7 +632,7 @@
       "Lat Pulldown"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "50 lb",
       "Reps": "8-12",
       "RPE": "8"
     }
@@ -656,7 +656,7 @@
       "Face Pull (rope)"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "20 lb",
       "Reps": "15-20",
       "RPE": "9"
     }
@@ -678,7 +678,7 @@
       "Cable Dorsiflexion (ankle strap)"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "5 lb",
       "Reps": "15-20",
       "RPE": "9"
     }
@@ -702,7 +702,7 @@
       "Pallof Press (cable)"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "15 lb",
       "Reps": "10/side",
       "RPE": "8"
     }
@@ -722,7 +722,7 @@
       "Cable Woodchop"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "15 lb",
       "Reps": "10/side",
       "RPE": "8"
     }
@@ -820,7 +820,7 @@
       "Russian twist"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "10 lb",
       "Reps": "10/side",
       "RPE": "8"
     }
@@ -840,7 +840,7 @@
       "DB Overhead Press"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "15 lb",
       "Reps": "8-10",
       "RPE": "8"
     }
@@ -860,7 +860,7 @@
       "DB Shoulder Shrug"
     ],
     "defaultValues": {
-      "Weight": "",
+      "Weight": "30 lb",
       "Reps": "10-15",
       "RPE": "8"
     }
