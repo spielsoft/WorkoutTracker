@@ -172,6 +172,14 @@ void main() {
       await tester.pumpAndSettle();
       await expectFlutterAccessibilityGuidelines(tester);
 
+      await tester.tap(find.byKey(const ValueKey('set-field-RPE')));
+      await tester.pump();
+      expect(
+        find.bySemanticsLabel('Save set S2 from keyboard'),
+        findsOneWidget,
+      );
+      await expectFlutterAccessibilityGuidelines(tester);
+
       await tester.tap(find.byTooltip('Back to exercises'));
       await tester.pumpAndSettle();
 

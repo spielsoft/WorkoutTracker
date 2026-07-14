@@ -13,10 +13,7 @@ import 'ui/shared/role.dart';
 
 const _segmentRadius = 8.0;
 const _undoWindow = Duration(seconds: 5);
-const _numberKeyboard = TextInputType.numberWithOptions(
-  decimal: true,
-  signed: true,
-);
+const _numberKeyboard = TextInputType.numberWithOptions(decimal: true);
 
 final class LogView extends LoadedView {
   const LogView({
@@ -180,6 +177,10 @@ class _LogScreenSt extends State<LogScreen> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void _dismissInput() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = _flow.viewModel;
@@ -199,7 +200,10 @@ class _LogScreenSt extends State<LogScreen> {
             subtitle: selectedChoice.exercise,
             compactTitle: true,
             backTooltip: 'Back to exercises',
-            onBack: widget.actions.close,
+            onBack: () {
+              _dismissInput();
+              widget.actions.close();
+            },
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
@@ -242,6 +246,7 @@ class _LogScreenSt extends State<LogScreen> {
                 ],
                 selected: {selectedChoice.sheetRowNumber},
                 onSelectionChanged: (selection) {
+                  _dismissInput();
                   widget.actions.selectRow(selection.single);
                 },
               );
@@ -251,6 +256,10 @@ class _LogScreenSt extends State<LogScreen> {
           _PlanSummary(context: loggingContext),
           const SizedBox(height: 12),
           _StructuredSetEditor(
+            key: ValueKey(
+              '${widget.view.target.blockLabel}-'
+              '${widget.view.target.selectedRow}',
+            ),
             logFormat: loggingContext.logFormat,
             targets: loggingContext.targets.values,
             controllers: viewModel.newSetCtrls,
@@ -508,7 +517,7 @@ class _RecentHistoryBlock extends StatelessWidget {
   }
 }
 
-class _StructuredSetEditor extends StatelessWidget {
+class _StructuredSetEditor extends StatefulWidget {
   const _StructuredSetEditor({
     required this.logFormat,
     required this.targets,
@@ -516,6 +525,7 @@ class _StructuredSetEditor extends StatelessWidget {
     required this.setNumber,
     required this.isBusy,
     required this.onSave,
+    super.key,
   });
 
   final LogFormatParseResult logFormat;
@@ -526,29 +536,173 @@ class _StructuredSetEditor extends StatelessWidget {
   final VoidCallback onSave;
 
   @override
+  State<_StructuredSetEditor> createState() => _StructuredSetEditorSt();
+}
+
+class _StructuredSetEditorSt extends State<_StructuredSetEditor>
+    with WidgetsBindingObserver {
+  final _portal = OverlayPortalController(debugLabel: 'set forward action');
+  late List<String> _labels;
+  late List<FocusNode> _focusNodes;
+  int? _focusedIndex;
+  var _keyboardVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _labels = _fieldLabels(widget.logFormat);
+    _focusNodes = _createFocusNodes(_labels);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = (View.maybeOf(context)?.viewInsets.bottom ?? 0) > 0;
+    if (_keyboardVisible && !visible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) FocusManager.instance.primaryFocus?.unfocus();
+      });
+    }
+    _keyboardVisible = visible;
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final view = View.maybeOf(context);
+    if (view == null) return;
+    final visible = view.viewInsets.bottom > 0;
+    if (_keyboardVisible && !visible) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+    _keyboardVisible = visible;
+  }
+
+  @override
+  void didUpdateWidget(_StructuredSetEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final labels = _fieldLabels(widget.logFormat);
+    if (_sameLabels(labels, _labels)) return;
+    _hidePortal();
+    _disposeFocusNodes();
+    _labels = labels;
+    _focusNodes = _createFocusNodes(labels);
+    _focusedIndex = null;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _hidePortal();
+    _disposeFocusNodes();
+    super.dispose();
+  }
+
+  List<FocusNode> _createFocusNodes(List<String> labels) {
+    return [
+      for (final label in labels)
+        FocusNode(debugLabel: 'New set $label')..addListener(_focusChanged),
+    ];
+  }
+
+  void _disposeFocusNodes() {
+    for (final node in _focusNodes) {
+      node
+        ..removeListener(_focusChanged)
+        ..dispose();
+    }
+  }
+
+  void _focusChanged() {
+    if (!mounted) return;
+    final index = _focusNodes.indexWhere((node) => node.hasFocus);
+    final focusedIndex = index < 0 ? null : index;
+    if (focusedIndex == _focusedIndex) return;
+    setState(() => _focusedIndex = focusedIndex);
+    if (focusedIndex == null) {
+      _hidePortal();
+    } else {
+      _portal.show();
+    }
+  }
+
+  void _hidePortal() {
+    if (_portal.isShowing) _portal.hide();
+  }
+
+  void _advance(int index) {
+    if (index < _focusNodes.length - 1) {
+      _focusNodes[index + 1].requestFocus();
+      return;
+    }
+    if (!widget.isBusy) widget.onSave();
+  }
+
+  String get _actionLabel {
+    final index = _focusedIndex!;
+    if (index < _labels.length - 1) {
+      return 'Next field ${_labels[index + 1]}';
+    }
+    return 'Save set S${widget.setNumber} from keyboard';
+  }
+
+  Widget _forwardAction(BuildContext context) {
+    final index = _focusedIndex;
+    if (index == null) return const SizedBox.shrink();
+    return Positioned(
+      right: 16,
+      bottom: MediaQuery.viewInsetsOf(context).bottom + 8,
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        elevation: 6,
+        borderRadius: BorderRadius.circular(12),
+        child: Tooltip(
+          message: _actionLabel,
+          excludeFromSemantics: true,
+          child: Semantics(
+            label: _actionLabel,
+            button: true,
+            enabled: !widget.isBusy,
+            onTap: widget.isBusy ? null : () => _advance(index),
+            child: ExcludeSemantics(
+              child: IconButton(
+                key: const ValueKey('set-forward-action'),
+                constraints: const BoxConstraints.tightFor(
+                  width: 56,
+                  height: 56,
+                ),
+                onPressed: widget.isBusy ? null : () => _advance(index),
+                icon: const Icon(Icons.arrow_forward),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final fieldLabels = switch (logFormat) {
-      ParsedLogFormat(:final fieldLabels) => fieldLabels,
-      InvalidLogFormat() => const <String>[],
-    };
     Widget saveButton() {
       return FilledButton.icon(
-        onPressed: isBusy ? null : onSave,
+        onPressed: widget.isBusy ? null : widget.onSave,
         icon: const Icon(Icons.save_outlined),
-        label: Text('Save set S$setNumber'),
+        label: Text('Save set S${widget.setNumber}'),
       );
     }
 
     TextField field(String label, int index) {
-      final isLast = index == fieldLabels.length - 1;
-      final target = targets[label] ?? '';
+      final isLast = index == _labels.length - 1;
+      final target = widget.targets[label] ?? '';
       final visualLabel = target.trim().isEmpty ? label : '$label ($target)';
       return TextField(
         key: ValueKey('set-field-$label'),
-        controller: controllers[label],
+        controller: widget.controllers[label],
+        focusNode: _focusNodes[index],
         keyboardType: _numberKeyboard,
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
-        onSubmitted: isLast ? (_) => onSave() : null,
+        onSubmitted: (_) => _advance(index),
         decoration: InputDecoration(
           label: ExcludeSemantics(child: Text(visualLabel)),
           border: const OutlineInputBorder(),
@@ -559,32 +713,52 @@ class _StructuredSetEditor extends StatelessWidget {
     Widget accessibleField(String label, int index) {
       return A11yTextField(
         label: 'New set $label',
-        valueListenable: controllers[label],
+        valueListenable: widget.controllers[label],
         child: field(label, index),
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final fieldWidth = constraints.maxWidth < 520
-            ? constraints.maxWidth
-            : 112.0;
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            for (var i = 0; i < fieldLabels.length; i += 1)
-              SizedBox(
-                width: fieldWidth,
-                child: accessibleField(fieldLabels[i], i),
-              ),
-            saveButton(),
-          ],
-        );
-      },
+    return OverlayPortal(
+      controller: _portal,
+      overlayLocation: OverlayChildLocation.rootOverlay,
+      overlayChildBuilder: _forwardAction,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final fieldWidth = constraints.maxWidth < 520
+              ? constraints.maxWidth
+              : 112.0;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (var i = 0; i < _labels.length; i += 1)
+                SizedBox(
+                  width: fieldWidth,
+                  child: accessibleField(_labels[i], i),
+                ),
+              saveButton(),
+            ],
+          );
+        },
+      ),
     );
   }
+}
+
+List<String> _fieldLabels(LogFormatParseResult format) {
+  return switch (format) {
+    ParsedLogFormat(:final fieldLabels) => fieldLabels,
+    InvalidLogFormat() => const <String>[],
+  };
+}
+
+bool _sameLabels(List<String> left, List<String> right) {
+  if (left.length != right.length) return false;
+  for (var i = 0; i < left.length; i += 1) {
+    if (left[i] != right[i]) return false;
+  }
+  return true;
 }
 
 class _LoggedSetSummary extends StatelessWidget {

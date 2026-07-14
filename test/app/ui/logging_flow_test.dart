@@ -159,6 +159,39 @@ void main() {
     expect(service.appliedPlans, hasLength(1));
   });
 
+  testWidgets('final forward action cannot bypass pending save protection', (
+    tester,
+  ) async {
+    final service = CompletingWriteValidationService(minimalValidParsedSheet());
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('set-field-Weight')),
+      '155.5',
+    );
+    await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
+    await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
+    await tester.tap(find.byKey(const ValueKey('set-field-RPE')));
+    await tester.pump();
+
+    final forward = find.bySemanticsLabel('Save set S1 from keyboard');
+    expect(forward, findsOneWidget);
+    await tester.tap(forward);
+    await tester.tap(forward);
+
+    expect(service.appliedPlans, hasLength(1));
+    expect(service.appliedPlans.single.cellUpdates.single.value, '155.5x6@8');
+  });
+
   testWidgets('shows failed Save set writes near logging controls', (
     tester,
   ) async {
@@ -453,22 +486,33 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Front Plank'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('edit-S1')));
+      await tester.tap(find.byKey(const ValueKey('set-field-Reps')));
       await tester.pump();
       expect(
-        find.byKey(const ValueKey('logged-S1-field-Reps')),
+        find.bySemanticsLabel('Save set S2 from keyboard'),
         findsOneWidget,
       );
 
       await tester.tap(find.text('Front Plank'));
       await tester.pumpAndSettle();
 
+      expect(find.byIcon(Icons.arrow_forward), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('set-field-Seconds')));
+      await tester.pump();
+      expect(find.bySemanticsLabel('Next field RPE'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('edit-S1')));
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey('logged-S1-field-Seconds')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('logged-S1-field-Reps')), findsNothing);
+
       expect(find.byKey(const ValueKey('set-field-Seconds')), findsOneWidget);
       expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
       expect(find.byKey(const ValueKey('set-field-Reps')), findsNothing);
 
-      await tester.tap(find.byKey(const ValueKey('edit-S1')));
-      await tester.pump();
       await tester.enterText(
         find.byKey(const ValueKey('logged-S1-field-Seconds')),
         '50',

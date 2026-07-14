@@ -46,7 +46,7 @@ void main() {
     expect(summaryGap, lessThan(20));
   });
 
-  testWidgets('keyboard advances in format order and saves decimal values', (
+  testWidgets('forward accessory advances in format order and saves literals', (
     tester,
   ) async {
     final actions = _LogActions();
@@ -61,33 +61,152 @@ void main() {
         tester
             .widget<TextField>(find.byKey(ValueKey('set-field-$label')))
             .keyboardType,
-        const TextInputType.numberWithOptions(decimal: true, signed: true),
+        const TextInputType.numberWithOptions(decimal: true),
       );
     }
 
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
     await tester.tap(load);
-    await tester.enterText(load, '102.5');
-    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await tester.pump();
+    expect(find.bySemanticsLabel('Next field Effort'), findsOneWidget);
+
+    await tester.enterText(load, '102.5 kg');
+    await tester.tap(find.bySemanticsLabel('Next field Effort'));
     await tester.pump();
     expect(
       tester.widget<EditableText>(_editable(effort)).focusNode.hasFocus,
       isTrue,
     );
+    expect(_fieldText(tester, 'Load'), '102.5 kg');
 
     await tester.enterText(effort, '7.5');
-    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await tester.tap(find.bySemanticsLabel('Next field Cue'));
     await tester.pump();
     expect(
       tester.widget<EditableText>(_editable(cue)).focusNode.hasFocus,
       isTrue,
     );
+    expect(_fieldText(tester, 'Effort'), '7.5');
 
-    await tester.enterText(cue, '9');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
+    expect(find.bySemanticsLabel('Save set S1 from keyboard'), findsOneWidget);
+    await tester.enterText(cue, 'steady');
+    await tester.tap(find.bySemanticsLabel('Save set S1 from keyboard'));
     await tester.pump();
 
     final save = actions.cmds.single as SaveSetCmd;
-    expect(save.fields, {'Load': '102.5', 'Effort': '7.5', 'Cue': '9'});
+    expect(save.fields, {'Load': '102.5 kg', 'Effort': '7.5', 'Cue': 'steady'});
+  });
+
+  testWidgets('final accessory preserves empty, failed, and busy state', (
+    tester,
+  ) async {
+    final actions = _LogActions(succeeds: false);
+    final view = _literalView();
+    await tester.pumpWidget(_app(actions: actions, view: view));
+
+    await tester.tap(_field('Cue'));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Save set S1 from keyboard'));
+    await tester.pump();
+    expect(actions.cmds, isEmpty);
+
+    await tester.enterText(_field('Load'), '100.5');
+    await tester.enterText(_field('Effort'), '7');
+    await tester.enterText(_field('Cue'), 'go');
+    await tester.tap(find.bySemanticsLabel('Save set S1 from keyboard'));
+    await tester.pump();
+
+    expect(actions.cmds, hasLength(1));
+    expect(find.text('Save set S1'), findsOneWidget);
+    expect(_fieldText(tester, 'Load'), '100.5');
+    expect(_fieldText(tester, 'Effort'), '7');
+    expect(_fieldText(tester, 'Cue'), 'go');
+
+    await tester.pumpWidget(
+      _app(actions: actions, view: _viewState(view, isBusy: true)),
+    );
+    await tester.pump();
+    final forward = find.bySemanticsLabel('Save set S1 from keyboard');
+    expect(forward, findsOneWidget);
+    _expectDisabled(tester, forward);
+    await tester.tap(forward);
+    await tester.pump();
+    expect(actions.cmds, hasLength(1));
+  });
+
+  testWidgets('forward accessory clears with focus and screen context', (
+    tester,
+  ) async {
+    final actions = _LogActions();
+    await tester.pumpWidget(_app(actions: actions));
+
+    await tester.tap(_field('Weight'));
+    await tester.pump();
+    expect(find.bySemanticsLabel('Next field Reps'), findsOneWidget);
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+
+    await tester.tap(_field('Weight'));
+    await tester.pump();
+    await tester.tap(find.text('Leg Press'));
+    await tester.pump();
+    expect(actions.selectedRows, [4]);
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+
+    await tester.tap(_field('Weight'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Back to exercises'));
+    await tester.pump();
+    expect(actions.closed, isTrue);
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+
+    await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('focused field and accessory clear simulated keyboard insets', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1000);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetViewInsets();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _targetView(targets: '240x10-12@8,0'),
+      ),
+    );
+    final field = _field('Pain');
+    await tester.ensureVisible(field);
+    await tester.tap(field);
+    await tester.pump();
+
+    final forward = find.bySemanticsLabel('Save set S1 from keyboard');
+    expect(forward, findsOneWidget);
+    expect(tester.takeException(), isNull);
+    const keyboardTop = 1000.0 - 320;
+    expect(tester.getBottomLeft(field).dy, lessThanOrEqualTo(keyboardTop));
+    expect(tester.getBottomLeft(forward).dy, lessThanOrEqualTo(keyboardTop));
+
+    tester.view.viewInsets = FakeViewPadding.zero;
+    await tester.pump();
+    await tester.pump();
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+    expect(
+      tester.widget<EditableText>(_editable(field)).focusNode.hasFocus,
+      isFalse,
+    );
   });
 
   testWidgets('keeps desktop set entry compact in the shared flow', (
@@ -486,7 +605,7 @@ void main() {
       tester
           .widget<TextField>(find.byKey(const ValueKey('logged-S1-field-Cue')))
           .keyboardType,
-      const TextInputType.numberWithOptions(decimal: true, signed: true),
+      const TextInputType.numberWithOptions(decimal: true),
     );
     await tester.enterText(find.bySemanticsLabel('S1 Load'), '103.25');
     await tester.enterText(cue, '3');
