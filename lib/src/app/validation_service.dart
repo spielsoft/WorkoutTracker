@@ -1,5 +1,4 @@
 import 'package:workout_tracker/contract.dart';
-import 'package:workout_tracker/sheets.dart';
 
 import 'validation_core.dart';
 
@@ -11,38 +10,6 @@ abstract interface class WbkIo {
   Future<void> writeExercises(ExercisesWritePlan plan);
 
   Future<void> writeExeUpdate(ExeUpdatePlan plan);
-}
-
-class AdapterWbkIo implements WbkIo {
-  const AdapterWbkIo({
-    required this.sheetId,
-    required this.readAdapter,
-    required this.writeAdapter,
-  });
-
-  final String sheetId;
-  final SheetsReadAdapter readAdapter;
-  final SheetsWriteAdapter writeAdapter;
-
-  @override
-  Future<ParsedActiveSheet> read() {
-    return readAdapter.readParsedActiveSheet(sheetId);
-  }
-
-  @override
-  Future<void> writeActive(ActiveSheetWritePlan plan) {
-    return writeAdapter.applyWritePlan(spreadsheetId: sheetId, plan: plan);
-  }
-
-  @override
-  Future<void> writeExercises(ExercisesWritePlan plan) {
-    return writeAdapter.applyExercisesPlan(spreadsheetId: sheetId, plan: plan);
-  }
-
-  @override
-  Future<void> writeExeUpdate(ExeUpdatePlan plan) {
-    return writeAdapter.applyExeUpdate(spreadsheetId: sheetId, plan: plan);
-  }
 }
 
 class ValSess implements WbkSess {

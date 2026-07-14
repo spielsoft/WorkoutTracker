@@ -19,13 +19,18 @@ is not copied to an application backend.
 ## Editing the Sheet Directly
 
 Each exercise's `Log Format` declares its logging fields, such as
-`{Weight}x{Reps}@{RPE}` or `{Seconds}@{RPE}`. Names inside braces are exact
-fields, and every other character is literal text. The `Exercises` tab stores
-matching `Default Values`; active workout rows store independently editable
-`Targets`. Sets, Rest, and Tempo remain fixed metadata. Blank field values are
-valid, but a nonblank Default Values or Targets cell that does not match its
-Log Format blocks app writes until corrected. Unparseable history text remains
-available as raw text.
+`{Weight}x{Reps}@{RPE}` or
+`({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}`. Names inside braces are
+exact fields, and every other character is literal text. A format has one to
+five fields; units belong in names while structured entries remain numeric.
+The `Exercises` tab stores matching `Default Values`; active workout rows store
+independently editable `Targets`. Sets, Rest, and Tempo remain fixed metadata.
+Blank field values are valid, but a nonblank Default Values or Targets cell
+that does not match its Log Format blocks app writes until corrected.
+Declared `0.9` sheets preview their Python-style conversion before a confirmed,
+stale-checked batch. Default Values and Targets retain their meaning, and
+history stays byte-for-byte unchanged; entries the current format cannot parse
+remain available as raw text.
 
 ## Current Status
 

@@ -93,7 +93,8 @@ final class AppFlow extends ChangeNotifier {
       availability: workspace.pickerAvailability,
       showAvailability: workspace.selectedSheet == null && _hasPicker,
       showTextFallback: !_hasPicker || workspace.fallbackAvailable,
-      hasLoadedWorkout: report != null && !report.hasBlockingIssues,
+      hasLoadedWorkout:
+          report != null && !report.hasBlockingIssues && _migration == null,
       report: report,
       account: workspace.accountProfile,
       hasPicker: _hasPicker,
@@ -285,7 +286,7 @@ final class AppFlow extends ChangeNotifier {
 
   CmdResult _returnToWorkout() {
     final report = _ctrl.report;
-    if (report == null || report.hasBlockingIssues) {
+    if (report == null || report.hasBlockingIssues || _migration != null) {
       return const CmdResult.failed();
     }
     loaded.showHome();

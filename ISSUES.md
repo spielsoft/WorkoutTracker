@@ -6,7 +6,7 @@
 - [x] Slice 4: Safely Change Formats for Placed Exercises
 - [x] Slice 5: Normalize Every Provided Exercise Default
 - [x] Slice 6: Clean Up TDD Tests
-- [ ] Slice 7: Run the Architecture and Full Local Guard
+- [x] Slice 7: Run the Architecture and Full Local Guard
 - [ ] Slice 8: Validate Conversion Against Google Sheets
 
 ## Slice 1: Use Python-Style Formats in Version 1.0 Workbooks
@@ -250,13 +250,13 @@ all in-scope findings before declaring the plan locally complete.
 
 ### Acceptance criteria
 
-- [ ] The `code-quality-review` skill is used for the final architecture review.
-- [ ] The review finds no shallow pass-through layer, duplicated parser, DB Step-Up production special case, unsafe cross-tab seam, or public contract drift.
-- [ ] All in-scope review findings are fixed and validated.
-- [ ] Formatting and static analysis pass.
-- [ ] The full local test suite passes without enabling live Google tests.
-- [ ] The domain contract and user-facing format help agree on Python-style syntax, five fields, unit-bearing names, numeric entry, version conversion, and raw-history safety.
-- [ ] Every completed slice has its own validated commit and checked plan item.
+- [x] The `code-quality-review` skill is used for the final architecture review.
+- [x] The review finds no shallow pass-through layer, duplicated parser, DB Step-Up production special case, unsafe cross-tab seam, or public contract drift.
+- [x] All in-scope review findings are fixed and validated.
+- [x] Formatting and static analysis pass.
+- [x] The full local test suite passes without enabling live Google tests.
+- [x] The domain contract and user-facing format help agree on Python-style syntax, five fields, unit-bearing names, numeric entry, version conversion, and raw-history safety.
+- [x] Every completed slice has its own validated commit and checked plan item.
 
 ### Blocked by
 

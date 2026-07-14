@@ -15,6 +15,13 @@ Headers, values, formulas, and writable columns must still satisfy the declared
 version's contract before ordinary writes. New workbooks and successful legacy
 conversions receive the current version token.
 
+A declared `0.9` workbook receives a preview before its bracket-token formats
+are converted to Python-style literal formats. Confirmation rereads the
+workbook, proves Default Values, Targets, and parseable history remain
+equivalent, applies the format and metadata changes in one batch, and preserves
+all history cells byte-for-byte. Missing metadata selects only the original
+legacy conversion; versions are never inferred from headers.
+
 ## Required Tabs and Headers
 
 The first tab is the active workout sheet. Its fixed columns must appear in
@@ -114,11 +121,17 @@ The language is literal:
   literal extraction boundary are invalid.
 - Field labels do not imply numeric or application-owned semantics.
 
+Provided definitions carry stable measurement context in exact names such as
+`{Weight (lbs)}` and `{Height (in)}` rather than embedding units in values.
+Their defaults are numeric, including `Pain=0` where Pain is declared. The
+structured set editor uses numeric keyboards for every format field while
+the storage boundary still preserves unexpected history as raw text.
+
 Examples:
 
 ```text
 {Weight}x{Reps}@{RPE}
-{Height}x{Reps}@{RPE},{Pain}
+({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}
 {Reps}@{RPE}
 {Seconds}s@{RPE}
 ```

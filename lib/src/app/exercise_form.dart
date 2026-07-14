@@ -503,8 +503,9 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                           icon: Icons.data_object_outlined,
                           textInputAction: TextInputAction.next,
                           helperText:
-                              'Use {Field} for values; all other text is '
-                              'literal. Use 1–5 fields.',
+                              'Use {Field}, such as {Weight (lbs)}, for 1–5 '
+                              'values; all other text is literal. Enter '
+                              'numeric defaults; units belong in field names.',
                           validator: _formatError,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
                           onChanged: _formatChanged,

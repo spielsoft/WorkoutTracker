@@ -83,6 +83,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Use {Field}'), findsOneWidget);
+    expect(find.textContaining('{Weight (lbs)}'), findsOneWidget);
+    expect(find.textContaining('numeric defaults'), findsOneWidget);
+    expect(find.textContaining('units belong in field names'), findsOneWidget);
     expect(find.text('Preview: x10@8'), findsOneWidget);
 
     await tester.enterText(format, '({A},{b}){C c}-{D (kg)}/{E}');

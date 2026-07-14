@@ -53,6 +53,30 @@ void main() {
     expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
   });
 
+  testWidgets('keeps a selected 0.9 sheet behind its format update', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        svc: TestValSvc(minimalValidParsedSheet()),
+        fieldMigrator: _FormatMigrator(),
+        picker: FakeSheetPicker(),
+        initialSelection: const SelectedSheet(
+          spreadsheetId: 'versioned-sheet-id',
+          name: 'Versioned workouts',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Update workout sheet formats'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('return-to-selected-workout')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('workout-home')), findsNothing);
+  });
+
   testWidgets('converts an exact legacy workbook after confirmation', (
     tester,
   ) async {

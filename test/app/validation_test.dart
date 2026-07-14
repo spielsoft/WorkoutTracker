@@ -1383,12 +1383,44 @@ ValSess _session(
 ) {
   return ValSess(
     sheetId: 'spreadsheet-id',
-    io: AdapterWbkIo(
+    io: _AdapterIo(
       sheetId: 'spreadsheet-id',
       readAdapter: SheetsReadAdapter(client: readClient),
       writeAdapter: SheetsWriteAdapter(client: writeClient),
     ),
   );
+}
+
+class _AdapterIo implements WbkIo {
+  const _AdapterIo({
+    required this.sheetId,
+    required this.readAdapter,
+    required this.writeAdapter,
+  });
+
+  final String sheetId;
+  final SheetsReadAdapter readAdapter;
+  final SheetsWriteAdapter writeAdapter;
+
+  @override
+  Future<ParsedActiveSheet> read() {
+    return readAdapter.readParsedActiveSheet(sheetId);
+  }
+
+  @override
+  Future<void> writeActive(ActiveSheetWritePlan plan) {
+    return writeAdapter.applyWritePlan(spreadsheetId: sheetId, plan: plan);
+  }
+
+  @override
+  Future<void> writeExercises(ExercisesWritePlan plan) {
+    return writeAdapter.applyExercisesPlan(spreadsheetId: sheetId, plan: plan);
+  }
+
+  @override
+  Future<void> writeExeUpdate(ExeUpdatePlan plan) {
+    return writeAdapter.applyExeUpdate(spreadsheetId: sheetId, plan: plan);
+  }
 }
 
 List<String> _exerciseRow(String exercise, {String description = ''}) {
