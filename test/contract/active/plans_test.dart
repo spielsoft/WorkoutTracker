@@ -38,7 +38,7 @@ void main() {
           exercisesSheetColumns,
           _exerciseRow(
             'Side Plank',
-            format: '{Seconds}[@]{RPE}',
+            format: '{Seconds}@{RPE}',
             values: const {'Seconds': '30', 'RPE': '8'},
           ),
         ],
@@ -89,7 +89,7 @@ void main() {
     final changed = [
       ...rows.map((row) => [...row]),
     ];
-    changed[2][6] = '{Reps}[@]{RPE}';
+    changed[2][6] = '{Reps}@{RPE}';
     changed[2][4] = '5@8';
 
     expect(
@@ -111,7 +111,7 @@ void main() {
         defaultSets: '3',
         defaultRest: '45s',
         defaultTempo: 'hold',
-        logFormat: '{Seconds}[@]{RPE}',
+        logFormat: '{Seconds}@{RPE}',
         defaultValues: const {'Seconds': '30', 'RPE': '8'},
       ),
     );

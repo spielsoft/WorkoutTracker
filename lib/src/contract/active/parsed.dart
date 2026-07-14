@@ -13,6 +13,7 @@ class ParsedActiveSheet {
     Iterable<Iterable<String>> rows = const [],
     Iterable<Iterable<String>> exercisesRows = const [],
     Iterable<CellFormula> cellFormulas = const [],
+    required this._parseFormat,
   }) : slots = List<WorkoutSlot>.unmodifiable(slots),
        historyBlocks = List<HistoryBlock>.unmodifiable(historyBlocks),
        primarySlots = List<WorkoutSlot>.unmodifiable(primarySlots),
@@ -40,6 +41,7 @@ class ParsedActiveSheet {
   final List<List<String>> _rows;
   final List<List<String>> _exercisesRows;
   final List<CellFormula> _cellFormulas;
+  final LogFormatParseResult Function(String) _parseFormat;
 
   List<String> get selectableWorkouts {
     return _WorkoutReadModelBuilder(this).selectableWorkouts;

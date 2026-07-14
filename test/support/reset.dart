@@ -64,7 +64,7 @@ Wbk _developmentFixture() {
           '2 min',
           '2-1-1',
           '',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
           'x8@8',
         ],
       ],

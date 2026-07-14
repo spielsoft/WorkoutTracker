@@ -48,8 +48,10 @@ class CanonicalExercise {
     this.defaultTempo = '',
     this.notes = '',
     this.logFormat = defaultExerciseLogFormat,
+    LogFormatParseResult? format,
     Map<String, String> defaultValues = const {},
-  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues);
+  }) : format = format ?? parseLogFormat(logFormat),
+       defaultValues = Map<String, String>.unmodifiable(defaultValues);
 
   final int sheetRowNumber;
   final String exercise;
@@ -59,6 +61,7 @@ class CanonicalExercise {
   final String defaultTempo;
   final String notes;
   final String logFormat;
+  final LogFormatParseResult format;
   final Map<String, String> defaultValues;
 
   String get displayName {
@@ -181,9 +184,13 @@ class _WorkoutReadModelBuilder {
             ),
             notes: _cell(sheet._exercisesRows[rowIndex], columns.notes),
             logFormat: _cell(sheet._exercisesRows[rowIndex], columns.logFormat),
+            format: sheet._parseFormat(
+              _cell(sheet._exercisesRows[rowIndex], columns.logFormat),
+            ),
             defaultValues: _defaultValues(
               sheet._exercisesRows[rowIndex],
               columns,
+              sheet._parseFormat,
             ),
           ),
     ];
@@ -345,8 +352,9 @@ class _WorkoutReadModelBuilder {
 Map<String, String> _defaultValues(
   List<String> row,
   _ExercisesColumnIndexes columns,
+  LogFormatParseResult Function(String) parseFormat,
 ) {
-  final parsed = parseLogFormat(_cell(row, columns.logFormat));
+  final parsed = parseFormat(_cell(row, columns.logFormat));
   if (parsed is! ParsedLogFormat) return const {};
   return parsed.parseValues(_cell(row, columns.defaultValues)) ?? const {};
 }

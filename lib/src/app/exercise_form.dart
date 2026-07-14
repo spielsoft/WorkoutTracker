@@ -503,8 +503,8 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                           icon: Icons.data_object_outlined,
                           textInputAction: TextInputAction.next,
                           helperText:
-                              'Use {Field} for values and [text] for literal '
-                              'separators; use 1–4 fields.',
+                              'Use {Field} for values; all other text is '
+                              'literal. Use 1–5 fields.',
                           validator: _formatError,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
                           onChanged: _formatChanged,

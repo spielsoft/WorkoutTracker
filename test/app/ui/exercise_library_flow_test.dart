@@ -125,7 +125,7 @@ void main() {
           defaultRest: '2 min',
           defaultTempo: '2-1-1',
           defaultValues: const {'Weight': '', 'Reps': '10', 'RPE': '8'},
-          logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+          logFormat: '{Weight}x{Reps}@{RPE}',
         ),
       ]);
       expect(find.text('Edit exercises'), findsWidgets);
@@ -276,7 +276,7 @@ void main() {
             defaultRest: '2 min',
             defaultTempo: '2-1-1',
             defaultValues: const {'Weight': '', 'Reps': '10', 'RPE': '8'},
-            logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+            logFormat: '{Weight}x{Reps}@{RPE}',
           ),
         ),
       ]);

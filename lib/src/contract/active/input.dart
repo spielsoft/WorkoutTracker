@@ -35,6 +35,7 @@ class ActiveSheetInput {
     Iterable<Iterable<String>> exercisesRows = const [],
     this.hasExercisesSheet = true,
     this.validateWorkbook = false,
+    this.schemaVersion = currentWbkVersion,
     Set<int> mergedFirstColumnRows = const {},
   }) : rows = List<List<String>>.unmodifiable(
          rows.map((row) => List<String>.unmodifiable(row)),
@@ -49,6 +50,7 @@ class ActiveSheetInput {
   final List<CellFormula> cellFormulas;
   final List<List<String>> exercisesRows;
   final bool hasExercisesSheet;
+  final String? schemaVersion;
 
   /// Whether missing workbook tabs and headers must be reported.
   ///

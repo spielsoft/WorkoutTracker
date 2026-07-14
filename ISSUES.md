@@ -1,6 +1,6 @@
 # Python-Style Exercise Log Formats
 
-- [ ] Slice 1: Use Python-Style Formats in Version 1.0 Workbooks
+- [x] Slice 1: Use Python-Style Formats in Version 1.0 Workbooks
 - [ ] Slice 2: Convert Version 0.9 Formats Safely
 - [ ] Slice 3: Log Five-Field DB Step-Ups in New Workbooks
 - [ ] Slice 4: Safely Change Formats for Placed Exercises
@@ -29,16 +29,16 @@ until the next slice provides their converter; never reinterpret them as
 
 ### Acceptance criteria
 
-- [ ] A behavior test first demonstrates parsing and rendering a Python-style format whose literal punctuation appears directly outside field braces.
-- [ ] Formats with one through five exact, case-sensitive fields are accepted.
-- [ ] Empty fields, unmatched braces, duplicate fields, more than five fields, and adjacent fields without a literal extraction boundary are rejected with useful validation messages.
-- [ ] Rendering and parsing `({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}` round-trips `(12, 15)x8@8,0` into five ordered values with the exact declared keys.
-- [ ] Preview generation works for five fields and has no fixed four-value assumption.
-- [ ] Exercise authoring help, validation, preview, and accessible default-field names expose only the Python-style contract.
-- [ ] A structured five-field exercise can be logged through an in-memory version `1.0` workbook using the public command flow.
-- [ ] New workbook templates and repository fixtures contain Python-style formats and carry schema version `1.0`.
-- [ ] Declared `0.9` workbooks remain explicitly version-routed and are not parsed as `1.0` formats.
-- [ ] Focused notation, version routing, workbook parsing, authoring, and logging tests pass.
+- [x] A behavior test first demonstrates parsing and rendering a Python-style format whose literal punctuation appears directly outside field braces.
+- [x] Formats with one through five exact, case-sensitive fields are accepted.
+- [x] Empty fields, unmatched braces, duplicate fields, more than five fields, and adjacent fields without a literal extraction boundary are rejected with useful validation messages.
+- [x] Rendering and parsing `({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}` round-trips `(12, 15)x8@8,0` into five ordered values with the exact declared keys.
+- [x] Preview generation works for five fields and has no fixed four-value assumption.
+- [x] Exercise authoring help, validation, preview, and accessible default-field names expose only the Python-style contract.
+- [x] A structured five-field exercise can be logged through an in-memory version `1.0` workbook using the public command flow.
+- [x] New workbook templates and repository fixtures contain Python-style formats and carry schema version `1.0`.
+- [x] Declared `0.9` workbooks remain explicitly version-routed and are not parsed as `1.0` formats.
+- [x] Focused notation, version routing, workbook parsing, authoring, and logging tests pass.
 
 ### Blocked by
 

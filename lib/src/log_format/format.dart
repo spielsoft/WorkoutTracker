@@ -22,7 +22,7 @@ class ParsedLogFormat extends LogFormatParseResult {
   ];
 
   String get representativeEntry {
-    const samples = ['100', '8', '8', '1'];
+    const samples = ['100', '8', '8', '1', '0'];
     return render({
       for (var i = 0; i < fieldLabels.length; i += 1)
         fieldLabels[i]: samples[i],
@@ -191,29 +191,50 @@ LogFormatParseResult parseLogFormat(String text) {
   final segments = <LogFormatSegment>[];
   var index = 0;
   while (index < source.length) {
-    final marker = source[index];
-    if (marker != '{' && marker != '[') {
-      return const InvalidLogFormat(['Format text must use {} or [] tokens.']);
+    if (source[index] == '}') {
+      return const InvalidLogFormat([
+        'Closing braces must have a matching opening brace.',
+      ]);
     }
-    final endMarker = marker == '{' ? '}' : ']';
-    final end = source.indexOf(endMarker, index + 1);
+    if (source[index] != '{') {
+      final nextField = source.indexOf('{', index);
+      final end = nextField == -1 ? source.length : nextField;
+      final literal = source.substring(index, end);
+      if (literal.contains('}')) {
+        return const InvalidLogFormat([
+          'Closing braces must have a matching opening brace.',
+        ]);
+      }
+      segments.add(LogLiteral(literal));
+      index = end;
+      continue;
+    }
+
+    final end = source.indexOf('}', index + 1);
     if (end == -1) {
-      return const InvalidLogFormat(['Format tokens must be closed.']);
+      return const InvalidLogFormat([
+        'Opening braces must have a matching closing brace.',
+      ]);
     }
-    final value = source.substring(index + 1, end);
-    if (marker == '{' && value.trim().isEmpty) {
+    final label = source.substring(index + 1, end);
+    if (label.trim().isEmpty) {
       return const InvalidLogFormat(['Field labels must not be blank.']);
     }
-    if (marker == '{' && _containsTokenMarker(value)) {
-      return const InvalidLogFormat(['Field labels cannot contain brackets.']);
+    if (label.contains('{')) {
+      return const InvalidLogFormat(['Field labels cannot contain braces.']);
     }
-    segments.add(marker == '{' ? LogField(value) : LogLiteral(value));
+    if (segments.isNotEmpty && segments.last is LogField) {
+      return const InvalidLogFormat([
+        'Adjacent fields need literal text between them.',
+      ]);
+    }
+    segments.add(LogField(label));
     index = end + 1;
   }
 
   final fieldCount = segments.whereType<LogField>().length;
-  if (fieldCount < 1 || fieldCount > 4) {
-    return const InvalidLogFormat(['Log formats support one to four fields.']);
+  if (fieldCount < 1 || fieldCount > 5) {
+    return const InvalidLogFormat(['Log formats support one to five fields.']);
   }
 
   final labels = [
@@ -235,13 +256,6 @@ LogEntry parseLogEntry(ParsedLogFormat format, String text) {
     fieldLabels: format.fieldLabels,
     fieldValues: values,
   );
-}
-
-bool _containsTokenMarker(String text) {
-  return text.contains('{') ||
-      text.contains('}') ||
-      text.contains('[') ||
-      text.contains(']');
 }
 
 Map<String, String>? _parseLogEntrySegments(

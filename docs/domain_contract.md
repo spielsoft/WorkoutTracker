@@ -6,9 +6,9 @@ it useful to a person working directly in Google Sheets.
 ## Workbook Version
 
 WorkoutTracker stores a document-visible Google Sheets developer-metadata
-entry named `workouttracker.schema_version`. The current pre-MVP workbook
-version is `0.9`; the MVP contract will be `1.0`. An absent key identifies the
-original legacy workbook format.
+entry named `workouttracker.schema_version`. The current workbook version is
+`1.0`. Declared `0.9` workbooks retain their previous syntax until deliberately
+converted. An absent key identifies the original legacy workbook format.
 
 The version selects a migration path but never replaces structural validation.
 Headers, values, formulas, and writable columns must still satisfy the declared
@@ -102,23 +102,25 @@ Each exercise defines how structured fields become compact cell text. Blank
 `Log Format` uses:
 
 ```text
-{Weight}[x]{Reps}[@]{RPE}
+{Weight}x{Reps}@{RPE}
 ```
 
 The language is literal:
 
 - `{Field}` declares an exact user-authored field label.
-- `[text]` declares text that is always emitted.
-- A format contains one to four uniquely named fields.
+- Every character outside field braces is literal text that is always emitted.
+- A format contains one to five uniquely named fields.
+- Empty or unmatched braces, duplicate fields, and adjacent fields without a
+  literal extraction boundary are invalid.
 - Field labels do not imply numeric or application-owned semantics.
 
 Examples:
 
 ```text
-{Weight}[x]{Reps}[@]{RPE}
-{Height}[x]{Reps}[@]{RPE}[,]{Pain}
-{Reps}[@]{RPE}
-{Seconds}[s@]{RPE}
+{Weight}x{Reps}@{RPE}
+{Height}x{Reps}@{RPE},{Pain}
+{Reps}@{RPE}
+{Seconds}s@{RPE}
 ```
 
 An invalid row-local format blocks structured writes for the workbook. An

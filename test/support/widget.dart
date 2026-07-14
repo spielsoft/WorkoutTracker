@@ -728,7 +728,7 @@ List<String> exerciseRow(
   String defaultRest = '2 min',
   String defaultTempo = '2-1-1',
   String notes = '',
-  String logFormat = '{Weight}[x]{Reps}[@]{RPE}',
+  String logFormat = '{Weight}x{Reps}@{RPE}',
   Map<String, String> defaultValues = const {
     'Weight': '',
     'Reps': '10',

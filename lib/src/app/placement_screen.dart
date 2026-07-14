@@ -230,9 +230,8 @@ class _PlaceFormSt extends State<_PlaceForm> {
     if (exercise == null) {
       return;
     }
-    final format = parseLogFormat(exercise.logFormat);
-    if (format is ParsedLogFormat) {
-      for (final label in format.fieldLabels) {
+    if (exercise.format case ParsedLogFormat(:final fieldLabels)) {
+      for (final label in fieldLabels) {
         _targetCtrls[label] = TextEditingController(
           text: exercise.defaultValues[label] ?? '',
         );

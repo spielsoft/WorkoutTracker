@@ -84,9 +84,7 @@ List<String> _activeRow(List<String> row) {
     ...row,
     ...List.filled(row.length < 10 ? 10 - row.length : 0, ''),
   ];
-  final format = padded[7].trim().isEmpty
-      ? '{Weight}[x]{Reps}[@]{RPE}'
-      : padded[7];
+  final format = padded[7].trim().isEmpty ? '{Weight}x{Reps}@{RPE}' : padded[7];
   return [
     padded[0],
     padded[1],
@@ -107,9 +105,7 @@ List<String> _exerciseRow(List<String> row) {
     ...row,
     ...List.filled(row.length < 9 ? 9 - row.length : 0, ''),
   ];
-  final format = padded[8].trim().isEmpty
-      ? '{Weight}[x]{Reps}[@]{RPE}'
-      : padded[8];
+  final format = padded[8].trim().isEmpty ? '{Weight}x{Reps}@{RPE}' : padded[8];
   return [
     padded[0],
     padded[1],
@@ -307,7 +303,7 @@ WorkoutWorkbookFixture loadInvalidLogFormatDamageFixture() {
           '3 min',
           '',
           'Stay braced.',
-          '{Weight[x]{Reps}',
+          '{Weightx{Reps}',
           'Legs',
           '',
           '',
@@ -360,7 +356,7 @@ WorkoutWorkbookFixture loadFormulaDamageFixture() {
           '3 min',
           '',
           'Stay braced.',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
           'Legs',
           '',
           '',
@@ -423,7 +419,7 @@ WorkoutWorkbookFixture loadAmbiguousFormulaRepairDamageFixture() {
           '3 min',
           '',
           'Stay braced.',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
           'Legs',
           '',
           '',
@@ -457,7 +453,7 @@ WorkoutWorkbookFixture loadAmbiguousFormulaRepairDamageFixture() {
           '3 min',
           '',
           'Stay braced.',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
         ],
         [
           'Squat',
@@ -468,7 +464,7 @@ WorkoutWorkbookFixture loadAmbiguousFormulaRepairDamageFixture() {
           '3 min',
           '',
           'Stay tall.',
-          '{Reps}[@]{RPE}',
+          '{Reps}@{RPE}',
         ],
       ],
     ),
@@ -490,7 +486,7 @@ WorkoutWorkbookFixture loadNoExactMatchFormulaRepairDamageFixture() {
           '3 min',
           '',
           'Stay upright.',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
           'Legs',
           '',
           '',
@@ -1142,7 +1138,7 @@ SheetGridFixture _minimalExercisesSheet({
       '3 min',
       '',
       'Stay braced.',
-      '{Weight}[x]{Reps}[@]{RPE}',
+      '{Weight}x{Reps}@{RPE}',
     ],
   ],
 }) {

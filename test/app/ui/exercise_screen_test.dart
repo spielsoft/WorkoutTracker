@@ -84,6 +84,31 @@ void main() {
 
     expect(find.textContaining('Use {Field}'), findsOneWidget);
     expect(find.text('Preview: x10@8'), findsOneWidget);
+
+    await tester.enterText(format, '({A},{b}){C c}-{D (kg)}/{E}');
+    await tester.pump();
+
+    for (final entry in const {
+      'A': '1',
+      'b': '2',
+      'C c': '3',
+      'D (kg)': '4',
+      'E': '5',
+    }.entries) {
+      await tester.enterText(
+        find.byKey(ValueKey('exercise-authoring-default-${entry.key}')),
+        entry.value,
+      );
+      await tester.pump();
+    }
+
+    expect(find.textContaining('all other text is literal'), findsOneWidget);
+    expect(find.text('Preview: (1,2)3-4/5'), findsOneWidget);
+    expect(find.bySemanticsLabel('Default A'), findsWidgets);
+    expect(find.bySemanticsLabel('Default b'), findsWidgets);
+    expect(find.bySemanticsLabel('Default C c'), findsWidgets);
+    expect(find.bySemanticsLabel('Default D (kg)'), findsWidgets);
+    expect(find.bySemanticsLabel('Default E'), findsWidgets);
   });
 
   testWidgets('invalid formats show feedback and cannot create an exercise', (
@@ -109,10 +134,10 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.enterText(format, '{Weight[x]{Reps}');
+    await tester.enterText(format, '{Weightx{Reps}');
     await tester.pump();
 
-    expect(find.text('Field labels cannot contain brackets.'), findsOneWidget);
+    expect(find.text('Field labels cannot contain braces.'), findsOneWidget);
     expect(find.textContaining('Preview:'), findsNothing);
 
     final save = find.text('Save exercise');
@@ -134,7 +159,7 @@ void main() {
             exercise: CanonicalExercise(
               sheetRowNumber: 2,
               exercise: 'Squat',
-              logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+              logFormat: '{Weight}x{Reps}@{RPE}',
             ),
           ),
           actions: actions,

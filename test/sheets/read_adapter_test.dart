@@ -74,7 +74,7 @@ void main() {
                     '',
                     'x5@8',
                     'Stay braced.',
-                    '{Weight}[x]{Reps}[@]{RPE}',
+                    '{Weight}x{Reps}@{RPE}',
                     'Legs',
                     '',
                     'x',
@@ -117,7 +117,7 @@ void main() {
                     '3 min',
                     '2-1-1',
                     'Stay braced.',
-                    '{Weight}[x]{Reps}[@]{RPE}',
+                    '{Weight}x{Reps}@{RPE}',
                     'x5@8',
                   ],
                 ],
@@ -181,12 +181,90 @@ void main() {
       contains('The Exercises tab is missing.'),
     );
   });
+
+  test('routes declared 0.9 formats without treating them as 1.0', () async {
+    final old = _versionedSnapshot('{Reps}[@]{RPE}', '8@7');
+    final parsedOld = await SheetsReadAdapter(
+      client: _FakeSheetsWorkbookClient(old, schemaVersion: '0.9'),
+    ).readParsedActiveSheet('spreadsheet-id');
+
+    expect(parsedOld.schemaViolations, isEmpty);
+    expect(
+      (parsedOld.slots.single.logFormat as ParsedLogFormat).literalSegments,
+      ['@'],
+    );
+    expect(parsedOld.canonicalExercises.single.defaultValues, {
+      'Reps': '8',
+      'RPE': '7',
+    });
+    expect(
+      parsedOld
+          .planPrimaryPlacement(
+            exercise: parsedOld.canonicalExercises.single,
+            workout: 'Default',
+            metadata: const WorkoutPlacementMetadata(
+              targetValues: {'Reps': '9', 'RPE': '8'},
+            ),
+          )
+          .cellUpdates
+          .map((update) => update.value),
+      contains('9@8'),
+    );
+
+    final current = await SheetsReadAdapter(
+      client: _FakeSheetsWorkbookClient(old),
+    ).readParsedActiveSheet('spreadsheet-id');
+    expect(
+      current.schemaViolations.map((issue) => issue.message),
+      contains('Targets do not match Log Format.'),
+    );
+  });
+
+  test('does not infer a schema version from workbook structure', () async {
+    final parsed = await SheetsReadAdapter(
+      client: _FakeSheetsWorkbookClient(
+        _versionedSnapshot('{Reps}@{RPE}', '8@7'),
+        schemaVersion: null,
+      ),
+    ).readParsedActiveSheet('spreadsheet-id');
+
+    expect(
+      parsed.schemaViolations.map((issue) => issue.message),
+      contains('Workbook schema version metadata is missing.'),
+    );
+  });
+}
+
+SheetsWorkbookSnapshot _versionedSnapshot(String format, String values) {
+  return SheetsWorkbookSnapshot(
+    sheets: [
+      SheetsGridSnapshot(
+        sheet: const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
+        rows: [
+          activeSheetFixedColumns,
+          List.filled(activeSheetFixedColumns.length, ''),
+          ['Lift', '1', '', '', values, '', format, '', '', 'x'],
+        ],
+      ),
+      SheetsGridSnapshot(
+        sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
+        rows: [
+          exercisesSheetColumns,
+          ['Lift', '', '1', '', '', '', format, values],
+        ],
+      ),
+    ],
+  );
 }
 
 class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {
-  _FakeSheetsWorkbookClient(this.snapshot);
+  _FakeSheetsWorkbookClient(
+    this.snapshot, {
+    this.schemaVersion = workbookSchemaVersion,
+  });
 
   final SheetsWorkbookSnapshot snapshot;
+  final String? schemaVersion;
   final List<String> metadataSpreadsheetIds = [];
   final List<_GridRequest> gridRequests = [];
 
@@ -195,6 +273,10 @@ class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {
     metadataSpreadsheetIds.add(spreadsheetId);
     return SheetsWorkbookMetadata(
       sheets: snapshot.sheets.map((sheet) => sheet.sheet),
+      developerMetadata: [
+        if (schemaVersion case final value?)
+          SheetsDeveloperMetadata(id: 1, key: workbookSchemaKey, value: value),
+      ],
     );
   }
 

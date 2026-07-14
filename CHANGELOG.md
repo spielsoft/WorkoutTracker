@@ -15,7 +15,7 @@ User-visible changes to WorkoutTracker are recorded here. Releases follow
 
 - Support, privacy, and self-build documentation now describe the source MVP.
 
-## 1.0.0 - Pending
+## 1.0.0-rc.1 - Pending
 
 The first source-MVP GitHub release will freeze the owner-accepted gym-test
 baseline. It is not published until the release process in `RELEASING.md` is

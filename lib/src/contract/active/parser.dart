@@ -1,6 +1,10 @@
 part of '../active.dart';
 
 ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
+  final parseFormat = sheet.schemaVersion == priorWbkVersion
+      ? parseLegacyLogFormat
+      : parseLogFormat;
+  final versionViolations = _versionViolations(sheet);
   final validateExercises =
       sheet.validateWorkbook || sheet.exercisesRows.isNotEmpty;
   final exerciseHeaderViolations = validateExercises
@@ -12,7 +16,11 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   final exerciseViolations = [
     ...exerciseHeaderViolations,
     if (exerciseColumns != null)
-      ..._exerciseValueViolations(sheet.exercisesRows, exerciseColumns),
+      ..._exerciseValueViolations(
+        sheet.exercisesRows,
+        exerciseColumns,
+        parseFormat,
+      ),
   ];
   if (sheet.rows.isEmpty) {
     return ParsedActiveSheet._(
@@ -24,17 +32,20 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
           message: 'The active sheet is empty and has no header row.',
         ),
         ...exerciseViolations,
+        ...versionViolations,
       ],
       exerciseColumns: exerciseColumns,
       columns: null,
       rows: sheet.rows,
       exercisesRows: sheet.exercisesRows,
       cellFormulas: sheet.cellFormulas,
+      parseFormat: parseFormat,
     );
   }
 
   final fixedViolations = _fixedColumnViolations(sheet.rows.first);
   final schemaViolations = <SchemaViolation>[
+    ...versionViolations,
     ...fixedViolations,
     ...exerciseViolations,
     ..._historyBlockViolations(
@@ -52,6 +63,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
       rows: sheet.rows,
       exercisesRows: sheet.exercisesRows,
       cellFormulas: sheet.cellFormulas,
+      parseFormat: parseFormat,
     );
   }
 
@@ -78,7 +90,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     }
 
     final workout = _cell(row, columns.workout).trim();
-    final logFormat = parseLogFormat(_logFormatCell(row, columns));
+    final logFormat = parseFormat(_logFormatCell(row, columns));
     final targetValues = logFormat is ParsedLogFormat
         ? logFormat.parseValues(_cell(row, columns.targets))
         : null;
@@ -162,6 +174,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     rows: sheet.rows,
     exercisesRows: sheet.exercisesRows,
     cellFormulas: sheet.cellFormulas,
+    parseFormat: parseFormat,
   );
 }
 
@@ -218,12 +231,13 @@ List<SchemaViolation> _exerciseColumnViolations(ActiveSheetInput sheet) {
 List<SchemaViolation> _exerciseValueViolations(
   List<List<String>> rows,
   _ExercisesColumnIndexes columns,
+  LogFormatParseResult Function(String) parseFormat,
 ) {
   final violations = <SchemaViolation>[];
   for (var index = 1; index < rows.length; index += 1) {
     final row = rows[index];
     if (_cell(row, columns.exercise).trim().isEmpty) continue;
-    final format = parseLogFormat(_cell(row, columns.logFormat));
+    final format = parseFormat(_cell(row, columns.logFormat));
     if (format case InvalidLogFormat(:final errors)) {
       violations.add(
         SchemaViolation(
@@ -246,6 +260,30 @@ List<SchemaViolation> _exerciseValueViolations(
     }
   }
   return violations;
+}
+
+List<SchemaViolation> _versionViolations(ActiveSheetInput sheet) {
+  if (!sheet.validateWorkbook) return const [];
+  final version = sheet.schemaVersion;
+  if (version == null) {
+    return const [
+      SchemaViolation(
+        sheetRowNumber: 1,
+        workout: defaultWorkoutName,
+        message: 'Workbook schema version metadata is missing.',
+      ),
+    ];
+  }
+  if (version != priorWbkVersion && version != currentWbkVersion) {
+    return [
+      SchemaViolation(
+        sheetRowNumber: 1,
+        workout: defaultWorkoutName,
+        message: 'Workbook schema version "$version" is unsupported.',
+      ),
+    ];
+  }
+  return const [];
 }
 
 List<SchemaViolation> _fixedColumnViolations(List<String> header) {

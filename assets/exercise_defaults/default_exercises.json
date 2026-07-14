@@ -6,7 +6,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Keep front shin vertical to minimize knee shear.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -27,7 +27,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Backup reverse-lunge option when the Smith machine is busy.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -48,7 +48,7 @@
     "defaultRest": "120s",
     "defaultTempo": "2-1-1",
     "notes": "Place feet high and wide; do not lock knees at the top.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker",
@@ -72,7 +72,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Hinge at the hips and stop when hamstrings are fully stretched.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -94,7 +94,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Backup hinge when rack or Smith machine space is unavailable.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -116,7 +116,7 @@
     "defaultRest": "2m",
     "defaultTempo": "2-1-1",
     "notes": "Feel hamstrings and keep a neutral spine.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -137,7 +137,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Quad isolation option inferred from logged leg-extension work.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -158,7 +158,7 @@
     "defaultRest": "3m",
     "defaultTempo": "3-1-1",
     "notes": "Squat pattern from fall and winter programs.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker",
       "2026 Winter Tracker"
@@ -181,7 +181,7 @@
     "defaultRest": "60s",
     "defaultTempo": "3-1-1",
     "notes": "Do not drop; keep knee aligned over toe.",
-    "logFormat": "{Height}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Height}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -204,7 +204,7 @@
     "defaultRest": "90s",
     "defaultTempo": "3-1-1",
     "notes": "Control the descent to prep knees for downhill hiking.",
-    "logFormat": "{Height}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Height}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -225,7 +225,7 @@
     "defaultRest": "15s",
     "defaultTempo": "explosive",
     "notes": "Rest 15 seconds after each cluster.",
-    "logFormat": "{Height}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Height}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -246,7 +246,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Full stretch at the bottom and a one-second pause at the top.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -268,7 +268,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Pause for one second at the bottom stretch and top squeeze.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -288,7 +288,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Calf raise machine option with controlled pauses.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -309,7 +309,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Backup calf raise using the leg press machine.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -332,7 +332,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Seated calf raise option with controlled stretch and squeeze.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}[,]{Pain}",
+    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -353,7 +353,7 @@
     "defaultRest": "120s",
     "defaultTempo": "2-1-1",
     "notes": "Set bench to 30 degrees; retract scapula and lower to upper chest.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -374,7 +374,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Tuck elbows to 45 degrees and press in a slight arc.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -396,7 +396,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Elbow health and arm-size accessory.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -416,7 +416,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Slight bend in elbows; push dumbbells out toward the walls.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -438,7 +438,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Strict curl, smooth wrist rotation, and no leg drive on the press.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -458,7 +458,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Vertical dumbbell press from a seated bench.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -478,7 +478,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Neutral grip targeting brachialis and forearms.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -498,7 +498,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Use constant tension and squeeze at the top.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -518,7 +518,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Keep elbows pinned and flare the rope at the bottom.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -540,7 +540,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Fall upper-body row variation logged as bench rows.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -560,7 +560,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Set bench to incline and pull elbows toward hips.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -582,7 +582,7 @@
     "defaultRest": "2m",
     "defaultTempo": "2-1-1",
     "notes": "Keep torso parallel to the floor and squeeze at the top.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -602,7 +602,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Depress shoulders before pulling and keep torso upright.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -622,7 +622,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Drive elbows down and keep a tall chest.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -644,7 +644,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Pull the rope to face height and focus on shoulder external rotation.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker",
@@ -668,7 +668,7 @@
     "defaultRest": "30s",
     "defaultTempo": "2-1-1",
     "notes": "Snowboarding accessory; elevate foot with a bench or step.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -690,7 +690,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Brace hard and resist cable rotation.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker",
@@ -714,7 +714,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Rotate with hips instead of spine.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -734,7 +734,7 @@
     "defaultRest": "60s",
     "defaultTempo": "controlled",
     "notes": "Keep hips square to the floor; widen feet if needed.",
-    "logFormat": "{Reps}[@]{RPE}",
+    "logFormat": "{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -753,7 +753,7 @@
     "defaultRest": "45s",
     "defaultTempo": "hold",
     "notes": "Top leg on bench, hips high, body in a straight line.",
-    "logFormat": "{Seconds}[@]{RPE}",
+    "logFormat": "{Seconds}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -773,7 +773,7 @@
     "defaultRest": "45s",
     "defaultTempo": "controlled",
     "notes": "Press lower back into the floor hard.",
-    "logFormat": "{Reps}[@]{RPE}",
+    "logFormat": "{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -792,7 +792,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Lean torso forward; switch if shoulders pinch.",
-    "logFormat": "{Reps}[@]{RPE}",
+    "logFormat": "{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -812,7 +812,7 @@
     "defaultRest": "60s",
     "defaultTempo": "1-1-1",
     "notes": "Rotational core accessory.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -832,7 +832,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-0-1",
     "notes": "Strict vertical press.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -852,7 +852,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Dumbbell shrug accessory.",
-    "logFormat": "{Weight}[x]{Reps}[@]{RPE}",
+    "logFormat": "{Weight}x{Reps}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -872,7 +872,7 @@
     "defaultRest": "45s",
     "defaultTempo": "hold",
     "notes": "Anti-lateral-flexion core hold.",
-    "logFormat": "{Seconds}[s@]{RPE}",
+    "logFormat": "{Seconds}s@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],

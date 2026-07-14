@@ -1,7 +1,10 @@
 import 'package:googleapis/sheets/v4.dart' as sheets;
 
+import '../defaults.dart';
+
 const workbookSchemaKey = 'workouttracker.schema_version';
-const workbookSchemaVersion = '0.9';
+const workbookSchemaVersion = currentWbkVersion;
+const priorWorkbookSchemaVersion = priorWbkVersion;
 
 abstract interface class SheetsWorkbookClient {
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId);

@@ -209,7 +209,7 @@ void main() {
       (
         fixture: loadInvalidLogFormatDamageFixture(),
         expectedText:
-            'Active sheet row 3: Invalid Log Format: Field labels cannot contain brackets.',
+            'Active sheet row 3: Invalid Log Format: Field labels cannot contain braces.',
       ),
       (
         fixture: loadBackupGroupingDamageFixture(),

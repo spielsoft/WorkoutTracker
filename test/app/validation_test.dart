@@ -115,6 +115,55 @@ void main() {
     expect(writeClient.operations, isEmpty);
   });
 
+  test(
+    'logs five structured fields through the version 1.0 command flow',
+    () async {
+      const format = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
+      final rows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        ['Step Up', '1', '', '', '(12, 15)x8@8,0', '', format, '', '', 'x', ''],
+      ];
+      final savedRows = [
+        rows[0],
+        rows[1],
+        [...rows[2].take(10), '(14, 20)x9@7.5,1'],
+      ];
+      final exercises = [
+        exercisesSheetColumns,
+        ['Step Up', '', '1', '', '', '', format, '(12, 15)x8@8,0'],
+      ];
+      final reads = _SequencedSpreadsheetClient([
+        _workbookSnapshot(rows, exercises),
+        _workbookSnapshot(rows, exercises),
+        _workbookSnapshot(savedRows, exercises),
+      ]);
+      final writes = _RecordingWriteClient();
+      final sess = _session(reads, writes);
+
+      await sess.read();
+      final report = await sess.execute(
+        SaveSetCmd(
+          blockLabel: 'Week 1',
+          sheetRow: 3,
+          fields: const {
+            'Height (in)': '14',
+            'Weight (lbs)': '20',
+            'Reps': '9',
+            'RPE': '7.5',
+            'Pain': '1',
+          },
+        ),
+      );
+
+      expect(report.schemaViolations, isEmpty);
+      expect(
+        writes.operations.whereType<SheetsCellWrite>().single.value,
+        '(14, 20)x9@7.5,1',
+      );
+    },
+  );
+
   test('malformed headers cannot apply active or Exercises writes', () async {
     final malformedWorkbooks = [
       _workbookSnapshot(
@@ -323,7 +372,7 @@ void main() {
           '3 min',
           '',
           '',
-          '{Reps}[@]{RPE}',
+          '{Reps}@{RPE}',
           'Legs',
           '',
           '',
@@ -495,7 +544,7 @@ void main() {
           '3 min',
           '',
           '',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
         ],
         [
           'Bench Press',
@@ -506,7 +555,7 @@ void main() {
           '3 min',
           '',
           '',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
         ],
       ];
       final updatedExercisesRows = [
@@ -520,7 +569,7 @@ void main() {
           '3 min',
           '',
           '',
-          '{Weight}[x]{Reps}[@]{RPE}',
+          '{Weight}x{Reps}@{RPE}',
         ],
         exercisesRows[2],
       ];
@@ -542,7 +591,7 @@ void main() {
             defaultSets: '3',
             defaultRest: '3 min',
             defaultValues: const {'Weight': '', 'Reps': '5', 'RPE': '8'},
-            logFormat: '{Weight}[x]{Reps}[@]{RPE}',
+            logFormat: '{Weight}x{Reps}@{RPE}',
           ),
         ),
       );
@@ -672,7 +721,7 @@ void main() {
           '2 min',
           '',
           'backup notes',
-          '{Reps}[@]{RPE}',
+          '{Reps}@{RPE}',
           'Legs',
           'TRUE',
           '12@8',
@@ -698,7 +747,7 @@ void main() {
           '2 min',
           '',
           'upper backup',
-          '{Reps}[@]{RPE}',
+          '{Reps}@{RPE}',
           'Upper',
           'TRUE',
           '10@8',
@@ -754,7 +803,7 @@ void main() {
           '2 min',
           '',
           'upper backup',
-          '{Reps}[@]{RPE}',
+          '{Reps}@{RPE}',
           'Upper',
           'TRUE',
           '10@8',
@@ -780,7 +829,7 @@ void main() {
           '2 min',
           '',
           'backup notes',
-          '{Reps}[@]{RPE}',
+          '{Reps}@{RPE}',
           'Legs',
           'TRUE',
           '12@8',
@@ -859,7 +908,7 @@ void main() {
           '2 min',
           '',
           'backup notes',
-          '{Reps}[@]{RPE}',
+          '{Reps}@{RPE}',
           'Legs',
           'TRUE',
           '12@8',
@@ -1227,7 +1276,7 @@ class _SequencedSpreadsheetClient implements SheetsWorkbookClient {
     final snapshot = _nextSnapshot < snapshots.length
         ? snapshots[_nextSnapshot]
         : snapshots.last;
-    return SheetsWorkbookMetadata(sheets: snapshot.sheets.map((s) => s.sheet));
+    return _currentMetadata(snapshot.sheets.map((s) => s.sheet));
   }
 
   @override
@@ -1255,12 +1304,10 @@ class _RecordingWriteClient implements SheetsWorkbookClient {
 
   @override
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
-    return SheetsWorkbookMetadata(
-      sheets: const [
-        SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
-        SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
-      ],
-    );
+    return _currentMetadata(const [
+      SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
+      SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
+    ]);
   }
 
   @override
@@ -1294,9 +1341,7 @@ class _CloseTrackingWorkbookClient implements SheetsWorkbookClient {
     final snapshot = _nextSnapshot < snapshots.length
         ? snapshots[_nextSnapshot]
         : snapshots.last;
-    return SheetsWorkbookMetadata(
-      sheets: snapshot.sheets.map((sheet) => sheet.sheet),
-    );
+    return _currentMetadata(snapshot.sheets.map((sheet) => sheet.sheet));
   }
 
   @override
@@ -1326,6 +1371,19 @@ class _CloseTrackingWorkbookClient implements SheetsWorkbookClient {
       client().closedDuringAction = true;
     }
   }
+}
+
+SheetsWorkbookMetadata _currentMetadata(Iterable<SheetsSheetIdentity> sheets) {
+  return SheetsWorkbookMetadata(
+    sheets: sheets,
+    developerMetadata: const [
+      SheetsDeveloperMetadata(
+        id: 1,
+        key: workbookSchemaKey,
+        value: workbookSchemaVersion,
+      ),
+    ],
+  );
 }
 
 final hasClosedCleanly = isA<_CloseTrackingAuthClient>()

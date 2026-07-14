@@ -19,7 +19,8 @@ is not copied to an application backend.
 ## Editing the Sheet Directly
 
 Each exercise's `Log Format` declares its logging fields, such as
-`{Weight}[x]{Reps}[@]{RPE}` or `{Seconds}[@]{RPE}`. The `Exercises` tab stores
+`{Weight}x{Reps}@{RPE}` or `{Seconds}@{RPE}`. Names inside braces are exact
+fields, and every other character is literal text. The `Exercises` tab stores
 matching `Default Values`; active workout rows store independently editable
 `Targets`. Sets, Rest, and Tempo remain fixed metadata. Blank field values are
 valid, but a nonblank Default Values or Targets cell that does not match its

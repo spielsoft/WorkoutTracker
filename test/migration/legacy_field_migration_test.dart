@@ -101,7 +101,7 @@ void main() {
       'Default Values',
     ]);
     expect(client.exerciseRows[1][7], 'x5@8');
-    expect(client.schemaVersion, workbookSchemaVersion);
+    expect(client.schemaVersion, priorWorkbookSchemaVersion);
   });
 
   test('does not guess a legacy path for a versioned workbook', () async {

@@ -31,10 +31,10 @@ history precedence, raw-history preservation, and stale-write rejection. The
 temporary owner migration and its colocated tests are deleted together before
 MVP release.
 
-Workbook-version coverage verifies that new sheets and successful conversions
-write `workouttracker.schema_version=0.9`, missing metadata selects only the
-original legacy converter, and a declared version is never guessed from
-headers.
+Workbook-version coverage verifies that new sheets write
+`workouttracker.schema_version=1.0`, declared `0.9` sheets retain their routed
+syntax until conversion, missing metadata selects only the original legacy
+converter, and a declared version is never guessed from headers.
 
 Fakes may prove what WorkoutTracker requests or accepts. They do not prove the
 behavior of Google Sign-In, Drive, Sheets, Firebase, OAuth, or Picker.

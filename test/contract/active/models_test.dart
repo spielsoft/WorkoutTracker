@@ -23,7 +23,7 @@ void main() {
             tempo: 'hold',
             targets: '30@8',
             notes: 'Keep hips stacked.',
-            logFormat: '{Seconds}[@]{RPE}',
+            logFormat: '{Seconds}@{RPE}',
             workout: 'Legs',
             isBackup: true,
             history: const ['30@8'],

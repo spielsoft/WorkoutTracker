@@ -140,7 +140,7 @@ void main() {
           'developerMetadata': {
             'location': {'spreadsheet': true},
             'metadataKey': workbookSchemaKey,
-            'metadataValue': '0.9',
+            'metadataValue': '1.0',
             'visibility': 'DOCUMENT',
           },
         },

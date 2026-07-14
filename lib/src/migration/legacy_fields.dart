@@ -2,6 +2,7 @@ import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/sheets.dart';
 
 import '../app/auth_client.dart';
+import '../log_format/legacy.dart';
 
 abstract interface class FieldMigrator {
   Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId);
@@ -234,7 +235,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
   for (var index = 1; index < activeRows.length; index += 1) {
     final row = _padded(activeRows[index], 10);
     final formatText = row[7].trim().isEmpty
-        ? defaultExerciseLogFormat
+        ? legacyLogFormat
         : row[7];
     final targets = _legacyValues(
       formatText,
@@ -277,7 +278,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
   for (var index = 1; index < exerciseRows.length; index += 1) {
     final row = _padded(exerciseRows[index], 9);
     final formatText = row[8].trim().isEmpty
-        ? defaultExerciseLogFormat
+        ? legacyLogFormat
         : row[8];
     final defaults = _legacyValues(
       formatText,
@@ -311,7 +312,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
     SheetsMetadataWrite(
       sheet: workbook.active.sheet,
       key: workbookSchemaKey,
-      value: workbookSchemaVersion,
+      value: priorWorkbookSchemaVersion,
       metadataId: schemaMetadata?.id,
     ),
   );
@@ -336,7 +337,7 @@ String _legacyValues(
   required String location,
   required List<String> blockers,
 }) {
-  final parsed = parseLogFormat(formatText);
+  final parsed = parseLegacyLogFormat(formatText);
   if (parsed is! ParsedLogFormat) {
     blockers.add('$location has an invalid Log Format.');
     return '';

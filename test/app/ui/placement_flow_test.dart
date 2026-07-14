@@ -22,7 +22,7 @@ void main() {
                 defaultSets: '2',
                 defaultRest: '45s',
                 defaultTempo: 'hold',
-                logFormat: '{Seconds}[@]{RPE}',
+                logFormat: '{Seconds}@{RPE}',
                 defaultValues: const {'Seconds': '30', 'RPE': '8'},
               ),
             ],
@@ -55,6 +55,55 @@ void main() {
       'Seconds': '45',
       'RPE': '8',
     });
+  });
+
+  testWidgets('placement keeps the format routed by a declared 0.9 workbook', (
+    tester,
+  ) async {
+    const oldFormat = '{Seconds}[s}@]{RPE}';
+    final sheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [
+          activeSheetFixedColumns,
+          List.filled(activeSheetFixedColumns.length, ''),
+        ],
+        exercisesRows: const [
+          exercisesSheetColumns,
+          ['Side Plank', '', '2', '45s', 'hold', '', oldFormat, '30s}@8'],
+        ],
+        validateWorkbook: true,
+        schemaVersion: '0.9',
+      ),
+    );
+    final exercise = sheet.canonicalExercises.single;
+
+    expect(sheet.schemaViolations, isEmpty);
+    expect((exercise.format as ParsedLogFormat).literalSegments, ['s}@']);
+    await tester.pumpWidget(
+      _app(
+        PlacementScreen(
+          view: PlacementView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            intent: const PlaceIntent.primary(workout: 'Core'),
+            exercises: [exercise],
+          ),
+          actions: _Actions(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Side Plank').last);
+    await tester.pumpAndSettle();
+
+    final seconds = tester.widget<TextField>(
+      find.widgetWithText(TextField, 'Seconds'),
+    );
+    final rpe = tester.widget<TextField>(find.widgetWithText(TextField, 'RPE'));
+    expect(seconds.controller?.text, '30');
+    expect(rpe.controller?.text, '8');
   });
 
   testWidgets('backup placement identifies its parent and supports creation', (

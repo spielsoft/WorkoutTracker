@@ -1,4 +1,5 @@
 import '../log_format/format.dart';
+import '../log_format/legacy.dart';
 import '../defaults.dart';
 
 part 'active/healing.dart';

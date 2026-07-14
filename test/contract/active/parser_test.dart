@@ -19,7 +19,7 @@ void main() {
           activeRow(
             'Side Plank',
             targets: '30@8',
-            logFormat: '{Seconds}[@]{RPE}',
+            logFormat: '{Seconds}@{RPE}',
             workout: 'Core',
           ),
         ],
@@ -54,7 +54,7 @@ void main() {
           activeRow(
             'Side Plank',
             targets: 'not structured',
-            logFormat: '{Seconds}[@]{RPE}',
+            logFormat: '{Seconds}@{RPE}',
           ),
         ],
       ),
