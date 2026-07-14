@@ -13,6 +13,7 @@ import 'shared/name_dialog.dart';
 final class SheetView extends AppView {
   const SheetView({
     required super.isBusy,
+    required this.isRestoring,
     required this.sheetText,
     required this.selectedSheet,
     required this.availability,
@@ -28,6 +29,7 @@ final class SheetView extends AppView {
     super.error,
   });
 
+  final bool isRestoring;
   final String sheetText;
   final SelectedSheet? selectedSheet;
   final PickerAvail availability;
@@ -196,7 +198,7 @@ class _SheetScreenSt extends State<SheetScreen> {
           _SheetPick(view: view, run: widget.run, onCreate: _createSheet),
           if (view.showTextFallback) const SizedBox(height: 12),
         ],
-        if (view.showTextFallback)
+        if (view.showTextFallback && !view.isRestoring)
           _SheetText(view: view, ctrl: _ctrl, run: widget.run),
         const SizedBox(height: 24),
         if (view.error case final error?) ...[
@@ -278,6 +280,11 @@ class _SheetPick extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = view.selectedSheet;
     final connected = !view.showAccount || view.account != null;
+    final title = view.isRestoring
+        ? 'Connecting to Google Sheets…'
+        : selected?.displayLabel ??
+              (connected ? 'No workout sheet selected' : 'Not logged in');
+    final email = selected?.accountEmail ?? view.account?.email;
     final colors = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -295,19 +302,24 @@ class _SheetPick extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    selected?.displayLabel ?? 'No workout sheet selected',
+                    title,
                     key: const ValueKey('selected-spreadsheet-label'),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
                 if (view.showAccount) ...[
                   const SizedBox(width: 8),
-                  AccountMenu(account: view.account, run: run),
+                  AccountMenu(
+                    account: view.account,
+                    run: run,
+                    enabled: !view.isRestoring,
+                  ),
                 ],
               ],
             ),
-            if (selected?.accountEmail case final email?) ...[
+            if (!view.isRestoring && email != null) ...[
               const SizedBox(height: 4),
               Text(
                 email,
@@ -315,113 +327,101 @@ class _SheetPick extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
-            if (!connected) ...[
+            if (view.isRestoring) ...[
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 18,
-                    color: colors.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Log in from the account menu to choose or create a '
-                      'workout sheet.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
+              const LinearProgressIndicator(
+                key: ValueKey('workspace-restore-progress'),
+                minHeight: 2,
               ),
-            ],
-            const SizedBox(height: 12),
-            if (selected != null && view.hasLoadedWorkout)
-              FilledButton.tonalIcon(
-                key: const ValueKey('return-to-selected-workout'),
-                onPressed: view.isBusy
-                    ? null
-                    : () => run(const ReturnToWorkout()),
-                icon: const Icon(Icons.fitness_center_outlined),
-                label: const Text('Return to workout'),
-              )
-            else
-              FilledButton.icon(
-                key: const ValueKey('choose-google-spreadsheet'),
-                onPressed:
-                    view.isBusy || !connected || !view.availability.canChoose
-                    ? null
-                    : () => run(const ChooseSheet()),
-                icon: const Icon(Icons.drive_folder_upload_outlined),
-                label: Text(
-                  selected == null ? 'Choose workout sheet' : 'Change sheet',
-                ),
-              ),
-            const SizedBox(height: 8),
-            if (selected != null && view.hasLoadedWorkout)
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final change = OutlinedButton.icon(
-                    key: const ValueKey('choose-google-spreadsheet'),
-                    onPressed:
-                        view.isBusy ||
-                            !connected ||
-                            !view.availability.canChoose
-                        ? null
-                        : () => run(const ChooseSheet()),
-                    icon: const Icon(Icons.drive_folder_upload_outlined),
-                    label: const Text('Change sheet'),
-                  );
-                  final create = OutlinedButton.icon(
-                    key: const ValueKey('create-google-spreadsheet'),
-                    onPressed:
-                        view.isBusy ||
-                            !connected ||
-                            !view.availability.canCreate
-                        ? null
-                        : onCreate,
-                    icon: const Icon(Icons.add_to_drive_outlined),
-                    label: const Text('Create sheet'),
-                  );
-                  if (constraints.maxWidth < 400) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [change, const SizedBox(height: 8), create],
-                    );
-                  }
-                  return Row(
-                    children: [
-                      Expanded(child: change),
-                      const SizedBox(width: 8),
-                      Expanded(child: create),
-                    ],
-                  );
-                },
-              )
-            else
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  key: const ValueKey('create-google-spreadsheet'),
-                  onPressed:
-                      view.isBusy || !connected || !view.availability.canCreate
-                      ? null
-                      : onCreate,
-                  icon: const Icon(Icons.add_to_drive_outlined),
-                  label: const Text('Create sheet'),
-                ),
-              ),
-            if (view.showAvailability && view.availability.summary != null) ...[
+            ] else if (!connected) ...[
               const SizedBox(height: 8),
               Text(
-                view.availability.summary!,
-                key: const ValueKey('spreadsheet-picker-availability'),
+                'Log in from the account menu.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
               ),
+            ],
+            if (connected && !view.isRestoring) ...[
+              const SizedBox(height: 12),
+              if (selected != null && view.hasLoadedWorkout)
+                FilledButton.tonalIcon(
+                  key: const ValueKey('return-to-selected-workout'),
+                  onPressed: view.isBusy
+                      ? null
+                      : () => run(const ReturnToWorkout()),
+                  icon: const Icon(Icons.fitness_center_outlined),
+                  label: const Text('Return to workout'),
+                )
+              else
+                FilledButton.icon(
+                  key: const ValueKey('choose-google-spreadsheet'),
+                  onPressed: view.isBusy || !view.availability.canChoose
+                      ? null
+                      : () => run(const ChooseSheet()),
+                  icon: const Icon(Icons.drive_folder_upload_outlined),
+                  label: Text(
+                    selected == null ? 'Choose workout sheet' : 'Change sheet',
+                  ),
+                ),
+              const SizedBox(height: 8),
+              if (selected != null && view.hasLoadedWorkout)
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final change = OutlinedButton.icon(
+                      key: const ValueKey('choose-google-spreadsheet'),
+                      onPressed: view.isBusy || !view.availability.canChoose
+                          ? null
+                          : () => run(const ChooseSheet()),
+                      icon: const Icon(Icons.drive_folder_upload_outlined),
+                      label: const Text('Change sheet'),
+                    );
+                    final create = OutlinedButton.icon(
+                      key: const ValueKey('create-google-spreadsheet'),
+                      onPressed: view.isBusy || !view.availability.canCreate
+                          ? null
+                          : onCreate,
+                      icon: const Icon(Icons.add_to_drive_outlined),
+                      label: const Text('Create sheet'),
+                    );
+                    if (constraints.maxWidth < 400) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [change, const SizedBox(height: 8), create],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: change),
+                        const SizedBox(width: 8),
+                        Expanded(child: create),
+                      ],
+                    );
+                  },
+                )
+              else
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('create-google-spreadsheet'),
+                    onPressed: view.isBusy || !view.availability.canCreate
+                        ? null
+                        : onCreate,
+                    icon: const Icon(Icons.add_to_drive_outlined),
+                    label: const Text('Create sheet'),
+                  ),
+                ),
+              if (view.showAvailability &&
+                  view.availability.summary != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  view.availability.summary!,
+                  key: const ValueKey('spreadsheet-picker-availability'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
           ],
         ),

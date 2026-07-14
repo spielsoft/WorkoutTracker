@@ -86,6 +86,7 @@ final class AppFlow extends ChangeNotifier {
   SheetView _sheetView(ValReport? report, WorkspaceUiSt workspace, bool busy) {
     return SheetView(
       isBusy: busy,
+      isRestoring: workspace.isInitializing,
       error: _ctrl.error ?? workspace.error,
       sheetText: _sheetText,
       selectedSheet: workspace.selectedSheet,

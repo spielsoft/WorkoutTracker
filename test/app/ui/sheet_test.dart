@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 
+import '../../support/widget.dart';
+
 void main() {
   testWidgets('offers login from the disconnected account menu', (
     tester,
@@ -46,26 +48,103 @@ void main() {
     expect(cmds.last, isA<ValidateSheet>());
   });
 
-  testWidgets('disables sheet actions until login', (tester) async {
+  testWidgets('shows logged-out guidance without sheet actions', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _app(_view(showTextFallback: false), (_) async => const CmdResult.done()),
     );
 
-    final choose = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Choose workout sheet'),
+    expect(find.text('Not logged in'), findsOneWidget);
+    expect(find.text('Log in from the account menu.'), findsOneWidget);
+    expect(find.byTooltip('Connect Google Sheets'), findsOneWidget);
+    expect(find.byIcon(Icons.account_circle_outlined), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('choose-google-spreadsheet')),
+      findsNothing,
     );
-    final create = tester.widget<OutlinedButton>(
-      find.widgetWithText(OutlinedButton, 'Create sheet'),
+    expect(
+      find.byKey(const ValueKey('create-google-spreadsheet')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('shows a neutral restoring state without sheet actions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        _view(showTextFallback: false, isRestoring: true),
+        (_) async => const CmdResult.done(),
+      ),
     );
 
-    expect(choose.onPressed, isNull);
-    expect(create.onPressed, isNull);
+    expect(find.text('Connecting to Google Sheets…'), findsOneWidget);
+    expect(find.text('Not logged in'), findsNothing);
+    expect(find.text('Log in from the account menu.'), findsNothing);
+    expect(find.byTooltip('Connect Google Sheets'), findsOneWidget);
     expect(
-      find.text(
-        'Log in from the account menu to choose or create a workout sheet.',
-      ),
+      find.byKey(const ValueKey('workspace-restore-progress')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('choose-google-spreadsheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create-google-spreadsheet')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('shows the active account before sheet selection', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        _view(showTextFallback: false, account: _account),
+        (_) async => const CmdResult.done(),
+      ),
+    );
+
+    expect(find.text('No workout sheet selected'), findsOneWidget);
+    expect(find.text('athlete@example.com'), findsOneWidget);
+    expect(
+      find.byTooltip('Google Sheets account: athlete@example.com'),
+      findsOneWidget,
+    );
+    expect(find.byType(CircleAvatar), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('choose-google-spreadsheet')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create-google-spreadsheet')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('startup states remain accessible on a narrow large-text phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+
+    for (final view in [
+      _view(showTextFallback: false),
+      _view(showTextFallback: false, isRestoring: true),
+      _view(showTextFallback: false, account: _account),
+    ]) {
+      await tester.pumpWidget(_app(view, (_) async => const CmdResult.done()));
+      expect(tester.takeException(), isNull);
+      await expectFlutterAccessibilityGuidelines(tester);
+    }
   });
 
   testWidgets('collects a name before creating a sheet', (tester) async {
@@ -170,9 +249,11 @@ SheetView _view({
   AcctMismatch? accountMismatch,
   SelectedSheet? selectedSheet,
   bool hasLoadedWorkout = false,
+  bool isRestoring = false,
 }) {
   return SheetView(
-    isBusy: false,
+    isBusy: isRestoring,
+    isRestoring: isRestoring,
     sheetText: '',
     selectedSheet: selectedSheet,
     availability: const PickerAvail.available(),

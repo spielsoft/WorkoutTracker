@@ -1,225 +1,196 @@
-# Human-Friendly Workout Sheets PRD
+# Fast Gym Set Entry PRD
 
 ## Problem Statement
 
-WorkoutTracker treats a user-owned Google Sheet as durable workout data, but
-the active tab it creates and maintains is optimized for machine safety rather
-than comfortable human use. Generated sheets lack the frozen panes, sensible
-column widths, grouped history headers, and visible workout sections that make
-a training program easy to scan or edit directly in Google Sheets.
+WorkoutTracker's set-entry screen presents the right underlying workout data
+through a slow and confusing hierarchy. The active set number appears as a
+detached `Next set S1` heading instead of on the save action where it matters.
+The selected exercise is repeated in the screen header, exercise selector, and
+again above the form. A bordered `Training details` panel consumes scarce phone
+space while exposing compact sheet notation such as `x10-12@8,` that is useful
+for storage but awkward for a person entering a set in the gym.
 
-The current parser also decides that a row is an exercise primarily because its
-Exercise cell is non-empty. That makes ordinary human annotations risky: a
-label typed in the first column may be interpreted as workout data unless the
-row happens to use a recognized merge. Empty rows are ignored today, but row
-identity should be explicit rather than inferred from content or formatting.
+Configured target values are already available to prefill format-driven fields,
+but the screen does not clearly explain those values. The user needs to see the
+row-local suggestions chosen when the exercise was added to the workout, such
+as `Reps (10-12)` and `RPE (8)`, next to the fields they describe. Blank targets
+must remain blank rather than being displayed as zero, while an explicit zero
+must remain visible as `0`.
 
-Formatting and semantic data have different ownership. WorkoutTracker should
-make a sane attempt to format structures it creates or extends, while user
-values and unrelated annotation rows remain safe. Manual changes to formatting
-on the active tab are allowed but unsupported: they may be replaced when an
-operation must restructure the affected rows or columns. Unaffected formatting
-should remain untouched where the Sheets API permits it. Extra retired tabs
-must be allowed, preserved, and ignored for now.
+The current iOS keyboard request asks for signed decimal input. Flutter maps
+that request to iOS's numbers-and-punctuation keyboard, producing a large
+punctuation layout with an alphabetic switch. A pure number or decimal pad is
+faster, but stock iOS numeric pads do not reliably expose a Next key. The entry
+flow therefore needs both a numeric-focused keyboard and an app-owned forward
+action that preserves fast field traversal.
 
 ## Solution
 
-Introduce a new active-sheet schema whose final fixed metadata column is a
-narrow `is_exercise` marker immediately before history. A literal `x` means the
-row is an exercise; a blank marker means the row is not exercise data,
-regardless of visible text. Unknown non-empty marker values are blocking schema
-damage rather than input to guess about.
+Turn the logging screen into a compact, task-first set-entry flow. Keep the
+sheet and selected exercise context at the top, but remove the repeated
+standalone exercise heading and detached next-set heading. Replace the training
+details card with an unframed summary such as `3 sets | 120 s Rest`, followed by
+the exercise's coaching note as quiet secondary text. Do not render the encoded
+Targets string or Tempo in this summary.
 
-Workout headings are durable annotation rows. They have a blank
-`is_exercise`, show the workout name in the visible Exercise area, and carry
-the workout identity in the existing Workout metadata column. This lets an
-empty workout survive deletion of its final exercise and a later reload.
-Ordinary annotation or spacing rows leave both machine-owned fields blank and
-are ignored and preserved.
+Keep the configured row-local target values beside the fields they describe.
+For each new-set field, append a nonblank configured target in parentheses:
+`Reps (10-12)`, `RPE (8)`, `Weight (240)`, or `Pain (0)`. A field with no
+configured target keeps its plain label, such as `Weight` or `Pain`. These
+parenthetical values always come from the active workout row's Targets cell;
+they do not change when a previous logged result is used to prefill the input.
+The existing prefill precedence remains unchanged.
 
-Generate an approachable active tab with two frozen header rows, fixed
-metadata frozen before horizontally scrolling history, deliberate widths and
-text wrapping modeled on the reference sheet, de-emphasized machine columns, a
-very narrow centered exercise-marker column, vertically grouped fixed headers,
-horizontally merged history labels, and grey workout heading rows. Omit the
-example workbook's obsolete Starting point column and visible `Backup:`
-prefixes; backup identity remains in `is_backup`.
+Move the active set identity onto the primary action. The button reads
+`Save set S1`, advances to `Save set S2` after a successful write, and continues
+to use the existing safe workbook command path.
 
-Formatting is best-effort and local. New workbooks receive the full default
-style. Adding a workout, exercise, history block, or set formats only the new
-structure and any merge directly affected by that insertion. Deletion and
-reordering use structural operations where practical so formatting moves with
-owned rows, and they do not broadly reformat surviving content. WorkoutTracker
-does not interpret colors, fonts, borders, or widths as schema.
-
-Existing owner workbooks are converted by the single temporary, allowlisted
-migration module already used for the field-model change. It will be extended
-to mark only rows accepted by the legacy parser, leave unrecognized and empty
-rows unmarked, create durable workout headings, and apply the default layout
-without changing history or unrelated tabs. A temporary confirmed owner action
-may invoke it during pre-MVP testing. It is deleted before MVP; there is no
-shipped fallback parser or conversion UI. A failed or stale migration performs
-no unsafe follow-up writes.
+Request an unsigned decimal numeric keyboard for structured set fields so the
+software keyboard does not present signed punctuation or alphabetic keys.
+Provide an app-owned input accessory with a right-arrow action. The arrow moves
+through fields in Log Format declaration order; from the final field it saves
+the current set using the same guarded action as the visible save button. Do not
+add an input formatter that rejects arbitrary characters, because Log Format
+field values remain user-authored strings and must still accept paste or
+hardware-keyboard input.
 
 ## User Stories
 
-1. As a user creating a workout sheet, I want it to look organized immediately, so that I can use it directly in Google Sheets without manual cleanup.
-2. As a gym user, I want workout names shown as grey section headings, so that I can scan a long program quickly.
-3. As a sheet user, I want the metadata and header rows frozen, so that exercise identity remains visible while I scroll through history.
-4. As a sheet user, I want history labels merged over their set columns, so that S1, S2, and later sets are visibly grouped under the correct block.
-5. As a sheet user, I want useful widths and wrapped notes, so that important content is readable without constant resizing.
-6. As a sheet user, I want machine-only columns visually de-emphasized, so that workout content remains the focus.
-7. As a user, I want the exercise marker at the final metadata boundary, so that it does not interrupt the human-readable workout fields.
-8. As a user, I want the exercise marker column narrow and centered, so that its `x` values consume almost no screen space.
-9. As a user adding a workout, I want its heading persisted immediately, so that an empty workout survives reloads.
-10. As a user deleting the last exercise, I want the empty workout to remain selected and represented in the sheet, so that the app does not silently switch workouts.
-11. As a user adding an exercise, I want it inserted into the selected workout section, so that the physical sheet remains grouped.
-12. As a user adding a backup, I want its clean exercise name retained, so that the sheet does not duplicate backup state in visible prose.
-13. As a user adding a history block, I want its header and first set column formatted consistently with existing history.
-14. As a user adding another set, I want the new column included in the visible history group, so that the block remains understandable.
-15. As a user inserting an empty row, I want WorkoutTracker to ignore and preserve it, so that spacing is safe.
-16. As a user adding a note or section annotation, I want it ignored when it is not marked as an exercise, so that visible text is not mistaken for workout data.
-17. As a user changing cell formatting, I want unrelated operations to leave it alone where possible, so that small personal adjustments are not needlessly destroyed.
-18. As a user, I accept that formatting in a structurally affected range may be normalized, so that the app can keep generated structure coherent.
-19. As a user reordering exercises, I want formatting to travel with owned rows where practical, so that row presentation does not become detached from its exercise.
-20. As a user deleting an exercise, I want only that exercise and its backups removed, so that intervening annotations and other formatting remain.
-21. As a user with retired tabs, I want them preserved and ignored, so that old programs remain available for reference.
-22. As a user, I want the first tab to remain the active workout for this release, so that extra tabs do not create ambiguous selection rules.
-23. As an existing user, I want a safe upgrade from the legacy WorkoutTracker schema, so that I do not need to rebuild my workout history.
-24. As an existing user, I want the upgrade to mark only rows already accepted as exercises, so that annotations do not become data during migration.
-25. As an existing user, I want stale or malformed workbooks blocked before migration writes, so that an upgrade cannot corrupt the source of truth.
-26. As a direct sheet editor, I want copied exercise rows to retain their marker, so that ordinary copy-and-edit workflows continue to work.
-27. As a direct sheet editor, I want an unknown exercise marker rejected clearly, so that typographical mistakes are not interpreted unpredictably.
-28. As a maintainer, I want formatting concerns outside the semantic parser, so that style changes cannot alter workout meaning.
-29. As a maintainer, I want adapter tests to prove the app's requested values, dimensions, merges, and formats without pretending to prove Google behavior.
-30. As the project owner, I want a live visual acceptance pass on representative sheets, so that the generated layout is confirmed in Google Sheets before release.
-31. As the project owner, I want to approve a disposable prototype sheet before production integration, so that widths and visual hierarchy are grounded in the real Google Sheets renderer.
+1. As a gym user, I want the active set number on the save button, so that I know exactly which set I am recording at the moment of action.
+2. As a gym user, I want `Save set S1` to become `Save set S2` after a successful save, so that progress is clear without a separate status heading.
+3. As a gym user, I want the selected exercise shown without redundant repeated headings, so that more of the entry form fits above the keyboard.
+4. As a gym user, I want a compact `3 sets | 120 s Rest` summary, so that I can see the two planning facts I need quickly.
+5. As a gym user, I do not want to see encoded target notation such as `x10-12@8,`, so that sheet storage syntax does not distract from entry.
+6. As a gym user, I do not want a `Training details` heading and border around a few facts, so that the screen uses vertical space efficiently.
+7. As a gym user, I want the exercise coaching note retained as secondary text, so that important form or safety cues remain available.
+8. As a gym user, I want each configured target shown with its field, so that I can interpret `Reps (10-12)` without decoding another summary.
+9. As a gym user, I want an explicit zero suggestion shown as `(0)`, so that zero is not confused with missing data.
+10. As a gym user, I want fields with no configured target to keep a plain label, so that the app does not pretend a blank is a suggestion.
+11. As a gym user, I want configured suggestions to remain visible even when prior history prefills a different value, so that I can compare the plan with my latest performance.
+12. As a gym user, I want the suggestion label to reflect the active workout row, so that backup exercises and duplicate placements show their own targets.
+13. As a gym user, I want a numeric-focused keyboard without alphabetic keys, so that common set values are faster to enter.
+14. As a gym user, I want decimal entry available, so that fractional weights and other decimal values remain practical.
+15. As a gym user, I want a large right-arrow control near the keyboard, so that I can advance without reaching back into the form.
+16. As a gym user, I want the arrow to follow the declared field order, so that Weight, Reps, RPE, Pain, and custom formats remain predictable.
+17. As a gym user, I want the final arrow to save the current set, so that set entry can be completed with one continuous keyboard workflow.
+18. As a screen-reader user, I want stable contextual names such as `New set Weight`, so that visual suggestion text does not make field navigation verbose or unstable.
+19. As a large-text user, I want suggestion-bearing labels and controls to fit a narrow phone, so that the optimized flow remains usable with accessibility scaling.
+20. As a user editing structured values with paste or a hardware keyboard, I want literal text to remain accepted, so that the UI does not narrow the workbook's Log Format contract.
+21. As a user, I want failed saves to leave my typed values visible, so that faster entry does not weaken existing error recovery.
+22. As a user, I want busy-state protection to prevent duplicate saves from either the button or keyboard arrow, so that a fast interaction cannot create duplicate writes.
+23. As a workbook owner, I want this redesign to change presentation only, so that Targets, history notation, validation, and write safety remain intact.
+24. As the project owner, I want to inspect the real iOS keyboard and entry flow before release, so that native keyboard behavior is not inferred from widget fakes.
 
 ## Implementation Decisions
 
-- The active tab's fixed columns, in order, are Exercise, Sets, Rest, Tempo,
-  Targets, Notes, Log Format, Workout, is_backup, and is_exercise. History
-  begins immediately after is_exercise. Targets is rendered by the row's Log
-  Format and replaces privileged Reps/RPE metadata columns.
-- `is_exercise` accepts only blank or the literal `x`. The parser reads an
-  exercise only when this marker is `x`; a non-empty Exercise cell alone has no
-  semantic meaning.
-- A workout heading has a blank exercise marker and a non-empty Workout value.
-  Its visible label occupies the human-readable Exercise area. Other unmarked
-  rows with no Workout identity are annotations and are ignored.
-- Exercise rows retain Workout and is_backup as the authoritative grouping
-  metadata. Visible text never carries a `Backup:` prefix.
-- The first tab remains the active workout tab and the Exercises tab retains
-  its current canonical role. Every other tab is ignored and never mutated by
-  active-workout commands.
-- The generated active tab uses two header rows. Fixed metadata headers may be
-  vertically merged; each history label is horizontally merged over its set
-  columns and set labels remain in the second row.
-- Freeze the two header rows and the fixed metadata band. Machine-oriented
-  columns may be hidden or visually de-emphasized; is_exercise remains the
-  final, narrow metadata column before history.
-- Treat column proportions as intentional presentation behavior. Initial pixel
-  widths should closely follow the reference: Exercise 250, Sets 80, Rest 96,
-  Tempo 96, Targets 128, Notes 330, is_exercise 28, and every history set
-  column 128. Hidden machine columns may retain practical internal widths
-  because they do not participate in the visible layout.
-- Exercise is wide enough for ordinary names but may truncate exceptionally
-  long names; Notes is the dominant wrapped-text column; target fields stay
-  compact; history columns remain uniform as blocks grow. Do not add the
-  reference workbook's wide Starting point column.
-- Grey workout headings are merged only across a stable visible metadata
-  range. New history columns receive matching heading-row fill without
-  requiring full-width workout-row merges to be rebuilt.
-- Default styling includes the specified widths, wrapping for descriptive text,
-  clear header emphasis, restrained borders, and accessible contrast. Exact
-  width constants are an intentional presentation contract; incidental request
-  order remains an implementation detail.
-- Formatting is app-owned but applied narrowly after initialization. Manual
-  formatting is unsupported and may be replaced inside a structurally affected
-  range; the app must not normalize the entire workbook after ordinary writes.
-- Colors, fonts, borders, widths, frozen panes, hidden state, and merges are not
-  inputs to workout parsing. The presentation layer consumes explicit semantic
-  structure and emits Sheets formatting requests.
-- Creating a workout becomes a durable workbook mutation that writes and
-  formats its heading. Deleting the final exercise does not delete that heading.
-- Primary exercise placement targets the selected workout section. Backup
-  placement remains adjacent to its parent primary.
-- Prefer row or dimension moves when reordering so row formatting moves with
-  the owned data. User annotation rows are not silently converted, cleared, or
-  included in deletion plans.
-- History insertion applies default format only to new columns and directly
-  affected header merges. Unrelated history blocks are not reformatted.
-- Owner migration is explicit and uses the same reread, expectation, write, and
-  refreshed-report safety model as other workbook mutations.
-- Legacy recognition exists only inside the temporary migration file. Normal
-  parsing does not fall back to Exercise-cell inference.
-- Existing values, formulas, raw history text, empty rows, annotations, and
-  extra tabs survive migration unless a user explicitly chooses an operation
-  that removes them.
-- Before production formatting integration, use isolated prototype code to
-  create a disposable representative Google Sheet containing the proposed
-  schema, multiple workouts, primary and backup rows, notes, and multiple
-  history blocks. Owner approval of that real sheet locks the presentation
-  constants and may update this PRD before implementation continues.
-- Prototype success proves visual design only. It does not bypass production
-  session safety, adapter, migration, or behavioral acceptance requirements.
+- This is a presentation and input-interaction change. It does not change the
+  workbook schema, Targets encoding, Log Format parsing, history cells, or set
+  write planning.
+- The screen header and exercise selector remain. The repeated standalone
+  selected-exercise heading below the selector is removed.
+- The detached `Next set Sn` text is removed. The existing computed next-set
+  number supplies the dynamic `Save set Sn` button label.
+- The primary action advances only after the existing reread, guarded write,
+  and refreshed-report workflow succeeds. Failed input remains visible.
+- The bordered training-details panel is replaced with an unframed compact
+  summary. The summary contains nonblank Sets and Rest only and never contains
+  rendered Targets or Tempo.
+- Seconds receive presentation-only spacing, so `120s` is displayed as
+  `120 s Rest`. Other existing Rest units remain recognizable and are not
+  rewritten in the workbook.
+- A nonblank exercise note remains directly below the compact summary without
+  the redundant `Notes:` prefix. Blank notes consume no space.
+- New-set visual field labels append the active row's nonblank configured target
+  value in parentheses. Parentheses contain the value itself, never the word
+  `suggestion`.
+- Blank targets produce no parenthetical suffix. Explicit zero is nonblank and
+  displays as `(0)`. The app never synthesizes zero from a blank.
+- Suggestion labels are derived from the active row's Targets map and remain
+  independent of controller prefill. The existing prefill rule remains: use the
+  latest formatted result when available, otherwise use configured Targets.
+- Suggestion suffixes apply to new-set entry only. Editing an already logged set
+  retains ordinary field labels because those values are no longer suggestions.
+- Accessibility names remain stable and contextual, for example
+  `New set Weight`; the visual `Weight (240)` label is not allowed to replace
+  that semantic contract.
+- Structured set fields request unsigned decimal numeric input. Signed input is
+  not requested, which avoids iOS's numbers-and-punctuation layout. No filtering
+  rule rejects pasted, hardware-keyboard, or otherwise valid literal text.
+- A small app-owned keyboard accessory provides the forward action instead of a
+  custom replacement keyboard or a new third-party keyboard dependency.
+- The accessory follows Log Format declaration order. Intermediate arrows move
+  focus to the next field; the final arrow invokes the same save workflow as
+  `Save set Sn` and respects busy-state protection.
+- The accessory has an accessible name that describes its current action, a
+  compliant tap target, and clear focus/disabled state not conveyed by color
+  alone.
+- Field widths and wrapping are adjusted where necessary so parenthetical
+  suggestions remain usable on narrow phones, large text, and the existing
+  compact desktop layout.
+- The generated mockups are directional design references. This PRD's clarified
+  dynamic labels are authoritative over mockup text that literally says
+  `(suggestion)`.
 
 ## Testing Decisions
 
-- Test the new schema through public parsing, validation, planning, workbook
-  session, and screen contracts. Do not test private classification helpers.
-- Keep fixtures with empty rows, visible annotations in the Exercise column,
-  workout headings, primary exercises, backups, and unparseable raw history.
-- Prove that only `x` rows become exercises, headings create durable workouts,
-  blanks are ignored, and unknown marker values block writes.
-- Test the temporary migration on representative valid workbooks and assert the
-  refreshed workbook retains formulas, raw history, ignored rows, and tab
-  identity.
-- Adapter tests may assert essential request ranges and formatting operations,
-  including freezes, the intentional pixel widths, hidden/de-emphasized
-  columns, merges, and grey heading treatment. Avoid brittle assertions about
-  every generated request or documentation prose.
-- Test additions and removals through observable workbook results. Ensure
-  unaffected annotations and rows survive rather than asserting internal call
-  order.
-- Test that ordinary value writes do not include broad formatting updates and
-  that structural formatting requests target only newly created or directly
-  affected ranges.
-- Fakes prove WorkoutTracker's request contract only. A final opt-in live check
-  must inspect a new workbook, a migrated workbook, history growth, exercise
-  deletion, and retained extra tabs in Google Sheets.
-- Run an early HITL prototype review before production integration. It must
-  exercise the actual Sheets renderer and explicitly approve or revise widths,
-  wrapping, freezes, hidden columns, merges, and workout-heading treatment.
-- Use the test-cleanup skill after implementation to remove TDD scaffolding and
-  retain the smallest durable behavior suite.
+- Use TDD through visible logging-screen and public logging-flow behavior. Do
+  not test private string helpers or exact incidental widget nesting.
+- Cover the compact summary with representative rest values and verify that
+  Targets notation, Tempo, `Training details`, and the detached next-set label
+  are absent.
+- Cover the retained coaching note as visible secondary text and the blank-note
+  state as absent content.
+- Verify `Save set S1` emits the existing save command, advances to
+  `Save set S2` only after a successful refreshed state, remains unchanged on
+  failure, and is disabled while a command is pending.
+- Cover suggestion labels for nonblank text, explicit zero, blank values,
+  placement-specific targets, and a controller prefilled from more recent
+  history. Tests should prove that labels come from Targets, not controller
+  text.
+- Preserve focused semantics coverage for stable `New set <field>` labels and
+  declaration-order traversal.
+- Verify the requested unsigned decimal keyboard configuration and the
+  accessory's observable Next/final-save behavior. Widget tests establish the
+  app contract but do not claim to prove the native iOS keyboard renderer.
+- Retain tests showing decimal values, arbitrary pasted or hardware-entered
+  literal values, failed-save input preservation, and duplicate-action
+  suppression.
+- Run narrow-phone and large-text layout checks plus Flutter's labeled-target,
+  Android-target, iOS-target, and contrast guidelines for the revised state.
+- Use the existing logging UI and integrated logging-flow tests as prior art.
+  Keep assertions centered on copy, action behavior, focus order, commands, and
+  accessible semantics.
+- After TDD, use the test-cleanup skill to remove scaffolding and duplicated
+  assertions while retaining the smallest durable public behavior suite.
+- Finish with a human iOS review using the software keyboard. A simulator with
+  the software keyboard forced visible is sufficient for layout review; a
+  physical device is preferred for one-handed interaction. Use a disposable
+  workbook copy or another explicitly approved sheet for any save action.
 
 ## Out of Scope
 
-- Importing the referenced example workbook as a supported schema.
-- Retaining its Starting point column or visible `Backup:` name prefixes.
-- Treating arbitrary colors, fonts, borders, widths, or merges as semantic data.
-- Guaranteeing that every manual formatting change survives a structural edit.
-- A user-facing formatting editor or theme chooser.
-- Using retired tabs as the top-level workout organization model.
-- Selecting an active workout tab other than the first tab.
-- Adding new workout, history-block, or set deletion features solely for this
-  layout project.
-- Google Picker replacement or any work in the preserved Picker plans.
-- Android release readiness or new app-store packaging work.
+- Changing blank Weight or Pain targets to zero.
+- Editing the shared reference workbook or running opt-in live Google tests.
+- Changing canonical exercise defaults, active-row Targets, Log Format syntax,
+  or history notation.
+- Replacing the native keyboard with a custom keypad.
+- Adding a third-party keyboard package solely for the accessory action.
+- Rejecting letters or other literal characters with input formatters.
+- Redesigning logged-set history, raw-set editing, exercise selection, recent
+  history, workout setup, startup, account, sheet selection, or the sheet
+  picker.
+- Android release-readiness work or app-store packaging.
+- Broad visual theming outside the logging entry screen.
 
 ## Further Notes
 
-The referenced workbook is a visual model, not a migration source. The target
-is a similarly readable sheet that retains WorkoutTracker's safe formula,
-metadata, and history contracts.
+The shared workbook was inspected read-only to clarify the photographed row.
+That Leg Press placement stores Targets as `x10-12@8,`, so Weight and Pain are
+blank. Another placement stores `240x10-12@8,0`, demonstrating that configured
+values and explicit zeroes are already preserved. The UI must present this
+distinction rather than trying to repair or reinterpret it.
 
-The prototype review is deliberately early and separate from final live
-acceptance. The first locks visual reality before production integration; the
-last proves that application workflows preserve it.
-
-Manual formatting is not prohibited in Google Sheets. It is simply outside the
-compatibility guarantee. The implementation should preserve it whenever that
-falls naturally out of targeted value writes and structural row moves, while
-favoring deterministic, understandable behavior over complex formatting
-provenance logic.
+The native keyboard layout cannot be proven by Flutter widget tests or by an
+adapter fake. Human acceptance must inspect the actual iOS software keyboard,
+the app-owned arrow, focus movement, keyboard avoidance, and final-field save
+behavior.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/contract.dart';
@@ -494,6 +496,57 @@ void main() {
     );
   });
 
+  testWidgets('does not show a logged-out state while restoring an account', (
+    tester,
+  ) async {
+    final gate = Completer<void>();
+    final accountSession = FakeGoogleAccountSession(
+      null,
+      restoredAccount: const GoogleAccountProfile(
+        email: 'saved@example.com',
+        displayName: 'Saved Account',
+      ),
+      restoreWait: gate.future,
+    );
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        svc: service,
+        accountSession: accountSession,
+        picker: FakeSheetPicker(),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Connecting to Google Sheets…'), findsOneWidget);
+    expect(find.text('Not logged in'), findsNothing);
+    expect(find.byIcon(Icons.account_circle_outlined), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('choose-google-spreadsheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create-google-spreadsheet')),
+      findsNothing,
+    );
+
+    gate.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Connecting to Google Sheets…'), findsNothing);
+    expect(find.text('No workout sheet selected'), findsOneWidget);
+    expect(find.text('saved@example.com'), findsOneWidget);
+    expect(
+      find.byTooltip('Google Sheets account: saved@example.com'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('login enables sheet choice with all required scopes', (
     tester,
   ) async {
@@ -514,12 +567,12 @@ void main() {
     await tester.pump();
 
     expect(
-      tester
-          .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Choose workout sheet'),
-          )
-          .onPressed,
-      isNull,
+      find.byKey(const ValueKey('choose-google-spreadsheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create-google-spreadsheet')),
+      findsNothing,
     );
 
     await tester.tap(find.byTooltip('Connect Google Sheets'));
@@ -568,6 +621,7 @@ void main() {
         initialText: 'spreadsheet-id',
       ),
     );
+    await tester.pumpAndSettle();
 
     await tester.tap(
       find.byTooltip('Google Sheets account: wrong@example.com'),
@@ -640,7 +694,15 @@ void main() {
     expect(store.workoutSelection, isNull);
     expect(find.text('development'), findsNothing);
     expect(find.text('Return to workout'), findsNothing);
-    expect(find.text('No workout sheet selected'), findsOneWidget);
+    expect(find.text('Not logged in'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('choose-google-spreadsheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create-google-spreadsheet')),
+      findsNothing,
+    );
   });
 
   testWidgets('shows the Google Sheets account menu in picker mode', (

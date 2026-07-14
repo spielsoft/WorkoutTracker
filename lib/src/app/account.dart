@@ -5,10 +5,16 @@ import 'ui/sheet.dart';
 import 'ui/view.dart';
 
 class AccountMenu extends StatefulWidget {
-  const AccountMenu({required this.account, required this.run, super.key});
+  const AccountMenu({
+    required this.account,
+    required this.run,
+    this.enabled = true,
+    super.key,
+  });
 
   final GoogleAccountProfile? account;
   final Future<CmdResult> Function(SheetCmd cmd) run;
+  final bool enabled;
 
   @override
   State<AccountMenu> createState() => _AccountMenuSt();
@@ -51,7 +57,7 @@ class _AccountMenuSt extends State<AccountMenu> {
       tooltip: account == null
           ? 'Connect Google Sheets'
           : 'Google Sheets account: ${account.email}',
-      enabled: !_isBusy,
+      enabled: widget.enabled && !_isBusy,
       icon: _GoogleAccountAvatar(account: account, isBusy: _isBusy),
       onSelected: (action) {
         switch (action) {

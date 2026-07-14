@@ -9,10 +9,15 @@ import '../fixtures/workbook.dart';
 
 class FakeGoogleAccountSession extends ChangeNotifier
     implements GoogleAccountSession {
-  FakeGoogleAccountSession(this._currentAccount, {this.restoredAccount});
+  FakeGoogleAccountSession(
+    this._currentAccount, {
+    this.restoredAccount,
+    this.restoreWait,
+  });
 
   GoogleAccountProfile? _currentAccount;
   final GoogleAccountProfile? restoredAccount;
+  final Future<void>? restoreWait;
   int restoreCount = 0;
   int signInCount = 0;
   int signOutCount = 0;
@@ -24,6 +29,9 @@ class FakeGoogleAccountSession extends ChangeNotifier
   @override
   Future<void> restoreAccount({List<String> scopes = const []}) async {
     restoreCount += 1;
+    if (restoreWait case final wait?) {
+      await wait;
+    }
     if (restoredAccount != null) {
       _currentAccount = restoredAccount;
       notifyListeners();
