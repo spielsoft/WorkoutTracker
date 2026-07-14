@@ -12,6 +12,48 @@ import '../../fixtures/workbook.dart';
 import '../../support/widget.dart';
 
 void main() {
+  testWidgets('previews and confirms the declared 0.9 format update', (
+    tester,
+  ) async {
+    final migrator = _FormatMigrator();
+    final service = RevalidatingValService(
+      reports: [minimalValidParsedSheet(), minimalValidParsedSheet()],
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        svc: service,
+        fieldMigrator: migrator,
+        initialText: 'versioned-sheet-id',
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Update workout sheet formats'), findsOneWidget);
+    expect(
+      find.text(
+        'Exercises row 2 Log Format: '
+        '"{Weight}[x]{Reps}[@]{RPE}" → "{Weight}x{Reps}@{RPE}".',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('convert-format-sheet')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Update workout sheet formats?'), findsOneWidget);
+    expect(migrator.migrateCount, 0);
+    await tester.tap(
+      find.byKey(const ValueKey('confirm-format-sheet-conversion')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(migrator.migrateCount, 1);
+    expect(migrator.expected?.kind, WbkMigrationKind.format09);
+    expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
+  });
+
   testWidgets('converts an exact legacy workbook after confirmation', (
     tester,
   ) async {
@@ -742,30 +784,79 @@ void main() {
 
 class _FieldMigrator implements FieldMigrator {
   int migrateCount = 0;
+  bool migrated = false;
 
-  LegacyFieldMigrationReport _report({bool applied = false}) =>
-      LegacyFieldMigrationReport(
-        spreadsheetId: 'legacy-sheet-id',
-        exerciseCount: 1,
-        activeRowCount: 1,
-        changes: const ['Update legacy columns.', 'Set schema version 0.9.'],
-        blockers: const [],
-        recognized: true,
-        wasApplied: applied,
-      );
+  LegacyFieldMigrationReport _report({
+    bool applied = false,
+    bool recognized = true,
+  }) => LegacyFieldMigrationReport(
+    spreadsheetId: 'legacy-sheet-id',
+    exerciseCount: 1,
+    activeRowCount: 1,
+    changes: const ['Update legacy columns.', 'Set schema version 0.9.'],
+    blockers: const [],
+    recognized: recognized,
+    wasApplied: applied,
+  );
 
   @override
   Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId) async {
-    return _report();
+    return _report(recognized: !migrated);
   }
 
   @override
   Future<LegacyFieldMigrationReport> migrate(
     String spreadsheetId, {
     required bool confirmed,
+    WbkMigrationReport? expected,
+  }) async {
+    expect(confirmed, isTrue);
+    expect(expected?.kind, WbkMigrationKind.originalFields);
+    migrateCount += 1;
+    migrated = true;
+    return _report(applied: true);
+  }
+}
+
+class _FormatMigrator implements FieldMigrator {
+  int migrateCount = 0;
+  WbkMigrationReport? expected;
+  bool migrated = false;
+
+  FormatMigrationReport _report({
+    bool applied = false,
+    bool recognized = true,
+    bool alreadyCurrent = false,
+  }) => FormatMigrationReport(
+    spreadsheetId: 'versioned-sheet-id',
+    changes: const [
+      'Exercises row 2 Log Format: '
+          '"{Weight}[x]{Reps}[@]{RPE}" → "{Weight}x{Reps}@{RPE}".',
+      'Set workbook schema version to 1.0.',
+    ],
+    blockers: const [],
+    recognized: recognized,
+    sourceVersion: alreadyCurrent ? '1.0' : '0.9',
+    historyCellCount: 1,
+    wasApplied: applied,
+    alreadyCurrent: alreadyCurrent,
+  );
+
+  @override
+  Future<FormatMigrationReport> dryRun(String spreadsheetId) async {
+    return _report(recognized: !migrated, alreadyCurrent: migrated);
+  }
+
+  @override
+  Future<FormatMigrationReport> migrate(
+    String spreadsheetId, {
+    required bool confirmed,
+    WbkMigrationReport? expected,
   }) async {
     expect(confirmed, isTrue);
     migrateCount += 1;
+    this.expected = expected;
+    migrated = true;
     return _report(applied: true);
   }
 }

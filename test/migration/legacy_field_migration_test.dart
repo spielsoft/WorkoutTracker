@@ -119,6 +119,30 @@ void main() {
     expect(report.blockers.join(' '), contains(workbookSchemaVersion));
   });
 
+  test(
+    'routes an unversioned original through its distinct path first',
+    () async {
+      final client = _Client(
+        activeRows: _activeRows(),
+        exerciseRows: _exerciseRows(),
+      );
+      final migrator = RoutedFieldMigrator(
+        client: client,
+        allowedSpreadsheetIds: const ['approved'],
+      );
+
+      final original = await migrator.dryRun('approved');
+      expect(original.kind, WbkMigrationKind.originalFields);
+
+      await migrator.migrate('approved', confirmed: true, expected: original);
+      expect(client.schemaVersion, priorWorkbookSchemaVersion);
+
+      final formats = await migrator.dryRun('approved');
+      expect(formats.kind, WbkMigrationKind.format09);
+      expect(formats.recognized, isTrue);
+    },
+  );
+
   test('rejects a stale workbook before applying operations', () async {
     final client = _Client(
       activeRows: _activeRows(),

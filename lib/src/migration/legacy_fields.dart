@@ -1,54 +1,8 @@
 import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/sheets.dart';
 
-import '../app/auth_client.dart';
 import '../log_format/legacy.dart';
-
-abstract interface class FieldMigrator {
-  Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId);
-
-  Future<LegacyFieldMigrationReport> migrate(
-    String spreadsheetId, {
-    required bool confirmed,
-  });
-}
-
-class GoogleFieldMigrator implements FieldMigrator {
-  const GoogleFieldMigrator(this._google);
-
-  final ApiAccess _google;
-
-  @override
-  Future<LegacyFieldMigrationReport> dryRun(String spreadsheetId) {
-    return _run(spreadsheetId, (migrator) => migrator.dryRun(spreadsheetId));
-  }
-
-  @override
-  Future<LegacyFieldMigrationReport> migrate(
-    String spreadsheetId, {
-    required bool confirmed,
-  }) {
-    return _run(
-      spreadsheetId,
-      (migrator) => migrator.migrate(spreadsheetId, confirmed: confirmed),
-    );
-  }
-
-  Future<T> _run<T>(
-    String spreadsheetId,
-    Future<T> Function(LegacyFieldMigrator migrator) action,
-  ) {
-    return _google.run(
-      scopes: GoogleApisWbkClient.writeScopes,
-      action: (resources) => action(
-        LegacyFieldMigrator(
-          client: GoogleApisWbkClient(resources.sheetsApi),
-          allowedSpreadsheetIds: [spreadsheetId],
-        ),
-      ),
-    );
-  }
-}
+import 'model.dart';
 
 /// Temporary owner-only migration for pre-MVP Reps/RPE workbook columns.
 ///
@@ -74,12 +28,23 @@ class LegacyFieldMigrator implements FieldMigrator {
   Future<LegacyFieldMigrationReport> migrate(
     String spreadsheetId, {
     required bool confirmed,
+    WbkMigrationReport? expected,
   }) async {
     _requireAllowed(spreadsheetId);
     if (!confirmed) {
       throw StateError('Legacy migration requires explicit confirmation.');
     }
+    if (expected != null &&
+        (expected.kind != WbkMigrationKind.originalFields ||
+            expected.spreadsheetId != spreadsheetId)) {
+      throw StateError('Workbook conversion route changed after preview.');
+    }
     final baseline = await _read(spreadsheetId);
+    if (expected?.staleExpectation case final _LegacyWorkbook preview) {
+      if (!_sameWorkbook(preview, baseline)) {
+        throw StateError('Workbook changed after the migration dry run.');
+      }
+    }
     final plan = _plan(spreadsheetId, baseline);
     if (plan.report.blockers.isNotEmpty) {
       throw StateError(plan.report.blockers.join(' '));
@@ -137,7 +102,7 @@ class LegacyFieldMigrator implements FieldMigrator {
   }
 }
 
-class LegacyFieldMigrationReport {
+class LegacyFieldMigrationReport implements WbkMigrationReport {
   LegacyFieldMigrationReport({
     required this.spreadsheetId,
     required this.exerciseCount,
@@ -147,19 +112,35 @@ class LegacyFieldMigrationReport {
     required this.recognized,
     this.wasApplied = false,
     this.refreshedSheet,
+    this.staleExpectation,
   }) : changes = List<String>.unmodifiable(changes),
        blockers = List<String>.unmodifiable(blockers);
 
+  @override
   final String spreadsheetId;
   final int exerciseCount;
   final int activeRowCount;
+  @override
   final List<String> changes;
+  @override
   final List<String> blockers;
+  @override
   final bool recognized;
+  @override
   final bool wasApplied;
+  @override
   final ParsedActiveSheet? refreshedSheet;
+  @override
+  final WbkStaleExpectation? staleExpectation;
 
-  bool get canApply => blockers.isEmpty;
+  @override
+  WbkMigrationKind get kind => WbkMigrationKind.originalFields;
+
+  @override
+  bool get alreadyCurrent => false;
+
+  @override
+  bool get canApply => recognized && blockers.isEmpty;
 
   LegacyFieldMigrationReport applied(ParsedActiveSheet sheet) =>
       LegacyFieldMigrationReport(
@@ -181,7 +162,7 @@ class _LegacyPlan {
   final List<SheetsWorkbookOperation> operations;
 }
 
-class _LegacyWorkbook {
+class _LegacyWorkbook implements WbkStaleExpectation {
   const _LegacyWorkbook({
     required this.active,
     required this.exercises,
@@ -234,9 +215,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
   var activeCount = 0;
   for (var index = 1; index < activeRows.length; index += 1) {
     final row = _padded(activeRows[index], 10);
-    final formatText = row[7].trim().isEmpty
-        ? legacyLogFormat
-        : row[7];
+    final formatText = row[7].trim().isEmpty ? legacyLogFormat : row[7];
     final targets = _legacyValues(
       formatText,
       reps: row[2],
@@ -277,9 +256,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
   var exerciseCount = 0;
   for (var index = 1; index < exerciseRows.length; index += 1) {
     final row = _padded(exerciseRows[index], 9);
-    final formatText = row[8].trim().isEmpty
-        ? legacyLogFormat
-        : row[8];
+    final formatText = row[8].trim().isEmpty ? legacyLogFormat : row[8];
     final defaults = _legacyValues(
       formatText,
       reps: row[3],
@@ -325,6 +302,7 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
       changes: changes,
       blockers: blockers,
       recognized: true,
+      staleExpectation: workbook,
     ),
     operations: operations,
   );

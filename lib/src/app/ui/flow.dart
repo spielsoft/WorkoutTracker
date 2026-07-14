@@ -52,7 +52,7 @@ final class AppFlow extends ChangeNotifier {
   late final LoadedFlow loaded;
   bool _showLoaded = false;
   String _sheetText;
-  LegacyFieldMigrationReport? _fieldMigration;
+  WbkMigrationReport? _migration;
   bool _migrationPending = false;
 
   AppView get view {
@@ -99,7 +99,7 @@ final class AppFlow extends ChangeNotifier {
       hasPicker: _hasPicker,
       showAccount: _showAccount,
       accountMismatch: workspace.accountMismatch,
-      fieldMigration: _fieldMigration,
+      migration: _migration,
     );
   }
 
@@ -150,7 +150,7 @@ final class AppFlow extends ChangeNotifier {
         exerciseRow,
       ),
       OpenSheet() => await _openSheet(),
-      ConvertLegacySheet() => await _convertLegacySheet(),
+      ConfirmWbkMigration() => await _confirmMigration(),
     };
     notifyListeners();
     return result;
@@ -168,29 +168,30 @@ final class AppFlow extends ChangeNotifier {
         ? await _ctrl.validateSelection(_sheetText)
         : await _ctrl.validateSelected(selected);
     final report = _ctrl.report;
-    await _inspectLegacy(report);
-    _showLoaded = ok && report != null && !report.hasBlockingIssues;
+    await _inspectMigration(report);
+    _showLoaded =
+        ok && report != null && !report.hasBlockingIssues && _migration == null;
     if (_showLoaded) loaded.showHome();
     return CmdResult.result(ok);
   }
 
-  Future<void> _inspectLegacy(ValReport? report) async {
-    _fieldMigration = null;
+  Future<void> _inspectMigration(ValReport? report) async {
+    _migration = null;
     final migrator = fieldMigrator;
-    if (migrator == null || report == null || !report.hasSchemaDamage) return;
+    if (migrator == null || report == null) return;
     try {
       final candidate = await migrator.dryRun(report.sheetId);
       if (_ctrl.report?.sheetId == report.sheetId && candidate.recognized) {
-        _fieldMigration = candidate;
+        _migration = candidate;
       }
     } on Object {
       // Ordinary schema guidance remains available when inspection fails.
     }
   }
 
-  Future<CmdResult> _convertLegacySheet() async {
+  Future<CmdResult> _confirmMigration() async {
     final report = _ctrl.report;
-    final migration = _fieldMigration;
+    final migration = _migration;
     final migrator = fieldMigrator;
     if (report == null ||
         migration == null ||
@@ -203,11 +204,15 @@ final class AppFlow extends ChangeNotifier {
     _migrationPending = true;
     notifyListeners();
     try {
-      await migrator.migrate(report.sheetId, confirmed: true);
+      await migrator.migrate(
+        report.sheetId,
+        confirmed: true,
+        expected: migration,
+      );
       return _validate();
     } on Object catch (error) {
       _ctrl.reportSelectionFailure(error);
-      return CmdResult.failed('Unable to convert old sheet: $error');
+      return CmdResult.failed('Unable to update workout sheet: $error');
     } finally {
       _migrationPending = false;
       notifyListeners();
@@ -256,7 +261,7 @@ final class AppFlow extends ChangeNotifier {
     _ctrl.clearSelection();
     _sheetText = '';
     _showLoaded = false;
-    _fieldMigration = null;
+    _migration = null;
     loaded.reset();
     return const CmdResult.done();
   }
@@ -291,7 +296,9 @@ final class AppFlow extends ChangeNotifier {
   Future<CmdResult> _repairAll() async {
     final ok = await _ctrl.repairFormulas();
     if (ok) {
-      _showLoaded = _ctrl.report?.hasBlockingIssues == false;
+      await _inspectMigration(_ctrl.report);
+      _showLoaded =
+          _ctrl.report?.hasBlockingIssues == false && _migration == null;
       if (_showLoaded) loaded.showHome();
     }
     return CmdResult.result(ok);
@@ -303,7 +310,9 @@ final class AppFlow extends ChangeNotifier {
       selectedRow: exerciseRow,
     );
     if (ok) {
-      _showLoaded = _ctrl.report?.hasBlockingIssues == false;
+      await _inspectMigration(_ctrl.report);
+      _showLoaded =
+          _ctrl.report?.hasBlockingIssues == false && _migration == null;
       if (_showLoaded) loaded.showHome();
     }
     return CmdResult.result(ok);

@@ -25,7 +25,7 @@ final class SheetView extends AppView {
     required this.hasPicker,
     required this.showAccount,
     this.accountMismatch,
-    this.fieldMigration,
+    this.migration,
     super.error,
   });
 
@@ -41,7 +41,7 @@ final class SheetView extends AppView {
   final bool hasPicker;
   final bool showAccount;
   final AcctMismatch? accountMismatch;
-  final LegacyFieldMigrationReport? fieldMigration;
+  final WbkMigrationReport? migration;
 }
 
 sealed class SheetCmd {
@@ -103,8 +103,8 @@ final class OpenSheet extends SheetCmd {
   const OpenSheet();
 }
 
-final class ConvertLegacySheet extends SheetCmd {
-  const ConvertLegacySheet();
+final class ConfirmWbkMigration extends SheetCmd {
+  const ConfirmWbkMigration();
 }
 
 class SheetScreen extends StatefulWidget {
@@ -160,15 +160,28 @@ class _SheetScreenSt extends State<SheetScreen> {
     await widget.run(CreateSheet(name.isEmpty ? initial : name));
   }
 
-  Future<void> _convertLegacySheet() async {
+  Future<void> _showMigrationDialog() async {
+    final migration = widget.view.migration;
+    final isFormat = migration?.kind == WbkMigrationKind.format09;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Convert old workout sheet?'),
-        content: const Text(
-          'WorkoutTracker will update this sheet to the current columns. '
-          'Exercise data, formulas, and workout history will be preserved. '
-          'The sheet is reread before writing and conversion stops if it changed.',
+        title: Text(
+          isFormat
+              ? 'Update workout sheet formats?'
+              : 'Convert old workout sheet?',
+        ),
+        content: Text(
+          isFormat
+              ? 'WorkoutTracker will replace the listed bracket notation '
+                    'with Python-style formats and set the workbook schema '
+                    'to 1.0. Default Values, Targets, formulas, and workout '
+                    'history will be preserved. The sheet is reread before '
+                    'writing and conversion stops if it changed.'
+              : 'WorkoutTracker will update this sheet to the current '
+                    'columns. Exercise data, formulas, and workout history '
+                    'will be preserved. The sheet is reread before writing '
+                    'and conversion stops if it changed.',
         ),
         actions: [
           TextButton(
@@ -176,15 +189,19 @@ class _SheetScreenSt extends State<SheetScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            key: const ValueKey('confirm-legacy-sheet-conversion'),
+            key: ValueKey(
+              isFormat
+                  ? 'confirm-format-sheet-conversion'
+                  : 'confirm-legacy-sheet-conversion',
+            ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Convert sheet'),
+            child: Text(isFormat ? 'Update formats' : 'Convert sheet'),
           ),
         ],
       ),
     );
     if (confirmed == true && mounted) {
-      await widget.run(const ConvertLegacySheet());
+      await widget.run(const ConfirmWbkMigration());
     }
   }
 
@@ -234,8 +251,8 @@ class _SheetScreenSt extends State<SheetScreen> {
         if (view.report case final report?)
           ValidationSummary(
             report: report,
-            fieldMigration: view.fieldMigration,
-            onConvertLegacy: view.isBusy ? null : _convertLegacySheet,
+            migration: view.migration,
+            onMigrate: view.isBusy ? null : _showMigrationDialog,
             onRepairFormulas: view.isBusy
                 ? null
                 : () async {

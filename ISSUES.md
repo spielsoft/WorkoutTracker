@@ -1,7 +1,7 @@
 # Python-Style Exercise Log Formats
 
 - [x] Slice 1: Use Python-Style Formats in Version 1.0 Workbooks
-- [ ] Slice 2: Convert Version 0.9 Formats Safely
+- [x] Slice 2: Convert Version 0.9 Formats Safely
 - [ ] Slice 3: Log Five-Field DB Step-Ups in New Workbooks
 - [ ] Slice 4: Safely Change Formats for Placed Exercises
 - [ ] Slice 5: Normalize Every Provided Exercise Default
@@ -64,13 +64,13 @@ original-workbook conversion route without guessing versions from structure.
 
 ### Acceptance criteria
 
-- [ ] A declared version `0.9` workbook offers a dry-run conversion that lists every format change without writing.
-- [ ] Confirmed conversion rewrites notation-only brackets into equivalent literal text, preserves the rendered Default Values and Targets, leaves history cells unchanged, and stamps version `1.0`.
-- [ ] Conversion is idempotent, refuses damaged or stale workbooks, and never guesses a version from headers.
-- [ ] An unversioned original workbook still follows only its existing legacy conversion path and reaches the current contract deliberately.
-- [ ] Converter-specific recognition of the old notation does not leak into `1.0` authoring help or validation behavior.
-- [ ] Converted workbooks reopen through ordinary `1.0` validation with no format, Default Values, Targets, or history regression.
-- [ ] Focused migration planning, confirmation UI, adapter, version metadata, and reread tests pass.
+- [x] A declared version `0.9` workbook offers a dry-run conversion that lists every format change without writing.
+- [x] Confirmed conversion rewrites notation-only brackets into equivalent literal text, preserves the rendered Default Values and Targets, leaves history cells unchanged, and stamps version `1.0`.
+- [x] Conversion is idempotent, refuses damaged or stale workbooks, and never guesses a version from headers.
+- [x] An unversioned original workbook still follows only its existing legacy conversion path and reaches the current contract deliberately.
+- [x] Converter-specific recognition of the old notation does not leak into `1.0` authoring help or validation behavior.
+- [x] Converted workbooks reopen through ordinary `1.0` validation with no format, Default Values, Targets, or history regression.
+- [x] Focused migration planning, confirmation UI, adapter, version metadata, and reread tests pass.
 
 ### Blocked by
 

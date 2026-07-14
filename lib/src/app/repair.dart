@@ -13,8 +13,8 @@ class ValidationSummary extends StatelessWidget {
     this.onRepairFormulas,
     this.onRepairFormulaIssue,
     this.onOpenSpreadsheet,
-    this.fieldMigration,
-    this.onConvertLegacy,
+    this.migration,
+    this.onMigrate,
     super.key,
   });
 
@@ -26,8 +26,8 @@ class ValidationSummary extends StatelessWidget {
   })?
   onRepairFormulaIssue;
   final Future<void> Function()? onOpenSpreadsheet;
-  final LegacyFieldMigrationReport? fieldMigration;
-  final Future<void> Function()? onConvertLegacy;
+  final WbkMigrationReport? migration;
+  final Future<void> Function()? onMigrate;
 
   @override
   Widget build(BuildContext context) {
@@ -38,27 +38,35 @@ class ValidationSummary extends StatelessWidget {
       (issue) => issue.needsChoice,
     );
     final panels = <Widget>[
-      if (fieldMigration case final migration?)
+      if (migration case final migration?)
         IssuePanel(
           icon: Icons.upgrade_outlined,
-          title: migration.canApply
-              ? 'Convert old workout sheet'
-              : 'Old workout sheet needs attention',
+          title: _migrationTitle(migration),
           lines: [
             if (migration.canApply)
-              'This sheet uses an older WorkoutTracker column layout.',
+              migration.kind == WbkMigrationKind.format09
+                  ? 'This declared 0.9 sheet uses older bracket-token Log Formats.'
+                  : 'This sheet uses an older WorkoutTracker column layout.',
             ...migration.changes,
             if (migration.blockers.isNotEmpty) 'Spreadsheet details',
             ...migration.blockers,
           ],
           action: migration.canApply
               ? FilledButton.icon(
-                  key: const ValueKey('convert-legacy-sheet'),
-                  onPressed: onConvertLegacy == null
+                  key: ValueKey(
+                    migration.kind == WbkMigrationKind.format09
+                        ? 'convert-format-sheet'
+                        : 'convert-legacy-sheet',
+                  ),
+                  onPressed: onMigrate == null
                       ? null
-                      : () => unawaited(onConvertLegacy!()),
+                      : () => unawaited(onMigrate!()),
                   icon: const Icon(Icons.upgrade_outlined),
-                  label: const Text('Convert old sheet'),
+                  label: Text(
+                    migration.kind == WbkMigrationKind.format09
+                        ? 'Update formats'
+                        : 'Convert old sheet',
+                  ),
                 )
               : FilledButton.icon(
                   key: const ValueKey('open-legacy-sheet'),
@@ -133,6 +141,17 @@ class ValidationSummary extends StatelessWidget {
       ],
     );
   }
+}
+
+String _migrationTitle(WbkMigrationReport report) {
+  if (report.kind == WbkMigrationKind.format09) {
+    return report.canApply
+        ? 'Update workout sheet formats'
+        : 'Workout sheet format update needs attention';
+  }
+  return report.canApply
+      ? 'Convert old workout sheet'
+      : 'Old workout sheet needs attention';
 }
 
 String _manualRepairItemLine(ManualRepairItem item) {
