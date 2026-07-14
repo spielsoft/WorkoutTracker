@@ -68,6 +68,7 @@ final class LoadedFlow
 
   final List<_Page> _pages = [const _Home()];
   int? _highlightedRow;
+  ExerciseDef? _pendingEdit;
 
   List<AppPage> pages({
     required bool busy,
@@ -120,6 +121,8 @@ final class LoadedFlow
         error: _ctrl.error ?? error,
         sheetLabel: sheetLabel,
         exercise: exercise,
+        formatImpact: _ctrl.pendingFormatUpdate,
+        pendingExercise: _pendingEdit,
       ),
       _Placement(:final intent) => PlacementView(
         isBusy: busy,
@@ -230,6 +233,7 @@ final class LoadedFlow
   Future<void> edit(CanonicalExercise exercise) async {
     _ctrl.closeExercise();
     _highlightedRow = null;
+    _pendingEdit = null;
     _push(_Edit(exercise));
     _changed();
   }
@@ -242,7 +246,11 @@ final class LoadedFlow
         selectedExercise: selected,
         exercise: exercise,
       );
-      if (!ok) return false;
+      if (!ok) {
+        if (_ctrl.pendingFormatUpdate != null) _pendingEdit = exercise;
+        return false;
+      }
+      _pendingEdit = null;
       _highlightedRow = selected.sheetRowNumber;
       _pages.removeLast();
       _changed();
@@ -257,6 +265,29 @@ final class LoadedFlow
     _pages.removeLast();
     _changed();
     return true;
+  }
+
+  @override
+  Future<bool> confirmFormatUpdate(
+    Map<int, Map<String, String>> valuesByRow,
+  ) async {
+    final ok = await _ctrl.confirmExerciseUpdate(valuesByRow);
+    if (!ok) return false;
+    final page = _pages.last;
+    if (page case _Edit(exercise: final selected)) {
+      _pendingEdit = null;
+      _highlightedRow = selected.sheetRowNumber;
+      _pages.removeLast();
+      _changed();
+    }
+    return true;
+  }
+
+  @override
+  void cancelFormatUpdate() {
+    _pendingEdit = _ctrl.pendingFormatUpdate?.exercise;
+    _ctrl.cancelExerciseUpdate();
+    _changed();
   }
 
   @override
@@ -299,6 +330,10 @@ final class LoadedFlow
 
   void _leave(_Page page) {
     if (page is _Log) _ctrl.closeExercise();
+    if (page is _Edit && _ctrl.pendingFormatUpdate != null) {
+      _ctrl.cancelExerciseUpdate();
+    }
+    if (page is _Edit) _pendingEdit = null;
   }
 
   void _openPrimary(String workout) {

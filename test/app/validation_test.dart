@@ -611,6 +611,254 @@ void main() {
   );
 
   test(
+    'reviews and atomically updates a placed format without rewriting history',
+    () async {
+      const oldFormat = '({Height (in)})x{Reps}@{RPE},{Pain}';
+      const newFormat = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'DB Step-Up',
+          '3',
+          '2 min',
+          '2-1-1',
+          '(14)x10@7,0',
+          '',
+          oldFormat,
+          'Legs',
+          '',
+          'x',
+          '(12)x8@8,0',
+        ],
+      ];
+      final updatedActiveRows = activeRows.map((row) => [...row]).toList()
+        ..[2][4] = '(14, 20)x10@7,0'
+        ..[2][6] = newFormat;
+      final exerciseRows = [
+        exercisesSheetColumns,
+        ['DB Step-Up', '', '3', '2 min', '2-1-1', '', oldFormat, '(12)x8@8,0'],
+      ];
+      final updatedExerciseRows = [
+        exercisesSheetColumns,
+        [
+          'DB Step-Up',
+          '',
+          '3',
+          '2 min',
+          '2-1-1',
+          '',
+          newFormat,
+          '(12, 15)x8@8,0',
+        ],
+      ];
+      const formulas = [
+        SheetsCellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          formula: '=Exercises!A2',
+        ),
+        SheetsCellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 7,
+          formula: '=Exercises!G2',
+        ),
+      ];
+      final reads = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, exerciseRows, activeFormulas: formulas),
+        _workbookSnapshot(activeRows, exerciseRows, activeFormulas: formulas),
+        _workbookSnapshot(
+          updatedActiveRows,
+          updatedExerciseRows,
+          activeFormulas: formulas,
+        ),
+      ]);
+      final writes = _RecordingWriteClient();
+      final sess = _session(reads, writes);
+      final initial = await sess.read();
+      final exercise = ExerciseDef(
+        exercise: 'DB Step-Up',
+        defaultSets: '3',
+        defaultRest: '2 min',
+        defaultTempo: '2-1-1',
+        logFormat: newFormat,
+        defaultValues: const {
+          'Height (in)': '12',
+          'Weight (lbs)': '15',
+          'Reps': '8',
+          'RPE': '8',
+          'Pain': '0',
+        },
+      );
+
+      final preview = await sess.execute(
+        UpdateExeCmd(
+          selected: initial.activeSheet.canonicalExercises.single,
+          exercise: exercise,
+        ),
+      );
+
+      expect(writes.operations, isEmpty);
+      final impact = preview.exeFormatImpact!;
+      expect(impact.rawHistoryCount, 1);
+      final updated = await sess.execute(
+        ConfirmExeUpdateCmd(
+          impact: impact,
+          valuesByRow: {
+            3: {
+              ...impact.placements.single.proposedValues,
+              'Weight (lbs)': '20',
+            },
+          },
+        ),
+      );
+
+      expect(writes.applyCount, 1);
+      expect(
+        writes.operations.whereType<SheetsCellWrite>().map(
+          (write) => (write.sheet.title, write.sheetColumnNumber, write.value),
+        ),
+        containsAll([
+          ('Exercises', 7, newFormat),
+          ('Exercises', 8, '(12, 15)x8@8,0'),
+          ('Active Workout', 5, '(14, 20)x10@7,0'),
+        ]),
+      );
+      final context = updated.activeSheet.buildLoggingContext(
+        primaryRow: 3,
+        selectedRow: 3,
+        blockLabel: 'Week 1',
+      );
+      expect(context.selectedHistory.entries.single.rawValue, '(12)x8@8,0');
+      expect(
+        context.selectedHistory.entries.single.logEntry,
+        isA<RawLogEntry>(),
+      );
+    },
+  );
+
+  test(
+    'uses the canonical path for a format change with no placements',
+    () async {
+      const oldFormat = '{Reps}@{RPE}';
+      const newFormat = '{Reps}@{RPE},{Pain}';
+      final activeRows = [activeSheetFixedColumns, List.filled(10, '')];
+      final exerciseRows = [
+        exercisesSheetColumns,
+        ['Leg Extension', '', '3', '2 min', '2-1-1', '', oldFormat, '10@8'],
+      ];
+      final updatedExerciseRows = [
+        exercisesSheetColumns,
+        ['Leg Extension', '', '3', '2 min', '2-1-1', '', newFormat, '10@8,0'],
+      ];
+      final reads = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, exerciseRows),
+        _workbookSnapshot(activeRows, exerciseRows),
+        _workbookSnapshot(activeRows, updatedExerciseRows),
+      ]);
+      final writes = _RecordingWriteClient();
+      final sess = _session(reads, writes);
+      final initial = await sess.read();
+
+      final updated = await sess.execute(
+        UpdateExeCmd(
+          selected: initial.activeSheet.canonicalExercises.single,
+          exercise: ExerciseDef(
+            exercise: 'Leg Extension',
+            defaultSets: '3',
+            defaultRest: '2 min',
+            defaultTempo: '2-1-1',
+            logFormat: newFormat,
+            defaultValues: const {'Reps': '10', 'RPE': '8', 'Pain': '0'},
+          ),
+        ),
+      );
+
+      expect(updated.exeFormatImpact, isNull);
+      expect(writes.applyCount, 1);
+      expect(
+        writes.operations.whereType<SheetsCellWrite>().map(
+          (write) => write.sheet.title,
+        ),
+        everyElement('Exercises'),
+      );
+    },
+  );
+
+  test(
+    'rejects a reviewed format update when placed Targets changed',
+    () async {
+      const oldFormat = '{Reps}@{RPE}';
+      const newFormat = '{Reps}@{RPE},{Pain}';
+      final activeRows = [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(10, ''), 'S1'],
+        [
+          'Leg Extension',
+          '3',
+          '2 min',
+          '',
+          '10@8',
+          '',
+          oldFormat,
+          'Legs',
+          '',
+          'x',
+          '10@8',
+        ],
+      ];
+      final changedRows = activeRows.map((row) => [...row]).toList()
+        ..[2][4] = '12@9';
+      final exerciseRows = [
+        exercisesSheetColumns,
+        ['Leg Extension', '', '3', '2 min', '', '', oldFormat, '10@8'],
+      ];
+      const formulas = [
+        SheetsCellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 1,
+          formula: '=Exercises!A2',
+        ),
+        SheetsCellFormula(
+          sheetRowNumber: 3,
+          sheetColumnNumber: 7,
+          formula: '=Exercises!G2',
+        ),
+      ];
+      final reads = _SequencedSpreadsheetClient([
+        _workbookSnapshot(activeRows, exerciseRows, activeFormulas: formulas),
+        _workbookSnapshot(changedRows, exerciseRows, activeFormulas: formulas),
+      ]);
+      final writes = _RecordingWriteClient();
+      final sess = _session(reads, writes);
+      final initial = await sess.read();
+      final preview = await sess.execute(
+        UpdateExeCmd(
+          selected: initial.activeSheet.canonicalExercises.single,
+          exercise: ExerciseDef(
+            exercise: 'Leg Extension',
+            defaultSets: '3',
+            defaultRest: '2 min',
+            logFormat: newFormat,
+            defaultValues: const {'Reps': '10', 'RPE': '8', 'Pain': '0'},
+          ),
+        ),
+      );
+      final impact = preview.exeFormatImpact!;
+
+      final rejected = await sess.execute(
+        ConfirmExeUpdateCmd(
+          impact: impact,
+          valuesByRow: {3: impact.placements.single.proposedValues},
+        ),
+      );
+
+      expect(rejected.writeRejections, isNotEmpty);
+      expect(writes.operations, isEmpty);
+    },
+  );
+
+  test(
     'reorders canonical exercises and rereads workout references safely',
     () async {
       final activeRows = [
@@ -1301,6 +1549,7 @@ class _SequencedSpreadsheetClient implements SheetsWorkbookClient {
 
 class _RecordingWriteClient implements SheetsWorkbookClient {
   final operations = <SheetsWorkbookOperation>[];
+  var applyCount = 0;
 
   @override
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
@@ -1323,6 +1572,7 @@ class _RecordingWriteClient implements SheetsWorkbookClient {
     required String spreadsheetId,
     required Iterable<SheetsWorkbookOperation> operations,
   }) async {
+    applyCount += 1;
     this.operations.addAll(operations);
   }
 }

@@ -59,6 +59,13 @@ class _ScopedWbkIo implements WbkIo {
     );
   }
 
+  @override
+  Future<void> writeExeUpdate(ExeUpdatePlan plan) {
+    return _run(
+      (_, write) => write.applyExeUpdate(spreadsheetId: sheetId, plan: plan),
+    );
+  }
+
   Future<T> _run<T>(
     Future<T> Function(SheetsReadAdapter read, SheetsWriteAdapter write) action,
   ) {

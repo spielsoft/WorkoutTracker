@@ -124,6 +124,83 @@ void main() {
     },
   );
 
+  test(
+    'returning from format impact keeps the proposed exercise draft',
+    () async {
+      const oldFormat = '{Reps}@{RPE}';
+      const newFormat = '{Reps}@{RPE},{Pain}';
+      final sheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: const [
+            [...activeSheetFixedColumns, 'Week 1'],
+            ['', '', '', '', '', '', '', '', '', '', 'S1'],
+            [
+              'Leg Extension',
+              '3',
+              '2 min',
+              '',
+              '10@8',
+              '',
+              oldFormat,
+              'Legs',
+              '',
+              'x',
+              '10@8',
+            ],
+          ],
+          exercisesRows: const [
+            exercisesSheetColumns,
+            ['Leg Extension', '', '3', '2 min', '', '', oldFormat, '10@8'],
+          ],
+          cellFormulas: const [
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A2',
+            ),
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 7,
+              formula: '=Exercises!G2',
+            ),
+          ],
+        ),
+      );
+      final exercise = ExerciseDef(
+        exercise: 'Leg Extension',
+        defaultSets: '3',
+        defaultRest: '2 min',
+        logFormat: newFormat,
+        defaultValues: const {'Reps': '10', 'RPE': '8', 'Pain': '0'},
+      );
+      final impact = sheet.inspectFormatUpdate(
+        selectedExercise: sheet.canonicalExercises.single,
+        exercise: exercise,
+      )!;
+      final access = _CmdAccess(
+        ValReport(
+          spreadsheetId: 'spreadsheet-id',
+          activeSheet: sheet,
+          exeFormatImpact: impact,
+        ),
+      );
+      final flow = AppFlow(svc: access, initialText: 'spreadsheet-id');
+      addTearDown(flow.dispose);
+      await flow.run(const ValidateSheet());
+      await flow.loaded.home(const OpenExerciseLibrary());
+      await flow.loaded.edit(sheet.canonicalExercises.single);
+
+      expect(await flow.loaded.save(exercise), isFalse);
+      expect((flow.view as EditExerciseView).formatImpact, same(impact));
+
+      flow.loaded.cancelFormatUpdate();
+
+      final returned = flow.view as EditExerciseView;
+      expect(returned.formatImpact, isNull);
+      expect(returned.pendingExercise, exercise);
+    },
+  );
+
   test('releases loaded mutation state after failure and success', () async {
     final access = _CmdAccess(_activeReport());
     final flow = AppFlow(svc: access, initialText: 'spreadsheet-id');

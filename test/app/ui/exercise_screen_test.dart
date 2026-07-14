@@ -258,6 +258,165 @@ void main() {
       expect(changed.closed, isFalse);
     },
   );
+
+  testWidgets(
+    'format review names placements and unchanged raw-history impact accessibly',
+    (tester) async {
+      const oldFormat = '({Height (in)})x{Reps}@{RPE},{Pain}';
+      const newFormat = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
+      final sheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: const [
+            [...activeSheetFixedColumns, 'Week 1'],
+            ['', '', '', '', '', '', '', '', '', '', 'S1'],
+            [
+              'DB Step-Up',
+              '3',
+              '2 min',
+              '2-1-1',
+              '(14)x10@7,0',
+              '',
+              oldFormat,
+              'Legs',
+              '',
+              'x',
+              '(12)x8@8,0',
+            ],
+          ],
+          exercisesRows: const [
+            exercisesSheetColumns,
+            [
+              'DB Step-Up',
+              '',
+              '3',
+              '2 min',
+              '2-1-1',
+              '',
+              oldFormat,
+              '(12)x8@8,0',
+            ],
+          ],
+          cellFormulas: const [
+            CellFormula(
+              sheetRowNumber: 3,
+              sheetColumnNumber: 1,
+              formula: '=Exercises!A2',
+            ),
+          ],
+        ),
+      );
+      final impact = sheet.inspectFormatUpdate(
+        selectedExercise: sheet.canonicalExercises.single,
+        exercise: ExerciseDef(
+          exercise: 'DB Step-Up',
+          logFormat: newFormat,
+          defaultValues: const {
+            'Height (in)': '12',
+            'Weight (lbs)': '15',
+            'Reps': '8',
+            'RPE': '8',
+            'Pain': '0',
+          },
+        ),
+      )!;
+      final actions = _EditActions();
+
+      await tester.pumpWidget(
+        _app(
+          EditExerciseScreen(
+            view: EditExerciseView(
+              isBusy: false,
+              sheetLabel: 'Training',
+              exercise: sheet.canonicalExercises.single,
+              formatImpact: impact,
+            ),
+            actions: actions,
+          ),
+        ),
+      );
+
+      expect(find.bySemanticsLabel('Review exercise format change'), findsOne);
+      expect(find.text('1 placement will receive reviewed Targets.'), findsOne);
+      expect(
+        find.text(
+          '1 existing history entry will become raw text. '
+          'History will remain unchanged and editable.',
+        ),
+        findsOne,
+      );
+      expect(find.text('Row 3 · Legs · Primary'), findsOne);
+      expect(find.text('Current Targets: (14)x10@7,0'), findsOne);
+      expect(find.bySemanticsLabel('Row 3 Height (in)'), findsOne);
+      expect(find.bySemanticsLabel('Row 3 Weight (lbs)'), findsOne);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('format-update-3-Weight (lbs)')),
+        '20',
+      );
+      final confirm = find.byKey(const ValueKey('confirm-format-update'));
+      await tester.scrollUntilVisible(
+        confirm,
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -240));
+      await tester.pumpAndSettle();
+      await tester.tap(confirm);
+      await tester.pump();
+
+      expect(actions.confirmed![3]!['Weight (lbs)'], '20');
+    },
+  );
+
+  testWidgets('returning from format review preserves the proposed draft', (
+    tester,
+  ) async {
+    const format = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
+    await tester.pumpWidget(
+      _app(
+        EditExerciseScreen(
+          view: EditExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            exercise: CanonicalExercise(
+              sheetRowNumber: 2,
+              exercise: 'DB Step-Up',
+              logFormat: '({Height (in)})x{Reps}@{RPE},{Pain}',
+            ),
+            pendingExercise: ExerciseDef(
+              exercise: 'DB Step-Up',
+              logFormat: format,
+              defaultValues: const {
+                'Height (in)': '12',
+                'Weight (lbs)': '15',
+                'Reps': '8',
+                'RPE': '8',
+                'Pain': '0',
+              },
+            ),
+          ),
+          actions: _EditActions(),
+        ),
+      ),
+    );
+
+    final formatField = find.byKey(
+      const ValueKey('exercise-authoring-log-format'),
+    );
+    await tester.scrollUntilVisible(
+      formatField,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(_fieldText(tester, formatField), format);
+    expect(
+      _fieldText(
+        tester,
+        find.byKey(const ValueKey('exercise-authoring-default-Weight (lbs)')),
+      ),
+      '15',
+    );
+  });
 }
 
 void _expectPending(WidgetTester tester) {
@@ -270,6 +429,15 @@ void _expectPending(WidgetTester tester) {
 void _expectDisabled(WidgetTester tester, Finder control) {
   final semantics = tester.getSemantics(control.first).getSemanticsData();
   expect(semantics.hasAction(SemanticsAction.tap), isFalse);
+}
+
+String _fieldText(WidgetTester tester, Finder field) {
+  return tester
+      .widget<EditableText>(
+        find.descendant(of: field, matching: find.byType(EditableText)),
+      )
+      .controller
+      .text;
 }
 
 Widget _app(Widget child) {
@@ -296,6 +464,7 @@ final class _CreateActions implements CreateExerciseActions {
 
 final class _EditActions implements EditExerciseActions {
   ExerciseDef? saved;
+  Map<int, Map<String, String>>? confirmed;
   bool closed = false;
 
   @override
@@ -306,4 +475,15 @@ final class _EditActions implements EditExerciseActions {
     saved = exercise;
     return true;
   }
+
+  @override
+  Future<bool> confirmFormatUpdate(
+    Map<int, Map<String, String>> valuesByRow,
+  ) async {
+    confirmed = valuesByRow;
+    return true;
+  }
+
+  @override
+  void cancelFormatUpdate() {}
 }

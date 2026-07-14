@@ -108,6 +108,64 @@ class SheetsWriteAdapter {
     );
   }
 
+  /// Applies one format update across Exercises and the active sheet.
+  ///
+  /// Both tabs are resolved from one metadata snapshot and submitted in one
+  /// Sheets batch so formula-driven formats never observe stale row Targets.
+  Future<void> applyExeUpdate({
+    required String spreadsheetId,
+    required ExeUpdatePlan plan,
+  }) async {
+    if (plan.exercises.rowUpdates.isEmpty &&
+        plan.exercises.rowAppends.isEmpty &&
+        plan.exercises.formulaUpdates.isEmpty &&
+        plan.active.cellUpdates.isEmpty) {
+      return;
+    }
+    final metadata = await client.fetchMetadata(spreadsheetId);
+    final active = _requiredActiveSheet(metadata);
+    final exercises = _requiredSheet(metadata, 'Exercises');
+    final operations = <SheetsWorkbookOperation>[
+      for (final append in _sortedRowAppends(plan.exercises.rowAppends))
+        SheetsRowInsertion(
+          sheet: exercises,
+          sheetRowNumber: append.sheetRowNumber,
+          rowCount: 1,
+        ),
+      ..._rowUpdateWrites(exercises, plan.exercises.rowUpdates),
+      ..._rowAppendWrites(exercises, plan.exercises.rowAppends),
+      for (final update in plan.exercises.formulaUpdates)
+        SheetsCellWrite(
+          sheet: active,
+          sheetRowNumber: update.sheetRowNumber,
+          sheetColumnNumber: update.sheetColumnNumber,
+          value: update.value,
+          mode: SheetsValueInputMode.userEntered,
+        ),
+      for (final update in plan.active.cellUpdates)
+        if (update.value.isNotEmpty)
+          SheetsCellWrite(
+            sheet: active,
+            sheetRowNumber: update.sheetRowNumber,
+            sheetColumnNumber: update.sheetColumnNumber,
+            value: update.value,
+            mode: _modeForCellUpdate(update),
+          ),
+      for (final update in plan.active.cellUpdates)
+        if (update.value.isEmpty &&
+            update.valueKind == CellUpdateValueKind.literalText)
+          SheetsCellClear(
+            sheet: active,
+            sheetRowNumber: update.sheetRowNumber,
+            sheetColumnNumber: update.sheetColumnNumber,
+          ),
+    ];
+    await client.applyOperations(
+      spreadsheetId: spreadsheetId,
+      operations: operations,
+    );
+  }
+
   Future<SheetsSheetIdentity> _activeSheet(String spreadsheetId) async {
     final metadata = await client.fetchMetadata(spreadsheetId);
     return _requiredActiveSheet(metadata);

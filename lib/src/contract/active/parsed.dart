@@ -183,6 +183,18 @@ class ParsedActiveSheet {
     );
   }
 
+  /// Describes a format change that needs placement-specific confirmation.
+  ///
+  /// Returns null for the ordinary canonical-only path, including updates
+  /// whose format did not change or which have no placed rows.
+  ExeFormatImpact? inspectFormatUpdate({
+    required CanonicalExercise selectedExercise,
+    required ExerciseDef exercise,
+  }) {
+    if (schemaViolations.isNotEmpty || _columns == null) return null;
+    return _formatImpact(this, selected: selectedExercise, exercise: exercise);
+  }
+
   ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
     return _WritePlanner(this).planCanonicalReorder(intent);
   }

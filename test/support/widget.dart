@@ -614,6 +614,11 @@ class _TestWbkIo implements WbkIo {
   Future<void> writeExercises(ExercisesWritePlan plan) async {
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> writeExeUpdate(ExeUpdatePlan plan) async {
+    throw UnimplementedError();
+  }
 }
 
 class RevalidatingValService extends _IoAccess {

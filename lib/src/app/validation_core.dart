@@ -99,6 +99,19 @@ class UpdateExeCmd extends WbkCmd {
   final ExerciseDef exercise;
 }
 
+class ConfirmExeUpdateCmd extends WbkCmd {
+  ConfirmExeUpdateCmd({
+    required this.impact,
+    required Map<int, Map<String, String>> valuesByRow,
+  }) : valuesByRow = Map<int, Map<String, String>>.unmodifiable({
+         for (final entry in valuesByRow.entries)
+           entry.key: Map<String, String>.unmodifiable(entry.value),
+       });
+
+  final ExeFormatImpact impact;
+  final Map<int, Map<String, String>> valuesByRow;
+}
+
 class PlaceExeCmd extends WbkCmd {
   const PlaceExeCmd({
     required this.exercise,
@@ -167,12 +180,14 @@ class ValReport {
     required String spreadsheetId,
     required this.activeSheet,
     Iterable<WriteRejection> writeRejections = const [],
+    this.exeFormatImpact,
   }) : sheetId = spreadsheetId,
        writeRejections = List<WriteRejection>.unmodifiable(writeRejections);
 
   final String sheetId;
   final ParsedActiveSheet activeSheet;
   final List<WriteRejection> writeRejections;
+  final ExeFormatImpact? exeFormatImpact;
 
   String get sheetUrl {
     return sheetUrlForId(sheetId);

@@ -25,6 +25,7 @@ class AppCtrl extends ChangeNotifier {
   int? _selectedLoggingRow;
   var _serviceActions = 0;
   var _mutationPending = false;
+  ExeFormatImpact? _pendingFormatUpdate;
   int _validationEpoch = 0;
   bool _isDisposed = false;
 
@@ -33,6 +34,8 @@ class AppCtrl extends ChangeNotifier {
   String? get error => _error;
 
   bool get isBusy => _serviceActions > 0 || _mutationPending;
+
+  ExeFormatImpact? get pendingFormatUpdate => _pendingFormatUpdate;
 
   WorkoutSetupReadModel? get workoutSetup {
     final report = _report;
@@ -130,6 +133,7 @@ class AppCtrl extends ChangeNotifier {
     _selectedWorkout = null;
     _selectedHistoryBlock = null;
     _pendingWorkouts.clear();
+    _pendingFormatUpdate = null;
     _clearLoggingSelection();
     notifyListeners();
   }
@@ -279,16 +283,50 @@ class AppCtrl extends ChangeNotifier {
       return false;
     }
 
-    return _runMutation(
+    final updated = await _runMutation(
       failurePrefix: 'Unable to update exercise',
       action: () async {
         _report = await _execute(
           UpdateExeCmd(selected: selectedExercise, exercise: exercise),
         );
+        _pendingFormatUpdate = _report?.exeFormatImpact;
         _error = null;
         _clearLoggingSelection();
       },
     );
+    return updated && _pendingFormatUpdate == null;
+  }
+
+  Future<bool> confirmExerciseUpdate(
+    Map<int, Map<String, String>> valuesByRow,
+  ) async {
+    final impact = _pendingFormatUpdate;
+    if (impact == null) return false;
+    return _runMutation(
+      failurePrefix: 'Unable to update exercise',
+      action: () async {
+        _report = await _execute(
+          ConfirmExeUpdateCmd(impact: impact, valuesByRow: valuesByRow),
+        );
+        if (_report!.writeRejections.isEmpty) {
+          _pendingFormatUpdate = null;
+          _error = null;
+          _clearLoggingSelection();
+        }
+      },
+      rejection: () {
+        final rejections = _report?.writeRejections ?? const [];
+        return rejections.isEmpty
+            ? null
+            : rejections.map((item) => item.message).join(' ');
+      },
+    );
+  }
+
+  void cancelExerciseUpdate() {
+    _pendingFormatUpdate = null;
+    _error = null;
+    notifyListeners();
   }
 
   Future<bool> addExerciseToWorkout({
@@ -554,6 +592,7 @@ class AppCtrl extends ChangeNotifier {
     _report = report;
     _error = null;
     _pendingWorkouts.clear();
+    _pendingFormatUpdate = null;
     _selectedWorkout = report.activeSheet.selectableWorkouts.firstOrNull;
     _selectedHistoryBlock = report.activeSheet.historyBlocks.firstOrNull?.label;
     _clearLoggingSelection();

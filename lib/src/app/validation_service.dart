@@ -9,6 +9,8 @@ abstract interface class WbkIo {
   Future<void> writeActive(ActiveSheetWritePlan plan);
 
   Future<void> writeExercises(ExercisesWritePlan plan);
+
+  Future<void> writeExeUpdate(ExeUpdatePlan plan);
 }
 
 class AdapterWbkIo implements WbkIo {
@@ -35,6 +37,11 @@ class AdapterWbkIo implements WbkIo {
   @override
   Future<void> writeExercises(ExercisesWritePlan plan) {
     return writeAdapter.applyExercisesPlan(spreadsheetId: sheetId, plan: plan);
+  }
+
+  @override
+  Future<void> writeExeUpdate(ExeUpdatePlan plan) {
+    return writeAdapter.applyExeUpdate(spreadsheetId: sheetId, plan: plan);
   }
 }
 
@@ -122,14 +129,13 @@ class ValSess implements WbkSess {
           baseline,
         ),
       CreateExeCmd(:final exercise) => _createExe(exercise),
-      UpdateExeCmd(:final selected, :final exercise) => _commitExercises(
-        baseline.activeSheet.planCanonicalUpdate(
-          selectedExercise: selected,
-          exercise: exercise,
-        ),
+      UpdateExeCmd(:final selected, :final exercise) => _updateExe(
         baseline,
         selected: selected,
+        exercise: exercise,
       ),
+      ConfirmExeUpdateCmd(:final impact, :final valuesByRow) =>
+        _commitExeUpdate(impact.plan(valuesByRow)),
       PlaceExeCmd(:final exercise, :final metadata, :final placement) =>
         _placeExe(
           baseline,
@@ -186,6 +192,54 @@ class ValSess implements WbkSess {
             metadata: metadata,
           );
     return _commitActive(plan, baseline, selected: exercise);
+  }
+
+  Future<ValReport> _updateExe(
+    ValReport baseline, {
+    required CanonicalExercise selected,
+    required ExerciseDef exercise,
+  }) {
+    if (selected.logFormat != exercise.resolvedLogFormat &&
+        baseline.healingIssues.isNotEmpty) {
+      return Future.value(
+        _reject(
+          baseline,
+          const WriteRejection(
+            'Repair active-sheet formulas before updating an exercise.',
+          ),
+        ),
+      );
+    }
+    final impact = baseline.activeSheet.inspectFormatUpdate(
+      selectedExercise: selected,
+      exercise: exercise,
+    );
+    if (impact != null) {
+      final report = ValReport(
+        spreadsheetId: sheetId,
+        activeSheet: baseline.activeSheet,
+        exeFormatImpact: impact,
+      );
+      _report = report;
+      return Future.value(report);
+    }
+    return _commitExercises(
+      baseline.activeSheet.planCanonicalUpdate(
+        selectedExercise: selected,
+        exercise: exercise,
+      ),
+      baseline,
+      selected: selected,
+    );
+  }
+
+  Future<ValReport> _commitExeUpdate(ExeUpdatePlan plan) async {
+    final current = await _read();
+    if (current.schemaViolations.isNotEmpty) return _rejectSchema(current);
+    final rejections = plan.writeRejections(current.activeSheet);
+    if (rejections.isNotEmpty) return _rejectAll(current, rejections);
+    await io.writeExeUpdate(plan);
+    return _read();
   }
 
   Future<ValReport> _deleteWorkoutExe(

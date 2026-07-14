@@ -3,7 +3,7 @@
 - [x] Slice 1: Use Python-Style Formats in Version 1.0 Workbooks
 - [x] Slice 2: Convert Version 0.9 Formats Safely
 - [x] Slice 3: Log Five-Field DB Step-Ups in New Workbooks
-- [ ] Slice 4: Safely Change Formats for Placed Exercises
+- [x] Slice 4: Safely Change Formats for Placed Exercises
 - [ ] Slice 5: Normalize Every Provided Exercise Default
 - [ ] Slice 6: Clean Up TDD Tests
 - [ ] Slice 7: Run the Architecture and Full Local Guard
@@ -134,19 +134,19 @@ history entries that will become raw and never rewrite them automatically.
 
 ### Acceptance criteria
 
-- [ ] A failing public workflow test first proves that changing a placed exercise's format cannot update only the Exercises row and leave invalid Targets.
-- [ ] A format change with no placements continues through the simple canonical update path.
-- [ ] A format change with placements returns an impact model containing every affected row, its old Targets, proposed ordered fields, and count of history entries that will become raw.
-- [ ] Exact matching fields retain their placement-specific values.
-- [ ] New or renamed fields begin with canonical defaults and remain explicitly editable for each placement before confirmation.
-- [ ] The update cannot proceed while any affected placement would render invalid Targets under the proposed format.
-- [ ] The final plan owns the complete canonical-plus-placement workflow behind one public interface rather than exposing pass-through helpers.
-- [ ] The workflow rereads schema-valid state, verifies canonical and placement expectations, and rejects concurrent edits.
-- [ ] The Sheets adapter applies Exercises and active-sheet writes in one batch operation.
-- [ ] A DB Step-Up upgrade can set Height (in), Weight (lbs), Reps, RPE, and Pain Targets without an intermediate invalid workbook.
-- [ ] Existing DB Step-Up history lacking Weight is unchanged byte-for-byte and appears as editable raw history after the update.
-- [ ] The confirmation UI identifies affected placements and raw-history impact with accessible, non-color-only state.
-- [ ] Focused planning, orchestration, adapter, format-edit, logging, and accessibility tests pass.
+- [x] A failing public workflow test first proves that changing a placed exercise's format cannot update only the Exercises row and leave invalid Targets.
+- [x] A format change with no placements continues through the simple canonical update path.
+- [x] A format change with placements returns an impact model containing every affected row, its old Targets, proposed ordered fields, and count of history entries that will become raw.
+- [x] Exact matching fields retain their placement-specific values.
+- [x] New or renamed fields begin with canonical defaults and remain explicitly editable for each placement before confirmation.
+- [x] The update cannot proceed while any affected placement would render invalid Targets under the proposed format.
+- [x] The final plan owns the complete canonical-plus-placement workflow behind one public interface rather than exposing pass-through helpers.
+- [x] The workflow rereads schema-valid state, verifies canonical and placement expectations, and rejects concurrent edits.
+- [x] The Sheets adapter applies Exercises and active-sheet writes in one batch operation.
+- [x] A DB Step-Up upgrade can set Height (in), Weight (lbs), Reps, RPE, and Pain Targets without an intermediate invalid workbook.
+- [x] Existing DB Step-Up history lacking Weight is unchanged byte-for-byte and appears as editable raw history after the update.
+- [x] The confirmation UI identifies affected placements and raw-history impact with accessible, non-color-only state.
+- [x] Focused planning, orchestration, adapter, format-edit, logging, and accessibility tests pass.
 
 ### Blocked by
 

@@ -35,6 +35,12 @@ class _ExerciseWritePlanner {
           values: _exerciseValues(exercise),
         ),
       ],
+      expectations: [
+        ExercisesRowExpct(
+          sheetRowNumber: sheetRowNumber,
+          expectedValues: context.sheet._exercisesRows[sheetRowNumber - 1],
+        ),
+      ],
     );
   }
 

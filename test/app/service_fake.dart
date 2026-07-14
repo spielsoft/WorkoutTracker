@@ -97,4 +97,9 @@ class _MemoryWbkIo implements WbkIo {
   Future<void> writeExercises(ExercisesWritePlan plan) async {
     throw StateError('This in-memory workbook has no Exercises write fixture.');
   }
+
+  @override
+  Future<void> writeExeUpdate(ExeUpdatePlan plan) async {
+    throw StateError('This in-memory workbook has no combined write fixture.');
+  }
 }

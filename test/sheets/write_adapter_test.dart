@@ -645,6 +645,59 @@ void main() {
       );
     },
   );
+
+  test(
+    'applies a format change across both tabs in one Sheets batch',
+    () async {
+      final client = _FakeSheetsWorkbookClient(
+        const SheetsSheetIdentity(sheetId: 42, title: 'Active Workout'),
+      );
+      final adapter = SheetsWriteAdapter(client: client);
+
+      await adapter.applyExeUpdate(
+        spreadsheetId: 'spreadsheet-id',
+        plan: ExeUpdatePlan(
+          exercises: ExercisesWritePlan(
+            rowUpdates: [
+              ExercisesRowUpdate(
+                sheetRowNumber: 2,
+                values: const [
+                  'DB Step-Up',
+                  '',
+                  '3',
+                  '2 min',
+                  '2-1-1',
+                  '',
+                  '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}',
+                  '(12, 15)x8@8,0',
+                ],
+              ),
+            ],
+          ),
+          active: ActiveSheetWritePlan(
+            cellUpdates: const [
+              CellUpdate(
+                sheetRowNumber: 3,
+                sheetColumnNumber: 5,
+                value: '(14, 20)x10@7,0',
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(client.fetchedSpreadsheetIds, ['spreadsheet-id']);
+      expect(client.applyCount, 1);
+      expect(
+        client.writes.map((write) => (write.sheetTitle, write.value)),
+        containsAll([
+          ('Exercises', '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}'),
+          ('Exercises', '(12, 15)x8@8,0'),
+          ('Active Workout', '(14, 20)x10@7,0'),
+        ]),
+      );
+    },
+  );
 }
 
 class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {
@@ -658,6 +711,7 @@ class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {
   final List<_CellClear> clears = [];
   final List<_StructuralBatch> structuralBatches = [];
   var failStructuralBatch = false;
+  var applyCount = 0;
 
   @override
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId) async {
@@ -686,6 +740,7 @@ class _FakeSheetsWorkbookClient implements SheetsWorkbookClient {
     required String spreadsheetId,
     required Iterable<SheetsWorkbookOperation> operations,
   }) async {
+    applyCount += 1;
     final operationList = operations.toList();
     final hasStructuralOperations = operationList.any(
       (operation) =>

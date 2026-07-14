@@ -17,5 +17,6 @@ part 'active/planning_context.dart';
 part 'active/history_planner.dart';
 part 'active/set_planner.dart';
 part 'active/exercise_planner.dart';
+part 'active/format_update.dart';
 part 'active/workout_planner.dart';
 part 'active/write_planner.dart';
