@@ -5,7 +5,7 @@
 - [x] Slice 3: Log Five-Field DB Step-Ups in New Workbooks
 - [x] Slice 4: Safely Change Formats for Placed Exercises
 - [x] Slice 5: Normalize Every Provided Exercise Default
-- [ ] Slice 6: Clean Up TDD Tests
+- [x] Slice 6: Clean Up TDD Tests
 - [ ] Slice 7: Run the Architecture and Full Local Guard
 - [ ] Slice 8: Validate Conversion Against Google Sheets
 
@@ -213,13 +213,13 @@ preservation, and stale-write behavior.
 
 ### Acceptance criteria
 
-- [ ] The `test-cleanup` skill is read and followed before changing tests.
-- [ ] Tests that exist only to drive private helper implementation are removed or rewritten through public interfaces.
-- [ ] Contract tests retain the exact DB Step-Up format, five-field extraction, and malformed-format boundaries.
-- [ ] Workbook tests retain version selection, dry-run conversion, idempotence, raw preservation, and stale rejection.
-- [ ] UI tests retain numeric keyboard behavior, stable semantics, responsive five-field layout, and the atomic-update confirmation contract without pinning widget structure.
-- [ ] Catalog tests retain complete fields, numeric values, pain `0`, and round-trip coverage without enumerating irrelevant JSON formatting.
-- [ ] Focused suites and the full local test suite pass after cleanup.
+- [x] The `test-cleanup` skill is read and followed before changing tests.
+- [x] Tests that exist only to drive private helper implementation are removed or rewritten through public interfaces.
+- [x] Contract tests retain the exact DB Step-Up format, five-field extraction, and malformed-format boundaries.
+- [x] Workbook tests retain version selection, dry-run conversion, idempotence, raw preservation, and stale rejection.
+- [x] UI tests retain numeric keyboard behavior, stable semantics, responsive five-field layout, and the atomic-update confirmation contract without pinning widget structure.
+- [x] Catalog tests retain complete fields, numeric values, pain `0`, and round-trip coverage without enumerating irrelevant JSON formatting.
+- [x] Focused suites and the full local test suite pass after cleanup.
 
 ### Blocked by
 

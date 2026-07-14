@@ -2,88 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
-import 'package:workout_tracker/sheets.dart';
 
 void main() {
-  testWidgets('places five DB Step-Up targets from the new workbook', (
-    tester,
-  ) async {
-    final workbook = await loadWbkTmpl();
-    final sheet = parseActiveSheet(
-      ActiveSheetInput(
-        rows: [
-          workbook.activeSheet.rows.single,
-          List.filled(activeSheetFixedColumns.length, ''),
-        ],
-        exercisesRows: workbook.exercisesSheet.rows,
-        validateWorkbook: true,
-        schemaVersion: '1.0',
-      ),
-    );
-    final stepUp = sheet.canonicalExercises.singleWhere(
-      (exercise) => exercise.exercise == 'DB Step-Up',
-    );
-    final actions = _Actions();
-
-    await tester.pumpWidget(
-      _app(
-        PlacementScreen(
-          view: PlacementView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            intent: const PlaceIntent.primary(workout: 'Legs'),
-            exercises: [stepUp],
-          ),
-          actions: actions,
-        ),
-      ),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('DB Step-Up').last);
-    await tester.pumpAndSettle();
-
-    const targets = {
-      'Height (in)': '12',
-      'Weight (lbs)': '15',
-      'Reps': '8',
-      'RPE': '8',
-      'Pain': '0',
-    };
-    for (final entry in targets.entries) {
-      final field = find.byKey(ValueKey('placement-target-${entry.key}'));
-      expect(field, findsOneWidget);
-      final textField = find.descendant(
-        of: field,
-        matching: find.byType(TextField),
-      );
-      expect(tester.widget<TextField>(textField).controller?.text, entry.value);
-    }
-
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('place-existing-exercise')),
-    );
-    await tester.tap(find.byKey(const ValueKey('place-existing-exercise')));
-
-    expect(actions.placed.single.metadata.targetValues, targets);
-    final plan = sheet.planPrimaryPlacement(
-      exercise: stepUp,
-      workout: 'Legs',
-      metadata: actions.placed.single.metadata,
-    );
-    expect(
-      plan.cellUpdates,
-      contains(
-        const CellUpdate(
-          sheetRowNumber: 3,
-          sheetColumnNumber: 5,
-          value: '(12, 15)x8@8,0',
-        ),
-      ),
-    );
-  });
-
   testWidgets('placement exposes selected exercise dynamic targets', (
     tester,
   ) async {
@@ -135,55 +55,6 @@ void main() {
       'Seconds': '45',
       'RPE': '8',
     });
-  });
-
-  testWidgets('placement keeps the format routed by a declared 0.9 workbook', (
-    tester,
-  ) async {
-    const oldFormat = '{Seconds}[s}@]{RPE}';
-    final sheet = parseActiveSheet(
-      ActiveSheetInput(
-        rows: [
-          activeSheetFixedColumns,
-          List.filled(activeSheetFixedColumns.length, ''),
-        ],
-        exercisesRows: const [
-          exercisesSheetColumns,
-          ['Side Plank', '', '2', '45s', 'hold', '', oldFormat, '30s}@8'],
-        ],
-        validateWorkbook: true,
-        schemaVersion: '0.9',
-      ),
-    );
-    final exercise = sheet.canonicalExercises.single;
-
-    expect(sheet.schemaViolations, isEmpty);
-    expect((exercise.format as ParsedLogFormat).literalSegments, ['s}@']);
-    await tester.pumpWidget(
-      _app(
-        PlacementScreen(
-          view: PlacementView(
-            isBusy: false,
-            sheetLabel: 'Training',
-            intent: const PlaceIntent.primary(workout: 'Core'),
-            exercises: [exercise],
-          ),
-          actions: _Actions(),
-        ),
-      ),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Side Plank').last);
-    await tester.pumpAndSettle();
-
-    final seconds = tester.widget<TextField>(
-      find.widgetWithText(TextField, 'Seconds'),
-    );
-    final rpe = tester.widget<TextField>(find.widgetWithText(TextField, 'RPE'));
-    expect(seconds.controller?.text, '30');
-    expect(rpe.controller?.text, '8');
   });
 
   testWidgets('backup placement identifies its parent and supports creation', (

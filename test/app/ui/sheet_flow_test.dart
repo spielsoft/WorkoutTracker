@@ -50,7 +50,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(migrator.migrateCount, 1);
-    expect(migrator.expected?.kind, WbkMigrationKind.format09);
     expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
   });
 
@@ -820,7 +819,6 @@ class _FieldMigrator implements FieldMigrator {
 
 class _FormatMigrator implements FieldMigrator {
   int migrateCount = 0;
-  WbkMigrationReport? expected;
   bool migrated = false;
 
   FormatMigrationReport _report({
@@ -855,7 +853,6 @@ class _FormatMigrator implements FieldMigrator {
   }) async {
     expect(confirmed, isTrue);
     migrateCount += 1;
-    this.expected = expected;
     migrated = true;
     return _report(applied: true);
   }

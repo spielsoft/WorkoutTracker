@@ -150,7 +150,9 @@ void main() {
         ),
       );
       expect(plan.writeRejections(stale), isNotEmpty);
-      expect(changed[2].skip(10), rows[2].skip(10));
+      final preview = plan.active.previewRowsAfterApplying(rows);
+      expect(preview[2].skip(10), rows[2].skip(10));
+      expect(preview[3].skip(10), rows[3].skip(10));
     },
   );
 

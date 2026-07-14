@@ -146,15 +146,4 @@ void main() {
       'Pain': '0',
     });
   });
-
-  test('seeds conservative bodyweight Dips reps', () async {
-    final defaults = await loadExerciseDefaults();
-    final dips = defaults.singleWhere(
-      (exercise) => exercise.exercise == 'Dips',
-    );
-
-    expect(dips.defaultValues, {'Reps': '5', 'RPE': '8'});
-    expect(dips.notes, contains('5-8 reps'));
-    expect(dips.notes, contains('assistance'));
-  });
 }

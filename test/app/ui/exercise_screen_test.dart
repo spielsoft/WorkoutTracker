@@ -408,12 +408,10 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(_fieldText(tester, formatField), format);
-    expect(
-      _fieldText(
-        tester,
-        find.byKey(const ValueKey('exercise-authoring-default-Weight (lbs)')),
-      ),
+    await _expectInput(tester, formatField, format);
+    await _expectInput(
+      tester,
+      find.byKey(const ValueKey('exercise-authoring-default-Weight (lbs)')),
       '15',
     );
   });
@@ -431,13 +429,15 @@ void _expectDisabled(WidgetTester tester, Finder control) {
   expect(semantics.hasAction(SemanticsAction.tap), isFalse);
 }
 
-String _fieldText(WidgetTester tester, Finder field) {
-  return tester
-      .widget<EditableText>(
-        find.descendant(of: field, matching: find.byType(EditableText)),
-      )
-      .controller
-      .text;
+Future<void> _expectInput(
+  WidgetTester tester,
+  Finder field,
+  String value,
+) async {
+  await tester.ensureVisible(field);
+  await tester.tap(field);
+  await tester.pump();
+  expect(tester.testTextInput.editingState, containsPair('text', value));
 }
 
 Widget _app(Widget child) {

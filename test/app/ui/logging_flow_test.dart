@@ -47,16 +47,20 @@ void main() {
 
       const fields = ['Height (in)', 'Weight (lbs)', 'Reps', 'RPE', 'Pain'];
       for (final label in fields) {
-        final field = find.byKey(ValueKey('set-field-$label'));
-        expect(find.bySemanticsLabel('New set $label'), findsOneWidget);
+        final field = find.bySemanticsLabel('New set $label');
+        expect(field, findsOneWidget);
         expect(
-          tester.widget<TextField>(field).keyboardType,
+          tester
+              .widget<TextField>(
+                find.descendant(of: field, matching: find.byType(TextField)),
+              )
+              .keyboardType,
           const TextInputType.numberWithOptions(decimal: true),
         );
       }
       final tops = [
         for (final label in fields)
-          tester.getTopLeft(find.byKey(ValueKey('set-field-$label'))).dy,
+          tester.getTopLeft(find.bySemanticsLabel('New set $label')).dy,
       ];
       expect(tops, orderedEquals([...tops]..sort()));
       expect(find.text('Height (in) (12)'), findsOneWidget);
@@ -72,7 +76,7 @@ void main() {
       };
       for (final entry in edited.entries) {
         await tester.enterText(
-          find.byKey(ValueKey('set-field-${entry.key}')),
+          find.bySemanticsLabel('New set ${entry.key}'),
           entry.value,
         );
       }
@@ -91,19 +95,16 @@ void main() {
       }
       expect(find.text('Save set S3'), findsOneWidget);
 
-      await tester.tap(find.byKey(const ValueKey('edit-S1')));
+      await tester.tap(find.byTooltip('Edit S1'));
       await tester.pump();
       final raw = find.bySemanticsLabel('S1 raw set text');
       expect(raw, findsOneWidget);
-      expect(
-        tester
-            .widget<EditableText>(
-              find.descendant(of: raw, matching: find.byType(EditableText)),
-            )
-            .controller
-            .text,
-        '12x8@8,0',
-      );
+      await tester.enterText(raw, '12x9@8,0');
+      await tester.tap(find.byTooltip('Save raw set text'));
+      await tester.pump();
+
+      expect(service.appliedPlans, hasLength(2));
+      expect(service.appliedPlans.last.cellUpdates.single.value, '12x9@8,0');
     },
   );
 

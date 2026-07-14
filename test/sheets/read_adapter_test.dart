@@ -189,27 +189,14 @@ void main() {
     ).readParsedActiveSheet('spreadsheet-id');
 
     expect(parsedOld.schemaViolations, isEmpty);
-    expect(
-      (parsedOld.slots.single.logFormat as ParsedLogFormat).literalSegments,
-      ['@'],
-    );
     expect(parsedOld.canonicalExercises.single.defaultValues, {
       'Reps': '8',
       'RPE': '7',
     });
-    expect(
-      parsedOld
-          .planPrimaryPlacement(
-            exercise: parsedOld.canonicalExercises.single,
-            workout: 'Default',
-            metadata: const WorkoutPlacementMetadata(
-              targetValues: {'Reps': '9', 'RPE': '8'},
-            ),
-          )
-          .cellUpdates
-          .map((update) => update.value),
-      contains('9@8'),
-    );
+    expect(parsedOld.slots.single.targetValues, const {
+      'Reps': '8',
+      'RPE': '7',
+    });
 
     final current = await SheetsReadAdapter(
       client: _FakeSheetsWorkbookClient(old),

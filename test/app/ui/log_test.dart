@@ -260,7 +260,7 @@ void main() {
             'RPE',
             'Pain',
           ])
-            find.byKey(ValueKey('set-field-$label')),
+            find.bySemanticsLabel('New set $label'),
           find.widgetWithText(FilledButton, 'Save set S1'),
         ];
         expect(tester.takeException(), isNull);
