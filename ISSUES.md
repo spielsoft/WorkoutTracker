@@ -7,7 +7,7 @@ the worktree, or the sheet picker.
 ## Progress
 
 - [x] Slice 1: Make the set-entry hierarchy task-first
-- [ ] Slice 2: Put configured targets on their fields
+- [x] Slice 2: Put configured targets on their fields
 - [ ] Slice 3: Add numeric keyboard traversal
 - [ ] Slice 4: Clean the completed behavior tests
 - [ ] Slice 5: Approve the real iOS entry experience

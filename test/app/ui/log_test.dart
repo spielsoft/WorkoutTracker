@@ -100,12 +100,18 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(_app(actions: _LogActions()));
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _targetView(targets: '240x10-12@8,0'),
+      ),
+    );
 
     final controls = [
       _field('Weight'),
       _field('Reps'),
       _field('RPE'),
+      _field('Pain'),
       find.text('Save set S1'),
     ];
     final centers = controls.map(tester.getCenter).toList();
@@ -128,7 +134,12 @@ void main() {
       tester.platformDispatcher.clearTextScaleFactorTestValue();
     });
 
-    await tester.pumpWidget(_app(actions: _LogActions()));
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _targetView(targets: '240x10-12@8,0'),
+      ),
+    );
 
     expect(tester.takeException(), isNull);
     expect(find.text('Next set S1'), findsNothing);
@@ -136,6 +147,8 @@ void main() {
     expect(find.text('Current S1'), findsNothing);
     expect(find.text('Backup'), findsNothing);
     expect(find.text('Save set S1'), findsOneWidget);
+    expect(find.text('Reps (10-12)'), findsOneWidget);
+    expect(find.text('Pain (0)'), findsOneWidget);
   });
 
   testWidgets('emits typed row, close, and set-save commands', (tester) async {
@@ -220,6 +233,123 @@ void main() {
       tester.widget<EditableText>(_editable(_field('RPE'))).controller.text,
       '8',
     );
+  });
+
+  testWidgets(
+    'shows exact configured targets without changing stable field names',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          actions: _LogActions(),
+          view: _targetView(targets: '240x10-12@8,0'),
+        ),
+      );
+
+      for (final label in const ['Weight', 'Reps', 'RPE', 'Pain']) {
+        expect(find.bySemanticsLabel('New set $label'), findsOneWidget);
+      }
+      expect(find.bySemanticsLabel('Weight (240)'), findsNothing);
+      expect(find.bySemanticsLabel('New set Weight (240)'), findsNothing);
+      expect(find.text('Weight (240)'), findsOneWidget);
+      expect(find.text('Reps (10-12)'), findsOneWidget);
+      expect(find.text('RPE (8)'), findsOneWidget);
+      expect(find.text('Pain (0)'), findsOneWidget);
+      expect(_fieldText(tester, 'Weight'), '240');
+      expect(_fieldText(tester, 'Reps'), '10-12');
+      expect(_fieldText(tester, 'RPE'), '8');
+      expect(_fieldText(tester, 'Pain'), '0');
+    },
+  );
+
+  testWidgets('keeps blank targets plain and never invents zero', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _targetView(targets: 'x10-12@8,'),
+      ),
+    );
+
+    expect(find.text('Weight'), findsOneWidget);
+    expect(find.text('Reps (10-12)'), findsOneWidget);
+    expect(find.text('RPE (8)'), findsOneWidget);
+    expect(find.text('Pain'), findsOneWidget);
+    expect(find.textContaining('(0)'), findsNothing);
+  });
+
+  testWidgets(
+    'keeps row targets visible when newer history supplies the draft',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          actions: _LogActions(),
+          view: _targetView(targets: '240x10-12@8,0', history: '225x6@9,2'),
+        ),
+      );
+
+      expect(find.text('Weight (240)'), findsOneWidget);
+      expect(find.text('Reps (10-12)'), findsOneWidget);
+      expect(find.text('RPE (8)'), findsOneWidget);
+      expect(find.text('Pain (0)'), findsOneWidget);
+      expect(_fieldText(tester, 'Weight'), '225');
+      expect(_fieldText(tester, 'Reps'), '6');
+      expect(_fieldText(tester, 'RPE'), '9');
+      expect(_fieldText(tester, 'Pain'), '2');
+    },
+  );
+
+  testWidgets('uses targets from the active backup or duplicate placement', (
+    tester,
+  ) async {
+    final actions = _LogActions();
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _placementView(primaryRow: 3, selectedRow: 3),
+      ),
+    );
+    expect(find.text('Weight (100)'), findsOneWidget);
+    expect(find.text('Reps (5)'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _placementView(primaryRow: 3, selectedRow: 4),
+      ),
+    );
+    expect(find.text('Weight (110)'), findsOneWidget);
+    expect(find.text('Reps (6)'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _placementView(primaryRow: 5, selectedRow: 5),
+      ),
+    );
+    expect(find.text('Weight (120)'), findsOneWidget);
+    expect(find.text('Reps (8)'), findsOneWidget);
+  });
+
+  testWidgets('keeps target suffixes off logged-set edit fields', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _targetView(targets: '240x10-12@8,0', history: '225x6@9,2'),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Edit S1'));
+    await tester.pump();
+
+    for (final label in const ['Weight', 'Reps', 'RPE', 'Pain']) {
+      final field = tester.widget<TextField>(
+        find.byKey(ValueKey('logged-S1-field-$label')),
+      );
+      expect(field.decoration?.labelText, label);
+    }
   });
 
   testWidgets(
@@ -651,12 +781,113 @@ LogView _literalView() {
   );
 }
 
+LogView _targetView({required String targets, String history = ''}) {
+  final active = parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Leg Press',
+          '3',
+          '120s',
+          '',
+          targets,
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+          'Legs',
+          '',
+          'x',
+          history,
+        ],
+      ],
+    ),
+  );
+  return LogView(
+    isBusy: false,
+    activeSheet: active,
+    sheetLabel: 'Development Workouts',
+    target: const WorkoutLoggingTarget(
+      blockLabel: 'Week 1',
+      primaryRow: 3,
+      selectedRow: 3,
+    ),
+  );
+}
+
+LogView _placementView({required int primaryRow, required int selectedRow}) {
+  final active = parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Press',
+          '3',
+          '2 min',
+          '',
+          '100x5@6,',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+          'Upper',
+          '',
+          'x',
+          '',
+        ],
+        [
+          'Press',
+          '3',
+          '2 min',
+          '',
+          '110x6@7,0',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+          'Upper',
+          'TRUE',
+          'x',
+          '',
+        ],
+        [
+          'Press',
+          '3',
+          '2 min',
+          '',
+          '120x8@9,',
+          '',
+          '{Weight}[x]{Reps}[@]{RPE}[,]{Pain}',
+          'Upper',
+          '',
+          'x',
+          '',
+        ],
+      ],
+    ),
+  );
+  return LogView(
+    isBusy: false,
+    activeSheet: active,
+    sheetLabel: 'Development Workouts',
+    target: WorkoutLoggingTarget(
+      blockLabel: 'Week 1',
+      primaryRow: primaryRow,
+      selectedRow: selectedRow,
+    ),
+  );
+}
+
 Finder _field(String label) {
-  return find.bySemanticsLabel(label);
+  return find.bySemanticsLabel('New set $label');
 }
 
 Finder _editable(Finder field) {
   return find.descendant(of: field, matching: find.byType(EditableText));
+}
+
+String _fieldText(WidgetTester tester, String label) {
+  return tester
+      .widget<TextField>(find.byKey(ValueKey('set-field-$label')))
+      .controller!
+      .text;
 }
 
 void _expectDisabled(WidgetTester tester, Finder control) {

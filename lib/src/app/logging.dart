@@ -252,6 +252,7 @@ class _LogScreenSt extends State<LogScreen> {
           const SizedBox(height: 12),
           _StructuredSetEditor(
             logFormat: loggingContext.logFormat,
+            targets: loggingContext.targets.values,
             controllers: viewModel.newSetCtrls,
             setNumber: viewModel.nextSetNumber,
             isBusy: widget.view.isBusy,
@@ -510,6 +511,7 @@ class _RecentHistoryBlock extends StatelessWidget {
 class _StructuredSetEditor extends StatelessWidget {
   const _StructuredSetEditor({
     required this.logFormat,
+    required this.targets,
     required this.controllers,
     required this.setNumber,
     required this.isBusy,
@@ -517,6 +519,7 @@ class _StructuredSetEditor extends StatelessWidget {
   });
 
   final LogFormatParseResult logFormat;
+  final Map<String, String> targets;
   final Map<String, TextEditingController> controllers;
   final int setNumber;
   final bool isBusy;
@@ -538,6 +541,8 @@ class _StructuredSetEditor extends StatelessWidget {
 
     TextField field(String label, int index) {
       final isLast = index == fieldLabels.length - 1;
+      final target = targets[label] ?? '';
+      final visualLabel = target.trim().isEmpty ? label : '$label ($target)';
       return TextField(
         key: ValueKey('set-field-$label'),
         controller: controllers[label],
@@ -545,7 +550,7 @@ class _StructuredSetEditor extends StatelessWidget {
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
         onSubmitted: isLast ? (_) => onSave() : null,
         decoration: InputDecoration(
-          labelText: label,
+          label: ExcludeSemantics(child: Text(visualLabel)),
           border: const OutlineInputBorder(),
         ),
       );
