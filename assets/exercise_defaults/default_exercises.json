@@ -5,8 +5,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Keep front shin vertical to minimize knee shear.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Keep front shin vertical to minimize knee shear. Aim for 8-10 reps per leg.",
+    "logFormat": "{Weight (lbs)}x{Reps (per leg)}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -14,8 +14,8 @@
       "Smith Machine Reverse Lunges"
     ],
     "defaultValues": {
-      "Weight": "45 lb",
-      "Reps": "8-10/leg",
+      "Weight (lbs)": "45",
+      "Reps (per leg)": "8",
       "RPE": "8",
       "Pain": "0"
     }
@@ -26,8 +26,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Backup reverse-lunge option when the Smith machine is busy.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Backup reverse-lunge option when the Smith machine is busy. Aim for 8-10 reps per leg.",
+    "logFormat": "{Weight (lbs)}x{Reps (per leg)}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -35,8 +35,8 @@
       "Backup; DB reverse"
     ],
     "defaultValues": {
-      "Weight": "15 lb",
-      "Reps": "8-10/leg",
+      "Weight (lbs)": "15",
+      "Reps (per leg)": "8",
       "RPE": "8",
       "Pain": "0"
     }
@@ -47,8 +47,8 @@
     "defaultSets": "3",
     "defaultRest": "120s",
     "defaultTempo": "2-1-1",
-    "notes": "Place feet high and wide; do not lock knees at the top.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Place feet high and wide; do not lock knees at the top. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker",
@@ -59,8 +59,8 @@
       "Leg press [backup]"
     ],
     "defaultValues": {
-      "Weight": "90 lb",
-      "Reps": "10-12",
+      "Weight (lbs)": "90",
+      "Reps": "10",
       "RPE": "8",
       "Pain": "0"
     }
@@ -71,8 +71,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Hinge at the hips and stop when hamstrings are fully stretched.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Hinge at the hips and stop when hamstrings are fully stretched. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -81,8 +81,8 @@
       "Smith Machine RDL"
     ],
     "defaultValues": {
-      "Weight": "65 lb",
-      "Reps": "10-12",
+      "Weight (lbs)": "65",
+      "Reps": "10",
       "RPE": "8",
       "Pain": "0"
     }
@@ -94,7 +94,7 @@
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
     "notes": "Backup hinge when rack or Smith machine space is unavailable.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -104,7 +104,7 @@
       "dB Rm. Deadlift [backup]"
     ],
     "defaultValues": {
-      "Weight": "25 lb",
+      "Weight (lbs)": "25",
       "Reps": "8",
       "RPE": "8"
     }
@@ -115,8 +115,8 @@
     "defaultSets": "3",
     "defaultRest": "2m",
     "defaultTempo": "2-1-1",
-    "notes": "Feel hamstrings and keep a neutral spine.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Feel hamstrings and keep a neutral spine. Aim for 6-8 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -124,8 +124,8 @@
       "Rom. Deadlift"
     ],
     "defaultValues": {
-      "Weight": "65 lb",
-      "Reps": "6-8",
+      "Weight (lbs)": "65",
+      "Reps": "6",
       "RPE": "8",
       "Pain": "0"
     }
@@ -137,7 +137,7 @@
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
     "notes": "Quad isolation option inferred from logged leg-extension work.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -145,7 +145,7 @@
       "Let extension"
     ],
     "defaultValues": {
-      "Weight": "40 lb",
+      "Weight (lbs)": "40",
       "Reps": "8",
       "RPE": "8",
       "Pain": "0"
@@ -157,8 +157,8 @@
     "defaultSets": "3",
     "defaultRest": "3m",
     "defaultTempo": "3-1-1",
-    "notes": "Squat pattern from fall and winter programs.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Squat pattern from fall and winter programs. Aim for 5-6 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker",
       "2026 Winter Tracker"
@@ -168,8 +168,8 @@
       "Deep Squats"
     ],
     "defaultValues": {
-      "Weight": "45 lb",
-      "Reps": "5-6",
+      "Weight (lbs)": "45",
+      "Reps": "5",
       "RPE": "8",
       "Pain": "0"
     }
@@ -180,8 +180,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "3-1-1",
-    "notes": "Do not drop; keep knee aligned over toe.",
-    "logFormat": "{Height}x{Reps}@{RPE},{Pain}",
+    "notes": "Do not drop; keep knee aligned over toe. Complete 8 reps per leg.",
+    "logFormat": "{Height (in)}x{Reps (per leg)}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -191,8 +191,8 @@
       "Lateral Step-Down (eccentric focus)"
     ],
     "defaultValues": {
-      "Height": "6 in",
-      "Reps": "8/leg",
+      "Height (in)": "6",
+      "Reps (per leg)": "8",
       "RPE": "7",
       "Pain": "0"
     }
@@ -203,7 +203,7 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "3-1-1",
-    "notes": "Control the descent to prep knees for downhill hiking.",
+    "notes": "Control the descent to prep knees for downhill hiking. Aim for 8-10 reps per leg.",
     "logFormat": "({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
@@ -225,8 +225,8 @@
     "defaultSets": "3",
     "defaultRest": "15s",
     "defaultTempo": "explosive",
-    "notes": "Rest 15 seconds after each cluster.",
-    "logFormat": "{Height}x{Reps}@{RPE},{Pain}",
+    "notes": "Perform 3 clusters of 3 reps and rest 15 seconds after each cluster.",
+    "logFormat": "{Height (in)}x{Clusters}x{Reps (per cluster)}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -234,8 +234,9 @@
       "Box Jump"
     ],
     "defaultValues": {
-      "Height": "18 in",
-      "Reps": "(3x3)",
+      "Height (in)": "18",
+      "Clusters": "3",
+      "Reps (per cluster)": "3",
       "RPE": "7",
       "Pain": "0"
     }
@@ -246,8 +247,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Full stretch at the bottom and a one-second pause at the top.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Full stretch at the bottom and a one-second pause at the top. Aim for 12-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -256,9 +257,9 @@
       "Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "25 lb",
-      "Reps": "12-15",
-      "RPE": "9",
+      "Weight (lbs)": "25",
+      "Reps": "12",
+      "RPE": "8",
       "Pain": "0"
     }
   },
@@ -268,8 +269,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Pause for one second at the bottom stretch and top squeeze.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Pause for one second at the bottom stretch and top squeeze. Aim for 12-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -277,9 +278,9 @@
       "Smith Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "45 lb",
-      "Reps": "12-15",
-      "RPE": "9"
+      "Weight (lbs)": "45",
+      "Reps": "12",
+      "RPE": "8"
     }
   },
   {
@@ -288,8 +289,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Calf raise machine option with controlled pauses.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Calf raise machine option with controlled pauses. Aim for 12-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -297,9 +298,9 @@
       "Machine Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "50 lb",
-      "Reps": "12-15",
-      "RPE": "9",
+      "Weight (lbs)": "50",
+      "Reps": "12",
+      "RPE": "8",
       "Pain": "0"
     }
   },
@@ -309,8 +310,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Backup calf raise using the leg press machine.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Backup calf raise using the leg press machine. Aim for 12-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -320,8 +321,8 @@
       "Calf raise (leg press)"
     ],
     "defaultValues": {
-      "Weight": "90 lb",
-      "Reps": "12-15",
+      "Weight (lbs)": "90",
+      "Reps": "12",
       "RPE": "8",
       "Pain": "0"
     }
@@ -332,8 +333,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Seated calf raise option with controlled stretch and squeeze.",
-    "logFormat": "{Weight}x{Reps}@{RPE},{Pain}",
+    "notes": "Seated calf raise option with controlled stretch and squeeze. Aim for 12-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE},{Pain}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -341,9 +342,9 @@
       "Seated Calf Raise"
     ],
     "defaultValues": {
-      "Weight": "25 lb",
-      "Reps": "12-15",
-      "RPE": "9",
+      "Weight (lbs)": "25",
+      "Reps": "12",
+      "RPE": "8",
       "Pain": "0"
     }
   },
@@ -353,8 +354,8 @@
     "defaultSets": "3",
     "defaultRest": "120s",
     "defaultTempo": "2-1-1",
-    "notes": "Set bench to 30 degrees; retract scapula and lower to upper chest.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Set bench to 30 degrees; retract scapula and lower to upper chest. Aim for 8-10 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -363,8 +364,8 @@
       "DB Incline Bench"
     ],
     "defaultValues": {
-      "Weight": "20 lb",
-      "Reps": "8-10",
+      "Weight (lbs)": "20",
+      "Reps": "8",
       "RPE": "8"
     }
   },
@@ -374,8 +375,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Tuck elbows to 45 degrees and press in a slight arc.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Tuck elbows to 45 degrees and press in a slight arc. Aim for 8-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -385,8 +386,8 @@
       "DB Bench Press"
     ],
     "defaultValues": {
-      "Weight": "25 lb",
-      "Reps": "8-12",
+      "Weight (lbs)": "25",
+      "Reps": "8",
       "RPE": "8"
     }
   },
@@ -396,8 +397,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Elbow health and arm-size accessory.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Elbow health and arm-size accessory. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -405,8 +406,8 @@
       "DB Skullcrushers"
     ],
     "defaultValues": {
-      "Weight": "10 lb",
-      "Reps": "10-12",
+      "Weight (lbs)": "10",
+      "Reps": "10",
       "RPE": "8"
     }
   },
@@ -416,8 +417,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Slight bend in elbows; push dumbbells out toward the walls.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Slight bend in elbows; push dumbbells out toward the walls. Aim for 12-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -427,9 +428,9 @@
       "DB Lateral Raise"
     ],
     "defaultValues": {
-      "Weight": "5 lb",
-      "Reps": "12-15",
-      "RPE": "9"
+      "Weight (lbs)": "5",
+      "Reps": "12",
+      "RPE": "8"
     }
   },
   {
@@ -438,8 +439,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Strict curl, smooth wrist rotation, and no leg drive on the press.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Strict curl, smooth wrist rotation, and no leg drive on the press. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -447,9 +448,9 @@
       "DB Bicep Curl to Overhead Press"
     ],
     "defaultValues": {
-      "Weight": "10 lb",
-      "Reps": "10-12",
-      "RPE": "9"
+      "Weight (lbs)": "10",
+      "Reps": "10",
+      "RPE": "8"
     }
   },
   {
@@ -458,8 +459,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Vertical dumbbell press from a seated bench.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Vertical dumbbell press from a seated bench. Aim for 8-10 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -467,8 +468,8 @@
       "Seated DB Press"
     ],
     "defaultValues": {
-      "Weight": "15 lb",
-      "Reps": "8-10",
+      "Weight (lbs)": "15",
+      "Reps": "8",
       "RPE": "8"
     }
   },
@@ -478,8 +479,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Neutral grip targeting brachialis and forearms.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Neutral grip targeting brachialis and forearms. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -487,9 +488,9 @@
       "Hammer Curls"
     ],
     "defaultValues": {
-      "Weight": "10 lb",
-      "Reps": "10-12",
-      "RPE": "9"
+      "Weight (lbs)": "10",
+      "Reps": "10",
+      "RPE": "8"
     }
   },
   {
@@ -498,8 +499,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Use constant tension and squeeze at the top.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Use constant tension and squeeze at the top. Aim for 12-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -507,9 +508,9 @@
       "Cable Bicep Curl"
     ],
     "defaultValues": {
-      "Weight": "20 lb",
-      "Reps": "12-15",
-      "RPE": "9"
+      "Weight (lbs)": "20",
+      "Reps": "12",
+      "RPE": "8"
     }
   },
   {
@@ -518,8 +519,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Keep elbows pinned and flare the rope at the bottom.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Keep elbows pinned and flare the rope at the bottom. Aim for 10-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker"
@@ -529,8 +530,8 @@
       "Cable Tricep Pushdown"
     ],
     "defaultValues": {
-      "Weight": "25 lb",
-      "Reps": "10-15",
+      "Weight (lbs)": "25",
+      "Reps": "10",
       "RPE": "8"
     }
   },
@@ -540,8 +541,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Fall upper-body row variation logged as bench rows.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Fall upper-body row variation logged as bench rows. Aim for 8-10 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -549,8 +550,8 @@
       "Bench rows"
     ],
     "defaultValues": {
-      "Weight": "20 lb",
-      "Reps": "8-10",
+      "Weight (lbs)": "20",
+      "Reps": "8",
       "RPE": "8"
     }
   },
@@ -560,8 +561,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Set bench to incline and pull elbows toward hips.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Set bench to incline and pull elbows toward hips. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -571,8 +572,8 @@
       "Chest-Supported DB Row [backup]"
     ],
     "defaultValues": {
-      "Weight": "20 lb",
-      "Reps": "10-12",
+      "Weight (lbs)": "20",
+      "Reps": "10",
       "RPE": "8"
     }
   },
@@ -582,8 +583,8 @@
     "defaultSets": "3",
     "defaultRest": "2m",
     "defaultTempo": "2-1-1",
-    "notes": "Keep torso parallel to the floor and squeeze at the top.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Keep torso parallel to the floor and squeeze at the top. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -591,9 +592,9 @@
       "Smith Bent Over Row"
     ],
     "defaultValues": {
-      "Weight": "45 lb",
-      "Reps": "10-12",
-      "RPE": "9"
+      "Weight (lbs)": "45",
+      "Reps": "10",
+      "RPE": "8"
     }
   },
   {
@@ -602,8 +603,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Depress shoulders before pulling and keep torso upright.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Depress shoulders before pulling and keep torso upright. Aim for 10-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -611,8 +612,8 @@
       "Seated Cable Row"
     ],
     "defaultValues": {
-      "Weight": "40 lb",
-      "Reps": "10-12",
+      "Weight (lbs)": "40",
+      "Reps": "10",
       "RPE": "8"
     }
   },
@@ -622,8 +623,8 @@
     "defaultSets": "3",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Drive elbows down and keep a tall chest.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Drive elbows down and keep a tall chest. Aim for 8-12 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2025 Fall Tracker"
@@ -633,8 +634,8 @@
       "Lat Pulldown"
     ],
     "defaultValues": {
-      "Weight": "50 lb",
-      "Reps": "8-12",
+      "Weight (lbs)": "50",
+      "Reps": "8",
       "RPE": "8"
     }
   },
@@ -644,8 +645,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Pull the rope to face height and focus on shoulder external rotation.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Pull the rope to face height and focus on shoulder external rotation. Aim for 15-20 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker",
@@ -657,9 +658,9 @@
       "Face Pull (rope)"
     ],
     "defaultValues": {
-      "Weight": "20 lb",
-      "Reps": "15-20",
-      "RPE": "9"
+      "Weight (lbs)": "20",
+      "Reps": "15",
+      "RPE": "8"
     }
   },
   {
@@ -668,8 +669,8 @@
     "defaultSets": "3",
     "defaultRest": "30s",
     "defaultTempo": "2-1-1",
-    "notes": "Snowboarding accessory; elevate foot with a bench or step.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Snowboarding accessory; elevate foot with a bench or step. Aim for 15-20 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker",
       "2025 Fall Tracker"
@@ -679,9 +680,9 @@
       "Cable Dorsiflexion (ankle strap)"
     ],
     "defaultValues": {
-      "Weight": "5 lb",
-      "Reps": "15-20",
-      "RPE": "9"
+      "Weight (lbs)": "5",
+      "Reps": "15",
+      "RPE": "8"
     }
   },
   {
@@ -690,8 +691,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Brace hard and resist cable rotation.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Brace hard and resist cable rotation. Complete 10 reps per side.",
+    "logFormat": "{Weight (lbs)}x{Reps (per side)}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker",
       "2026 Winter Tracker",
@@ -703,8 +704,8 @@
       "Pallof Press (cable)"
     ],
     "defaultValues": {
-      "Weight": "15 lb",
-      "Reps": "10/side",
+      "Weight (lbs)": "15",
+      "Reps (per side)": "10",
       "RPE": "8"
     }
   },
@@ -714,8 +715,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Rotate with hips instead of spine.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Rotate with hips instead of spine. Complete 10 reps per side.",
+    "logFormat": "{Weight (lbs)}x{Reps (per side)}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -723,8 +724,8 @@
       "Cable Woodchop"
     ],
     "defaultValues": {
-      "Weight": "15 lb",
-      "Reps": "10/side",
+      "Weight (lbs)": "15",
+      "Reps (per side)": "10",
       "RPE": "8"
     }
   },
@@ -734,8 +735,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "controlled",
-    "notes": "Keep hips square to the floor; widen feet if needed.",
-    "logFormat": "{Reps}@{RPE}",
+    "notes": "Keep hips square to the floor; widen feet if needed. Complete 20 alternating taps.",
+    "logFormat": "{Taps}@{RPE}",
     "sourceTabs": [
       "2026 Spring Tracker"
     ],
@@ -743,7 +744,7 @@
       "Floor Plank w/ Shoulder Taps"
     ],
     "defaultValues": {
-      "Reps": "20 taps",
+      "Taps": "20",
       "RPE": "8"
     }
   },
@@ -753,7 +754,7 @@
     "defaultSets": "3",
     "defaultRest": "45s",
     "defaultTempo": "hold",
-    "notes": "Top leg on bench, hips high, body in a straight line.",
+    "notes": "Top leg on bench, hips high, body in a straight line. Hold 20-30 seconds per side at RPE 7-8.",
     "logFormat": "{Seconds}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker",
@@ -763,8 +764,8 @@
       "Copenhagen Side Plank"
     ],
     "defaultValues": {
-      "Seconds": "20-30s",
-      "RPE": "7-8"
+      "Seconds": "20",
+      "RPE": "7"
     }
   },
   {
@@ -773,8 +774,8 @@
     "defaultSets": "3",
     "defaultRest": "45s",
     "defaultTempo": "controlled",
-    "notes": "Press lower back into the floor hard.",
-    "logFormat": "{Reps}@{RPE}",
+    "notes": "Press lower back into the floor hard. Complete 10 reps per side.",
+    "logFormat": "{Reps (per side)}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker"
     ],
@@ -782,17 +783,17 @@
       "Dead Bug"
     ],
     "defaultValues": {
-      "Reps": "10/side",
+      "Reps (per side)": "10",
       "RPE": "7"
     }
   },
   {
     "exercise": "Dips",
     "description": "Bodyweight dips",
-    "defaultSets": "2-3",
+    "defaultSets": "2",
     "defaultRest": "90s",
     "defaultTempo": "2-1-1",
-    "notes": "Lean torso forward; switch if shoulders pinch.",
+    "notes": "Lean torso forward; switch if shoulders pinch. Aim for 5-8 reps and use assistance as needed.",
     "logFormat": "{Reps}@{RPE}",
     "sourceTabs": [
       "2026 Winter Tracker",
@@ -802,7 +803,7 @@
       "Dips"
     ],
     "defaultValues": {
-      "Reps": "15",
+      "Reps": "5",
       "RPE": "8"
     }
   },
@@ -812,8 +813,8 @@
     "defaultSets": "2",
     "defaultRest": "60s",
     "defaultTempo": "1-1-1",
-    "notes": "Rotational core accessory.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Rotational core accessory. Complete 10 reps per side.",
+    "logFormat": "{Weight (lbs)}x{Reps (per side)}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -821,8 +822,8 @@
       "Russian twist"
     ],
     "defaultValues": {
-      "Weight": "10 lb",
-      "Reps": "10/side",
+      "Weight (lbs)": "10",
+      "Reps (per side)": "10",
       "RPE": "8"
     }
   },
@@ -832,8 +833,8 @@
     "defaultSets": "2",
     "defaultRest": "90s",
     "defaultTempo": "2-0-1",
-    "notes": "Strict vertical press.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Strict vertical press. Aim for 8-10 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -841,8 +842,8 @@
       "DB Overhead Press"
     ],
     "defaultValues": {
-      "Weight": "15 lb",
-      "Reps": "8-10",
+      "Weight (lbs)": "15",
+      "Reps": "8",
       "RPE": "8"
     }
   },
@@ -852,8 +853,8 @@
     "defaultSets": "3",
     "defaultRest": "60s",
     "defaultTempo": "2-1-1",
-    "notes": "Dumbbell shrug accessory.",
-    "logFormat": "{Weight}x{Reps}@{RPE}",
+    "notes": "Dumbbell shrug accessory. Aim for 10-15 reps.",
+    "logFormat": "{Weight (lbs)}x{Reps}@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
     ],
@@ -861,8 +862,8 @@
       "DB Shoulder Shrug"
     ],
     "defaultValues": {
-      "Weight": "30 lb",
-      "Reps": "10-15",
+      "Weight (lbs)": "30",
+      "Reps": "10",
       "RPE": "8"
     }
   },
@@ -872,7 +873,7 @@
     "defaultSets": "2",
     "defaultRest": "45s",
     "defaultTempo": "hold",
-    "notes": "Anti-lateral-flexion core hold.",
+    "notes": "Anti-lateral-flexion core hold. Hold 30-45 seconds per side.",
     "logFormat": "{Seconds}s@{RPE}",
     "sourceTabs": [
       "2025 Fall Tracker"
@@ -881,7 +882,7 @@
       "Side Plank"
     ],
     "defaultValues": {
-      "Seconds": "30-45s/side",
+      "Seconds": "30",
       "RPE": "8"
     }
   }

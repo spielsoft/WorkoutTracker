@@ -4,6 +4,7 @@ import 'package:workout_tracker/format.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final numeric = RegExp(r'^\d+(?:\.\d+)?$');
 
   test(
     'seeds app-created workbooks from editable default exercises JSON',
@@ -56,11 +57,33 @@ void main() {
           everyElement(isNotEmpty),
           reason: exercise.exercise,
         );
+        expect(
+          exercise.defaultValues.values,
+          everyElement(matches(numeric)),
+          reason: exercise.exercise,
+        );
+        expect(
+          format.fieldLabels,
+          isNot(contains('Weight')),
+          reason: '${exercise.exercise} must name weight units',
+        );
+        expect(
+          format.fieldLabels,
+          isNot(contains('Height')),
+          reason: '${exercise.exercise} must name measurement units',
+        );
         if (format.fieldLabels.contains('Pain')) {
           expect(
             exercise.defaultValues['Pain'],
             '0',
             reason: exercise.exercise,
+          );
+        }
+        if (format.fieldLabels.contains('RPE')) {
+          expect(
+            num.parse(exercise.defaultValues['RPE']!),
+            lessThanOrEqualTo(8),
+            reason: '${exercise.exercise} must start conservatively',
           );
         }
         expect(
@@ -122,5 +145,16 @@ void main() {
       'RPE': '8',
       'Pain': '0',
     });
+  });
+
+  test('seeds conservative bodyweight Dips reps', () async {
+    final defaults = await loadExerciseDefaults();
+    final dips = defaults.singleWhere(
+      (exercise) => exercise.exercise == 'Dips',
+    );
+
+    expect(dips.defaultValues, {'Reps': '5', 'RPE': '8'});
+    expect(dips.notes, contains('5-8 reps'));
+    expect(dips.notes, contains('assistance'));
   });
 }

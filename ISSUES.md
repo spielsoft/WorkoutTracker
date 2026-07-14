@@ -4,7 +4,7 @@
 - [x] Slice 2: Convert Version 0.9 Formats Safely
 - [x] Slice 3: Log Five-Field DB Step-Ups in New Workbooks
 - [x] Slice 4: Safely Change Formats for Placed Exercises
-- [ ] Slice 5: Normalize Every Provided Exercise Default
+- [x] Slice 5: Normalize Every Provided Exercise Default
 - [ ] Slice 6: Clean Up TDD Tests
 - [ ] Slice 7: Run the Architecture and Full Local Guard
 - [ ] Slice 8: Validate Conversion Against Google Sheets
@@ -174,18 +174,18 @@ definition seeds a valid `1.0` workbook and can round-trip through its format.
 
 ### Acceptance criteria
 
-- [ ] A catalog behavior test fails for every blank, nonnumeric, missing, extra, or mismatched provided field value.
-- [ ] Every provided format uses Python-style literal text and one through five unique fields.
-- [ ] Every provided default map has exactly the format's fields in declaration order.
-- [ ] Every provided default value is a numeric string suitable for the numeric gym-entry keyboard.
-- [ ] Every declared Pain value is exactly `0`.
-- [ ] Weight and height fields carry their units in names such as `Weight (lbs)` and `Height (in)` rather than in values.
-- [ ] Stable measurement context needed for extraction is carried by the field name; exercise instructions and target ranges remain human-readable in descriptions or notes.
-- [ ] Defaults remain conservative for an untrained male pursuing strength and hypertrophy.
-- [ ] Each rendered default parses back to the exact default map.
-- [ ] A newly created workbook contains every provided exercise as one valid eight-column Exercises row.
-- [ ] DB Step-Up retains the exact five-field contract established in Slice 3.
-- [ ] Focused catalog and workbook-template tests pass.
+- [x] A catalog behavior test fails for every blank, nonnumeric, missing, extra, or mismatched provided field value.
+- [x] Every provided format uses Python-style literal text and one through five unique fields.
+- [x] Every provided default map has exactly the format's fields in declaration order.
+- [x] Every provided default value is a numeric string suitable for the numeric gym-entry keyboard.
+- [x] Every declared Pain value is exactly `0`.
+- [x] Weight and height fields carry their units in names such as `Weight (lbs)` and `Height (in)` rather than in values.
+- [x] Stable measurement context needed for extraction is carried by the field name; exercise instructions and target ranges remain human-readable in descriptions or notes.
+- [x] Defaults remain conservative for an untrained male pursuing strength and hypertrophy.
+- [x] Each rendered default parses back to the exact default map.
+- [x] A newly created workbook contains every provided exercise as one valid eight-column Exercises row.
+- [x] DB Step-Up retains the exact five-field contract established in Slice 3.
+- [x] Focused catalog and workbook-template tests pass.
 
 ### Blocked by
 
