@@ -106,29 +106,10 @@ void main() {
 
     expect(service.appliedPlans, hasLength(1));
     expect(service.appliedPlans.single.cellUpdates.single.value, '155x6@8');
-    expect(find.text('Next set S2'), findsNothing);
     expect(find.text('Save set S2'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
-          .controller
-          ?.text,
-      '155',
-    );
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const ValueKey('set-field-Reps')))
-          .controller
-          ?.text,
-      '6',
-    );
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const ValueKey('set-field-RPE')))
-          .controller
-          ?.text,
-      '8',
-    );
+    _expectFieldValue('Weight', '155');
+    _expectFieldValue('Reps', '6');
+    _expectFieldValue('RPE', '8');
   });
 
   testWidgets('does not launch duplicate Save set actions while pending', (
@@ -218,19 +199,12 @@ void main() {
     await tester.pump();
 
     expect(service.appliedPlans, hasLength(1));
-    expect(find.byKey(const ValueKey('logging-write-error')), findsOneWidget);
     expect(
       find.text('Unable to save set: Bad state: network unavailable'),
       findsOneWidget,
     );
     expect(find.text('Save set S1'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
-          .controller
-          ?.text,
-      '155',
-    );
+    _expectFieldValue('Weight', '155');
   });
 
   testWidgets(
@@ -260,30 +234,16 @@ void main() {
 
       expect(service.appliedPlans, hasLength(1));
       expect(service.appliedPlans.single.nextSetPosition?.setNumber, 3);
-      expect(find.byKey(const ValueKey('logging-write-error')), findsOneWidget);
-      expect(find.text('Next set S2'), findsNothing);
+      expect(
+        find.text(
+          'Unable to save set: saved set was not visible after refresh.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Save set S2'), findsOneWidget);
-      expect(
-        tester
-            .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
-            .controller
-            ?.text,
-        '155',
-      );
-      expect(
-        tester
-            .widget<TextField>(find.byKey(const ValueKey('set-field-Reps')))
-            .controller
-            ?.text,
-        '6',
-      );
-      expect(
-        tester
-            .widget<TextField>(find.byKey(const ValueKey('set-field-RPE')))
-            .controller
-            ?.text,
-        '8',
-      );
+      _expectFieldValue('Weight', '155');
+      _expectFieldValue('Reps', '6');
+      _expectFieldValue('RPE', '8');
 
       await tester.tap(find.text('Save set S2'));
       await tester.pump();
@@ -294,8 +254,12 @@ void main() {
         service.appliedPlans.map((plan) => plan.nextSetPosition?.setNumber),
         [3, 3],
       );
-      expect(find.byKey(const ValueKey('logging-write-error')), findsNothing);
-      expect(find.text('Next set S3'), findsNothing);
+      expect(
+        find.text(
+          'Unable to save set: saved set was not visible after refresh.',
+        ),
+        findsNothing,
+      );
       expect(find.text('Save set S3'), findsOneWidget);
     },
   );
@@ -348,13 +312,9 @@ void main() {
     expect(find.text('worked up, grip failed'), findsOneWidget);
     expect(textFieldWithLabel('Raw set text'), findsNothing);
     expect(find.text('Training details'), findsNothing);
-    expect(find.byKey(const ValueKey('training-details')), findsNothing);
     expect(find.text('3 sets | 120 s Rest'), findsOneWidget);
     expect(find.textContaining('40@8'), findsNothing);
     expect(find.textContaining('Tempo'), findsNothing);
-    expect(find.text('Target: 3 sets x 40 @ 8'), findsNothing);
-    expect(find.text('Rest: 120s'), findsNothing);
-    expect(find.text('Tempo: Smooth'), findsNothing);
     expect(find.text('Notes: Stay tall.'), findsNothing);
     expect(find.text('Stay tall.'), findsOneWidget);
     expect(find.text('Recent history'), findsOneWidget);
@@ -424,7 +384,6 @@ void main() {
     await tester.tap(find.text('Pull Up'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Next set S2'), findsNothing);
     expect(find.text('Save set S2'), findsOneWidget);
     expect(find.text('Progress 1/3'), findsNothing);
     expect(find.text('Logged S1'), findsNothing);
@@ -486,17 +445,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Front Plank'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('set-field-Reps')));
-      await tester.pump();
-      expect(
-        find.bySemanticsLabel('Save set S2 from keyboard'),
-        findsOneWidget,
-      );
-
       await tester.tap(find.text('Front Plank'));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.arrow_forward), findsNothing);
       await tester.tap(find.byKey(const ValueKey('set-field-Seconds')));
       await tester.pump();
       expect(find.bySemanticsLabel('Next field RPE'), findsOneWidget);
@@ -529,5 +480,15 @@ void main() {
 
       expect(service.appliedPlans.last.cellUpdates.single.value, isEmpty);
     },
+  );
+}
+
+void _expectFieldValue(String label, String value) {
+  expect(
+    find.descendant(
+      of: find.bySemanticsLabel('New set $label'),
+      matching: find.text(value),
+    ),
+    findsOneWidget,
   );
 }

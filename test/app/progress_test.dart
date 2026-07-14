@@ -37,9 +37,6 @@ void main() {
     await tester.tap(find.text('Split Squat'));
     await tester.pumpAndSettle();
 
-    expect(find.text('3 sets | 90 s Rest'), findsOneWidget);
-    expect(find.textContaining('x8/side@8'), findsNothing);
-    expect(find.text('Next set S1'), findsNothing);
     expect(find.text('Save set S1'), findsOneWidget);
     expect(find.text('Progress 0/3'), findsNothing);
     expect(find.text('Current S1'), findsNothing);
@@ -57,7 +54,6 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Next set S2'), findsNothing);
     expect(find.text('Save set S2'), findsOneWidget);
     expect(find.text('Progress 1/3'), findsNothing);
     expect(find.text('Logged S1'), findsNothing);

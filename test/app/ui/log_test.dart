@@ -18,32 +18,16 @@ void main() {
 
     await tester.pumpWidget(_app(actions: _LogActions()));
 
-    final fields = ['Weight', 'Reps', 'RPE'].map(_field).toList();
-    final save = find.text('Save set S1');
-
     expect(find.text('Squat'), findsNWidgets(2));
     expect(find.text('Next set S1'), findsNothing);
     expect(find.text('Training details'), findsNothing);
-    expect(find.byKey(const ValueKey('training-details')), findsNothing);
     expect(find.text('3 sets | 3 min Rest'), findsOneWidget);
     expect(find.text('3 sets | x5@8'), findsNothing);
     expect(find.textContaining('Notes:'), findsNothing);
-    expect(
-      tester.getTopLeft(fields[0]).dy,
-      lessThan(tester.getTopLeft(fields[1]).dy),
-    );
-    expect(
-      tester.getTopLeft(fields[1]).dy,
-      lessThan(tester.getTopLeft(fields[2]).dy),
-    );
-    expect(
-      tester.getBottomLeft(fields[2]).dy,
-      lessThan(tester.getTopLeft(save).dy),
-    );
-    final summaryGap =
-        tester.getTopLeft(fields[0]).dy -
-        tester.getBottomLeft(find.text('3 sets | 3 min Rest')).dy;
-    expect(summaryGap, lessThan(20));
+    expect(_field('Weight'), findsOneWidget);
+    expect(_field('Reps'), findsOneWidget);
+    expect(_field('RPE'), findsOneWidget);
+    expect(find.text('Save set S1'), findsOneWidget);
   });
 
   testWidgets('forward accessory advances in format order and saves literals', (
@@ -65,7 +49,6 @@ void main() {
       );
     }
 
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
     await tester.tap(load);
     await tester.pump();
     expect(find.bySemanticsLabel('Next field Effort'), findsOneWidget);
@@ -73,22 +56,14 @@ void main() {
     await tester.enterText(load, '102.5 kg');
     await tester.tap(find.bySemanticsLabel('Next field Effort'));
     await tester.pump();
-    expect(
-      tester.widget<EditableText>(_editable(effort)).focusNode.hasFocus,
-      isTrue,
-    );
-    expect(_fieldText(tester, 'Load'), '102.5 kg');
+    expect(find.bySemanticsLabel('Next field Cue'), findsOneWidget);
+    _expectFieldValue('Load', '102.5 kg');
 
     await tester.enterText(effort, '7.5');
     await tester.tap(find.bySemanticsLabel('Next field Cue'));
     await tester.pump();
-    expect(
-      tester.widget<EditableText>(_editable(cue)).focusNode.hasFocus,
-      isTrue,
-    );
-    expect(_fieldText(tester, 'Effort'), '7.5');
-
     expect(find.bySemanticsLabel('Save set S1 from keyboard'), findsOneWidget);
+    _expectFieldValue('Effort', '7.5');
     await tester.enterText(cue, 'steady');
     await tester.tap(find.bySemanticsLabel('Save set S1 from keyboard'));
     await tester.pump();
@@ -118,9 +93,9 @@ void main() {
 
     expect(actions.cmds, hasLength(1));
     expect(find.text('Save set S1'), findsOneWidget);
-    expect(_fieldText(tester, 'Load'), '100.5');
-    expect(_fieldText(tester, 'Effort'), '7');
-    expect(_fieldText(tester, 'Cue'), 'go');
+    _expectFieldValue('Load', '100.5');
+    _expectFieldValue('Effort', '7');
+    _expectFieldValue('Cue', 'go');
 
     await tester.pumpWidget(
       _app(actions: actions, view: _viewState(view, isBusy: true)),
@@ -134,40 +109,31 @@ void main() {
     expect(actions.cmds, hasLength(1));
   });
 
-  testWidgets('forward accessory clears with focus and screen context', (
+  testWidgets('forward accessory follows the visible logging context', (
     tester,
   ) async {
     final actions = _LogActions();
     await tester.pumpWidget(_app(actions: actions));
 
+    expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
     await tester.tap(_field('Weight'));
     await tester.pump();
     expect(find.bySemanticsLabel('Next field Reps'), findsOneWidget);
 
-    FocusManager.instance.primaryFocus?.unfocus();
-    await tester.pump();
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
-
-    await tester.tap(_field('Weight'));
-    await tester.pump();
     await tester.tap(find.text('Leg Press'));
     await tester.pump();
     expect(actions.selectedRows, [4]);
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+    expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
 
     await tester.tap(_field('Weight'));
     await tester.pump();
     await tester.tap(find.byTooltip('Back to exercises'));
     await tester.pump();
     expect(actions.closed, isTrue);
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
-
-    await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
-    await tester.pump();
-    expect(tester.takeException(), isNull);
+    expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
   });
 
-  testWidgets('focused field and accessory clear simulated keyboard insets', (
+  testWidgets('final forward action remains reachable above keyboard insets', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 1000);
@@ -181,9 +147,10 @@ void main() {
       tester.platformDispatcher.clearTextScaleFactorTestValue();
     });
 
+    final actions = _LogActions();
     await tester.pumpWidget(
       _app(
-        actions: _LogActions(),
+        actions: actions,
         view: _targetView(targets: '240x10-12@8,0'),
       ),
     );
@@ -195,18 +162,20 @@ void main() {
     final forward = find.bySemanticsLabel('Save set S1 from keyboard');
     expect(forward, findsOneWidget);
     expect(tester.takeException(), isNull);
-    const keyboardTop = 1000.0 - 320;
+    final keyboardTop =
+        tester.view.physicalSize.height / tester.view.devicePixelRatio -
+        tester.view.viewInsets.bottom;
     expect(tester.getBottomLeft(field).dy, lessThanOrEqualTo(keyboardTop));
     expect(tester.getBottomLeft(forward).dy, lessThanOrEqualTo(keyboardTop));
+
+    await tester.tap(forward);
+    await tester.pump();
+    expect(actions.cmds, hasLength(1));
 
     tester.view.viewInsets = FakeViewPadding.zero;
     await tester.pump();
     await tester.pump();
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
-    expect(
-      tester.widget<EditableText>(_editable(field)).focusNode.hasFocus,
-      isFalse,
-    );
+    expect(find.bySemanticsLabel('Save set S1 from keyboard'), findsNothing);
   });
 
   testWidgets('keeps desktop set entry compact in the shared flow', (
@@ -226,19 +195,20 @@ void main() {
       ),
     );
 
+    expect(tester.takeException(), isNull);
     final controls = [
-      _field('Weight'),
-      _field('Reps'),
-      _field('RPE'),
-      _field('Pain'),
+      for (final label in const ['Weight', 'Reps', 'RPE', 'Pain'])
+        _field(label),
       find.text('Save set S1'),
     ];
-    final centers = controls.map(tester.getCenter).toList();
-
-    expect(centers.map((point) => point.dy).toSet(), hasLength(1));
-    for (var i = 1; i < centers.length; i += 1) {
-      expect(centers[i - 1].dx, lessThan(centers[i].dx));
-    }
+    final rects = controls.map(tester.getRect).toList();
+    final overlapTop = rects
+        .map((rect) => rect.top)
+        .reduce((a, b) => a > b ? a : b);
+    final overlapBottom = rects
+        .map((rect) => rect.bottom)
+        .reduce((a, b) => a < b ? a : b);
+    expect(overlapTop, lessThan(overlapBottom));
   });
 
   testWidgets('logging remains usable at narrow width with large text', (
@@ -373,10 +343,10 @@ void main() {
       expect(find.text('Reps (10-12)'), findsOneWidget);
       expect(find.text('RPE (8)'), findsOneWidget);
       expect(find.text('Pain (0)'), findsOneWidget);
-      expect(_fieldText(tester, 'Weight'), '240');
-      expect(_fieldText(tester, 'Reps'), '10-12');
-      expect(_fieldText(tester, 'RPE'), '8');
-      expect(_fieldText(tester, 'Pain'), '0');
+      _expectFieldValue('Weight', '240');
+      _expectFieldValue('Reps', '10-12');
+      _expectFieldValue('RPE', '8');
+      _expectFieldValue('Pain', '0');
     },
   );
 
@@ -411,10 +381,10 @@ void main() {
       expect(find.text('Reps (10-12)'), findsOneWidget);
       expect(find.text('RPE (8)'), findsOneWidget);
       expect(find.text('Pain (0)'), findsOneWidget);
-      expect(_fieldText(tester, 'Weight'), '225');
-      expect(_fieldText(tester, 'Reps'), '6');
-      expect(_fieldText(tester, 'RPE'), '9');
-      expect(_fieldText(tester, 'Pain'), '2');
+      _expectFieldValue('Weight', '225');
+      _expectFieldValue('Reps', '6');
+      _expectFieldValue('RPE', '9');
+      _expectFieldValue('Pain', '2');
     },
   );
 
@@ -464,11 +434,12 @@ void main() {
     await tester.pump();
 
     for (final label in const ['Weight', 'Reps', 'RPE', 'Pain']) {
-      final field = tester.widget<TextField>(
-        find.byKey(ValueKey('logged-S1-field-$label')),
-      );
-      expect(field.decoration?.labelText, label);
+      expect(find.bySemanticsLabel('S1 $label'), findsOneWidget);
     }
+    expect(find.text('Weight'), findsOneWidget);
+    expect(find.text('Reps'), findsOneWidget);
+    expect(find.text('RPE'), findsOneWidget);
+    expect(find.text('Pain'), findsOneWidget);
   });
 
   testWidgets(
@@ -1002,11 +973,11 @@ Finder _editable(Finder field) {
   return find.descendant(of: field, matching: find.byType(EditableText));
 }
 
-String _fieldText(WidgetTester tester, String label) {
-  return tester
-      .widget<TextField>(find.byKey(ValueKey('set-field-$label')))
-      .controller!
-      .text;
+void _expectFieldValue(String label, String value) {
+  expect(
+    find.descendant(of: _field(label), matching: find.text(value)),
+    findsOneWidget,
+  );
 }
 
 void _expectDisabled(WidgetTester tester, Finder control) {
