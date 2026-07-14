@@ -80,13 +80,13 @@ void main() {
     await tester.tap(find.text('Squat'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Next set S1'), findsOneWidget);
+    expect(find.text('Save set S1'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Legs exercises'), findsOneWidget);
-    expect(find.text('Next set S1'), findsNothing);
+    expect(find.text('Save set S1'), findsNothing);
   });
 
   testWidgets('native back returns the exercise library to workout home', (

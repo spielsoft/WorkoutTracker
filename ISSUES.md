@@ -6,7 +6,7 @@ the worktree, or the sheet picker.
 
 ## Progress
 
-- [ ] Slice 1: Make the set-entry hierarchy task-first
+- [x] Slice 1: Make the set-entry hierarchy task-first
 - [ ] Slice 2: Put configured targets on their fields
 - [ ] Slice 3: Add numeric keyboard traversal
 - [ ] Slice 4: Clean the completed behavior tests

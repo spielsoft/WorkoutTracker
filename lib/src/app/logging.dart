@@ -248,35 +248,12 @@ class _LogScreenSt extends State<LogScreen> {
             },
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Icon(
-                selectedChoice.isBackup
-                    ? backupIcon
-                    : Icons.fitness_center_outlined,
-                size: 20,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              Text(
-                selectedChoice.exercise,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Next set S${viewModel.nextSetNumber}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          _ExerciseContextPanel(context: loggingContext),
+          _PlanSummary(context: loggingContext),
           const SizedBox(height: 12),
           _StructuredSetEditor(
             logFormat: loggingContext.logFormat,
             controllers: viewModel.newSetCtrls,
+            setNumber: viewModel.nextSetNumber,
             isBusy: widget.view.isBusy,
             onSave: _saveSet,
           ),
@@ -360,52 +337,46 @@ class _InlineLoggingError extends StatelessWidget {
   }
 }
 
-class _ExerciseContextPanel extends StatelessWidget {
-  const _ExerciseContextPanel({required this.context});
+class _PlanSummary extends StatelessWidget {
+  const _PlanSummary({required this.context});
 
   final ExerciseLoggingContext context;
 
   @override
   Widget build(BuildContext context) {
     final targets = this.context.targets;
-    final renderedTargets = switch (this.context.logFormat) {
-      ParsedLogFormat format => format.renderValues(targets.values),
-      InvalidLogFormat() => '',
-    };
     final summaryParts = [
-      if (this.context.rest.trim().isNotEmpty) 'Rest ${this.context.rest}',
-      if (targets.tempo.trim().isNotEmpty) 'Tempo ${targets.tempo}',
+      if (targets.sets.trim().isNotEmpty) '${targets.sets.trim()} sets',
+      if (this.context.rest.trim().isNotEmpty)
+        '${_spacedSeconds(this.context.rest.trim())} Rest',
     ];
-    return DecoratedBox(
-      key: const ValueKey('training-details'),
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Training details',
-              style: Theme.of(context).textTheme.titleMedium,
+    final note = this.context.notes.trim();
+    if (summaryParts.isEmpty && note.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (summaryParts.isNotEmpty) Text(summaryParts.join(' | ')),
+        if (summaryParts.isNotEmpty && note.isNotEmpty)
+          const SizedBox(height: 4),
+        if (note.isNotEmpty)
+          Text(
+            note,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 4),
-            Text(
-              [
-                if (targets.sets.trim().isNotEmpty) '${targets.sets} sets',
-                if (renderedTargets.trim().isNotEmpty) renderedTargets,
-              ].join(' | '),
-            ),
-            if (summaryParts.isNotEmpty) Text(summaryParts.join(' | ')),
-            if (this.context.notes.trim().isNotEmpty)
-              Text('Notes: ${this.context.notes}'),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
+}
+
+String _spacedSeconds(String rest) {
+  final match = RegExp(
+    r'^(\d+(?:\.\d+)?)\s*s$',
+    caseSensitive: false,
+  ).firstMatch(rest);
+  return match == null ? rest : '${match.group(1)} s';
 }
 
 class _RecentHistoryPanel extends StatelessWidget {
@@ -540,12 +511,14 @@ class _StructuredSetEditor extends StatelessWidget {
   const _StructuredSetEditor({
     required this.logFormat,
     required this.controllers,
+    required this.setNumber,
     required this.isBusy,
     required this.onSave,
   });
 
   final LogFormatParseResult logFormat;
   final Map<String, TextEditingController> controllers;
+  final int setNumber;
   final bool isBusy;
   final VoidCallback onSave;
 
@@ -559,7 +532,7 @@ class _StructuredSetEditor extends StatelessWidget {
       return FilledButton.icon(
         onPressed: isBusy ? null : onSave,
         icon: const Icon(Icons.save_outlined),
-        label: const Text('Save set'),
+        label: Text('Save set S$setNumber'),
       );
     }
 

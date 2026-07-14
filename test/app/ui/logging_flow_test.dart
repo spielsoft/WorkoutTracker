@@ -100,13 +100,14 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save set'));
+    await tester.tap(find.text('Save set S1'));
     await tester.pump();
     await tester.pump();
 
     expect(service.appliedPlans, hasLength(1));
     expect(service.appliedPlans.single.cellUpdates.single.value, '155x6@8');
-    expect(find.text('Next set S2'), findsOneWidget);
+    expect(find.text('Next set S2'), findsNothing);
+    expect(find.text('Save set S2'), findsOneWidget);
     expect(
       tester
           .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
@@ -152,8 +153,8 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
     await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
 
-    await tester.tap(find.text('Save set'));
-    await tester.tap(find.text('Save set'));
+    await tester.tap(find.text('Save set S1'));
+    await tester.tap(find.text('Save set S1'));
 
     expect(service.appliedPlans, hasLength(1));
   });
@@ -179,7 +180,7 @@ void main() {
     );
     await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
     await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
-    await tester.tap(find.text('Save set'));
+    await tester.tap(find.text('Save set S1'));
     await tester.pump();
     await tester.pump();
 
@@ -188,6 +189,14 @@ void main() {
     expect(
       find.text('Unable to save set: Bad state: network unavailable'),
       findsOneWidget,
+    );
+    expect(find.text('Save set S1'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+          .controller
+          ?.text,
+      '155',
     );
   });
 
@@ -212,14 +221,15 @@ void main() {
       );
       await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
       await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
-      await tester.tap(find.text('Save set'));
+      await tester.tap(find.text('Save set S2'));
       await tester.pump();
       await tester.pump();
 
       expect(service.appliedPlans, hasLength(1));
       expect(service.appliedPlans.single.nextSetPosition?.setNumber, 3);
       expect(find.byKey(const ValueKey('logging-write-error')), findsOneWidget);
-      expect(find.text('Next set S2'), findsOneWidget);
+      expect(find.text('Next set S2'), findsNothing);
+      expect(find.text('Save set S2'), findsOneWidget);
       expect(
         tester
             .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
@@ -242,7 +252,7 @@ void main() {
         '8',
       );
 
-      await tester.tap(find.text('Save set'));
+      await tester.tap(find.text('Save set S2'));
       await tester.pump();
       await tester.pump();
 
@@ -252,7 +262,8 @@ void main() {
         [3, 3],
       );
       expect(find.byKey(const ValueKey('logging-write-error')), findsNothing);
-      expect(find.text('Next set S3'), findsOneWidget);
+      expect(find.text('Next set S3'), findsNothing);
+      expect(find.text('Save set S3'), findsOneWidget);
     },
   );
 
@@ -274,7 +285,7 @@ void main() {
         '3',
         '40',
         '8',
-        '90s',
+        '120s',
         'Smooth',
         'Stay tall.',
         '{Distance}[@]{RPE}',
@@ -298,24 +309,21 @@ void main() {
 
     expect(find.text('Carry'), findsWidgets);
     expect(find.text('Carry logging'), findsNothing);
-    expect(find.text('Next set S2'), findsOneWidget);
+    expect(find.text('Next set S2'), findsNothing);
+    expect(find.text('Save set S2'), findsOneWidget);
     expect(find.text('Logged sets'), findsOneWidget);
     expect(find.text('worked up, grip failed'), findsOneWidget);
     expect(textFieldWithLabel('Raw set text'), findsNothing);
-    expect(find.text('Training details'), findsOneWidget);
-    expect(find.text('3 sets | 40@8'), findsOneWidget);
-    expect(find.text('Rest 90s | Tempo Smooth'), findsOneWidget);
+    expect(find.text('Training details'), findsNothing);
+    expect(find.byKey(const ValueKey('training-details')), findsNothing);
+    expect(find.text('3 sets | 120 s Rest'), findsOneWidget);
+    expect(find.textContaining('40@8'), findsNothing);
+    expect(find.textContaining('Tempo'), findsNothing);
     expect(find.text('Target: 3 sets x 40 @ 8'), findsNothing);
-    expect(find.text('Rest: 90s'), findsNothing);
+    expect(find.text('Rest: 120s'), findsNothing);
     expect(find.text('Tempo: Smooth'), findsNothing);
-    expect(find.text('Notes: Stay tall.'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('training-details')),
-        matching: find.byType(ExpansionTile),
-      ),
-      findsNothing,
-    );
+    expect(find.text('Notes: Stay tall.'), findsNothing);
+    expect(find.text('Stay tall.'), findsOneWidget);
     expect(find.text('Recent history'), findsOneWidget);
     expect(find.text('Week 1: 30@7, 35@8'), findsOneWidget);
     expect(find.text('Week 1'), findsNothing);
@@ -383,7 +391,8 @@ void main() {
     await tester.tap(find.text('Pull Up'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Next set S2'), findsOneWidget);
+    expect(find.text('Next set S2'), findsNothing);
+    expect(find.text('Save set S2'), findsOneWidget);
     expect(find.text('Progress 1/3'), findsNothing);
     expect(find.text('Logged S1'), findsNothing);
     expect(find.text('Current S2'), findsNothing);

@@ -6,7 +6,7 @@ import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 
 void main() {
-  testWidgets('keeps phone set entry in task order with targets nearby', (
+  testWidgets('keeps phone set entry in a compact task-first hierarchy', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 1400);
@@ -19,10 +19,15 @@ void main() {
     await tester.pumpWidget(_app(actions: _LogActions()));
 
     final fields = ['Weight', 'Reps', 'RPE'].map(_field).toList();
-    final save = find.text('Save set');
+    final save = find.text('Save set S1');
 
-    expect(find.text('3 sets | x5@8'), findsOneWidget);
-    expect(find.text('Rest 3 min'), findsOneWidget);
+    expect(find.text('Squat'), findsNWidgets(2));
+    expect(find.text('Next set S1'), findsNothing);
+    expect(find.text('Training details'), findsNothing);
+    expect(find.byKey(const ValueKey('training-details')), findsNothing);
+    expect(find.text('3 sets | 3 min Rest'), findsOneWidget);
+    expect(find.text('3 sets | x5@8'), findsNothing);
+    expect(find.textContaining('Notes:'), findsNothing);
     expect(
       tester.getTopLeft(fields[0]).dy,
       lessThan(tester.getTopLeft(fields[1]).dy),
@@ -35,12 +40,10 @@ void main() {
       tester.getBottomLeft(fields[2]).dy,
       lessThan(tester.getTopLeft(save).dy),
     );
-    expect(
-      (tester.getTopLeft(fields[0]).dy -
-              tester.getBottomLeft(find.text('Rest 3 min')).dy)
-          .abs(),
-      lessThan(80),
-    );
+    final summaryGap =
+        tester.getTopLeft(fields[0]).dy -
+        tester.getBottomLeft(find.text('3 sets | 3 min Rest')).dy;
+    expect(summaryGap, lessThan(20));
   });
 
   testWidgets('keyboard advances in format order and saves decimal values', (
@@ -103,7 +106,7 @@ void main() {
       _field('Weight'),
       _field('Reps'),
       _field('RPE'),
-      find.text('Save set'),
+      find.text('Save set S1'),
     ];
     final centers = controls.map(tester.getCenter).toList();
 
@@ -128,11 +131,11 @@ void main() {
     await tester.pumpWidget(_app(actions: _LogActions()));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Next set S1'), findsOneWidget);
+    expect(find.text('Next set S1'), findsNothing);
     expect(find.text('Progress 0/3'), findsNothing);
     expect(find.text('Current S1'), findsNothing);
     expect(find.text('Backup'), findsNothing);
-    expect(find.text('Save set'), findsOneWidget);
+    expect(find.text('Save set S1'), findsOneWidget);
   });
 
   testWidgets('emits typed row, close, and set-save commands', (tester) async {
@@ -148,7 +151,7 @@ void main() {
     await tester.enterText(_field('Weight'), '225');
     await tester.enterText(_field('Reps'), '5');
     await tester.enterText(_field('RPE'), '8');
-    await tester.tap(find.text('Save set'));
+    await tester.tap(find.text('Save set S1'));
     await tester.pump();
 
     final save = actions.cmds.single as SaveSetCmd;
@@ -227,7 +230,7 @@ void main() {
       await tester.pumpWidget(_app(actions: actions, view: view));
 
       await tester.enterText(_field('Weight'), '225');
-      await tester.tap(find.text('Save set'));
+      await tester.tap(find.text('Save set S1'));
       await tester.pump();
       await tester.pumpWidget(
         _app(
@@ -263,7 +266,7 @@ void main() {
       _app(actions: _LogActions(), view: _viewState(view, isBusy: true)),
     );
 
-    _expectDisabled(tester, find.widgetWithText(FilledButton, 'Save set'));
+    _expectDisabled(tester, find.widgetWithText(FilledButton, 'Save set S2'));
     _expectDisabled(tester, find.byTooltip('Edit S1'));
     _expectDisabled(tester, find.byTooltip('Clear set'));
   });
