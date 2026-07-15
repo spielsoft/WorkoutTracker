@@ -56,14 +56,17 @@ WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
   flutter test integration_test/live_logging_flow_test.dart -d macos
 ```
 
-This command targets the supported macOS app and destructively resets the
-named development Sheet before and after its representative logged-set write.
-Field-model acceptance also inspects a conventional Weight/Reps/RPE row and a
-timed or custom-format row directly in the real Sheet.
+This command targets the supported macOS app and only the allowlisted
+development Sheet. It resets that fixture to a declared `0.9` workbook,
+reviews the format-conversion dry run, confirms conversion to `1.0`, upgrades
+the placed DB Step-Up to its five-field format, and logs
+`(12, 15)x8@8,0`. It then reads the Sheet directly to verify version metadata,
+the Exercises definition, formula ownership, active Targets, the new set, and
+unchanged pre-conversion history. The teardown resets the fixture to its
+ordinary deterministic state even when an assertion fails.
 
 Without the environment flag, it must skip before authentication. A live run
-must reset the fixture after itself; report reset failures and skipped runs
-explicitly.
+must reset the fixture after itself; reset failures fail the test distinctly.
 
 ## Temporary Owner Migration
 

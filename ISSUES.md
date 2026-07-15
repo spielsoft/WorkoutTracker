@@ -7,7 +7,7 @@
 - [x] Slice 5: Normalize Every Provided Exercise Default
 - [x] Slice 6: Clean Up TDD Tests
 - [x] Slice 7: Run the Architecture and Full Local Guard
-- [ ] Slice 8: Validate Conversion Against Google Sheets
+- [x] Slice 8: Validate Conversion Against Google Sheets
 
 ## Slice 1: Use Python-Style Formats in Version 1.0 Workbooks
 
@@ -283,14 +283,14 @@ validation.
 
 ### Acceptance criteria
 
-- [ ] The user explicitly approves the live test and target spreadsheet before authentication or writes.
-- [ ] The test uses only the documented opt-in environment flag and allowlisted development fixture or disposable copy.
-- [ ] Dry-run output is reviewed before confirmed conversion.
-- [ ] The converted workbook is stamped `1.0`, validates in the app, and contains Python-style formats.
-- [ ] DB Step-Up displays five numeric fields and writes a cell shaped like `(12, 15)x8@8,0`.
-- [ ] Direct Sheet inspection confirms the format, numeric values, formula ownership, active Targets, and unchanged prior history.
-- [ ] The fixture reset succeeds after validation; any reset failure is reported prominently.
-- [ ] No owner workbook is changed without a separate explicit confirmation naming that workbook.
+- [x] The user explicitly approves the live test and target spreadsheet before authentication or writes.
+- [x] The test uses only the documented opt-in environment flag and allowlisted development fixture or disposable copy.
+- [x] Dry-run output is reviewed before confirmed conversion.
+- [x] The converted workbook is stamped `1.0`, validates in the app, and contains Python-style formats.
+- [x] DB Step-Up displays five numeric fields and writes a cell shaped like `(12, 15)x8@8,0`.
+- [x] Direct Sheet inspection confirms the format, numeric values, formula ownership, active Targets, and unchanged prior history.
+- [x] The fixture reset succeeds after validation; any reset failure is reported prominently.
+- [x] No owner workbook is changed without a separate explicit confirmation naming that workbook.
 
 ### Blocked by
 
