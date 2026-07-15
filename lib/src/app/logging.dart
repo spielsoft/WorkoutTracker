@@ -575,7 +575,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
     if (_keyboardVisible && !visible) {
       FocusManager.instance.primaryFocus?.unfocus();
     }
-    _keyboardVisible = visible;
+    setState(() => _keyboardVisible = visible);
   }
 
   @override
@@ -619,7 +619,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
     final focusedIndex = index < 0 ? null : index;
     if (focusedIndex == _focusedIndex) return;
     setState(() => _focusedIndex = focusedIndex);
-    if (focusedIndex == null) {
+    if (focusedIndex == null || focusedIndex == _focusNodes.length - 1) {
       _hidePortal();
     } else {
       _portal.show();
@@ -633,46 +633,43 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
   void _advance(int index) {
     if (index < _focusNodes.length - 1) {
       _focusNodes[index + 1].requestFocus();
-      return;
     }
-    if (!widget.isBusy) widget.onSave();
   }
 
-  String get _actionLabel {
-    final index = _focusedIndex!;
-    if (index < _labels.length - 1) {
-      return 'Next field ${_labels[index + 1]}';
-    }
-    return 'Save set S${widget.setNumber} from keyboard';
-  }
+  void _dismissInput() => FocusManager.instance.primaryFocus?.unfocus();
 
   Widget _forwardAction(BuildContext context) {
     final index = _focusedIndex;
-    if (index == null) return const SizedBox.shrink();
+    if (index == null || index == _labels.length - 1) {
+      return const SizedBox.shrink();
+    }
+    final label = 'Next field ${_labels[index + 1]}';
     return Positioned(
       right: 16,
       bottom: MediaQuery.viewInsetsOf(context).bottom + 8,
-      child: Material(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        elevation: 6,
-        borderRadius: BorderRadius.circular(12),
-        child: Tooltip(
-          message: _actionLabel,
-          excludeFromSemantics: true,
-          child: Semantics(
-            label: _actionLabel,
-            button: true,
-            enabled: !widget.isBusy,
-            onTap: widget.isBusy ? null : () => _advance(index),
-            child: ExcludeSemantics(
-              child: IconButton(
-                key: const ValueKey('set-forward-action'),
-                constraints: const BoxConstraints.tightFor(
-                  width: 56,
-                  height: 56,
+      child: TextFieldTapRegion(
+        child: Material(
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+          elevation: 6,
+          borderRadius: BorderRadius.circular(12),
+          child: Tooltip(
+            message: label,
+            excludeFromSemantics: true,
+            child: Semantics(
+              label: label,
+              button: true,
+              enabled: !widget.isBusy,
+              onTap: widget.isBusy ? null : () => _advance(index),
+              child: ExcludeSemantics(
+                child: IconButton(
+                  key: const ValueKey('set-forward-action'),
+                  constraints: const BoxConstraints.tightFor(
+                    width: 56,
+                    height: 56,
+                  ),
+                  onPressed: widget.isBusy ? null : () => _advance(index),
+                  icon: const Icon(Icons.arrow_forward),
                 ),
-                onPressed: widget.isBusy ? null : () => _advance(index),
-                icon: const Icon(Icons.arrow_forward),
               ),
             ),
           ),
@@ -701,7 +698,8 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
         focusNode: _focusNodes[index],
         keyboardType: _numberKeyboard,
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
-        onSubmitted: (_) => _advance(index),
+        onSubmitted: (_) => isLast ? _dismissInput() : _advance(index),
+        onTapOutside: (_) => _dismissInput(),
         decoration: InputDecoration(
           label: ExcludeSemantics(child: Text(visualLabel)),
           border: const OutlineInputBorder(),

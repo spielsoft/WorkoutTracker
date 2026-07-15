@@ -30,83 +30,79 @@ void main() {
     expect(find.text('Save set S1'), findsOneWidget);
   });
 
-  testWidgets('forward accessory advances in format order and saves literals', (
+  testWidgets(
+    'forward accessory advances in format order before explicit save',
+    (tester) async {
+      final actions = _LogActions();
+      await tester.pumpWidget(_app(actions: actions, view: _literalView()));
+
+      final load = _field('Load');
+      final effort = _field('Effort');
+      final cue = _field('Cue');
+
+      for (final label in ['Load', 'Effort', 'Cue']) {
+        expect(
+          tester
+              .widget<TextField>(find.byKey(ValueKey('set-field-$label')))
+              .keyboardType,
+          const TextInputType.numberWithOptions(decimal: true),
+        );
+      }
+
+      await tester.tap(load);
+      await tester.pump();
+      expect(find.bySemanticsLabel('Next field Effort'), findsOneWidget);
+
+      await tester.enterText(load, '102.5 kg');
+      await tester.tap(find.bySemanticsLabel('Next field Effort'));
+      await tester.pump();
+      expect(find.bySemanticsLabel('Next field Cue'), findsOneWidget);
+      _expectFieldValue('Load', '102.5 kg');
+
+      await tester.enterText(effort, '7.5');
+      await tester.tap(find.bySemanticsLabel('Next field Cue'));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('set-forward-action')), findsNothing);
+      _expectFieldValue('Effort', '7.5');
+      await tester.enterText(cue, 'steady');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(actions.cmds, isEmpty);
+      expect(tester.testTextInput.isVisible, isFalse);
+
+      await tester.ensureVisible(find.text('Save set S1'));
+      await tester.tap(find.text('Save set S1'));
+      await tester.pump();
+
+      final save = actions.cmds.single as SaveSetCmd;
+      expect(save.fields, {
+        'Load': '102.5 kg',
+        'Effort': '7.5',
+        'Cue': 'steady',
+      });
+    },
+  );
+
+  testWidgets('tap outside dismisses final field without losing input', (
     tester,
   ) async {
     final actions = _LogActions();
     await tester.pumpWidget(_app(actions: actions, view: _literalView()));
 
-    final load = _field('Load');
-    final effort = _field('Effort');
-    final cue = _field('Cue');
-
-    for (final label in ['Load', 'Effort', 'Cue']) {
-      expect(
-        tester
-            .widget<TextField>(find.byKey(ValueKey('set-field-$label')))
-            .keyboardType,
-        const TextInputType.numberWithOptions(decimal: true),
-      );
-    }
-
-    await tester.tap(load);
-    await tester.pump();
-    expect(find.bySemanticsLabel('Next field Effort'), findsOneWidget);
-
-    await tester.enterText(load, '102.5 kg');
-    await tester.tap(find.bySemanticsLabel('Next field Effort'));
-    await tester.pump();
-    expect(find.bySemanticsLabel('Next field Cue'), findsOneWidget);
-    _expectFieldValue('Load', '102.5 kg');
-
-    await tester.enterText(effort, '7.5');
-    await tester.tap(find.bySemanticsLabel('Next field Cue'));
-    await tester.pump();
-    expect(find.bySemanticsLabel('Save set S1 from keyboard'), findsOneWidget);
-    _expectFieldValue('Effort', '7.5');
-    await tester.enterText(cue, 'steady');
-    await tester.tap(find.bySemanticsLabel('Save set S1 from keyboard'));
-    await tester.pump();
-
-    final save = actions.cmds.single as SaveSetCmd;
-    expect(save.fields, {'Load': '102.5 kg', 'Effort': '7.5', 'Cue': 'steady'});
-  });
-
-  testWidgets('final accessory preserves empty, failed, and busy state', (
-    tester,
-  ) async {
-    final actions = _LogActions(succeeds: false);
-    final view = _literalView();
-    await tester.pumpWidget(_app(actions: actions, view: view));
-
-    await tester.tap(_field('Cue'));
-    await tester.pump();
-    await tester.tap(find.bySemanticsLabel('Save set S1 from keyboard'));
-    await tester.pump();
-    expect(actions.cmds, isEmpty);
-
     await tester.enterText(_field('Load'), '100.5');
     await tester.enterText(_field('Effort'), '7');
     await tester.enterText(_field('Cue'), 'go');
-    await tester.tap(find.bySemanticsLabel('Save set S1 from keyboard'));
+    expect(find.byKey(const ValueKey('set-forward-action')), findsNothing);
+    expect(tester.testTextInput.isVisible, isTrue);
+
+    await tester.tap(find.text('Development Workouts'));
     await tester.pump();
 
-    expect(actions.cmds, hasLength(1));
-    expect(find.text('Save set S1'), findsOneWidget);
+    expect(actions.cmds, isEmpty);
+    expect(tester.testTextInput.isVisible, isFalse);
     _expectFieldValue('Load', '100.5');
     _expectFieldValue('Effort', '7');
     _expectFieldValue('Cue', 'go');
-
-    await tester.pumpWidget(
-      _app(actions: actions, view: _viewState(view, isBusy: true)),
-    );
-    await tester.pump();
-    final forward = find.bySemanticsLabel('Save set S1 from keyboard');
-    expect(forward, findsOneWidget);
-    _expectDisabled(tester, forward);
-    await tester.tap(forward);
-    await tester.pump();
-    expect(actions.cmds, hasLength(1));
   });
 
   testWidgets('forward accessory follows the visible logging context', (
@@ -133,12 +129,11 @@ void main() {
     expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
   });
 
-  testWidgets('final forward action remains reachable above keyboard insets', (
+  testWidgets('first forward action tracks delayed keyboard insets', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
-    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -154,13 +149,19 @@ void main() {
         view: _targetView(targets: '240x10-12@8,0'),
       ),
     );
-    final field = _field('Pain');
+    final field = _field('Weight');
     await tester.ensureVisible(field);
     await tester.tap(field);
     await tester.pump();
 
-    final forward = find.bySemanticsLabel('Save set S1 from keyboard');
+    final forward = find.bySemanticsLabel('Next field Reps');
     expect(forward, findsOneWidget);
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 80);
+    await tester.pump();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    await tester.pump();
+
     expect(tester.takeException(), isNull);
     final keyboardTop =
         tester.view.physicalSize.height / tester.view.devicePixelRatio -
@@ -170,12 +171,13 @@ void main() {
 
     await tester.tap(forward);
     await tester.pump();
-    expect(actions.cmds, hasLength(1));
+    expect(find.bySemanticsLabel('Next field RPE'), findsOneWidget);
+    expect(actions.cmds, isEmpty);
 
     tester.view.viewInsets = FakeViewPadding.zero;
     await tester.pump();
     await tester.pump();
-    expect(find.bySemanticsLabel('Save set S1 from keyboard'), findsNothing);
+    expect(find.byKey(const ValueKey('set-forward-action')), findsNothing);
   });
 
   testWidgets('keeps desktop set entry compact in the shared flow', (

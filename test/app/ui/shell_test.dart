@@ -172,10 +172,10 @@ void main() {
       await tester.pumpAndSettle();
       await expectFlutterAccessibilityGuidelines(tester);
 
-      await tester.tap(find.byKey(const ValueKey('set-field-RPE')));
+      await tester.tap(find.byKey(const ValueKey('set-field-Weight')));
       await tester.pump();
       expect(
-        find.bySemanticsLabel('Save set S2 from keyboard'),
+        find.bySemanticsLabel('Next field Reps'),
         findsOneWidget,
       );
       await expectFlutterAccessibilityGuidelines(tester);

@@ -241,39 +241,6 @@ void main() {
     expect(service.appliedPlans, hasLength(1));
   });
 
-  testWidgets('final forward action cannot bypass pending save protection', (
-    tester,
-  ) async {
-    final service = CompletingWriteValidationService(minimalValidParsedSheet());
-
-    await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.text('Squat'));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const ValueKey('set-field-Weight')),
-      '155.5',
-    );
-    await tester.enterText(find.byKey(const ValueKey('set-field-Reps')), '6');
-    await tester.enterText(find.byKey(const ValueKey('set-field-RPE')), '8');
-    await tester.tap(find.byKey(const ValueKey('set-field-RPE')));
-    await tester.pump();
-
-    final forward = find.bySemanticsLabel('Save set S1 from keyboard');
-    expect(forward, findsOneWidget);
-    await tester.tap(forward);
-    await tester.tap(forward);
-
-    expect(service.appliedPlans, hasLength(1));
-    expect(service.appliedPlans.single.cellUpdates.single.value, '155.5x6@8');
-  });
-
   testWidgets('shows failed Save set writes near logging controls', (
     tester,
   ) async {
