@@ -18,7 +18,7 @@ void main() {
 
     await tester.pumpWidget(_app(actions: _LogActions()));
 
-    expect(find.text('Squat'), findsNWidgets(2));
+    expect(find.text('Squat'), findsOneWidget);
     expect(find.text('Next set S1'), findsNothing);
     expect(find.text('Training details'), findsNothing);
     expect(find.text('3 sets | 3 min Rest'), findsOneWidget);

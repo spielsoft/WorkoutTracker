@@ -197,7 +197,6 @@ class _LogScreenSt extends State<LogScreen> {
         children: [
           ScreenHeader(
             title: widget.view.sheetLabel,
-            subtitle: selectedChoice.exercise,
             compactTitle: true,
             backTooltip: 'Back to exercises',
             onBack: () {
