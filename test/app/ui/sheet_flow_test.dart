@@ -98,6 +98,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Convert old workout sheet'), findsOneWidget);
+    expect(
+      find.text('This sheet uses an older WorkoutTracker column layout.'),
+      findsOneWidget,
+    );
+    expect(find.text('Update legacy columns.'), findsNothing);
+    expect(find.text('Set schema version 0.9.'), findsNothing);
     expect(find.text('Fix the active sheet structure'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('convert-legacy-sheet')));
     await tester.pumpAndSettle();
