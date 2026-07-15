@@ -3,6 +3,7 @@ import 'package:workout_tracker/contract.dart';
 
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
+import 'ui/shared/next_field.dart';
 
 enum ExerciseFormMode { create, edit }
 
@@ -378,6 +379,9 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       ExerciseFormMode.edit => 'Edit exercise',
     };
     final parsedFormat = parseLogFormat(_formatCtrl.text);
+    final valueLabels = parsedFormat is ParsedLogFormat
+        ? parsedFormat.fieldLabels
+        : const <String>[];
 
     return Form(
       key: _formKey,
@@ -397,46 +401,36 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             ],
           ),
           const SizedBox(height: 16),
-          A11yTextField(
-            identifier: 'exercise-authoring-name',
-            label: 'Exercise name',
-            valueListenable: _nameCtrl,
-            child: TextFormField(
-              key: const ValueKey('exercise-authoring-name'),
-              controller: _nameCtrl,
-              enabled: !widget.isBusy,
-              decoration: const InputDecoration(
-                labelText: 'Exercise name',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.fitness_center_outlined),
-              ),
-              textInputAction: TextInputAction.next,
-              onChanged: _changed,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Enter an exercise name.';
-                }
-                return null;
-              },
-            ),
+          _AuthoringField(
+            key: const ValueKey('exercise-authoring-name'),
+            controller: _nameCtrl,
+            enabled: !widget.isBusy,
+            semanticsIdentifier: 'exercise-authoring-name',
+            labelText: 'Exercise name',
+            icon: Icons.fitness_center_outlined,
+            nextLabel: 'Description',
+            textInputAction: TextInputAction.next,
+            selectAllOnFocus: false,
+            onChanged: _changed,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Enter an exercise name.';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 12),
-          A11yTextField(
-            identifier: 'exercise-authoring-description',
-            label: 'Description',
-            valueListenable: _descCtrl,
-            child: TextFormField(
-              key: const ValueKey('exercise-authoring-description'),
-              controller: _descCtrl,
-              enabled: !widget.isBusy,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.short_text_outlined),
-              ),
-              textInputAction: TextInputAction.next,
-              onChanged: _changed,
-            ),
+          _AuthoringField(
+            key: const ValueKey('exercise-authoring-description'),
+            controller: _descCtrl,
+            enabled: !widget.isBusy,
+            semanticsIdentifier: 'exercise-authoring-description',
+            labelText: 'Description',
+            icon: Icons.short_text_outlined,
+            nextLabel: 'Default sets',
+            textInputAction: TextInputAction.next,
+            selectAllOnFocus: false,
+            onChanged: _changed,
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
@@ -458,6 +452,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       semanticsIdentifier: 'exercise-authoring-default-sets',
                       labelText: 'Default sets',
                       icon: Icons.format_list_numbered_outlined,
+                      nextLabel: 'Default tempo',
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.number,
                       onChanged: _changed,
@@ -472,6 +467,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       semanticsIdentifier: 'exercise-authoring-default-tempo',
                       labelText: 'Default tempo',
                       icon: Icons.graphic_eq_outlined,
+                      nextLabel: 'Default rest',
                       textInputAction: TextInputAction.next,
                       onChanged: _changed,
                     ),
@@ -485,6 +481,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       semanticsIdentifier: 'exercise-authoring-default-rest',
                       labelText: 'Default rest',
                       icon: Icons.timer_outlined,
+                      nextLabel: 'Log format',
                       textInputAction: TextInputAction.next,
                       onChanged: _changed,
                     ),
@@ -501,6 +498,9 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                           semanticsIdentifier: 'exercise-authoring-log-format',
                           labelText: 'Log format',
                           icon: Icons.data_object_outlined,
+                          nextLabel: valueLabels.isEmpty
+                              ? 'Notes'
+                              : 'Default ${valueLabels.first}',
                           textInputAction: TextInputAction.next,
                           helperText:
                               'Use {Field}, such as {Weight (lbs)}, for 1–5 '
@@ -537,17 +537,22 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    for (final label in fieldLabels)
+                    for (var index = 0; index < fieldLabels.length; index += 1)
                       SizedBox(
                         width: fieldWidth,
                         child: _AuthoringField(
-                          key: ValueKey('exercise-authoring-default-$label'),
-                          controller: _valueCtrls[label]!,
+                          key: ValueKey(
+                            'exercise-authoring-default-${fieldLabels[index]}',
+                          ),
+                          controller: _valueCtrls[fieldLabels[index]]!,
                           enabled: !widget.isBusy,
                           semanticsIdentifier:
-                              'exercise-authoring-default-$label',
-                          labelText: 'Default $label',
+                              'exercise-authoring-default-${fieldLabels[index]}',
+                          labelText: 'Default ${fieldLabels[index]}',
                           icon: Icons.tune_outlined,
+                          nextLabel: index < fieldLabels.length - 1
+                              ? 'Default ${fieldLabels[index + 1]}'
+                              : 'Notes',
                           textInputAction: TextInputAction.next,
                           onChanged: _changed,
                         ),
@@ -624,11 +629,13 @@ class _AuthoringField extends StatefulWidget {
     required this.labelText,
     required this.icon,
     required this.textInputAction,
+    this.nextLabel,
     this.keyboardType,
     this.helperText,
     this.validator,
     this.autovalidateMode,
     this.onChanged,
+    this.selectAllOnFocus = true,
   });
 
   final TextEditingController controller;
@@ -637,11 +644,13 @@ class _AuthoringField extends StatefulWidget {
   final String labelText;
   final IconData icon;
   final TextInputAction textInputAction;
+  final String? nextLabel;
   final TextInputType? keyboardType;
   final String? helperText;
   final FormFieldValidator<String>? validator;
   final AutovalidateMode? autovalidateMode;
   final ValueChanged<String>? onChanged;
+  final bool selectAllOnFocus;
 
   @override
   State<_AuthoringField> createState() => _AuthoringFieldSt();
@@ -654,12 +663,16 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
   void initState() {
     super.initState();
     _focusNode = FocusNode();
-    _focusNode.addListener(_selectTextAfterFocus);
+    if (widget.selectAllOnFocus) {
+      _focusNode.addListener(_selectTextAfterFocus);
+    }
   }
 
   @override
   void dispose() {
-    _focusNode.removeListener(_selectTextAfterFocus);
+    if (widget.selectAllOnFocus) {
+      _focusNode.removeListener(_selectTextAfterFocus);
+    }
     _focusNode.dispose();
     super.dispose();
   }
@@ -681,6 +694,7 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
 
   @override
   Widget build(BuildContext context) {
+    final nextLabel = widget.nextLabel;
     return A11yTextField(
       identifier: widget.semanticsIdentifier,
       label: widget.labelText,
@@ -694,11 +708,17 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
           floatingLabelBehavior: FloatingLabelBehavior.always,
           border: const OutlineInputBorder(),
           prefixIcon: Icon(widget.icon),
+          suffixIcon: nextLabel == null
+              ? null
+              : NextFieldButton(focusNode: _focusNode, nextLabel: nextLabel),
           helperText: widget.helperText,
         ),
         textInputAction: widget.textInputAction,
         keyboardType: widget.keyboardType,
-        selectAllOnFocus: true,
+        selectAllOnFocus: widget.selectAllOnFocus,
+        onFieldSubmitted: (_) =>
+            nextLabel == null ? _focusNode.unfocus() : _focusNode.nextFocus(),
+        onTapOutside: (_) => _focusNode.unfocus(),
         validator: widget.validator,
         autovalidateMode: widget.autovalidateMode,
         onChanged: widget.onChanged,

@@ -62,6 +62,43 @@ void main() {
     }
   });
 
+  testWidgets('exercise fields expose arrows in declaration order', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        CreateExerciseScreen(
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
+          actions: _CreateActions(),
+        ),
+      ),
+    );
+
+    Future<void> advance(String label) async {
+      final arrow = find.bySemanticsLabel('Next field $label');
+      expect(arrow, findsOneWidget);
+      await tester.ensureVisible(arrow);
+      await tester.pumpAndSettle();
+      await tester.tap(arrow);
+      await tester.pumpAndSettle();
+    }
+
+    await tester.tap(find.byKey(const ValueKey('exercise-authoring-name')));
+    await tester.pump();
+    await advance('Description');
+    await advance('Default sets');
+    await advance('Default tempo');
+    await advance('Default rest');
+    await advance('Log format');
+    await advance('Default Weight');
+    await advance('Default Reps');
+    await advance('Default RPE');
+    await advance('Notes');
+
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+    expect(tester.testTextInput.isVisible, isTrue);
+  });
+
   testWidgets('valid formats show syntax help and current-value preview', (
     tester,
   ) async {
@@ -356,6 +393,11 @@ void main() {
         find.byKey(const ValueKey('format-update-3-Weight (lbs)')),
         '20',
       );
+      await tester.pump();
+      expect(find.bySemanticsLabel('Next field Row 3 Reps'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Next field Row 3 Reps'));
+      await tester.pump();
+      expect(find.bySemanticsLabel('Next field Row 3 RPE'), findsOneWidget);
       final confirm = find.byKey(const ValueKey('confirm-format-update'));
       await tester.scrollUntilVisible(
         confirm,

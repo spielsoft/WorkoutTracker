@@ -44,6 +44,24 @@ void main() {
     expect(find.widgetWithText(TextField, 'RPE'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Reps'), findsNothing);
 
+    Future<void> advance(String label) async {
+      final arrow = find.bySemanticsLabel('Next field $label');
+      expect(arrow, findsOneWidget);
+      await tester.ensureVisible(arrow);
+      await tester.pumpAndSettle();
+      await tester.tap(arrow);
+      await tester.pumpAndSettle();
+    }
+
+    await tester.tap(find.widgetWithText(TextField, 'Sets'));
+    await tester.pump();
+    await advance('Rest');
+    await advance('Tempo');
+    await advance('Notes');
+    await advance('Seconds');
+    await advance('RPE');
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+
     await tester.enterText(find.widgetWithText(TextField, 'Seconds'), '45');
     await tester.ensureVisible(
       find.byKey(const ValueKey('place-existing-exercise')),

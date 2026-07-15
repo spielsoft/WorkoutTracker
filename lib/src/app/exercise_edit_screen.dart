@@ -3,6 +3,7 @@ import 'package:workout_tracker/contract.dart';
 
 import 'exercise_form.dart';
 import 'ui/shared/header.dart';
+import 'ui/shared/next_field.dart';
 import 'ui/view.dart';
 
 final class EditExerciseView extends LoadedView {
@@ -100,6 +101,7 @@ class _FormatUpdateReview extends StatefulWidget {
 class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
   final _formKey = GlobalKey<FormState>();
   final _ctrls = <int, Map<String, TextEditingController>>{};
+  final _focusNodes = <int, Map<String, FocusNode>>{};
 
   @override
   void initState() {
@@ -108,6 +110,12 @@ class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
       _ctrls[placement.sheetRowNumber] = {
         for (final field in widget.impact.fields)
           field: TextEditingController(text: placement.proposedValues[field]),
+      };
+      _focusNodes[placement.sheetRowNumber] = {
+        for (final field in widget.impact.fields)
+          field: FocusNode(
+            debugLabel: 'Row ${placement.sheetRowNumber} $field',
+          ),
       };
     }
   }
@@ -119,7 +127,25 @@ class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
         ctrl.dispose();
       }
     }
+    for (final row in _focusNodes.values) {
+      for (final node in row.values) {
+        node.dispose();
+      }
+    }
     super.dispose();
+  }
+
+  String? _nextLabel(int placementIndex, int fieldIndex) {
+    final fields = widget.impact.fields;
+    if (fieldIndex < fields.length - 1) {
+      final row = widget.impact.placements[placementIndex].sheetRowNumber;
+      return 'Row $row ${fields[fieldIndex + 1]}';
+    }
+    if (placementIndex < widget.impact.placements.length - 1) {
+      final row = widget.impact.placements[placementIndex + 1].sheetRowNumber;
+      return 'Row $row ${fields.first}';
+    }
+    return null;
   }
 
   Future<void> _confirm() async {
@@ -183,53 +209,95 @@ class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
               'will become raw text. History will remain unchanged and editable.',
             ),
             const SizedBox(height: 16),
-            for (final placement in widget.impact.placements) ...[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Row ${placement.sheetRowNumber} · '
-                        '${placement.workout} · '
-                        '${placement.isBackup ? 'Backup' : 'Primary'}',
-                        style: Theme.of(context).textTheme.titleSmall,
+            for (
+              var placementIndex = 0;
+              placementIndex < widget.impact.placements.length;
+              placementIndex += 1
+            ) ...[
+              Builder(
+                builder: (context) {
+                  final placement = widget.impact.placements[placementIndex];
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Row ${placement.sheetRowNumber} · '
+                            '${placement.workout} · '
+                            '${placement.isBackup ? 'Backup' : 'Primary'}',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Current Targets: ${placement.oldTargets}'),
+                          if (placement.rawHistoryCount > 0)
+                            Text(
+                              '${placement.rawHistoryCount} history '
+                              '${placement.rawHistoryCount == 1 ? 'entry becomes' : 'entries become'} raw.',
+                            ),
+                          const SizedBox(height: 12),
+                          for (
+                            var fieldIndex = 0;
+                            fieldIndex < widget.impact.fields.length;
+                            fieldIndex += 1
+                          ) ...[
+                            Builder(
+                              builder: (context) {
+                                final field = widget.impact.fields[fieldIndex];
+                                final nextLabel = _nextLabel(
+                                  placementIndex,
+                                  fieldIndex,
+                                );
+                                final focusNode =
+                                    _focusNodes[placement
+                                        .sheetRowNumber]![field]!;
+                                return TextFormField(
+                                  key: ValueKey(
+                                    'format-update-${placement.sheetRowNumber}-$field',
+                                  ),
+                                  controller:
+                                      _ctrls[placement.sheetRowNumber]![field],
+                                  focusNode: focusNode,
+                                  enabled: !widget.isBusy,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                        signed: true,
+                                      ),
+                                  textInputAction: nextLabel == null
+                                      ? TextInputAction.done
+                                      : TextInputAction.next,
+                                  onFieldSubmitted: (_) => nextLabel == null
+                                      ? focusNode.unfocus()
+                                      : focusNode.nextFocus(),
+                                  onTapOutside: (_) => focusNode.unfocus(),
+                                  decoration: InputDecoration(
+                                    labelText:
+                                        'Row ${placement.sheetRowNumber} $field',
+                                    border: const OutlineInputBorder(),
+                                    suffixIcon: nextLabel == null
+                                        ? null
+                                        : NextFieldButton(
+                                            focusNode: focusNode,
+                                            nextLabel: nextLabel,
+                                          ),
+                                  ),
+                                  validator: (value) => _validateField(
+                                    placement.sheetRowNumber,
+                                    field,
+                                    value,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text('Current Targets: ${placement.oldTargets}'),
-                      if (placement.rawHistoryCount > 0)
-                        Text(
-                          '${placement.rawHistoryCount} history '
-                          '${placement.rawHistoryCount == 1 ? 'entry becomes' : 'entries become'} raw.',
-                        ),
-                      const SizedBox(height: 12),
-                      for (final field in widget.impact.fields) ...[
-                        TextFormField(
-                          key: ValueKey(
-                            'format-update-${placement.sheetRowNumber}-$field',
-                          ),
-                          controller: _ctrls[placement.sheetRowNumber]![field],
-                          enabled: !widget.isBusy,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                            signed: true,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Row ${placement.sheetRowNumber} $field',
-                            border: const OutlineInputBorder(),
-                          ),
-                          validator: (value) => _validateField(
-                            placement.sheetRowNumber,
-                            field,
-                            value,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 12),
             ],

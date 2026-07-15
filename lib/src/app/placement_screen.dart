@@ -4,6 +4,7 @@ import 'package:workout_tracker/contract.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
+import 'ui/shared/next_field.dart';
 import 'ui/shared/role.dart';
 
 enum PlaceKind { primary, backup }
@@ -276,6 +277,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
             !matchingExercises.contains(selectedExercise)
         ? [selectedExercise, ...matchingExercises]
         : matchingExercises;
+    final targets = _targetCtrls.entries.toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -356,18 +358,24 @@ class _PlaceFormSt extends State<_PlaceForm> {
                     child: _MetaField(
                       controller: _setsCtrl,
                       labelText: 'Sets',
+                      nextLabel: 'Rest',
                       keyboardType: TextInputType.number,
                     ),
                   ),
                   SizedBox(
                     width: fieldWidth,
-                    child: _MetaField(controller: _restCtrl, labelText: 'Rest'),
+                    child: _MetaField(
+                      controller: _restCtrl,
+                      labelText: 'Rest',
+                      nextLabel: 'Tempo',
+                    ),
                   ),
                   SizedBox(
                     width: fieldWidth,
                     child: _MetaField(
                       controller: _tempoCtrl,
                       labelText: 'Tempo',
+                      nextLabel: 'Notes',
                     ),
                   ),
                   SizedBox(
@@ -375,15 +383,19 @@ class _PlaceFormSt extends State<_PlaceForm> {
                     child: _MetaField(
                       controller: _notesCtrl,
                       labelText: 'Notes',
+                      nextLabel: targets.isEmpty ? null : targets.first.key,
                     ),
                   ),
-                  for (final entry in _targetCtrls.entries)
+                  for (var index = 0; index < targets.length; index += 1)
                     SizedBox(
                       width: fieldWidth,
                       child: _MetaField(
-                        key: ValueKey('placement-target-${entry.key}'),
-                        controller: entry.value,
-                        labelText: entry.key,
+                        key: ValueKey('placement-target-${targets[index].key}'),
+                        controller: targets[index].value,
+                        labelText: targets[index].key,
+                        nextLabel: index < targets.length - 1
+                            ? targets[index + 1].key
+                            : null,
                       ),
                     ),
                 ],
@@ -450,31 +462,62 @@ class _ExercisePlacementDraft {
   final WorkoutPlacementMetadata metadata;
 }
 
-class _MetaField extends StatelessWidget {
+class _MetaField extends StatefulWidget {
   const _MetaField({
     super.key,
     required this.controller,
     required this.labelText,
+    required this.nextLabel,
     this.keyboardType,
   });
 
   final TextEditingController controller;
   final String labelText;
+  final String? nextLabel;
   final TextInputType? keyboardType;
 
   @override
+  State<_MetaField> createState() => _MetaFieldSt();
+}
+
+class _MetaFieldSt extends State<_MetaField> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(debugLabel: widget.labelText);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final nextLabel = widget.nextLabel;
     return A11yTextField(
-      label: labelText,
-      valueListenable: controller,
+      label: widget.labelText,
+      valueListenable: widget.controller,
       child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
+        controller: widget.controller,
+        focusNode: _focusNode,
+        keyboardType: widget.keyboardType,
         decoration: InputDecoration(
-          labelText: labelText,
+          labelText: widget.labelText,
           border: const OutlineInputBorder(),
+          suffixIcon: nextLabel == null
+              ? null
+              : NextFieldButton(focusNode: _focusNode, nextLabel: nextLabel),
         ),
-        textInputAction: TextInputAction.next,
+        textInputAction: nextLabel == null
+            ? TextInputAction.done
+            : TextInputAction.next,
+        onSubmitted: (_) =>
+            nextLabel == null ? _focusNode.unfocus() : _focusNode.nextFocus(),
+        onTapOutside: (_) => _focusNode.unfocus(),
       ),
     );
   }

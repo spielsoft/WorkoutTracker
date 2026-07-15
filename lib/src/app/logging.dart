@@ -9,6 +9,7 @@ import 'validation_core.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
+import 'ui/shared/next_field.dart';
 import 'ui/shared/role.dart';
 
 const _segmentRadius = 8.0;
@@ -538,44 +539,15 @@ class _StructuredSetEditor extends StatefulWidget {
   State<_StructuredSetEditor> createState() => _StructuredSetEditorSt();
 }
 
-class _StructuredSetEditorSt extends State<_StructuredSetEditor>
-    with WidgetsBindingObserver {
-  final _portal = OverlayPortalController(debugLabel: 'set forward action');
+class _StructuredSetEditorSt extends State<_StructuredSetEditor> {
   late List<String> _labels;
   late List<FocusNode> _focusNodes;
-  int? _focusedIndex;
-  var _keyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _labels = _fieldLabels(widget.logFormat);
     _focusNodes = _createFocusNodes(_labels);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final visible = (View.maybeOf(context)?.viewInsets.bottom ?? 0) > 0;
-    if (_keyboardVisible && !visible) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) FocusManager.instance.primaryFocus?.unfocus();
-      });
-    }
-    _keyboardVisible = visible;
-  }
-
-  @override
-  void didChangeMetrics() {
-    if (!mounted) return;
-    final view = View.maybeOf(context);
-    if (view == null) return;
-    final visible = view.viewInsets.bottom > 0;
-    if (_keyboardVisible && !visible) {
-      FocusManager.instance.primaryFocus?.unfocus();
-    }
-    setState(() => _keyboardVisible = visible);
   }
 
   @override
@@ -583,100 +555,30 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
     super.didUpdateWidget(oldWidget);
     final labels = _fieldLabels(widget.logFormat);
     if (_sameLabels(labels, _labels)) return;
-    _hidePortal();
     _disposeFocusNodes();
     _labels = labels;
     _focusNodes = _createFocusNodes(labels);
-    _focusedIndex = null;
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _hidePortal();
     _disposeFocusNodes();
     super.dispose();
   }
 
   List<FocusNode> _createFocusNodes(List<String> labels) {
     return [
-      for (final label in labels)
-        FocusNode(debugLabel: 'New set $label')..addListener(_focusChanged),
+      for (final label in labels) FocusNode(debugLabel: 'New set $label'),
     ];
   }
 
   void _disposeFocusNodes() {
     for (final node in _focusNodes) {
-      node
-        ..removeListener(_focusChanged)
-        ..dispose();
-    }
-  }
-
-  void _focusChanged() {
-    if (!mounted) return;
-    final index = _focusNodes.indexWhere((node) => node.hasFocus);
-    final focusedIndex = index < 0 ? null : index;
-    if (focusedIndex == _focusedIndex) return;
-    setState(() => _focusedIndex = focusedIndex);
-    if (focusedIndex == null || focusedIndex == _focusNodes.length - 1) {
-      _hidePortal();
-    } else {
-      _portal.show();
-    }
-  }
-
-  void _hidePortal() {
-    if (_portal.isShowing) _portal.hide();
-  }
-
-  void _advance(int index) {
-    if (index < _focusNodes.length - 1) {
-      _focusNodes[index + 1].requestFocus();
+      node.dispose();
     }
   }
 
   void _dismissInput() => FocusManager.instance.primaryFocus?.unfocus();
-
-  Widget _forwardAction(BuildContext context) {
-    final index = _focusedIndex;
-    if (index == null || index == _labels.length - 1) {
-      return const SizedBox.shrink();
-    }
-    final label = 'Next field ${_labels[index + 1]}';
-    return Positioned(
-      right: 16,
-      bottom: MediaQuery.viewInsetsOf(context).bottom + 8,
-      child: TextFieldTapRegion(
-        child: Material(
-          color: Theme.of(context).colorScheme.surfaceContainerHigh,
-          elevation: 6,
-          borderRadius: BorderRadius.circular(12),
-          child: Tooltip(
-            message: label,
-            excludeFromSemantics: true,
-            child: Semantics(
-              label: label,
-              button: true,
-              enabled: !widget.isBusy,
-              onTap: widget.isBusy ? null : () => _advance(index),
-              child: ExcludeSemantics(
-                child: IconButton(
-                  key: const ValueKey('set-forward-action'),
-                  constraints: const BoxConstraints.tightFor(
-                    width: 56,
-                    height: 56,
-                  ),
-                  onPressed: widget.isBusy ? null : () => _advance(index),
-                  icon: const Icon(Icons.arrow_forward),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -698,11 +600,18 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
         focusNode: _focusNodes[index],
         keyboardType: _numberKeyboard,
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
-        onSubmitted: (_) => isLast ? _dismissInput() : _advance(index),
+        onSubmitted: (_) =>
+            isLast ? _dismissInput() : _focusNodes[index].nextFocus(),
         onTapOutside: (_) => _dismissInput(),
         decoration: InputDecoration(
           label: ExcludeSemantics(child: Text(visualLabel)),
           border: const OutlineInputBorder(),
+          suffixIcon: isLast
+              ? null
+              : NextFieldButton(
+                  focusNode: _focusNodes[index],
+                  nextLabel: _labels[index + 1],
+                ),
         ),
       );
     }
@@ -715,30 +624,27 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
       );
     }
 
-    return OverlayPortal(
-      controller: _portal,
-      overlayLocation: OverlayChildLocation.rootOverlay,
-      overlayChildBuilder: _forwardAction,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final fieldWidth = constraints.maxWidth < 520
-              ? constraints.maxWidth
-              : 112.0;
-          return Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              for (var i = 0; i < _labels.length; i += 1)
-                SizedBox(
-                  width: fieldWidth,
-                  child: accessibleField(_labels[i], i),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 520;
+        final fieldWidth = narrow ? constraints.maxWidth : 112.0;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            for (var i = 0; i < _labels.length; i += 1)
+              SizedBox(
+                width: fieldWidth,
+                child: accessibleField(_labels[i], i),
+              ),
+            if (narrow)
+              SizedBox(width: fieldWidth, child: saveButton())
+            else
               saveButton(),
-            ],
-          );
-        },
-      ),
+          ],
+        );
+      },
     );
   }
 }
@@ -894,19 +800,15 @@ class _LoggedSetFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget field(String label) {
-      return A11yTextField(
-        label: '${entry.setLabel} $label',
-        valueListenable: controllers[label],
-        child: TextField(
-          key: ValueKey('logged-${entry.setLabel}-field-$label'),
-          controller: controllers[label],
-          keyboardType: _numberKeyboard,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-          ),
-        ),
+    Widget field(String label, int index) {
+      return _LoggedSetField(
+        key: ValueKey('${entry.setLabel}-$label'),
+        entry: entry,
+        label: label,
+        controller: controllers[label]!,
+        nextLabel: index < fieldLabels.length - 1
+            ? '${entry.setLabel} ${fieldLabels[index + 1]}'
+            : null,
       );
     }
 
@@ -956,7 +858,7 @@ class _LoggedSetFields extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 for (var index = 0; index < fieldLabels.length; index++) ...[
-                  field(fieldLabels[index]),
+                  field(fieldLabels[index], index),
                   if (index < fieldLabels.length - 1) const SizedBox(height: 8),
                 ],
               ],
@@ -968,14 +870,78 @@ class _LoggedSetFields extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               SizedBox(width: 36, child: Text(entry.setLabel)),
-              for (final label in fieldLabels)
-                SizedBox(width: 112, child: field(label)),
+              for (var index = 0; index < fieldLabels.length; index++)
+                SizedBox(width: 112, child: field(fieldLabels[index], index)),
               saveButton(),
               cancelButton(),
               clearButton(),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _LoggedSetField extends StatefulWidget {
+  const _LoggedSetField({
+    super.key,
+    required this.entry,
+    required this.label,
+    required this.controller,
+    required this.nextLabel,
+  });
+
+  final RowHistoryEntry entry;
+  final String label;
+  final TextEditingController controller;
+  final String? nextLabel;
+
+  @override
+  State<_LoggedSetField> createState() => _LoggedSetFieldSt();
+}
+
+class _LoggedSetFieldSt extends State<_LoggedSetField> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(
+      debugLabel: '${widget.entry.setLabel} ${widget.label}',
+    );
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final nextLabel = widget.nextLabel;
+    return A11yTextField(
+      label: '${widget.entry.setLabel} ${widget.label}',
+      valueListenable: widget.controller,
+      child: TextField(
+        key: ValueKey('logged-${widget.entry.setLabel}-field-${widget.label}'),
+        controller: widget.controller,
+        focusNode: _focusNode,
+        keyboardType: _numberKeyboard,
+        textInputAction: nextLabel == null
+            ? TextInputAction.done
+            : TextInputAction.next,
+        onSubmitted: (_) =>
+            nextLabel == null ? _focusNode.unfocus() : _focusNode.nextFocus(),
+        onTapOutside: (_) => _focusNode.unfocus(),
+        decoration: InputDecoration(
+          labelText: widget.label,
+          border: const OutlineInputBorder(),
+          suffixIcon: nextLabel == null
+              ? null
+              : NextFieldButton(focusNode: _focusNode, nextLabel: nextLabel),
+        ),
       ),
     );
   }

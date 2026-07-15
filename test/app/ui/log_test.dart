@@ -28,6 +28,10 @@ void main() {
     expect(_field('Reps'), findsOneWidget);
     expect(_field('RPE'), findsOneWidget);
     expect(find.text('Save set S1'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('set-field-Weight'))).width,
+      tester.getSize(find.widgetWithText(FilledButton, 'Save set S1')).width,
+    );
   });
 
   testWidgets(
@@ -62,7 +66,7 @@ void main() {
       await tester.enterText(effort, '7.5');
       await tester.tap(find.bySemanticsLabel('Next field Cue'));
       await tester.pump();
-      expect(find.byKey(const ValueKey('set-forward-action')), findsNothing);
+      expect(find.byIcon(Icons.arrow_forward), findsNothing);
       _expectFieldValue('Effort', '7.5');
       await tester.enterText(cue, 'steady');
       await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -92,7 +96,7 @@ void main() {
     await tester.enterText(_field('Load'), '100.5');
     await tester.enterText(_field('Effort'), '7');
     await tester.enterText(_field('Cue'), 'go');
-    expect(find.byKey(const ValueKey('set-forward-action')), findsNothing);
+    expect(find.byIcon(Icons.arrow_forward), findsNothing);
     expect(tester.testTextInput.isVisible, isTrue);
 
     await tester.tap(find.text('Development Workouts'));
@@ -129,7 +133,7 @@ void main() {
     expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
   });
 
-  testWidgets('first forward action tracks delayed keyboard insets', (
+  testWidgets('next arrow stays inside the active field on a narrow screen', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 1000);
@@ -138,14 +142,12 @@ void main() {
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
-      tester.view.resetViewInsets();
       tester.platformDispatcher.clearTextScaleFactorTestValue();
     });
 
-    final actions = _LogActions();
     await tester.pumpWidget(
       _app(
-        actions: actions,
+        actions: _LogActions(),
         view: _targetView(targets: '240x10-12@8,0'),
       ),
     );
@@ -156,28 +158,16 @@ void main() {
 
     final forward = find.bySemanticsLabel('Next field Reps');
     expect(forward, findsOneWidget);
-
-    tester.view.viewInsets = const FakeViewPadding(bottom: 80);
-    await tester.pump();
-    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
-    await tester.pump();
+    final arrow = find.byIcon(Icons.arrow_forward);
+    expect(arrow, findsOneWidget);
 
     expect(tester.takeException(), isNull);
-    final keyboardTop =
-        tester.view.physicalSize.height / tester.view.devicePixelRatio -
-        tester.view.viewInsets.bottom;
-    expect(tester.getBottomLeft(field).dy, lessThanOrEqualTo(keyboardTop));
-    expect(tester.getBottomLeft(forward).dy, lessThanOrEqualTo(keyboardTop));
-
-    await tester.tap(forward);
-    await tester.pump();
-    expect(find.bySemanticsLabel('Next field RPE'), findsOneWidget);
-    expect(actions.cmds, isEmpty);
-
-    tester.view.viewInsets = FakeViewPadding.zero;
-    await tester.pump();
-    await tester.pump();
-    expect(find.byKey(const ValueKey('set-forward-action')), findsNothing);
+    final fieldRect = tester.getRect(
+      find.byKey(const ValueKey('set-field-Weight')),
+    );
+    final arrowRect = tester.getRect(arrow);
+    expect(fieldRect.contains(arrowRect.center), isTrue);
+    expect(arrowRect.right, lessThanOrEqualTo(fieldRect.right));
   });
 
   testWidgets('keeps desktop set entry compact in the shared flow', (
@@ -487,6 +477,12 @@ void main() {
     for (final label in const ['Weight', 'Reps', 'RPE', 'Pain']) {
       expect(find.bySemanticsLabel('S1 $label'), findsOneWidget);
     }
+    await tester.tap(find.bySemanticsLabel('S1 Weight'));
+    await tester.pump();
+    expect(find.bySemanticsLabel('Next field S1 Reps'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Next field S1 Reps'));
+    await tester.pump();
+    expect(find.bySemanticsLabel('Next field S1 RPE'), findsOneWidget);
     expect(find.text('Weight'), findsOneWidget);
     expect(find.text('Reps'), findsOneWidget);
     expect(find.text('RPE'), findsOneWidget);
