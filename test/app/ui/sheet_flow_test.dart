@@ -33,12 +33,10 @@ void main() {
 
     expect(find.text('Update workout sheet formats'), findsOneWidget);
     expect(
-      find.text(
-        'Exercises row 2 Log Format: '
-        '"{Weight}[x]{Reps}[@]{RPE}" → "{Weight}x{Reps}@{RPE}".',
-      ),
+      find.text('This sheet needs conversion from version 0.9 to 1.0.'),
       findsOneWidget,
     );
+    expect(find.textContaining('Exercises row 2 Log Format:'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('convert-format-sheet')));
     await tester.pumpAndSettle();
 

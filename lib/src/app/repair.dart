@@ -43,11 +43,14 @@ class ValidationSummary extends StatelessWidget {
           icon: Icons.upgrade_outlined,
           title: _migrationTitle(migration),
           lines: [
-            if (migration.canApply)
-              migration.kind == WbkMigrationKind.format09
-                  ? 'This declared 0.9 sheet uses older bracket-token Log Formats.'
-                  : 'This sheet uses an older WorkoutTracker column layout.',
-            ...migration.changes,
+            if (migration.kind == WbkMigrationKind.format09) ...[
+              if (migration.canApply)
+                'This sheet needs conversion from version 0.9 to 1.0.',
+            ] else ...[
+              if (migration.canApply)
+                'This sheet uses an older WorkoutTracker column layout.',
+              ...migration.changes,
+            ],
             if (migration.blockers.isNotEmpty) 'Spreadsheet details',
             ...migration.blockers,
           ],
