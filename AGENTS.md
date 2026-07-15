@@ -15,12 +15,11 @@ guidance relevant to the work:
 | Tests or live Google validation | `docs/testing.md` |
 | Login, scopes, sheet choice, or Google setup | `docs/google_sheets_development_auth.md` |
 | UI or semantics | `docs/accessibility.md` |
-| Apple builds or release bundles | `COMPILE.md` |
+| Apple builds or release bundles | `BUILDING.md` |
 | Creating or renaming code | `AGENTS/CONCISE-CODE-NAMES.md` and the `/concise-code-names` skill |
 
 `README.md` is the human-facing project overview; it is not required reading
 when the active task and routed guidance already provide enough context.
-`APP_STORE.md` is historical and is not an authoritative source.
 
 ## Non-Negotiable Product Rules
 

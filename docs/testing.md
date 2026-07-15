@@ -97,5 +97,5 @@ all owner workbooks complete the combined field/layout migration.
 ## Release Validation
 
 Run the full local suite plus the clean Apple builds required by
-[`COMPILE.md`](../COMPILE.md). Accessibility work also follows
+[`BUILDING.md`](../BUILDING.md). Accessibility work also follows
 [`docs/accessibility.md`](accessibility.md).

@@ -30,7 +30,7 @@ The default credential-free gate is `flutter test`. It contains 220 tests in
   dry-runs only when explicitly enabled and requires the exact spreadsheet ID
   again as confirmation before applying the temporary owner migration.
 - Native Apple bundle and accessibility smoke checks are release commands, not
-  simulated Dart tests. See `COMPILE.md` and `docs/accessibility.md`.
+  simulated Dart tests. See `BUILDING.md` and `docs/accessibility.md`.
 - Dynamic-field live acceptance inspects both a conventional Weight/Reps/RPE
   exercise and a non-conventional format in the app and resulting Google
   Sheet. The local suite proves only WorkoutTracker's contracts.

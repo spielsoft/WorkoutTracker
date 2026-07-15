@@ -92,7 +92,7 @@ bundle identifier, and create the matching native OAuth client. Release builds
 retain the App Sandbox network-client entitlement and Google Sign-In keychain
 access group. A signed bundle is required to validate stable keychain and
 native login behavior outside a debug session. The compile-only unsigned build
-in `COMPILE.md` does not prove authentication.
+in `BUILDING.md` does not prove authentication.
 
 OAuth client IDs embedded in an installed app are identifiers, not confidential
 client secrets. Exported credentials, API keys, and builder-specific generated
@@ -114,7 +114,7 @@ not an authentication or workout-data backend.
   of Android support.
 - Linux and Windows: not configured for Google account access.
 
-Build commands are in [`COMPILE.md`](../COMPILE.md). Real Google validation is
+Build commands are in [`BUILDING.md`](../BUILDING.md). Real Google validation is
 opt-in and documented in [`docs/testing.md`](testing.md).
 
 ## Expected Manual Flow
