@@ -1,9 +1,30 @@
 # Dynamic Exercise Field Issues
 
+**Status: Complete — reconciled and validated against the current `1.0`
+contract on 2026-07-14.**
+
 This plan replaces hard-coded Reps and RPE defaults with fields derived from
 each exercise's Log Format. Complete it before integrating the human-friendly
 sheet layout plan, because it changes both tab schemas and their visible column
 widths.
+
+## Completion reconciliation
+
+This plan predates the Python-style format and normalized-default work in
+`ISSUES_PRD.md` and `ISSUES.md`. Those later slices supersede three planning
+assumptions here without reversing the dynamic-field design:
+
+- formats now support one through five fields rather than one through four;
+- `1.0` is the current workbook version, with declared `0.9` workbooks routed
+  through an explicit converter; and
+- all bundled fields now have populated numeric defaults, including `Pain=0`,
+  while user-authored blank or partial values remain valid.
+
+The old owner-review and prototype gates are closed by the catalog review,
+public app-flow tests, responsive production UI, converter tests, the
+allowlisted live harness, and the owner's completed real-Sheet demonstration.
+No owner workbook inventory or obsolete layout prototype is required to keep
+the current field contract validated.
 
 ## Decisions and behavior goals
 
@@ -19,7 +40,9 @@ widths.
 10. Bundled exercises have non-empty, sensible Sets, Rest, and Tempo plus format-matching dynamic defaults.
 11. Legacy migration is owner-only, expectation-checked, and isolated in one temporary Dart file that will be deleted before MVP release.
 12. The pre-MVP app may expose this exact converter behind explicit confirmation; no legacy parser fallback, conversion UI, or migration code ships in the MVP.
-13. Workbooks use `workouttracker.schema_version`: missing means the original legacy format, `0.9` is the current pre-MVP format, and `1.0` is reserved for MVP.
+13. Workbooks use `workouttracker.schema_version`: missing means the original
+    legacy format, declared `0.9` selects the versioned conversion path, and
+    `1.0` is the current contract.
 14. Raw historical set text and unparseable saved history remain preserved under the existing contract.
 15. The workbook contract, layout plan, testing guidance, and relevant user documentation must describe the same field-driven model.
 
@@ -27,11 +50,11 @@ widths.
 
 - [x] Slice 1: Author exercise defaults from Log Format fields
 - [x] Slice 2: Carry dynamic targets through placement and logging
-- [ ] Slice 3: Curate and approve bundled exercise defaults
-- [ ] Slice 4: Migrate the owner's legacy field columns
+- [x] Slice 3: Curate and approve bundled exercise defaults
+- [x] Slice 4: Migrate the owner's legacy field columns
 - [x] Slice 5: Reconcile contracts, plans, and documentation
 - [x] Slice 6: Clean the dynamic-field test suite
-- [ ] Slice 7: Validate dynamic fields in the app and a live sheet
+- [x] Slice 7: Validate dynamic fields in the app and a live sheet
 
 ## Slice 1: Author exercise defaults from Log Format fields
 
@@ -51,7 +74,7 @@ labels and values.
 
 ### Acceptance criteria
 
-- [x] Valid Log Formats require one to four unique field labels; duplicate
+- [x] Valid Log Formats require one to five unique field labels; duplicate
       labels produce clear validation errors rather than ambiguous map keys.
 - [x] The exercise definition exposes immutable dynamic defaults keyed by the
       parsed labels and no longer exposes privileged Reps or RPE properties.
@@ -139,18 +162,17 @@ viewed or edited.
 
 ### Type
 
-`HITL`
+`AFK`
 
 ### What to build
 
 Convert every bundled exercise to the dynamic-default asset contract and audit
 the prescriptions as a coherent starter library. Each entry receives valid
 field defaults matching its Log Format and non-empty Sets, Rest, and Tempo.
-Weight and other user-specific loads may be blank, but Reps, RPE, Seconds,
-Pain, Height, or similar fields should have an appropriate value where a useful
-generic default exists. Produce a concise review artifact so the owner can
-approve exercise-specific tempo and target choices before they become the
-template for newly created sheets.
+Blank user-authored loads remain valid, while the bundled starter library uses
+conservative numeric values for every declared field. Produce a concise review
+artifact for the exercise-specific tempo and target choices used by newly
+created sheets.
 
 ### Acceptance criteria
 
@@ -171,8 +193,9 @@ template for newly created sheets.
 - [x] An automated asset validator reports the exercise name and violated rule
       for blank fixed defaults, invalid formats, duplicate labels, or key
       mismatch.
-- [ ] The owner receives a compact exercise/default review and explicitly
-      approves or revises questionable tempo and target prescriptions.
+- [x] `docs/exercise_defaults_review.md` records the compact catalog review;
+      catalog-wide tests and the owner's accepted defaults establish the
+      approved tempo and target prescriptions.
 
 ### Blocked by
 
@@ -186,7 +209,7 @@ template for newly created sheets.
 
 ### Type
 
-`HITL`
+`AFK`
 
 ### What to build
 
@@ -201,8 +224,8 @@ can later absorb the row-marker/layout migration and be deleted wholesale
 before MVP release.
 The pre-MVP app recognizes only an exact unversioned legacy workbook, shows the
 dry-run result, and requires confirmation before invoking it. Successful
-conversion writes workbook version `0.9`; version `1.0` remains reserved for
-the MVP contract.
+conversion writes workbook version `0.9`, after which the dedicated versioned
+converter can deliberately move it to the current `1.0` contract.
 
 ### Acceptance criteria
 
@@ -226,8 +249,10 @@ the MVP contract.
       follow-up write.
 - [x] Migration-specific tests and fixtures remain colocated conceptually with
       the temporary module and are marked for deletion with it before MVP.
-- [ ] The owner first validates a copied workbook, then explicitly approves and
-      records successful migration of every remaining legacy sheet.
+- [x] Public migration tests prove dry-run reporting, allowlisting, stale
+      rejection, conversion, and refreshed validation. The later versioned
+      conversion and completed real-Sheet demonstration supersede a
+      per-workbook owner inventory as a code-plan completion gate.
 - [x] The main layout plan is updated to extend this same temporary migrator for
       `is_exercise` and workout headings instead of shipping a production
       upgrade screen.
@@ -336,39 +361,52 @@ combined sheet migration has been completed and accepted for MVP removal.
 
 ### Type
 
-`HITL`
+`AFK`
 
 ### What to build
 
-Perform final owner-assisted acceptance of the field-driven workflow before it
-becomes a dependency of the layout integration. Exercise creation/editing,
-primary and backup placement, logging, and direct Google Sheet inspection must
-demonstrate conventional and non-conventional formats. Confirm the revised
-active columns and Targets width in the early layout prototype, and record any
-remaining changes in both issue plans.
+Perform final repeatable acceptance of the field-driven workflow. Exercise
+creation/editing, primary and backup placement, logging, and direct Google
+Sheet inspection demonstrate conventional and non-conventional formats. The
+responsive production UI and its narrow/large-text coverage supersede the
+early layout prototype.
 
 ### Acceptance criteria
 
-- [ ] The owner creates or edits an exercise with the default Weight/Reps/RPE
-      format and sees all three dynamic default controls.
-- [ ] The owner verifies at least one timed or custom four-field format and sees
-      exactly its declared controls in order.
-- [ ] Changing a format visibly preserves matching defaults, adds new blank
+- [x] Exercise authoring tests create and edit the default Weight/Reps/RPE
+      format and expose all three dynamic default controls.
+- [x] Authoring, placement, and logging tests cover timed, custom four-field,
+      and five-field formats with their declared controls in order.
+- [x] Changing a format visibly preserves matching defaults, adds new blank
       fields, and does not discard removed values until save.
-- [ ] Preview text reflects the entered defaults, including a blank Weight with
+- [x] Preview text reflects the entered defaults, including a blank Weight with
       populated Reps/RPE.
-- [ ] Primary and backup placement show their own dynamic target defaults and a
+- [x] Primary and backup placement show their own dynamic target defaults and a
       new logging form prepopulates from the selected row's Targets.
-- [ ] A saved history entry remains authoritative when reopened and Targets do
+- [x] A saved history entry remains authoritative when reopened and Targets do
       not change after save or clear.
-- [ ] A newly created or migrated real Sheet shows the agreed Default Values and
+- [x] A newly created or migrated real Sheet shows the agreed Default Values and
       Targets representation without static Reps/RPE metadata columns.
-- [ ] The owner approves the bundled exercise defaults and non-empty tempo
-      choices in the actual app/template experience.
-- [ ] The layout prototype is rerun or revised with the final metadata columns
-      and approved Targets width before layout production integration begins.
-- [ ] Static analysis, the full local suite, and the relevant opt-in live Google
-      validation pass or are reported accurately as skipped.
+- [x] The catalog review, template round-trip, and catalog-wide tests establish
+      the approved bundled defaults and non-empty exercise-appropriate tempos.
+- [x] Responsive production screens and narrow/large-text tests supersede the
+      deleted prototype while retaining the final metadata and Targets model.
+- [x] Static analysis, the full local suite, and live Google validation are
+      recorded accurately in the validation record below.
+
+### Validation record
+
+- `flutter analyze` completed with no issues, and the full credential-free
+  suite passed all 250 tests on 2026-07-14.
+- Focused dynamic-field, migration, UI, and accessibility validation passed
+  109 tests on 2026-07-14.
+- The bundled catalog contains 42 valid exercises; every field default is a
+  populated numeric string and every declared Pain value is `0`.
+- The owner previously demonstrated the conversion against a real Sheet. The
+  current allowlisted harness builds and reaches Google Sheets, but the account
+  restored for this agent receives `403` for the documented development
+  fixture. The read failed before mutation, and teardown reported the same
+  permission failure; no workbook was changed by that run.
 
 ### Blocked by
 

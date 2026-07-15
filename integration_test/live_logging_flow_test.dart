@@ -23,10 +23,7 @@ void main() {
     final google = ScopedApiAccess(auth: auth);
     final workspace = WorkspaceCtrl(
       accountSession: auth,
-      picker: DriveSheetPicker(
-        googleAccess: google,
-        showPicker: _resolveFixture,
-      ),
+      picker: _FixturePkr(auth),
     );
     final entry = LiveLoggingEntry(
       workspace: workspace,
@@ -87,18 +84,6 @@ void main() {
 const _stepUpFormat = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
 const _oldHistory = '(10)x6@7,0';
 const _loggedSet = '(12, 15)x8@8,0';
-
-Future<SheetEntry?> _resolveFixture(SheetViewReq req) async {
-  final entries = await req.load('WorkoutTracker development');
-  for (final entry in entries) {
-    if (entry.id == workoutTrackerDevelopmentSpreadsheetId) {
-      return entry;
-    }
-  }
-  throw StateError(
-    'The destructive WorkoutTracker development fixture is not accessible.',
-  );
-}
 
 Future<void> _resetFixture(ApiAccess google) {
   return google.run(
@@ -305,3 +290,24 @@ String _migrationSummary(FormatMigrationReport report) => [
   else
     ...report.blockers.map((blocker) => '- BLOCKER: $blocker'),
 ].join('\n');
+
+class _FixturePkr implements SheetPicker {
+  const _FixturePkr(this.account);
+
+  final GoogleAccountSession account;
+
+  @override
+  PickerAvail get availability => const PickerAvail.available();
+
+  @override
+  Future<SelectedSheet?> chooseSheet() async {
+    return SelectedSheet(
+      spreadsheetId: workoutTrackerDevelopmentSpreadsheetId,
+      name: 'WorkoutTracker development',
+      accountEmail: account.currentAccount?.email,
+    );
+  }
+
+  @override
+  Future<SelectedSheet?> createSheet({String? name}) async => null;
+}
