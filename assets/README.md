@@ -2,9 +2,13 @@
 
 ## Branding
 
-`assets/branding/workout_tracker_icon_source.png` is the high-resolution source
+`assets/branding/workout_tracker_icon.png` is the high-resolution source
 artwork for the platform app icons. It is not declared in `pubspec.yaml`
 because the app does not load it at runtime.
+
+`assets/branding/workout_tracker_icon_small.png` is a small transparent
+derivative. SpielSoftWeb keeps its own copy of product branding so website
+deployments do not depend on this application repository.
 
 Generated app icon assets live in the platform folders:
 

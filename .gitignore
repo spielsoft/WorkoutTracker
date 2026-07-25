@@ -32,7 +32,6 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-.firebase/
 
 # Local Google credential exports and generated build values. Only sanitized
 # examples and their README are tracked.

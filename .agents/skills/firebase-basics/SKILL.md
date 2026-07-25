@@ -21,23 +21,8 @@ Complete these setup steps before proceeding:
    - **CRITICAL**: Before configuring any extensions or agent environments
      below, you MUST read
      [references/local-env-setup.md](references/local-env-setup.md).
-   - **DO NOT SKIP** this step: if 'firebase-basics' is the only Firebase skill
-     available to you, you must follow the reference for your agent environment
-     to set up the full suite of Firebase skills:
-     - **Gemini CLI**: Review
-       [references/setup/gemini_cli.md](references/setup/gemini_cli.md)
-     - **Antigravity**: Review
-       [references/setup/antigravity.md](references/setup/antigravity.md)
-     - **Android Studio**: Review
-       [references/setup/android_studio.md](references/setup/android_studio.md)
-     - **Claude Code**: Review
-       [references/setup/claude_code.md](references/setup/claude_code.md)
-     - **Cursor**: Review
-       [references/setup/cursor.md](references/setup/cursor.md)
-     - **GitHub Copilot**: Review
-       [references/setup/github_copilot.md](references/setup/github_copilot.md)
-     - **Other Agents**: Review
-       [references/setup/other_agents.md](references/setup/other_agents.md)
+   - Install only the additional Firebase skills required by the active
+     project's implemented services. Do not install the full suite by default.
 
 1. **Authentication:** Ensure you are logged in to Firebase so that commands
    have the correct permissions. Run `npx -y firebase-tools@latest login`. For

@@ -1,7 +1,7 @@
 # Release Test Inventory
 
-The default credential-free gate is `flutter test`. It contains 220 tests in
-40 files and is organized by public contract:
+The default credential-free gate is `flutter test` and is organized by public
+contract:
 
 | Contract | Test files | Purpose |
 | --- | --- | --- |
@@ -12,7 +12,6 @@ The default credential-free gate is `flutter test`. It contains 220 tests in
 | Workout and exercise flows | `test/app/{progress,live_logging_entry}_test.dart`, `test/app/ui/{workout_home,logging_flow,log,navigation,placement_flow,exercise_library_flow,exercise_authoring,exercise_screen,library_search}_test.dart` | Protect generated default/target fields, target-prefilled logging, raw-set editing, navigation, authoring, placement, reorder auto-scroll, progress, and error recovery. |
 | Temporary owner migration | `test/migration/legacy_field_migration_test.dart` | Proves version dispatch, allowlisting, dry-run blockers, field conversion, metadata stamping, and raw-history preservation for the temporary pre-MVP migrator. Delete it with the migrator after owner workbooks are converted. |
 | Shell and accessibility | `test/app/ui/shell_test.dart` | Runs Flutter accessibility guidelines in core states and checks narrow, large-text workflows through visible outcomes. |
-| Hosted-resource safety | `test/firebase_hosting_static_site_test.dart` | Checks required links and contact, absence of hosted auth/token surfaces, and a static no-rewrite Hosting boundary. It does not lock disclosure wording or the exact file inventory. |
 
 ## Unusual Checks
 
@@ -55,8 +54,6 @@ Rewrite:
 - Sheet-name replacement is exercised through the platform text-input state
   and resulting picker request, without inspecting `EditableText` internals or
   exact selection offsets.
-- Hosted-resource coverage now checks destinations and safety boundaries, not
-  disclosure prose or exact filenames.
 
 Delete:
 

@@ -34,8 +34,10 @@ store-release design.
 ## Builder Configuration
 
 Every builder owns their Google Cloud project, consent screen, quotas, OAuth
-clients, and any verification obligations. The project owner's credentials are
-not a shared service for forks or source builds.
+clients, and any verification obligations. A Firebase project may supply that
+Google Cloud project, but the app uses native Google Sign-In rather than
+Firebase Authentication and has no Firebase SDK dependency. The project
+owner's credentials are not a shared service for forks or source builds.
 
 In Google Cloud Console:
 
@@ -98,8 +100,9 @@ OAuth client IDs embedded in an installed app are identifiers, not confidential
 client secrets. Exported credentials, API keys, and builder-specific generated
 configuration must still remain out of source control.
 
-Firebase Hosting serves only the checked-in support and privacy pages. It is
-not an authentication or workout-data backend.
+The public website, legal pages, Firebase Hosting configuration, deployment
+instructions, and hosted-resource tests are maintained separately in the
+SpielSoftWeb project. Hosting is not an authentication or workout-data backend.
 
 ## Platform Status
 

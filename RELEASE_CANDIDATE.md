@@ -73,9 +73,10 @@ defines file or command-line flag.
   First launch is pending the phone's one-time explicit trust of the refreshed
   personal-development profile. Physical-device Google login remains a
   user/HITL check.
-- Firebase Hosting deployment/manual production-page comparison belongs to
-  the already completed support/privacy slice and is not repeated by this
-  release build gate.
+- The historical Firebase Hosting deployment/manual production-page comparison
+  belonged to the completed support/privacy slice. The site, its Hosting
+  configuration, and its validation now live in the separate SpielSoftWeb
+  project and are not part of this app release gate.
 - Android: deliberately not built or validated. Its deferred SDK/toolchain,
   release networking and permission, package/signing identity, OAuth client,
   and physical-device work is documented in `BUILDING.md` and
