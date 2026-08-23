@@ -8,6 +8,8 @@ import '../validation.dart';
 import '../workspace.dart';
 import 'view.dart';
 import 'shared/a11y.dart';
+import 'shared/error.dart';
+import 'shared/header.dart';
 import 'shared/name_dialog.dart';
 
 final class SheetView extends AppView {
@@ -105,6 +107,10 @@ final class OpenSheet extends SheetCmd {
 
 final class ConfirmWbkMigration extends SheetCmd {
   const ConfirmWbkMigration();
+}
+
+final class DismissSheetError extends SheetCmd {
+  const DismissSheetError();
 }
 
 class SheetScreen extends StatefulWidget {
@@ -219,11 +225,9 @@ class _SheetScreenSt extends State<SheetScreen> {
           _SheetText(view: view, ctrl: _ctrl, run: widget.run),
         const SizedBox(height: 24),
         if (view.error case final error?) ...[
-          IssuePanel(
-            icon: Icons.error_outline,
-            title: 'Connection or validation failed',
-            lines: [error],
-            tone: IssueTone.error,
+          ErrorBanner(
+            message: error,
+            onDismiss: () => widget.run(const DismissSheetError()),
           ),
           const SizedBox(height: 16),
         ],
@@ -301,7 +305,6 @@ class _SheetPick extends StatelessWidget {
         ? 'Connecting to Google Sheets…'
         : selected?.displayLabel ??
               (connected ? 'No workout sheet selected' : 'Not logged in');
-    final email = selected?.accountEmail ?? view.account?.email;
     final colors = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -315,14 +318,10 @@ class _SheetPick extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.table_chart_outlined, color: colors.primary),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: ScreenTitle(
                     title,
                     key: const ValueKey('selected-spreadsheet-label'),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -336,14 +335,6 @@ class _SheetPick extends StatelessWidget {
                 ],
               ],
             ),
-            if (!view.isRestoring && email != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                email,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
             if (view.isRestoring) ...[
               const SizedBox(height: 8),
               const LinearProgressIndicator(

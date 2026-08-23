@@ -609,7 +609,7 @@ void main() {
 
     expect(find.text('Connecting to Google Sheets…'), findsNothing);
     expect(find.text('No workout sheet selected'), findsOneWidget);
-    expect(find.text('saved@example.com'), findsOneWidget);
+    expect(find.text('saved@example.com'), findsNothing);
     expect(
       find.byTooltip('Google Sheets account: saved@example.com'),
       findsOneWidget,

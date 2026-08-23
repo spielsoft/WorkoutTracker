@@ -116,6 +116,18 @@ class WorkspaceCtrl extends ChangeNotifier implements WorkspaceLifecycle {
   @override
   WorkspaceUiSt get state => _state;
 
+  void clearError() {
+    if (_state.error == null) return;
+    _setUiSt(
+      _stateWith(
+        selectedSheet: _state.selectedSheet,
+        pastedText: _state.pastedText,
+        workoutSelection: _state.workoutSelection,
+        clearError: true,
+      ),
+    );
+  }
+
   @override
   Future<WorkspaceUiSt> restore() {
     if (!_needsInit) return _restore();

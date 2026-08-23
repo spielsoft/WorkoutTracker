@@ -142,6 +142,7 @@ final class LoadedFlow
   }
 
   void showHome() {
+    dismissError();
     _ctrl.closeExercise();
     _pages
       ..clear()
@@ -150,6 +151,7 @@ final class LoadedFlow
   }
 
   void reset() {
+    dismissError();
     _ctrl.closeExercise();
     _pages
       ..clear()
@@ -208,6 +210,12 @@ final class LoadedFlow
         await _ctrl.deleteWorkoutExercise(primaryRow: primaryRow);
     }
     _changed();
+  }
+
+  @override
+  void dismissError() {
+    _ctrl.clearError();
+    _workspace.clearError();
   }
 
   @override
@@ -326,9 +334,13 @@ final class LoadedFlow
 
   _Page? get _previous => _pages.length < 2 ? null : _pages[_pages.length - 2];
 
-  void _push(_Page page) => _pages.add(page);
+  void _push(_Page page) {
+    dismissError();
+    _pages.add(page);
+  }
 
   void _leave(_Page page) {
+    dismissError();
     if (page is _Log) _ctrl.closeExercise();
     if (page is _Edit && _ctrl.pendingFormatUpdate != null) {
       _ctrl.cancelExerciseUpdate();

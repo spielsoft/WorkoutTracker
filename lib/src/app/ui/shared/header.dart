@@ -38,14 +38,11 @@ class ScreenHeader extends StatelessWidget {
             children: [
               A11yHeader(
                 label: subtitle == null ? title : '$title, $subtitle',
-                child: Text(
+                child: ScreenTitle(
                   title,
                   key: compactTitle
                       ? const ValueKey('current-workout-sheet-label')
                       : null,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
                   style: compactTitle
                       ? Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: colors.onSurfaceVariant,
@@ -70,6 +67,24 @@ class ScreenHeader extends StatelessWidget {
         ),
         if (trailing != null) ...[const SizedBox(width: 8), trailing!],
       ],
+    );
+  }
+}
+
+class ScreenTitle extends StatelessWidget {
+  const ScreenTitle(this.text, {this.style, super.key});
+
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
+      style: style,
     );
   }
 }

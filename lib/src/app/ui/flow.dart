@@ -152,6 +152,7 @@ final class AppFlow extends ChangeNotifier {
       ),
       OpenSheet() => await _openSheet(),
       ConfirmWbkMigration() => await _confirmMigration(),
+      DismissSheetError() => _dismissError(),
     };
     notifyListeners();
     return result;
@@ -279,8 +280,15 @@ final class AppFlow extends ChangeNotifier {
   }
 
   CmdResult _showSheet() {
+    _dismissError();
     _ctrl.closeExercise();
     _showLoaded = false;
+    return const CmdResult.done();
+  }
+
+  CmdResult _dismissError() {
+    _ctrl.clearError();
+    _workspace.clearError();
     return const CmdResult.done();
   }
 

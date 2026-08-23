@@ -164,7 +164,7 @@ void main() {
     expect(find.text('Workout'), findsOneWidget);
     expect(find.text('History block'), findsOneWidget);
     expect(find.text('Legs (0/1 started)'), findsOneWidget);
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);
 
     await tester.tap(find.text('Week 2'));
@@ -177,7 +177,7 @@ void main() {
     await tester.tap(find.text('Upper (0/1 started)').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Upper exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Bench Press'), findsOneWidget);
     expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
 
@@ -188,7 +188,7 @@ void main() {
     expect(find.text('Bench Press logging'), findsNothing);
     expect(find.byTooltip('Back to exercises'), findsOneWidget);
     expect(find.text('Workout setup'), findsNothing);
-    expect(find.text('Upper exercises'), findsNothing);
+    expect(find.text('Exercises'), findsNothing);
     expect(find.byKey(const ValueKey('set-field-Weight')), findsOneWidget);
     expect(find.byKey(const ValueKey('set-field-Reps')), findsOneWidget);
     expect(find.byKey(const ValueKey('set-field-RPE')), findsOneWidget);
@@ -267,10 +267,8 @@ void main() {
     await tester.pump();
 
     expect(service.appliedPlans, hasLength(1));
-    expect(
-      find.text('Unable to save set: Bad state: network unavailable'),
-      findsOneWidget,
-    );
+    expect(find.text('Unable to save set'), findsOneWidget);
+    expect(find.text('Bad state: network unavailable'), findsOneWidget);
     expect(find.text('Save set S1'), findsOneWidget);
     _expectFieldValue('Weight', '155');
   });
@@ -302,10 +300,9 @@ void main() {
 
       expect(service.appliedPlans, hasLength(1));
       expect(service.appliedPlans.single.nextSetPosition?.setNumber, 3);
+      expect(find.text('Unable to save set'), findsOneWidget);
       expect(
-        find.text(
-          'Unable to save set: saved set was not visible after refresh.',
-        ),
+        find.text('saved set was not visible after refresh.'),
         findsOneWidget,
       );
       expect(find.text('Save set S2'), findsOneWidget);

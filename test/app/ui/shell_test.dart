@@ -84,7 +84,7 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Edit exercise library'));
     await tester.pumpAndSettle();

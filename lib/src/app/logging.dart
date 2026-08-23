@@ -8,6 +8,7 @@ import 'logging_flow.dart';
 import 'validation_core.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
+import 'ui/shared/error.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/next_field.dart';
 import 'ui/shared/role.dart';
@@ -31,6 +32,8 @@ final class LogView extends LoadedView {
 
 abstract interface class LogActions {
   Future<void> close();
+
+  void dismissError();
 
   Future<void> selectRow(int sheetRow);
 
@@ -269,7 +272,7 @@ class _LogScreenSt extends State<LogScreen> {
           ),
           if (widget.view.error case final error?) ...[
             const SizedBox(height: 8),
-            _InlineLoggingError(message: error),
+            ErrorBanner(message: error, onDismiss: widget.actions.dismissError),
           ],
           const SizedBox(height: 16),
           Text('Logged sets', style: Theme.of(context).textTheme.titleMedium),
@@ -309,39 +312,6 @@ class _LogScreenSt extends State<LogScreen> {
           const SizedBox(height: 16),
           _RecentHistoryPanel(blocks: priorHistoryBlocks),
         ],
-      ),
-    );
-  }
-}
-
-class _InlineLoggingError extends StatelessWidget {
-  const _InlineLoggingError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      key: const ValueKey('logging-write-error'),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                message,
-                style: TextStyle(color: colorScheme.onErrorContainer),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

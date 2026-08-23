@@ -33,6 +33,12 @@ class AppCtrl extends ChangeNotifier {
 
   String? get error => _error;
 
+  void clearError() {
+    if (_error == null) return;
+    _error = null;
+    notifyListeners();
+  }
+
   bool get isBusy => _serviceActions > 0 || _mutationPending;
 
   ExeFormatImpact? get pendingFormatUpdate => _pendingFormatUpdate;

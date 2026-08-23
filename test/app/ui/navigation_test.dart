@@ -11,7 +11,7 @@ void main() {
   ) async {
     await _openWorkout(tester);
 
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);
     expect(find.text('Select'), findsNothing);
   });
@@ -85,7 +85,7 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Save set S1'), findsNothing);
   });
 
@@ -102,7 +102,7 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.bySemanticsLabel('Search exercises'), findsNothing);
   });
 
@@ -185,7 +185,7 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Choose exercise'), findsNothing);
   });
 

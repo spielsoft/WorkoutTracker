@@ -10,12 +10,12 @@ import 'exercise_create_screen.dart';
 import 'exercise_edit_screen.dart';
 import 'placement_screen.dart';
 import 'logging.dart';
-import 'repair.dart';
 import 'workout_home.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
+import 'ui/shared/error.dart';
 
 const _seed = Color(0xFF0E7C66);
 
@@ -265,12 +265,7 @@ class _AppShellSt extends State<AppShell> {
       children: [
         if (showError)
           if (view.error case final error?) ...[
-            IssuePanel(
-              icon: Icons.error_outline,
-              title: 'Connection or validation failed',
-              lines: [error],
-              tone: IssueTone.error,
-            ),
+            ErrorBanner(message: error, onDismiss: _flow.loaded.dismissError),
             const SizedBox(height: 16),
           ],
         if (fill) Expanded(child: screen) else screen,

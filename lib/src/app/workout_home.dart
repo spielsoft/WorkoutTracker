@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
 import 'controller.dart';
-import 'repair.dart';
 import 'ui/shared/a11y.dart';
+import 'ui/shared/error.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/name_dialog.dart';
 import 'workout.dart';
@@ -27,6 +27,8 @@ abstract interface class WorkoutHomeActions {
   Future<void> home(WorkoutHomeAction action);
 
   Future<bool> reorder(ReorderIntent intent);
+
+  void dismissError();
 }
 
 sealed class WorkoutHomeAction {
@@ -108,12 +110,7 @@ class WorkoutHomeScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (view.error case final error?) ...[
-          IssuePanel(
-            icon: Icons.error_outline,
-            title: 'Connection or validation failed',
-            lines: [error],
-            tone: IssueTone.error,
-          ),
+          ErrorBanner(message: error, onDismiss: actions.dismissError),
           const SizedBox(height: 16),
         ],
         ScreenHeader(

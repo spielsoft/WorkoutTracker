@@ -336,7 +336,7 @@ void main() {
     },
   );
 
-  testWidgets('prefills a new set from the latest prior-block result', (
+  testWidgets('prefills a fresh block from the latest prior first set', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -353,15 +353,44 @@ void main() {
 
     expect(
       tester.widget<EditableText>(_editable(_field('Weight'))).controller.text,
-      '125',
+      '120',
     );
     expect(
       tester.widget<EditableText>(_editable(_field('Reps'))).controller.text,
-      '4',
+      '5',
     );
     expect(
       tester.widget<EditableText>(_editable(_field('RPE'))).controller.text,
-      '8',
+      '7',
+    );
+  });
+
+  testWidgets('skips an unusable prior first set when prefilling', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 3', 'Week 2', 'Week 1'],
+          setLabels: const ['S1', 'S1', 'S1'],
+          values: const ['', 'manual note', '115x6@7'],
+          selectedBlock: 'Week 3',
+        ),
+      ),
+    );
+
+    expect(
+      tester.widget<EditableText>(_editable(_field('Weight'))).controller.text,
+      '115',
+    );
+    expect(
+      tester.widget<EditableText>(_editable(_field('Reps'))).controller.text,
+      '6',
+    );
+    expect(
+      tester.widget<EditableText>(_editable(_field('RPE'))).controller.text,
+      '7',
     );
   });
 
@@ -510,13 +539,14 @@ void main() {
         ),
       );
 
+      expect(find.text('Unable to save set'), findsOneWidget);
       expect(
-        find.text(
-          'Unable to save set: saved set was not visible after refresh.',
-        ),
+        find.text('saved set was not visible after refresh.'),
         findsOneWidget,
       );
       expect(find.text('225'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Dismiss error'));
+      expect(actions.dismissed, isTrue);
     },
   );
 
@@ -754,9 +784,13 @@ final class _LogActions implements LogActions {
   final cmds = <WbkCmd>[];
   final selectedRows = <int>[];
   bool closed = false;
+  bool dismissed = false;
 
   @override
   Future<void> close() async => closed = true;
+
+  @override
+  void dismissError() => dismissed = true;
 
   @override
   Future<bool> execute(WbkCmd cmd) async {

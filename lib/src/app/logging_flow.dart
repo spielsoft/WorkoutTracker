@@ -178,7 +178,7 @@ class LoggingFlow {
   }
 
   void _prefillNewSet(ExerciseLoggingContext context) {
-    final entry = _lastResult(context);
+    final entry = _prefillEntry(context);
     final values = switch (entry?.logEntry) {
       FormattedLogEntry(:final fieldValues) => fieldValues,
       _ => context.targets.values,
@@ -189,7 +189,7 @@ class LoggingFlow {
     }
   }
 
-  RowHistoryEntry? _lastResult(ExerciseLoggingContext context) {
+  RowHistoryEntry? _prefillEntry(ExerciseLoggingContext context) {
     final current = _lastNonEmpty(context.selectedHistory);
     if (current != null) {
       return current;
@@ -198,7 +198,7 @@ class LoggingFlow {
       if (block.label == context.selectedHistory.label) {
         continue;
       }
-      final entry = _lastNonEmpty(block);
+      final entry = _usableFirstSet(block);
       if (entry != null) {
         return entry;
       }
@@ -209,6 +209,17 @@ class LoggingFlow {
   RowHistoryEntry? _lastNonEmpty(RowHistoryBlock block) {
     for (final entry in block.entries.reversed) {
       if (entry.rawValue.trim().isNotEmpty) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  RowHistoryEntry? _usableFirstSet(RowHistoryBlock block) {
+    for (final entry in block.entries) {
+      if (entry.setNumber == 1 &&
+          entry.rawValue.trim().isNotEmpty &&
+          entry.logEntry is FormattedLogEntry) {
         return entry;
       }
     }

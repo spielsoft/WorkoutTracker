@@ -108,7 +108,7 @@ void main() {
     );
 
     expect(find.text('No workout sheet selected'), findsOneWidget);
-    expect(find.text('athlete@example.com'), findsOneWidget);
+    expect(find.text('athlete@example.com'), findsNothing);
     expect(
       find.byTooltip('Google Sheets account: athlete@example.com'),
       findsOneWidget,
@@ -122,6 +122,61 @@ void main() {
       find.byKey(const ValueKey('create-google-spreadsheet')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('uses the compact shared sheet title without a leading icon', (
+    tester,
+  ) async {
+    const name = '2026_Summer_Workout_Program_With_A_Long_Name';
+    await tester.pumpWidget(
+      _app(
+        _view(
+          showTextFallback: false,
+          account: _account,
+          selectedSheet: const SelectedSheet(
+            spreadsheetId: 'sheet-id',
+            name: name,
+            accountEmail: 'athlete@example.com',
+          ),
+        ),
+        (_) async => const CmdResult.done(),
+      ),
+    );
+
+    final title = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const ValueKey('selected-spreadsheet-label')),
+        matching: find.byType(Text),
+      ),
+    );
+    expect(title.data, name);
+    expect(title.maxLines, 1);
+    expect(title.softWrap, isFalse);
+    expect(title.overflow, TextOverflow.ellipsis);
+    expect(find.byIcon(Icons.table_chart_outlined), findsNothing);
+    expect(find.text('athlete@example.com'), findsNothing);
+    expect(
+      find.byTooltip('Google Sheets account: athlete@example.com'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('emits a dismiss command when an error banner is tapped', (
+    tester,
+  ) async {
+    final cmds = <SheetCmd>[];
+    await tester.pumpWidget(
+      _app(_view(error: 'Unable to open sheet: denied'), (cmd) async {
+        cmds.add(cmd);
+        return const CmdResult.done();
+      }),
+    );
+
+    expect(find.text('Unable to open sheet'), findsOneWidget);
+    expect(find.text('denied'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Dismiss error'));
+
+    expect(cmds.single, isA<DismissSheetError>());
   });
 
   testWidgets('startup states remain accessible on a narrow large-text phone', (
@@ -250,6 +305,7 @@ SheetView _view({
   SelectedSheet? selectedSheet,
   bool hasLoadedWorkout = false,
   bool isRestoring = false,
+  String? error,
 }) {
   return SheetView(
     isBusy: isRestoring,
@@ -265,5 +321,6 @@ SheetView _view({
     hasPicker: true,
     showAccount: true,
     accountMismatch: accountMismatch,
+    error: error,
   );
 }

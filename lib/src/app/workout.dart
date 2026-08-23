@@ -72,7 +72,7 @@ class WorkoutList extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${overview.workout} exercises',
+                      'Exercises',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),

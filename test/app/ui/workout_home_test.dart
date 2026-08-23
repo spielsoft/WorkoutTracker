@@ -56,7 +56,7 @@ void main() {
       await tester.pump();
 
       expect(service.spreadsheetIds, ['selected-spreadsheet-id']);
-      expect(find.text('Upper exercises'), findsOneWidget);
+      expect(find.text('Exercises'), findsOneWidget);
       expect(find.text('Bench Press'), findsOneWidget);
       expect(find.text('Squat'), findsNothing);
       expect(find.text('Week 1'), findsOneWidget);
@@ -182,7 +182,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Upper exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Pull Up'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Exercise actions for Pull Up'));
@@ -240,7 +240,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
     await tester.pump();
     await tester.pump();
-    expect(find.text('Upper exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Pull Up'), findsOneWidget);
     expect(find.text('Lat Pulldown'), findsOneWidget);
 
@@ -393,7 +393,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(find.text('Bulgarian Split Squat'), findsOneWidget);
     expect(find.text('Reverse Lunge'), findsOneWidget);
   });
@@ -454,7 +454,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('workout-home')), findsOneWidget);
-    expect(find.text('Legs exercises'), findsOneWidget);
+    expect(find.text('Exercises'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('spreadsheet-selection-input')),
       findsNothing,
@@ -570,4 +570,52 @@ void main() {
       expect(find.text('Week 2'), findsOneWidget);
     },
   );
+
+  testWidgets('duplicate history errors dismiss and do not follow navigation', (
+    tester,
+  ) async {
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    Future<void> createDuplicate() async {
+      await tester.tap(find.text('Week 1').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add history block...').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        textFieldWithLabel('History block label'),
+        'Week 1',
+      );
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
+    }
+
+    await createDuplicate();
+    expect(find.text('History block already exists'), findsOneWidget);
+    expect(find.text('Week 1 already exists.'), findsOneWidget);
+    expect(find.text('Connection or validation failed'), findsNothing);
+
+    await tester.tap(find.bySemanticsLabel('Dismiss error'));
+    await tester.pump();
+    expect(find.text('History block already exists'), findsNothing);
+
+    await createDuplicate();
+    expect(find.text('History block already exists'), findsOneWidget);
+    await tester.tap(find.text('Squat'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Save set S1'), findsOneWidget);
+    expect(find.text('History block already exists'), findsNothing);
+    expect(find.text('Week 1 already exists.'), findsNothing);
+  });
 }
