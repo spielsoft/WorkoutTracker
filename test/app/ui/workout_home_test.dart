@@ -8,6 +8,38 @@ import '../service_fake.dart';
 import '../../support/widget.dart';
 
 void main() {
+  testWidgets('history selection precedes workout selection responsively', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', 'Legs', '', 'x', ''],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    var history = tester.getRect(find.text('History block'));
+    var workout = tester.getRect(find.text('Workout'));
+    expect(history.top, lessThan(workout.top));
+
+    tester.view.physicalSize = const Size(900, 700);
+    await tester.pumpAndSettle();
+
+    history = tester.getRect(find.text('History block'));
+    workout = tester.getRect(find.text('Workout'));
+    expect(history.left, lessThan(workout.left));
+    expect(history.top, workout.top);
+  });
+
   testWidgets(
     'restores saved workout and history for a selected sheet visibly',
     (tester) async {

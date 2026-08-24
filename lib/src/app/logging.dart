@@ -14,6 +14,7 @@ import 'ui/shared/next_field.dart';
 import 'ui/shared/role.dart';
 
 const _segmentRadius = 8.0;
+const _keyboardGap = 8.0;
 const _undoWindow = Duration(seconds: 5);
 const _numberKeyboard = TextInputType.numberWithOptions(decimal: true);
 
@@ -509,15 +510,42 @@ class _StructuredSetEditor extends StatefulWidget {
   State<_StructuredSetEditor> createState() => _StructuredSetEditorSt();
 }
 
-class _StructuredSetEditorSt extends State<_StructuredSetEditor> {
+class _StructuredSetEditorSt extends State<_StructuredSetEditor>
+    with WidgetsBindingObserver {
+  final _editorKey = GlobalKey();
+  final _saveKey = GlobalKey();
   late List<String> _labels;
+  late List<GlobalKey> _fieldKeys;
   late List<FocusNode> _focusNodes;
+  double _bottomInset = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _labels = _fieldLabels(widget.logFormat);
+    _fieldKeys = _createFieldKeys(_labels);
     _focusNodes = _createFocusNodes(_labels);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncInset();
+  }
+
+  @override
+  void didChangeMetrics() {
+    _syncInset();
+  }
+
+  void _syncInset() {
+    if (!mounted) return;
+    final view = View.of(context);
+    final bottomInset = view.viewInsets.bottom / view.devicePixelRatio;
+    if (bottomInset == _bottomInset) return;
+    _bottomInset = bottomInset;
+    if (bottomInset > 0) _showFocus();
   }
 
   @override
@@ -527,25 +555,126 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor> {
     if (_sameLabels(labels, _labels)) return;
     _disposeFocusNodes();
     _labels = labels;
+    _fieldKeys = _createFieldKeys(labels);
     _focusNodes = _createFocusNodes(labels);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _disposeFocusNodes();
     super.dispose();
   }
 
   List<FocusNode> _createFocusNodes(List<String> labels) {
-    return [
+    final nodes = [
       for (final label in labels) FocusNode(debugLabel: 'New set $label'),
     ];
+    for (final node in nodes) {
+      node.addListener(_focusChanged);
+    }
+    return nodes;
+  }
+
+  List<GlobalKey> _createFieldKeys(List<String> labels) {
+    return [for (final _ in labels) GlobalKey()];
   }
 
   void _disposeFocusNodes() {
     for (final node in _focusNodes) {
+      node.removeListener(_focusChanged);
       node.dispose();
     }
+  }
+
+  void _focusChanged() {
+    if (_bottomInset > 0) _showFocus();
+  }
+
+  void _showFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _bottomInset <= 0) return;
+      final index = _focusNodes.indexWhere((node) => node.hasFocus);
+      if (index < 0) return;
+      unawaited(_reveal(index));
+    });
+  }
+
+  Future<void> _reveal(int index) async {
+    final fieldContext = _fieldKeys[index].currentContext;
+    final editorContext = _editorKey.currentContext;
+    if (fieldContext == null || editorContext == null) return;
+    final scrollable = Scrollable.maybeOf(fieldContext);
+    final editorBox = editorContext.findRenderObject();
+    final viewportBox = scrollable?.context.findRenderObject();
+    if (scrollable == null ||
+        editorBox is! RenderBox ||
+        viewportBox is! RenderBox) {
+      return;
+    }
+    final viewportTop = viewportBox.localToGlobal(Offset.zero).dy;
+    final view = View.of(context);
+    final screenHeight = view.physicalSize.height / view.devicePixelRatio;
+    final keyboardBottom = screenHeight - _bottomInset;
+    final scrollHeight = scrollable.position.viewportDimension;
+    final keyboardHeight = keyboardBottom - viewportTop;
+    final visibleHeight = keyboardHeight < scrollHeight
+        ? keyboardHeight
+        : scrollHeight;
+    final showEditor = editorBox.size.height <= visibleHeight;
+    await Scrollable.ensureVisible(
+      showEditor ? editorContext : fieldContext,
+      alignment: 0,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+    );
+    if (!mounted ||
+        !fieldContext.mounted ||
+        !scrollable.mounted ||
+        !_focusNodes[index].hasFocus) {
+      return;
+    }
+    await _revealSave(fieldContext, scrollable);
+  }
+
+  Future<void> _revealSave(
+    BuildContext fieldContext,
+    ScrollableState scrollable,
+  ) async {
+    final saveContext = _saveKey.currentContext;
+    final fieldBox = fieldContext.findRenderObject();
+    final saveBox = saveContext?.findRenderObject();
+    final viewportBox = scrollable.context.findRenderObject();
+    if (fieldBox is! RenderBox ||
+        saveBox is! RenderBox ||
+        viewportBox is! RenderBox) {
+      return;
+    }
+    final viewportTop = viewportBox.localToGlobal(Offset.zero).dy;
+    final scrollBottom = viewportTop + scrollable.position.viewportDimension;
+    final view = View.of(context);
+    final screenHeight = view.physicalSize.height / view.devicePixelRatio;
+    final keyboardBottom = screenHeight - _bottomInset;
+    final viewportBottom = keyboardBottom < scrollBottom
+        ? keyboardBottom
+        : scrollBottom;
+    final fieldTop = fieldBox.localToGlobal(Offset.zero).dy;
+    final saveBottom =
+        saveBox.localToGlobal(Offset.zero).dy + saveBox.size.height;
+    final obstruction = saveBottom - viewportBottom;
+    if (obstruction <= 0) return;
+    final delta = obstruction + _keyboardGap;
+    if (fieldTop - delta < viewportTop) return;
+    final position = scrollable.position;
+    final target = (position.pixels + delta).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    await position.animateTo(
+      target,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+    );
   }
 
   void _dismissInput() => FocusManager.instance.primaryFocus?.unfocus();
@@ -594,27 +723,31 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 520;
-        final fieldWidth = narrow ? constraints.maxWidth : 112.0;
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            for (var i = 0; i < _labels.length; i += 1)
-              SizedBox(
-                width: fieldWidth,
-                child: accessibleField(_labels[i], i),
-              ),
-            if (narrow)
-              SizedBox(width: fieldWidth, child: saveButton())
-            else
-              saveButton(),
-          ],
-        );
-      },
+    return KeyedSubtree(
+      key: _editorKey,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 520;
+          final fieldWidth = narrow ? constraints.maxWidth : 112.0;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (var i = 0; i < _labels.length; i += 1)
+                SizedBox(
+                  key: _fieldKeys[i],
+                  width: fieldWidth,
+                  child: accessibleField(_labels[i], i),
+                ),
+              if (narrow)
+                SizedBox(key: _saveKey, width: fieldWidth, child: saveButton())
+              else
+                KeyedSubtree(key: _saveKey, child: saveButton()),
+            ],
+          );
+        },
+      ),
     );
   }
 }

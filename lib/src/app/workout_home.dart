@@ -138,21 +138,21 @@ class WorkoutHomeScreen extends StatelessWidget {
               children: [
                 SizedBox(
                   width: fieldWidth,
+                  child: _HistoryField(
+                    blocks: setup.historyBlocks,
+                    selected: setup.selectedHistoryBlock,
+                    onChanged: (value) => actions.home(ChooseHistory(value)),
+                    onAdd: view.isBusy ? null : () => _addHistory(context),
+                  ),
+                ),
+                SizedBox(
+                  width: fieldWidth,
                   child: _WorkoutField(
                     workouts: setup.workouts,
                     selected: selectedWorkout,
                     progress: setup.progressByWorkout,
                     onChanged: (value) => actions.home(ChooseWorkout(value)),
                     onAdd: view.isBusy ? null : () => _addWorkout(context),
-                  ),
-                ),
-                SizedBox(
-                  width: fieldWidth,
-                  child: _HistoryField(
-                    blocks: setup.historyBlocks,
-                    selected: setup.selectedHistoryBlock,
-                    onChanged: (value) => actions.home(ChooseHistory(value)),
-                    onAdd: view.isBusy ? null : () => _addHistory(context),
                   ),
                 ),
               ],

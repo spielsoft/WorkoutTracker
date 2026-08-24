@@ -170,6 +170,70 @@ void main() {
     expect(arrowRect.right, lessThanOrEqualTo(fieldRect.right));
   });
 
+  testWidgets('keyboard shows the whole new-set editor when it fits', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_app(actions: _LogActions()));
+    await tester.showKeyboard(find.byKey(const ValueKey('set-field-RPE')));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
+    await tester.pumpAndSettle();
+
+    const visibleBottom = 812 - 330;
+    final controls = [
+      for (final label in const ['Weight', 'Reps', 'RPE']) _field(label),
+      find.widgetWithText(FilledButton, 'Save set S1'),
+    ];
+    for (final control in controls) {
+      final rect = tester.getRect(control);
+      expect(rect.top, greaterThanOrEqualTo(0));
+      expect(rect.bottom, lessThanOrEqualTo(visibleBottom));
+    }
+  });
+
+  testWidgets('keyboard prioritizes focus before the in-flow save button', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      _app(actions: _LogActions(), view: _dbStepUpView()),
+    );
+    await tester.showKeyboard(
+      find.byKey(const ValueKey('set-field-Height (in)')),
+    );
+    tester.view.viewInsets = const FakeViewPadding(bottom: 560);
+    await tester.pumpAndSettle();
+
+    const visibleBottom = 812 - 560;
+    final firstRect = tester.getRect(_field('Height (in)'));
+    final save = find.widgetWithText(FilledButton, 'Save set S1');
+    expect(firstRect.top, greaterThanOrEqualTo(0));
+    expect(firstRect.bottom, lessThanOrEqualTo(visibleBottom));
+    expect(tester.getRect(save).top, greaterThan(visibleBottom));
+
+    for (var i = 0; i < 4; i += 1) {
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pumpAndSettle();
+    }
+
+    final painRect = tester.getRect(_field('Pain'));
+    final saveRect = tester.getRect(save);
+    expect(painRect.top, greaterThanOrEqualTo(0));
+    expect(painRect.bottom, lessThanOrEqualTo(visibleBottom));
+    expect(
+      saveRect.bottom,
+      lessThanOrEqualTo(visibleBottom),
+      reason: 'Pain $painRect, Save $saveRect',
+    );
+    expect(painRect.bottom, lessThan(saveRect.top));
+  });
+
   testWidgets('keeps desktop set entry compact in the shared flow', (
     tester,
   ) async {
