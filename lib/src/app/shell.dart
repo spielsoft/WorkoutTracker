@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/migration.dart';
+import 'awake.dart';
 import 'state_store.dart';
 import 'validation.dart';
 import 'selection.dart';
@@ -260,10 +261,12 @@ class _AppShellSt extends State<AppShell> {
               ),
               LogView() => _feature(
                 view,
-                LogScreen(
-                  view: view,
-                  actions: _flow.loaded,
-                  onRest: _rest.start,
+                IdleAwake(
+                  child: LogScreen(
+                    view: view,
+                    actions: _flow.loaded,
+                    onRest: _rest.start,
+                  ),
                 ),
                 showError: false,
               ),
