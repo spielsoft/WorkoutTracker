@@ -5,6 +5,7 @@ import 'package:workout_tracker/contract.dart';
 
 import 'controller.dart';
 import 'logging_flow.dart';
+import 'rest_timer.dart';
 import 'validation_core.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
@@ -42,10 +43,16 @@ abstract interface class LogActions {
 }
 
 class LogScreen extends StatefulWidget {
-  const LogScreen({required this.view, required this.actions, super.key});
+  const LogScreen({
+    required this.view,
+    required this.actions,
+    this.onRest,
+    super.key,
+  });
 
   final LogView view;
   final LogActions actions;
+  final ValueChanged<Duration>? onRest;
 
   @override
   State<LogScreen> createState() => _LogScreenSt();
@@ -100,10 +107,12 @@ class _LogScreenSt extends State<LogScreen> {
 
   Future<void> _saveSet() async {
     if (widget.view.isBusy) return;
+    final rest = _restAfterSave(_flow.viewModel);
     final plan = _flow.planSetSave();
     if (plan == null) return;
 
-    await widget.actions.execute(plan);
+    final saved = await widget.actions.execute(plan);
+    if (saved && mounted && rest != null) widget.onRest?.call(rest);
   }
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
@@ -358,6 +367,12 @@ String _spacedSeconds(String rest) {
     caseSensitive: false,
   ).firstMatch(rest);
   return match == null ? rest : '${match.group(1)} s';
+}
+
+Duration? _restAfterSave(LoggingVm vm) {
+  final plannedSets = int.tryParse(vm.context.targets.sets.trim());
+  if (plannedSets == null || vm.nextSetNumber >= plannedSets) return null;
+  return restDuration(vm.context.rest);
 }
 
 class _RecentHistoryPanel extends StatelessWidget {

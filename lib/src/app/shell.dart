@@ -10,6 +10,7 @@ import 'exercise_create_screen.dart';
 import 'exercise_edit_screen.dart';
 import 'placement_screen.dart';
 import 'logging.dart';
+import 'rest_timer.dart';
 import 'workout_home.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
@@ -122,6 +123,7 @@ class _AppShellSt extends State<AppShell> {
   late final AppFlow _flow;
   late final Future<void> _init;
   final _navKey = GlobalKey<NavigatorState>();
+  final _rest = RestCtrl();
 
   @override
   void initState() {
@@ -141,6 +143,7 @@ class _AppShellSt extends State<AppShell> {
 
   @override
   void dispose() {
+    _rest.dispose();
     _flow.dispose();
     super.dispose();
   }
@@ -151,41 +154,58 @@ class _AppShellSt extends State<AppShell> {
       body: A11yScreen(
         label: 'WorkoutTracker',
         child: SafeArea(
-          child: FutureBuilder<void>(
-            future: _init,
-            builder: (context, _) => ListenableBuilder(
-              listenable: _flow,
-              builder: (context, _) {
-                final pages = _flow.pages;
-                return PopScope<Object?>(
-                  canPop: pages.length == 1,
-                  onPopInvokedWithResult: (didPop, _) {
-                    if (!didPop) _navKey.currentState?.maybePop();
-                  },
-                  child: Navigator(
-                    key: _navKey,
-                    pages: [
-                      for (final page in pages)
-                        if (page.view is SheetView ||
-                            page.view is WorkoutHomeView)
-                          _RootPage(
-                            key: ValueKey(page.id),
-                            child: _page(page.view),
-                          )
-                        else
-                          MaterialPage<Object?>(
-                            key: ValueKey(page.id),
-                            child: _page(page.view),
-                          ),
-                    ],
-                    onDidRemovePage: (page) {
-                      final key = page.key;
-                      if (key is ValueKey<Object>) _flow.didPop(key.value);
+          child: Column(
+            children: [
+              ListenableBuilder(
+                listenable: _rest,
+                builder: (context, _) => _rest.active
+                    ? ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 840),
+                        child: RestBar(ctrl: _rest),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              Expanded(
+                child: FutureBuilder<void>(
+                  future: _init,
+                  builder: (context, _) => ListenableBuilder(
+                    listenable: _flow,
+                    builder: (context, _) {
+                      final pages = _flow.pages;
+                      return PopScope<Object?>(
+                        canPop: pages.length == 1,
+                        onPopInvokedWithResult: (didPop, _) {
+                          if (!didPop) _navKey.currentState?.maybePop();
+                        },
+                        child: Navigator(
+                          key: _navKey,
+                          pages: [
+                            for (final page in pages)
+                              if (page.view is SheetView ||
+                                  page.view is WorkoutHomeView)
+                                _RootPage(
+                                  key: ValueKey(page.id),
+                                  child: _page(page.view),
+                                )
+                              else
+                                MaterialPage<Object?>(
+                                  key: ValueKey(page.id),
+                                  child: _page(page.view),
+                                ),
+                          ],
+                          onDidRemovePage: (page) {
+                            final key = page.key;
+                            if (key is ValueKey<Object>) {
+                              _flow.didPop(key.value);
+                            }
+                          },
+                        ),
+                      );
                     },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -240,7 +260,11 @@ class _AppShellSt extends State<AppShell> {
               ),
               LogView() => _feature(
                 view,
-                LogScreen(view: view, actions: _flow.loaded),
+                LogScreen(
+                  view: view,
+                  actions: _flow.loaded,
+                  onRest: _rest.start,
+                ),
                 showError: false,
               ),
               WorkoutHomeView() || LibraryView() => throw StateError(
