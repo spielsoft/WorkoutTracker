@@ -32,6 +32,26 @@ void main() {
     }
   });
 
+  testWidgets('keeps decorated input labels in the frame app-wide', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      WorkoutTrackerApp(
+        svc: TestValSvc.fromRows([
+          activeSheetFixedColumns,
+          List.filled(activeSheetFixedColumns.length, ''),
+        ]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final theme = Theme.of(tester.element(find.byType(Scaffold).first));
+    expect(
+      theme.inputDecorationTheme.floatingLabelBehavior,
+      FloatingLabelBehavior.always,
+    );
+  });
+
   testWidgets('repair guidance fits a narrow large-text phone', (tester) async {
     tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
@@ -174,10 +194,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('set-field-Weight')));
       await tester.pump();
-      expect(
-        find.bySemanticsLabel('Next field Reps'),
-        findsOneWidget,
-      );
+      expect(find.bySemanticsLabel('Next field Reps'), findsOneWidget);
       await expectFlutterAccessibilityGuidelines(tester);
 
       await tester.tap(find.byTooltip('Back to exercises'));

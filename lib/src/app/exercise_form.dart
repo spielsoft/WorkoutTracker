@@ -705,7 +705,6 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
         focusNode: _focusNode,
         decoration: InputDecoration(
           labelText: widget.labelText,
-          floatingLabelBehavior: FloatingLabelBehavior.always,
           border: const OutlineInputBorder(),
           prefixIcon: Icon(widget.icon),
           suffixIcon: nextLabel == null

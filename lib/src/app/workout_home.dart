@@ -350,7 +350,6 @@ class _SelectorSt extends State<_Selector> {
         hint: Text(widget.emptyPrompt, overflow: TextOverflow.ellipsis),
         decoration: InputDecoration(
           labelText: widget.label,
-          floatingLabelBehavior: FloatingLabelBehavior.always,
           border: const OutlineInputBorder(),
           prefixIcon: Icon(widget.prefixIcon),
         ),

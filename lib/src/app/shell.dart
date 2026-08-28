@@ -25,6 +25,9 @@ ThemeData _theme(Brightness brightness) {
   return ThemeData(
     brightness: brightness,
     colorScheme: ColorScheme.fromSeed(seedColor: _seed, brightness: brightness),
+    inputDecorationTheme: const InputDecorationThemeData(
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+    ),
     splashFactory: InkRipple.splashFactory,
     useMaterial3: true,
   );
