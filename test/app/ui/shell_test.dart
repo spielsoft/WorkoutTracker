@@ -29,6 +29,9 @@ void main() {
         Theme.of(tester.element(find.byType(Scaffold).first)).brightness,
         Brightness.dark,
       );
+      final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+      expect(app.theme?.brightness, Brightness.dark);
+      expect(app.darkTheme, isNull);
     }
   });
 

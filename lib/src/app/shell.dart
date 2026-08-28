@@ -21,7 +21,8 @@ import 'ui/shared/error.dart';
 
 const _seed = Color(0xFF0E7C66);
 
-ThemeData _theme(Brightness brightness) {
+ThemeData _theme() {
+  const brightness = Brightness.dark;
   return ThemeData(
     brightness: brightness,
     colorScheme: ColorScheme.fromSeed(seedColor: _seed, brightness: brightness),
@@ -62,9 +63,7 @@ class WorkoutTrackerApp extends StatelessWidget {
     return MaterialApp(
       title: 'WorkoutTracker',
       navigatorKey: navigatorKey,
-      theme: _theme(Brightness.light),
-      darkTheme: _theme(Brightness.dark),
-      themeMode: ThemeMode.dark,
+      theme: _theme(),
       scrollBehavior: const AppScrollBehavior(),
       home: AppShell(
         svc: svc,
