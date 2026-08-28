@@ -63,8 +63,8 @@ void main() {
           tester.getTopLeft(find.bySemanticsLabel('New set $label')).dy,
       ];
       expect(tops, orderedEquals([...tops]..sort()));
-      expect(find.text('Height (in) (12)'), findsOneWidget);
-      expect(find.text('Weight (lbs) (15)'), findsOneWidget);
+      expect(find.text('Height (in) → 12'), findsOneWidget);
+      expect(find.text('Weight (lbs) → 15'), findsOneWidget);
       expect(find.text('Save set S2'), findsOneWidget);
 
       const edited = {
