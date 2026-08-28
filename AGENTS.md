@@ -12,7 +12,7 @@ guidance relevant to the work:
 | Work | Read |
 | --- | --- |
 | Sheet parsing, validation, planning, or writes | `docs/domain_contract.md` |
-| Tests or live Google validation | `docs/testing.md` |
+| Tests, local app preview, or live Google validation | `docs/testing.md` |
 | Login, scopes, sheet choice, or Google setup | `docs/google_sheets_development_auth.md` |
 | UI or semantics | `docs/accessibility.md` |
 | Apple builds or release bundles | `BUILDING.md` |

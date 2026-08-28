@@ -39,6 +39,43 @@ converter, and a declared version is never guessed from headers.
 Fakes may prove what WorkoutTracker requests or accepts. They do not prove the
 behavior of Google Sign-In, Drive, Sheets, Firebase, OAuth, or Picker.
 
+## Local App Preview
+
+`dev/gym_preview.dart` runs the real application against an in-memory workbook.
+It requires no Google account, writes nothing outside the process, and opens on
+the workout home with several weeks of history already logged. Use it to judge
+screen behavior that is faster to see than to assert, such as keyboard
+avoidance, rest-timer presentation, or how a five-field log format lays out on
+a small phone.
+
+```sh
+flutter run -t dev/gym_preview.dart -d <device-id>
+```
+
+`flutter devices` lists the identifiers. The fixture covers three workouts,
+three history blocks, a backup exercise, a deliberately long workout name, and
+two-, three-, and five-field log formats. Edit its rows to reproduce a specific
+workbook shape; active-sheet and `Exercises` writes both round-trip in memory,
+so logging, reordering, and authoring all behave as they do against a real
+Sheet.
+
+This harness is a preview, not a validation tier. It proves nothing about
+Google, the schema contract, or any real workbook, and it never substitutes for
+`flutter test`.
+
+### Simulator Keyboard
+
+A simulator attached to the Mac keyboard never raises the on-screen numeric
+keypad, which hides the layout that matters most while logging a set.
+Disconnect the hardware keyboard once:
+
+```sh
+defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
+```
+
+Restart the Simulator application for the change to take effect. Set it back to
+`true` to restore typing from the Mac keyboard.
+
 ## Live Google Integration
 
 The writable fixture is:
