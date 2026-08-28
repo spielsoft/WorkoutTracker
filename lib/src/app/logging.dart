@@ -377,8 +377,6 @@ String _spacedSeconds(String rest) {
 }
 
 Duration? _restAfterSave(LoggingVm vm) {
-  final plannedSets = int.tryParse(vm.context.targets.sets.trim());
-  if (plannedSets == null || vm.nextSetNumber >= plannedSets) return null;
   return restDuration(vm.context.rest);
 }
 

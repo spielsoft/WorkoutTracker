@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
+import 'package:workout_tracker/src/app/rest_timer.dart';
 
 import '../../support/widget.dart';
 import '../service_fake.dart';
@@ -79,11 +80,41 @@ void main() {
     expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
   });
 
-  testWidgets('final planned set does not start a rest timer', (tester) async {
+  testWidgets('noninteger set prescription still starts a rest timer', (
+    tester,
+  ) async {
+    await _openLog(tester, rest: '90s', sets: '3-4');
+    await _save(tester);
+
+    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+  });
+
+  testWidgets('final planned set starts a rest timer', (tester) async {
     await _openLog(tester, rest: '90s', sets: '1');
     await _save(tester);
 
+    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+  });
+
+  testWidgets('blank rest starts no timer', (tester) async {
+    await _openLog(tester, rest: '', sets: '3');
+    await _save(tester);
+
     expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+  });
+
+  testWidgets('unparseable rest starts no timer', (tester) async {
+    await _openLog(tester, rest: 'eventually', sets: '3');
+    await _save(tester);
+
+    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+  });
+
+  test('supported rest spellings resolve', () {
+    expect(restDuration('3 min'), const Duration(minutes: 3));
+    expect(restDuration('90s'), const Duration(seconds: 90));
+    expect(restDuration('1.5 min'), const Duration(seconds: 90));
+    expect(restDuration('3:00'), const Duration(minutes: 3));
   });
 
   testWidgets('failed set save does not start a rest timer', (tester) async {
