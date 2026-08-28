@@ -6,15 +6,15 @@ navigation; none of them begins the view split described in
 `docs/workout_ui_direction.md`.
 
 - [ ] Slice 1: Distinguish Target Values From Entered Values
-- [ ] Slice 2: Replace Prefilled Set Values by Typing
-- [ ] Slice 3: Rest After Every Set With a Rest Value
-- [ ] Slice 4: Signal Rest Completion by Haptic
-- [ ] Slice 5: Draw the Rest Bar From the App Palette
-- [ ] Slice 6: Show Logged Sets Against Prescribed Sets
-- [ ] Slice 7: Remove the Duplicate Exercise Library Heading
-- [ ] Slice 8: Remove the Unused Light Theme
-- [ ] Slice 9: Start Rest Before the Sheet Write Completes
-- [ ] Slice 10: Run the Full Local Guard
+- [x] Slice 2: Replace Prefilled Set Values by Typing
+- [x] Slice 3: Rest After Every Set With a Rest Value
+- [x] Slice 4: Signal Rest Completion by Haptic
+- [x] Slice 5: Draw the Rest Bar From the App Palette
+- [x] Slice 6: Show Logged Sets Against Prescribed Sets
+- [x] Slice 7: Remove the Duplicate Exercise Library Heading
+- [x] Slice 8: Remove the Unused Light Theme
+- [x] Slice 9: Start Rest Before the Sheet Write Completes
+- [x] Slice 10: Run the Full Local Guard
 
 ## Slice 1: Distinguish Target Values From Entered Values
 
@@ -45,14 +45,14 @@ after the athlete overwrites the value.
 
 ### Acceptance criteria
 
-- [ ] A behavior test first demonstrates that an untouched prefilled field renders its value in the provisional style while an edited field does not.
-- [ ] Editing a field clears its provisional state for the current set.
-- [ ] Saving a set returns the values carried into the next set to the provisional style until they are edited.
-- [ ] The provisional color derives from the existing warning seed rather than a new literal, and is distinct from the error color.
-- [ ] A field with a target renders `Height (in) → 12`; a field without one renders the bare label.
-- [ ] Semantics announce the provisional state, so the distinction is never carried by color alone.
-- [ ] `textContrastGuideline` passes for provisional and entered values.
-- [ ] Three-field and five-field formats are checked on an iPhone 13 mini sized viewport.
+- [x] A behavior test first demonstrates that an untouched prefilled field renders its value in the provisional style while an edited field does not.
+- [x] Editing a field clears its provisional state for the current set.
+- [x] Saving a set returns the values carried into the next set to the provisional style until they are edited.
+- [x] The provisional color derives from the existing warning seed rather than a new literal, and is distinct from the error color.
+- [x] A field with a target renders `Height (in) → 12`; a field without one renders the bare label.
+- [x] Semantics announce the provisional state, so the distinction is never carried by color alone.
+- [x] `textContrastGuideline` passes for provisional and entered values.
+- [x] Three-field and five-field formats are checked on an iPhone 13 mini sized viewport.
 - [ ] The owner confirms the provisional color is legible under gym lighting.
 
 ### Blocked by
@@ -84,12 +84,12 @@ fields and the raw text field behind a logged set's edit control.
 
 ### Acceptance criteria
 
-- [ ] A behavior test first demonstrates that focusing a prefilled field and typing replaces its value rather than appending to it.
-- [ ] Selection covers the full value on focus for every field in a format, including the last.
-- [ ] Advancing with the in-field next arrow selects the destination field's contents the same way.
-- [ ] Re-focusing a field the athlete already edited also selects its contents.
-- [ ] Editing a logged set through its edit control behaves identically for formatted and raw fields.
-- [ ] Existing logging, keyboard traversal, and set-entry tests pass unchanged.
+- [x] A behavior test first demonstrates that focusing a prefilled field and typing replaces its value rather than appending to it.
+- [x] Selection covers the full value on focus for every field in a format, including the last.
+- [x] Advancing with the in-field next arrow selects the destination field's contents the same way.
+- [x] Re-focusing a field the athlete already edited also selects its contents.
+- [x] Editing a logged set through its edit control behaves identically for formatted and raw fields.
+- [x] Existing logging, keyboard traversal, and set-entry tests pass unchanged.
 
 ### Blocked by
 
@@ -120,11 +120,11 @@ timer that never appears and is never noticed.
 
 ### Acceptance criteria
 
-- [ ] A behavior test first demonstrates a rest timer starting after a saved set whose Sets cell is not a plain integer.
-- [ ] A rest timer starts after every saved set for an exercise with a usable Rest value, including the last prescribed set.
-- [ ] An exercise with a blank or unparseable Rest value starts no timer.
-- [ ] Every supported Rest spelling still resolves, including `3 min`, `90s`, `1.5 min`, and `3:00`.
-- [ ] Tests asserting suppression after the final set are removed or rewritten to the new rule.
+- [x] A behavior test first demonstrates a rest timer starting after a saved set whose Sets cell is not a plain integer.
+- [x] A rest timer starts after every saved set for an exercise with a usable Rest value, including the last prescribed set.
+- [x] An exercise with a blank or unparseable Rest value starts no timer.
+- [x] Every supported Rest spelling still resolves, including `3 min`, `90s`, `1.5 min`, and `3:00`.
+- [x] Tests asserting suppression after the final set are removed or rewritten to the new rule.
 
 ### Blocked by
 
@@ -154,11 +154,11 @@ usable.
 
 ### Acceptance criteria
 
-- [ ] A behavior test first demonstrates a completion signal firing exactly once when the countdown reaches zero.
-- [ ] Ending the timer with Done, or starting a new timer over a running one, fires no signal.
-- [ ] A timer whose remaining time elapsed while the app was backgrounded fires the signal once on resume.
-- [ ] The signal is a haptic only; no sound is played.
-- [ ] The signal is injectable, and an absent platform channel neither throws nor stops the timer.
+- [x] A behavior test first demonstrates a completion signal firing exactly once when the countdown reaches zero.
+- [x] Ending the timer with Done, or starting a new timer over a running one, fires no signal.
+- [x] A timer whose remaining time elapsed while the app was backgrounded fires the signal once on resume.
+- [x] The signal is a haptic only; no sound is played.
+- [x] The signal is injectable, and an absent platform channel neither throws nor stops the timer.
 
 ### Blocked by
 
@@ -188,12 +188,12 @@ readout would add a conversion rather than remove one.
 
 ### Acceptance criteria
 
-- [ ] The rest bar declares no hardcoded color literals.
-- [ ] Surface, countdown text, and both controls derive from color scheme roles.
-- [ ] The bar remains visually distinct from the ordinary page surface and from the provisional value color.
-- [ ] `textContrastGuideline` passes for the countdown and both control labels.
-- [ ] The countdown still displays whole remaining seconds.
-- [ ] Rest timer tests pass unchanged.
+- [x] The rest bar declares no hardcoded color literals.
+- [x] Surface, countdown text, and both controls derive from color scheme roles.
+- [x] The bar remains visually distinct from the ordinary page surface and from the provisional value color.
+- [x] `textContrastGuideline` passes for the countdown and both control labels.
+- [x] The countdown still displays whole remaining seconds.
+- [x] Rest timer tests pass unchanged.
 
 ### Blocked by
 
@@ -224,13 +224,13 @@ element that survives truncation of the name.
 
 ### Acceptance criteria
 
-- [ ] A behavior test first demonstrates a tile reporting both its logged and prescribed set counts.
-- [ ] A tile with no logged sets and a tile with every prescribed set logged both read unambiguously.
-- [ ] An exercise whose Sets cell is not a plain integer reports its logged count without inventing a total.
-- [ ] The workout selector shows progress for a workout name long enough to truncate.
-- [ ] Truncation still applies to the name itself and the selector stays single-line on a narrow phone.
-- [ ] Semantics convey the same progress the visual conveys, for both the tile and the selector.
-- [ ] History block and workout selector order is unchanged.
+- [x] A behavior test first demonstrates a tile reporting both its logged and prescribed set counts.
+- [x] A tile with no logged sets and a tile with every prescribed set logged both read unambiguously.
+- [x] An exercise whose Sets cell is not a plain integer reports its logged count without inventing a total.
+- [x] The workout selector shows progress for a workout name long enough to truncate.
+- [x] Truncation still applies to the name itself and the selector stays single-line on a narrow phone.
+- [x] Semantics convey the same progress the visual conveys, for both the tile and the selector.
+- [x] History block and workout selector order is unchanged.
 
 ### Blocked by
 
@@ -255,10 +255,10 @@ repeated title.
 
 ### Acceptance criteria
 
-- [ ] The phrase appears once on the screen.
-- [ ] The screen keeps an accessible heading and its screen label is unchanged.
-- [ ] Vertical space above the search field is recovered on a narrow phone.
-- [ ] Library and search tests pass unchanged.
+- [x] The phrase appears once on the screen.
+- [x] The screen keeps an accessible heading and its screen label is unchanged.
+- [x] Vertical space above the search field is recovered on a narrow phone.
+- [x] Library and search tests pass unchanged.
 
 ### Blocked by
 
@@ -285,10 +285,10 @@ the same builder and must survive the removal.
 
 ### Acceptance criteria
 
-- [ ] A single `ThemeData` is constructed, for dark brightness.
-- [ ] The app presents dark regardless of the system appearance setting.
-- [ ] The always-floating label behavior remains in effect app-wide.
-- [ ] Shell tests pass unchanged.
+- [x] A single `ThemeData` is constructed, for dark brightness.
+- [x] The app presents dark regardless of the system appearance setting.
+- [x] The always-floating label behavior remains in effect app-wide.
+- [x] Shell tests pass unchanged.
 
 ### Blocked by
 
@@ -332,12 +332,12 @@ out of scope here.
 
 ### Acceptance criteria
 
-- [ ] A behavior test first demonstrates the rest timer running while a set write is still in flight.
-- [ ] Tapping save with every field blank saves nothing and starts no timer.
-- [ ] A write that ultimately fails leaves the started timer running and still reports the failure.
-- [ ] Retrying a failed save restarts the countdown, asserted rather than left incidental.
-- [ ] An exercise with no usable Rest value starts no timer, whatever the write does.
-- [ ] Existing logging and rest timer tests pass unchanged.
+- [x] A behavior test first demonstrates the rest timer running while a set write is still in flight.
+- [x] Tapping save with every field blank saves nothing and starts no timer.
+- [x] A write that ultimately fails leaves the started timer running and still reports the failure.
+- [x] Retrying a failed save restarts the countdown, asserted rather than left incidental.
+- [x] An exercise with no usable Rest value starts no timer, whatever the write does.
+- [x] Existing logging and rest timer tests pass unchanged.
 
 ### Blocked by
 
@@ -365,10 +365,12 @@ active sheet without writing to it.
 
 ### Acceptance criteria
 
-- [ ] `dart format --output=none --set-exit-if-changed lib test integration_test dev` reports no changes.
-- [ ] `flutter analyze` reports no issues.
-- [ ] `flutter test` passes in full.
-- [ ] The macOS accessibility probe in `docs/accessibility.md` runs clean, or its skip is recorded with a reason.
+- [x] `dart format --output=none --set-exit-if-changed lib test integration_test dev` reports no changes.
+- [x] `flutter analyze` reports no issues.
+- [x] `flutter test` passes in full.
+- [x] The macOS accessibility probe was skipped: the unsigned local preview
+  launched, but this Codex host exposed only shallow `AXGroup`/`AXTextField`
+  roles rather than Flutter's semantic labels.
 
 ### Blocked by
 

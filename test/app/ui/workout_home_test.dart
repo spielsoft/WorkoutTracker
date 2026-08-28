@@ -200,18 +200,9 @@ void main() {
     expect(find.text('0 of 3 sets'), findsOneWidget);
     expect(find.text('3 of 3 sets'), findsOneWidget);
     expect(find.text('1 set logged'), findsOneWidget);
-    expect(
-      find.bySemanticsLabel(RegExp(r'0 of 3 sets')),
-      findsOneWidget,
-    );
-    expect(
-      find.bySemanticsLabel(RegExp(r'3 of 3 sets')),
-      findsOneWidget,
-    );
-    expect(
-      find.bySemanticsLabel(RegExp(r'1 set logged')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel(RegExp(r'0 of 3 sets')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'3 of 3 sets')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'1 set logged')), findsOneWidget);
 
     expect(find.text(workout), findsOneWidget);
     expect(find.text('2/3'), findsOneWidget);
