@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 const _barColor = Color(0xFF594738);
 const _barForeground = Color(0xFFFFF3E6);
 const _buttonBorder = Color(0xFFAA896C);
 const _tick = Duration(seconds: 1);
 const _extra = Duration(seconds: 30);
+
+typedef RestSignal = Future<void> Function();
 
 Duration? restDuration(String value) {
   final text = value.trim().toLowerCase();
@@ -33,11 +36,14 @@ Duration? _positiveDuration(int seconds) {
 }
 
 final class RestCtrl extends ChangeNotifier with WidgetsBindingObserver {
-  RestCtrl({DateTime Function()? now}) : _now = now ?? DateTime.now {
+  RestCtrl({DateTime Function()? now, RestSignal? signal})
+    : _now = now ?? DateTime.now,
+      _signal = signal ?? _signalRest {
     WidgetsBinding.instance.addObserver(this);
   }
 
   final DateTime Function() _now;
+  final RestSignal _signal;
   Timer? _ticker;
   DateTime? _inactiveAt;
   int _seconds = 0;
@@ -99,7 +105,7 @@ final class RestCtrl extends ChangeNotifier with WidgetsBindingObserver {
     _inactiveAt = null;
     _seconds -= _now().difference(inactiveAt).inSeconds;
     if (_seconds <= 0) {
-      _finish();
+      _finish(signal: true);
       return;
     }
     _startTicker();
@@ -112,19 +118,28 @@ final class RestCtrl extends ChangeNotifier with WidgetsBindingObserver {
       if (_paused || !active) return;
       _seconds -= 1;
       if (_seconds <= 0) {
-        _finish();
+        _finish(signal: true);
       } else {
         notifyListeners();
       }
     });
   }
 
-  void _finish() {
+  void _finish({bool signal = false}) {
     _ticker?.cancel();
     _seconds = 0;
     _paused = false;
     _inactiveAt = null;
     notifyListeners();
+    if (signal) unawaited(_emitSignal());
+  }
+
+  Future<void> _emitSignal() async {
+    try {
+      await _signal();
+    } catch (_) {
+      // Keep the timer usable when the platform haptic channel is absent.
+    }
   }
 
   @override
@@ -134,6 +149,8 @@ final class RestCtrl extends ChangeNotifier with WidgetsBindingObserver {
     super.dispose();
   }
 }
+
+Future<void> _signalRest() => HapticFeedback.mediumImpact();
 
 class RestBar extends StatelessWidget {
   const RestBar({required this.ctrl, super.key});
