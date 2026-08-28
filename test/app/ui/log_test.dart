@@ -88,6 +88,38 @@ void main() {
     },
   );
 
+  testWidgets('focus selects suggested and edited values for replacement', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _targetView(targets: '240x10-12@8,0'),
+      ),
+    );
+
+    await tester.tap(_field('Weight'));
+    await tester.pump();
+    _expectFullSelection(tester, _field('Weight'));
+    tester.testTextInput.enterText('225');
+    await tester.pump();
+    _expectFieldValue('Weight', '225');
+
+    await tester.tap(find.bySemanticsLabel('Next field Reps'));
+    await tester.pump();
+    _expectFullSelection(tester, _field('Reps'));
+    await tester.tap(find.bySemanticsLabel('Next field RPE'));
+    await tester.pump();
+    _expectFullSelection(tester, _field('RPE'));
+    await tester.tap(find.bySemanticsLabel('Next field Pain'));
+    await tester.pump();
+    _expectFullSelection(tester, _field('Pain'));
+
+    await tester.tap(_field('Weight'));
+    await tester.pump();
+    _expectFullSelection(tester, _field('Weight'));
+  });
+
   testWidgets('tap outside dismisses final field without losing input', (
     tester,
   ) async {
@@ -739,6 +771,41 @@ void main() {
     expect(find.bySemanticsLabel('S2 raw set text'), findsNothing);
   });
 
+  testWidgets('logged formatted and raw edits select their full values', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        actions: _LogActions(),
+        view: _historyView(
+          labels: const ['Week 2', ''],
+          setLabels: const ['S1', 'S2'],
+          values: const ['225x5@8', 'manual note'],
+          selectedBlock: 'Week 2',
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Edit S1'));
+    await tester.pump();
+    final weight = find.bySemanticsLabel('S1 Weight');
+    await tester.tap(weight);
+    await tester.pump();
+    _expectFullSelection(tester, weight);
+    await tester.tap(find.bySemanticsLabel('Next field S1 Reps'));
+    await tester.pump();
+    _expectFullSelection(tester, find.bySemanticsLabel('S1 Reps'));
+
+    await tester.tap(find.byTooltip('Cancel set edit'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Edit S2'));
+    await tester.pump();
+    final raw = find.bySemanticsLabel('S2 raw set text');
+    await tester.tap(raw);
+    await tester.pump();
+    _expectFullSelection(tester, raw);
+  });
+
   testWidgets('expands one saved set and save or cancel collapses it', (
     tester,
   ) async {
@@ -1244,6 +1311,12 @@ void _expectFieldValue(String label, String value) {
     find.descendant(of: _field(label), matching: find.text(value)),
     findsOneWidget,
   );
+}
+
+void _expectFullSelection(WidgetTester tester, Finder field) {
+  final editable = tester.widget<EditableText>(_editable(field));
+  expect(editable.controller.selection.start, 0);
+  expect(editable.controller.selection.end, editable.controller.text.length);
 }
 
 void _expectDisabled(WidgetTester tester, Finder control) {

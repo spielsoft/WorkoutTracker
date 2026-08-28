@@ -614,6 +614,8 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
   }
 
   void _focusChanged() {
+    final index = _focusNodes.indexWhere((node) => node.hasFocus);
+    if (index >= 0) _selectAll(widget.controllers[_labels[index]]!);
     if (_bottomInset > 0) _showFocus();
   }
 
@@ -728,6 +730,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
         key: ValueKey('set-field-$label'),
         controller: widget.controllers[label],
         focusNode: _focusNodes[index],
+        selectAllOnFocus: true,
         keyboardType: _numberKeyboard,
         style: suggested
             ? Theme.of(
@@ -735,6 +738,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
               ).textTheme.bodyLarge?.copyWith(color: suggestedColor)
             : null,
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
+        onTap: () => _selectAll(widget.controllers[label]!),
         onChanged: (_) => widget.onEntered(label),
         onSubmitted: (_) =>
             isLast ? _dismissInput() : _focusNodes[index].nextFocus(),
@@ -890,6 +894,8 @@ class _LoggedSetEditor extends StatelessWidget {
               child: TextField(
                 key: ValueKey('raw-${entry.setLabel}'),
                 controller: controller,
+                selectAllOnFocus: true,
+                onTap: () => _selectAll(controller),
                 decoration: const InputDecoration(
                   labelText: 'Raw set text',
                   border: OutlineInputBorder(),
@@ -1053,10 +1059,16 @@ class _LoggedSetFieldSt extends State<_LoggedSetField> {
     _focusNode = FocusNode(
       debugLabel: '${widget.entry.setLabel} ${widget.label}',
     );
+    _focusNode.addListener(_focusChanged);
+  }
+
+  void _focusChanged() {
+    if (_focusNode.hasFocus) _selectAll(widget.controller);
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_focusChanged);
     _focusNode.dispose();
     super.dispose();
   }
@@ -1071,10 +1083,12 @@ class _LoggedSetFieldSt extends State<_LoggedSetField> {
         key: ValueKey('logged-${widget.entry.setLabel}-field-${widget.label}'),
         controller: widget.controller,
         focusNode: _focusNode,
+        selectAllOnFocus: true,
         keyboardType: _numberKeyboard,
         textInputAction: nextLabel == null
             ? TextInputAction.done
             : TextInputAction.next,
+        onTap: () => _selectAll(widget.controller),
         onSubmitted: (_) =>
             nextLabel == null ? _focusNode.unfocus() : _focusNode.nextFocus(),
         onTapOutside: (_) => _focusNode.unfocus(),
@@ -1088,4 +1102,11 @@ class _LoggedSetFieldSt extends State<_LoggedSetField> {
       ),
     );
   }
+}
+
+void _selectAll(TextEditingController controller) {
+  controller.selection = TextSelection(
+    baseOffset: 0,
+    extentOffset: controller.text.length,
+  );
 }
