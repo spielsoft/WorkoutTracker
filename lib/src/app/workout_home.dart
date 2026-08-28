@@ -246,6 +246,9 @@ class _WorkoutField extends StatelessWidget {
       emptyPrompt: 'Add workout...',
       prefixIcon: Icons.fitness_center_outlined,
       selected: selected,
+      selectedSemantics: selected == null
+          ? null
+          : '$selected ${progress[selected]!.label}',
       addValue: _addWorkoutValue,
       onAdd: onAdd,
       onChanged: onChanged,
@@ -253,12 +256,42 @@ class _WorkoutField extends StatelessWidget {
         for (final workout in workouts)
           DropdownMenuItem(
             value: workout,
-            child: Text(
-              '$workout ${progress[workout]!.label}',
-              overflow: TextOverflow.ellipsis,
+            child: _WorkoutOption(
+              workout: workout,
+              progress: progress[workout]!,
             ),
           ),
       ],
+    );
+  }
+}
+
+class _WorkoutOption extends StatelessWidget {
+  const _WorkoutOption({required this.workout, required this.progress});
+
+  final String workout;
+  final WorkoutSetupProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '$workout ${progress.label}',
+      child: ExcludeSemantics(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                workout,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text('${progress.done}/${progress.total}'),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -305,6 +338,7 @@ class _Selector extends StatefulWidget {
     required this.emptyPrompt,
     required this.prefixIcon,
     required this.selected,
+    this.selectedSemantics,
     required this.addValue,
     required this.items,
     required this.onChanged,
@@ -316,6 +350,7 @@ class _Selector extends StatefulWidget {
   final String emptyPrompt;
   final IconData prefixIcon;
   final String? selected;
+  final String? selectedSemantics;
   final String addValue;
   final List<DropdownMenuItem<String>> items;
   final ValueChanged<String?> onChanged;
@@ -341,7 +376,10 @@ class _SelectorSt extends State<_Selector> {
   Widget build(BuildContext context) {
     return Semantics(
       label: '${widget.label} selector',
-      value: widget.selected ?? 'No ${widget.label.toLowerCase()} selected',
+      value:
+          widget.selectedSemantics ??
+          widget.selected ??
+          'No ${widget.label.toLowerCase()} selected',
       hint: 'Choose ${widget.label.toLowerCase()}',
       child: DropdownButtonFormField<String>(
         key: ValueKey('${widget.keyPrefix}-${widget.selected}-$_resetEpoch'),

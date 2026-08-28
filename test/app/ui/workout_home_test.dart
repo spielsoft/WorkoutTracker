@@ -138,12 +138,97 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Upper (1/1 started)'), findsOneWidget);
-      await tester.tap(find.text('Upper (1/1 started)'));
+      expect(find.text('Upper'), findsOneWidget);
+      expect(find.text('1/1'), findsOneWidget);
+      await tester.tap(find.text('Upper'));
       await tester.pumpAndSettle();
-      expect(find.text('Legs (0/1 started)'), findsOneWidget);
+      expect(find.text('Legs'), findsOneWidget);
+      expect(find.text('0/1'), findsOneWidget);
     },
   );
+
+  testWidgets('shows exercise and long-name workout progress unambiguously', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const workout = 'Functional Athleticism and Upper Pull Exercises';
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1', '', ''],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1', 'S2', 'S3'],
+      ['Squat', '3', '3 min', '', 'x5@8', '', '', workout, '', 'x', '', '', ''],
+      [
+        'Bench Press',
+        '3',
+        '3 min',
+        '',
+        'x5@8',
+        '',
+        '',
+        workout,
+        '',
+        'x',
+        '135x5@8',
+        '135x5@8',
+        '135x5@8',
+      ],
+      [
+        'Plank',
+        'AMRAP',
+        '60s',
+        '',
+        '45@8',
+        '',
+        '{Seconds}@{RPE}',
+        workout,
+        '',
+        'x',
+        '45@8',
+        '',
+        '',
+      ],
+    ]);
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('0 of 3 sets'), findsOneWidget);
+    expect(find.text('3 of 3 sets'), findsOneWidget);
+    expect(find.text('1 set logged'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp(r'0 of 3 sets')),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(RegExp(r'3 of 3 sets')),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(RegExp(r'1 set logged')),
+      findsOneWidget,
+    );
+
+    expect(find.text(workout), findsOneWidget);
+    expect(find.text('2/3'), findsOneWidget);
+    final name = tester.widget<Text>(find.text(workout));
+    expect(name.maxLines, 1);
+    expect(name.overflow, TextOverflow.ellipsis);
+    expect(tester.takeException(), isNull);
+
+    final selector = tester.getSemantics(
+      find.bySemanticsLabel(RegExp(r'Workout selector')),
+    );
+    expect(selector.value, '$workout (2/3 started)');
+
+    final historyTop = tester.getTopLeft(find.text('History block')).dy;
+    final workoutTop = tester.getTopLeft(find.text('Workout')).dy;
+    expect(historyTop, lessThan(workoutTop));
+  });
 
   testWidgets('opens backup placement from a visible overview row action', (
     tester,
@@ -575,7 +660,7 @@ void main() {
       expect(find.byKey(const ValueKey('add-workout')), findsNothing);
       expect(find.byKey(const ValueKey('add-history-block')), findsNothing);
 
-      await tester.tap(find.text('Legs (0/1 started)').first);
+      await tester.tap(find.text('Legs').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add workout...').last);
       await tester.pumpAndSettle();
@@ -584,7 +669,8 @@ void main() {
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Push (0/0 started)'), findsOneWidget);
+      expect(find.text('Push'), findsOneWidget);
+      expect(find.text('0/0'), findsOneWidget);
 
       await tester.tap(find.text('Week 1').first);
       await tester.pumpAndSettle();

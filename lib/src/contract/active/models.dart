@@ -15,12 +15,14 @@ class WorkoutOverviewSlot {
     required this.sheetRowNumber,
     required this.exercise,
     required this.setCount,
+    required this.prescribedSets,
     Iterable<WorkoutChoice> backups = const [],
   }) : backups = List<WorkoutChoice>.unmodifiable(backups);
 
   final int sheetRowNumber;
   final String exercise;
   final int setCount;
+  final String prescribedSets;
   final List<WorkoutChoice> backups;
 }
 
@@ -210,6 +212,7 @@ class _WorkoutReadModelBuilder {
               sheetRowNumber: slot.sheetRowNumber,
               exercise: slot.exercise,
               setCount: _setCountForSlot(slot, block),
+              prescribedSets: slot.sets,
               backups: slot.backups.map(_choiceForSlot),
             ),
           ),

@@ -53,16 +53,16 @@ void main() {
     ]);
 
     expect(find.text('Squat'), findsOneWidget);
-    expect(find.text('0 sets'), findsOneWidget);
+    expect(find.text('0 of 3 sets'), findsOneWidget);
 
-    await tester.tap(find.text('Legs (0/1 started)').first);
+    await tester.tap(find.text('Legs').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Upper (1/1 started)').last);
+    await tester.tap(find.text('Upper').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Squat'), findsNothing);
     expect(find.text('Bench Press'), findsOneWidget);
-    expect(find.text('1 set'), findsOneWidget);
+    expect(find.text('1 of 3 sets'), findsOneWidget);
 
     await tester.tap(find.text('Week 2').first);
     await tester.pumpAndSettle();
@@ -70,7 +70,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Bench Press'), findsOneWidget);
-    expect(find.text('0 sets'), findsOneWidget);
+    expect(find.text('0 of 3 sets'), findsOneWidget);
   });
 
   testWidgets('native back pops logging before leaving workout home', (

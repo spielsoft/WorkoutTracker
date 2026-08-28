@@ -64,6 +64,7 @@ void main() {
       blockLabel: '',
     );
     expect(overview.slots.single.exercise, 'Squat');
+    expect(overview.slots.single.prescribedSets, '3');
     expect(overview.slots.single.backups.single.exercise, 'Leg Press');
   });
 }

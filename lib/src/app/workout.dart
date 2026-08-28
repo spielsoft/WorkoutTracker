@@ -140,7 +140,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final setLabel = slot.setCount == 1 ? '1 set' : '${slot.setCount} sets';
+    final setLabel = _setProgress(slot);
     final setStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
     );
@@ -209,7 +209,11 @@ class _WorkoutOverviewTile extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 2),
-                            Text(setLabel, style: setStyle),
+                            Text(
+                              setLabel,
+                              semanticsLabel: setLabel,
+                              style: setStyle,
+                            ),
                           ],
                         ),
                       ),
@@ -268,6 +272,17 @@ class _WorkoutOverviewTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _setProgress(WorkoutOverviewSlot slot) {
+    final prescribed = int.tryParse(slot.prescribedSets.trim());
+    if (prescribed == null) {
+      return slot.setCount == 1
+          ? '1 set logged'
+          : '${slot.setCount} sets logged';
+    }
+    final unit = prescribed == 1 ? 'set' : 'sets';
+    return '${slot.setCount} of $prescribed $unit';
   }
 
   void _handleExerciseAction(_PrimaryExerciseAction action) {
