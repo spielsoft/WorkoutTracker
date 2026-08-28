@@ -134,7 +134,9 @@ final class RestCtrl extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _emitSignal() async {
     try {
       await _signal();
-    } catch (_) {
+    } on MissingPluginException {
+      // Keep the timer usable when the platform haptic channel is absent.
+    } on PlatformException {
       // Keep the timer usable when the platform haptic channel is absent.
     }
   }

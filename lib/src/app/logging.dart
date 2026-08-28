@@ -612,8 +612,6 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
   }
 
   void _focusChanged() {
-    final index = _focusNodes.indexWhere((node) => node.hasFocus);
-    if (index >= 0) _selectAll(widget.controllers[_labels[index]]!);
     if (_bottomInset > 0) _showFocus();
   }
 
@@ -720,10 +718,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
       final target = widget.targets[label] ?? '';
       final suggested = widget.provisional.contains(label);
       final visualLabel = target.trim().isEmpty ? label : '$label → $target';
-      final suggestedColor = stateStyle(
-        Theme.of(context).colorScheme,
-        VisualSt.warning,
-      ).border;
+      final suggestedColor = suggestedValueColor(Theme.of(context).colorScheme);
       return TextField(
         key: ValueKey('set-field-$label'),
         controller: widget.controllers[label],
@@ -1057,16 +1052,10 @@ class _LoggedSetFieldSt extends State<_LoggedSetField> {
     _focusNode = FocusNode(
       debugLabel: '${widget.entry.setLabel} ${widget.label}',
     );
-    _focusNode.addListener(_focusChanged);
-  }
-
-  void _focusChanged() {
-    if (_focusNode.hasFocus) _selectAll(widget.controller);
   }
 
   @override
   void dispose() {
-    _focusNode.removeListener(_focusChanged);
     _focusNode.dispose();
     super.dispose();
   }

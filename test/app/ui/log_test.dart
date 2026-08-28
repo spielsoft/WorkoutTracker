@@ -445,7 +445,7 @@ void main() {
     );
 
     final colors = Theme.of(tester.element(_field('Weight'))).colorScheme;
-    final suggested = stateStyle(colors, VisualSt.warning).border;
+    final suggested = suggestedValueColor(colors);
     final error = stateStyle(colors, VisualSt.error).border;
     expect(suggested, isNot(error));
     expect(

@@ -209,11 +209,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              setLabel,
-                              semanticsLabel: setLabel,
-                              style: setStyle,
-                            ),
+                            Text(setLabel, style: setStyle),
                           ],
                         ),
                       ),

@@ -134,14 +134,31 @@ String _stateLabel(VisualSt state) {
   };
 }
 
+const _warningSeed = Color(0xFFFFB300);
+
+ColorScheme _warningScheme(ColorScheme colors) {
+  return ColorScheme.fromSeed(
+    seedColor: _warningSeed,
+    brightness: colors.brightness,
+  );
+}
+
+/// Foreground for a logging value the athlete has not confirmed for this set.
+///
+/// Shares the warning seed with [VisualSt.warning] so the app keeps a single
+/// warm accent, but takes a light tone deliberately. The value sits directly
+/// on the page surface rather than inside a warning container, and has to read
+/// as easily as ordinary entered text under poor gym lighting, so this is
+/// brighter than the surrounding chrome rather than dimmer.
+Color suggestedValueColor(ColorScheme colors) {
+  return _warningScheme(colors).onPrimaryContainer;
+}
+
 ({Color background, Color border, Color foreground, IconData icon}) stateStyle(
   ColorScheme colors,
   VisualSt state,
 ) {
-  final warning = ColorScheme.fromSeed(
-    seedColor: const Color(0xFFFFB300),
-    brightness: colors.brightness,
-  );
+  final warning = _warningScheme(colors);
   return switch (state) {
     VisualSt.logged => (
       background: colors.secondaryContainer,
