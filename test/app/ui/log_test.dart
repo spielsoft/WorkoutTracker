@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
+import 'package:workout_tracker/src/app/ui/shared/status.dart';
 
 void main() {
   testWidgets('keeps phone set entry in a compact task-first hierarchy', (
@@ -292,8 +293,8 @@ void main() {
     expect(find.text('Current S1'), findsNothing);
     expect(find.text('Backup'), findsNothing);
     expect(find.text('Save set S1'), findsOneWidget);
-    expect(find.text('Reps (10-12)'), findsOneWidget);
-    expect(find.text('Pain (0)'), findsOneWidget);
+    expect(find.text('Reps → 10-12'), findsOneWidget);
+    expect(find.text('Pain → 0'), findsOneWidget);
   });
 
   testWidgets(
@@ -400,6 +401,91 @@ void main() {
     },
   );
 
+  testWidgets('distinguishes suggested values until the athlete edits them', (
+    tester,
+  ) async {
+    final actions = _LogActions();
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _targetView(targets: '240x10-12@8,0'),
+      ),
+    );
+
+    final colors = Theme.of(tester.element(_field('Weight'))).colorScheme;
+    final suggested = stateStyle(colors, VisualSt.warning).border;
+    final error = stateStyle(colors, VisualSt.error).border;
+    expect(suggested, isNot(error));
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+          .style
+          ?.color,
+      suggested,
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('New set Weight')).hint,
+      contains('Suggested value'),
+    );
+
+    await tester.enterText(_field('Weight'), '225');
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+          .style
+          ?.color,
+      isNot(suggested),
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('New set Weight')).hint,
+      isNot(contains('Suggested value')),
+    );
+
+    await tester.pumpWidget(
+      _app(
+        actions: actions,
+        view: _targetView(targets: '240x10-12@8,0', history: '225x6@9,2'),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+          .style
+          ?.color,
+      suggested,
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('New set Weight')).hint,
+      contains('Suggested value'),
+    );
+  });
+
+  testWidgets('suggested values retain contrast in compact formats', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final semantics = tester.ensureSemantics();
+    try {
+      for (final view in [_view(), _dbStepUpView()]) {
+        await tester.pumpWidget(_app(actions: _LogActions(), view: view));
+        await tester.pump();
+        for (final field in find.byType(TextField).evaluate()) {
+          await tester.ensureVisible(find.byWidget(field.widget));
+          await tester.pump();
+        }
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      }
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   testWidgets('prefills a fresh block from the latest prior first set', (
     tester,
   ) async {
@@ -473,10 +559,10 @@ void main() {
       }
       expect(find.bySemanticsLabel('Weight (240)'), findsNothing);
       expect(find.bySemanticsLabel('New set Weight (240)'), findsNothing);
-      expect(find.text('Weight (240)'), findsOneWidget);
-      expect(find.text('Reps (10-12)'), findsOneWidget);
-      expect(find.text('RPE (8)'), findsOneWidget);
-      expect(find.text('Pain (0)'), findsOneWidget);
+      expect(find.text('Weight → 240'), findsOneWidget);
+      expect(find.text('Reps → 10-12'), findsOneWidget);
+      expect(find.text('RPE → 8'), findsOneWidget);
+      expect(find.text('Pain → 0'), findsOneWidget);
       _expectFieldValue('Weight', '240');
       _expectFieldValue('Reps', '10-12');
       _expectFieldValue('RPE', '8');
@@ -495,8 +581,8 @@ void main() {
     );
 
     expect(find.text('Weight'), findsOneWidget);
-    expect(find.text('Reps (10-12)'), findsOneWidget);
-    expect(find.text('RPE (8)'), findsOneWidget);
+    expect(find.text('Reps → 10-12'), findsOneWidget);
+    expect(find.text('RPE → 8'), findsOneWidget);
     expect(find.text('Pain'), findsOneWidget);
     expect(find.textContaining('(0)'), findsNothing);
   });
@@ -511,10 +597,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Weight (240)'), findsOneWidget);
-      expect(find.text('Reps (10-12)'), findsOneWidget);
-      expect(find.text('RPE (8)'), findsOneWidget);
-      expect(find.text('Pain (0)'), findsOneWidget);
+      expect(find.text('Weight → 240'), findsOneWidget);
+      expect(find.text('Reps → 10-12'), findsOneWidget);
+      expect(find.text('RPE → 8'), findsOneWidget);
+      expect(find.text('Pain → 0'), findsOneWidget);
       _expectFieldValue('Weight', '225');
       _expectFieldValue('Reps', '6');
       _expectFieldValue('RPE', '9');
@@ -532,8 +618,8 @@ void main() {
         view: _placementView(primaryRow: 3, selectedRow: 3),
       ),
     );
-    expect(find.text('Weight (100)'), findsOneWidget);
-    expect(find.text('Reps (5)'), findsOneWidget);
+    expect(find.text('Weight → 100'), findsOneWidget);
+    expect(find.text('Reps → 5'), findsOneWidget);
 
     await tester.pumpWidget(
       _app(
@@ -541,8 +627,8 @@ void main() {
         view: _placementView(primaryRow: 3, selectedRow: 4),
       ),
     );
-    expect(find.text('Weight (110)'), findsOneWidget);
-    expect(find.text('Reps (6)'), findsOneWidget);
+    expect(find.text('Weight → 110'), findsOneWidget);
+    expect(find.text('Reps → 6'), findsOneWidget);
 
     await tester.pumpWidget(
       _app(
@@ -550,8 +636,8 @@ void main() {
         view: _placementView(primaryRow: 5, selectedRow: 5),
       ),
     );
-    expect(find.text('Weight (120)'), findsOneWidget);
-    expect(find.text('Reps (8)'), findsOneWidget);
+    expect(find.text('Weight → 120'), findsOneWidget);
+    expect(find.text('Reps → 8'), findsOneWidget);
   });
 
   testWidgets('keeps target suffixes off logged-set edit fields', (

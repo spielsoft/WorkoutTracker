@@ -13,6 +13,7 @@ import 'ui/shared/error.dart';
 import 'ui/shared/header.dart';
 import 'ui/shared/next_field.dart';
 import 'ui/shared/role.dart';
+import 'ui/shared/status.dart';
 
 const _segmentRadius = 8.0;
 const _keyboardGap = 8.0;
@@ -195,6 +196,10 @@ class _LogScreenSt extends State<LogScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
+  void _markEntered(String label) {
+    if (_flow.markEntered(label)) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = _flow.viewModel;
@@ -276,8 +281,10 @@ class _LogScreenSt extends State<LogScreen> {
             logFormat: loggingContext.logFormat,
             targets: loggingContext.targets.values,
             controllers: viewModel.newSetCtrls,
+            provisional: viewModel.provisional,
             setNumber: viewModel.nextSetNumber,
             isBusy: widget.view.isBusy,
+            onEntered: _markEntered,
             onSave: _saveSet,
           ),
           if (widget.view.error case final error?) ...[
@@ -508,8 +515,10 @@ class _StructuredSetEditor extends StatefulWidget {
     required this.logFormat,
     required this.targets,
     required this.controllers,
+    required this.provisional,
     required this.setNumber,
     required this.isBusy,
+    required this.onEntered,
     required this.onSave,
     super.key,
   });
@@ -517,8 +526,10 @@ class _StructuredSetEditor extends StatefulWidget {
   final LogFormatParseResult logFormat;
   final Map<String, String> targets;
   final Map<String, TextEditingController> controllers;
+  final Set<String> provisional;
   final int setNumber;
   final bool isBusy;
+  final ValueChanged<String> onEntered;
   final VoidCallback onSave;
 
   @override
@@ -707,13 +718,24 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
     TextField field(String label, int index) {
       final isLast = index == _labels.length - 1;
       final target = widget.targets[label] ?? '';
-      final visualLabel = target.trim().isEmpty ? label : '$label ($target)';
+      final suggested = widget.provisional.contains(label);
+      final visualLabel = target.trim().isEmpty ? label : '$label → $target';
+      final suggestedColor = stateStyle(
+        Theme.of(context).colorScheme,
+        VisualSt.warning,
+      ).border;
       return TextField(
         key: ValueKey('set-field-$label'),
         controller: widget.controllers[label],
         focusNode: _focusNodes[index],
         keyboardType: _numberKeyboard,
+        style: suggested
+            ? Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: suggestedColor)
+            : null,
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
+        onChanged: (_) => widget.onEntered(label),
         onSubmitted: (_) =>
             isLast ? _dismissInput() : _focusNodes[index].nextFocus(),
         onTapOutside: (_) => _dismissInput(),
@@ -733,6 +755,9 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
     Widget accessibleField(String label, int index) {
       return A11yTextField(
         label: 'New set $label',
+        hint: widget.provisional.contains(label)
+            ? 'Suggested value; edit to confirm'
+            : null,
         valueListenable: widget.controllers[label],
         child: field(label, index),
       );

@@ -26,6 +26,7 @@ class LoggingFlow {
   final _newSetCtrls = <String, TextEditingController>{};
   final _loggedFieldCtrls = <int, Map<String, TextEditingController>>{};
   final _rawCtrls = <int, TextEditingController>{};
+  final _provisional = <String>{};
 
   LoggingVm get viewModel {
     final context = _context;
@@ -43,6 +44,7 @@ class LoggingFlow {
           ),
       }),
       rawCtrls: Map<int, TextEditingController>.unmodifiable(_rawCtrls),
+      provisional: Set<String>.unmodifiable(_provisional),
     );
   }
 
@@ -52,6 +54,7 @@ class LoggingFlow {
     required int primaryRow,
     required int selectedRow,
   }) {
+    final currentSet = _nextSetNumber(_context.selectedHistory);
     final targetChanged =
         _blockLabel != blockLabel ||
         _primaryRow != primaryRow ||
@@ -60,8 +63,12 @@ class LoggingFlow {
     _blockLabel = blockLabel;
     _primaryRow = primaryRow;
     _selectedRow = selectedRow;
-    _syncCtrls(_context, prefillNewSet: targetChanged);
+    final context = _context;
+    final setAdvanced = currentSet != _nextSetNumber(context.selectedHistory);
+    _syncCtrls(context, prefillNewSet: targetChanged || setAdvanced);
   }
+
+  bool markEntered(String label) => _provisional.remove(label);
 
   SaveSetCmd? planSetSave() {
     final fieldValues = {
@@ -168,6 +175,7 @@ class LoggingFlow {
         .toList();
     for (final label in removedLabels) {
       _newSetCtrls.remove(label)?.dispose();
+      _provisional.remove(label);
     }
     for (final label in labels) {
       _newSetCtrls.putIfAbsent(label, TextEditingController.new);
@@ -183,9 +191,11 @@ class LoggingFlow {
       FormattedLogEntry(:final fieldValues) => fieldValues,
       _ => context.targets.values,
     };
+    _provisional.clear();
     for (final MapEntry(key: label, value: controller)
         in _newSetCtrls.entries) {
       controller.text = values[label] ?? '';
+      if (controller.text.trim().isNotEmpty) _provisional.add(label);
     }
   }
 
@@ -346,6 +356,7 @@ class LoggingVm {
     required this.newSetCtrls,
     required this.loggedCtrls,
     required this.rawCtrls,
+    required this.provisional,
   }) : loggedEntries = List<RowHistoryEntry>.unmodifiable(loggedEntries);
 
   final ExerciseLoggingContext context;
@@ -354,6 +365,7 @@ class LoggingVm {
   final Map<String, TextEditingController> newSetCtrls;
   final Map<int, Map<String, TextEditingController>> loggedCtrls;
   final Map<int, TextEditingController> rawCtrls;
+  final Set<String> provisional;
 
   WorkoutChoice get selectedChoice => context.selectedChoice;
 }
