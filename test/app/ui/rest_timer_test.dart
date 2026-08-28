@@ -8,6 +8,20 @@ import '../../support/widget.dart';
 import '../service_fake.dart';
 
 void main() {
+  testWidgets('rest timer runs while the set write is still in flight', (
+    tester,
+  ) async {
+    await _openService(
+      tester,
+      CompletingWriteValidationService(minimalValidParsedSheet()),
+    );
+
+    await _save(tester);
+
+    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+    expect(find.text('180'), findsOneWidget);
+  });
+
   testWidgets(
     'successful set save starts a top timer that survives navigation',
     (tester) async {
@@ -103,6 +117,32 @@ void main() {
     expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
   });
 
+  testWidgets('blank fields neither save nor start rest', (tester) async {
+    final service = TestValSvc.fromRows([
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Squat',
+        '3',
+        '90s',
+        '',
+        '',
+        '',
+        '{Weight}x{Reps}@{RPE}',
+        'Legs',
+        '',
+        'x',
+        '',
+      ],
+    ]);
+    await _openService(tester, service);
+
+    await _save(tester);
+
+    expect(service.appliedPlans, isEmpty);
+    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+  });
+
   testWidgets('unparseable rest starts no timer', (tester) async {
     await _openLog(tester, rest: 'eventually', sets: '3');
     await _save(tester);
@@ -117,20 +157,34 @@ void main() {
     expect(restDuration('3:00'), const Duration(minutes: 3));
   });
 
-  testWidgets('failed set save does not start a rest timer', (tester) async {
+  testWidgets('failed set save leaves its started rest timer running', (
+    tester,
+  ) async {
     final service = FailingWriteValidationService(minimalValidParsedSheet());
-    await tester.pumpWidget(
-      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
-    );
-    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.text('Squat'));
-    await tester.pumpAndSettle();
+    await _openService(tester, service);
 
     await _save(tester);
 
     expect(find.text('Unable to save set'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+    expect(find.text('180'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.text('175'), findsOneWidget);
+    await _save(tester);
+    expect(find.text('180'), findsOneWidget);
+  });
+
+  testWidgets('unusable rest starts no timer while a write is in flight', (
+    tester,
+  ) async {
+    await _openService(
+      tester,
+      CompletingWriteValidationService(_sheet(rest: 'later')),
+    );
+
+    await _save(tester);
+
     expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
   });
 
@@ -159,11 +213,6 @@ Future<void> _openLog(
   required String sets,
   bool configureView = true,
 }) async {
-  if (configureView) {
-    tester.view.physicalSize = const Size(390, 1200);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-  }
   final service = TestValSvc.fromRows([
     [...activeSheetFixedColumns, 'Week 1'],
     [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
@@ -181,6 +230,19 @@ Future<void> _openLog(
       '',
     ],
   ]);
+  await _openService(tester, service, configureView: configureView);
+}
+
+Future<void> _openService(
+  WidgetTester tester,
+  WbkAccess service, {
+  bool configureView = true,
+}) async {
+  if (configureView) {
+    tester.view.physicalSize = const Size(390, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+  }
 
   await tester.pumpWidget(
     WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
@@ -190,6 +252,30 @@ Future<void> _openLog(
   await tester.pump();
   await tester.tap(find.text('Squat'));
   await tester.pumpAndSettle();
+}
+
+ParsedActiveSheet _sheet({required String rest}) {
+  return parseActiveSheet(
+    ActiveSheetInput(
+      rows: [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Squat',
+          '3',
+          rest,
+          '',
+          'x5@8',
+          '',
+          '{Weight}x{Reps}@{RPE}',
+          'Legs',
+          '',
+          'x',
+          '',
+        ],
+      ],
+    ),
+  );
 }
 
 Future<void> _save(WidgetTester tester) async {

@@ -13,7 +13,8 @@ navigation; none of them begins the view split described in
 - [ ] Slice 6: Show Logged Sets Against Prescribed Sets
 - [ ] Slice 7: Remove the Duplicate Exercise Library Heading
 - [ ] Slice 8: Remove the Unused Light Theme
-- [ ] Slice 9: Run the Full Local Guard
+- [ ] Slice 9: Start Rest Before the Sheet Write Completes
+- [ ] Slice 10: Run the Full Local Guard
 
 ## Slice 1: Distinguish Target Values From Entered Values
 
@@ -297,7 +298,57 @@ None - can start immediately.
 
 - Review decision: dark-only is permanent.
 
-## Slice 9: Run the Full Local Guard
+## Slice 9: Start Rest Before the Sheet Write Completes
+
+### Type
+
+`AFK`
+
+### What to build
+
+Saving a set starts the rest timer as soon as the set is known to be savable,
+rather than after the spreadsheet write returns. Rest is a physical clock that
+begins when the athlete racks the bar, so on a slow connection the countdown
+currently starts late by the full network latency: the remaining time shown is
+wrong for the whole set, and the tap produces no feedback until the write
+lands.
+
+The timer must not start when there is nothing to save. Planning a set returns
+no plan when every field is blank, and that case saves nothing today. Start the
+timer only once a plan exists, then await the write as before. Reporting a
+failed write is unchanged.
+
+One consequence is accepted deliberately: if a write fails and the athlete
+retries, the countdown restarts. A failed save already interrupts the set, and
+the alternative is per-set bookkeeping about whether a timer is already
+running.
+
+This does not make logging work on a poor connection. Saving stays blocked
+until the write completes, and a single save costs at least three sequential
+round trips — a re-read to validate the plan against current state, the write,
+and a confirming read that retries while the change is not yet visible.
+Reducing those round trips, and entering data while offline, are deliberately
+out of scope here.
+
+### Acceptance criteria
+
+- [ ] A behavior test first demonstrates the rest timer running while a set write is still in flight.
+- [ ] Tapping save with every field blank saves nothing and starts no timer.
+- [ ] A write that ultimately fails leaves the started timer running and still reports the failure.
+- [ ] Retrying a failed save restarts the countdown, asserted rather than left incidental.
+- [ ] An exercise with no usable Rest value starts no timer, whatever the write does.
+- [ ] Existing logging and rest timer tests pass unchanged.
+
+### Blocked by
+
+- Rest After Every Set With a Rest Value
+
+### User stories covered
+
+- Review decision: start rest on the intent to save, not on write acknowledgment.
+- Deferred: entering data on a poor connection, and reducing the round trips a save costs.
+
+## Slice 10: Run the Full Local Guard
 
 ### Type
 

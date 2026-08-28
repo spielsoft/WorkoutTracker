@@ -108,12 +108,12 @@ class _LogScreenSt extends State<LogScreen> {
 
   Future<void> _saveSet() async {
     if (widget.view.isBusy) return;
-    final rest = _restAfterSave(_flow.viewModel);
     final plan = _flow.planSetSave();
     if (plan == null) return;
 
-    final saved = await widget.actions.execute(plan);
-    if (saved && mounted && rest != null) widget.onRest?.call(rest);
+    final rest = _restAfterSave(_flow.viewModel);
+    if (rest != null) widget.onRest?.call(rest);
+    await widget.actions.execute(plan);
   }
 
   Future<void> _saveRawSet(RowHistoryEntry entry) async {
