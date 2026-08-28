@@ -36,7 +36,24 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-exercise-manager')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Edit exercises'), findsWidgets);
+    expect(find.text('Edit exercises'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.header == true &&
+            widget.properties.label?.contains('Edit exercises') == true,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(RegExp(r'Edit exercise library')),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(find.bySemanticsLabel('Search exercises')).dy,
+      lessThan(150),
+    );
     expect(find.byTooltip('Back to workout'), findsOneWidget);
     expect(find.byTooltip('Create exercise'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);

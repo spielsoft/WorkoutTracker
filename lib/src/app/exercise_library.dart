@@ -266,8 +266,6 @@ class _LibraryHeader extends StatelessWidget {
                 ),
         ),
         const SizedBox(height: 16),
-        Text('Edit exercises', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
         TextField(
           key: const ValueKey('exercise-library-search'),
           controller: searchCtrl,
