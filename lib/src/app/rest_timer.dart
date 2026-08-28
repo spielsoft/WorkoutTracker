@@ -3,9 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const _barColor = Color(0xFF594738);
-const _barForeground = Color(0xFFFFF3E6);
-const _buttonBorder = Color(0xFFAA896C);
 const _tick = Duration(seconds: 1);
 const _extra = Duration(seconds: 30);
 
@@ -159,9 +156,10 @@ class RestBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
       key: const ValueKey('rest-timer'),
-      color: _barColor,
+      color: colors.tertiaryContainer,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
@@ -173,8 +171,8 @@ class RestBar extends StatelessWidget {
                   key: const ValueKey('rest-add'),
                   onPressed: ctrl.addTime,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _barForeground,
-                    side: const BorderSide(color: _buttonBorder),
+                    foregroundColor: colors.onTertiaryContainer,
+                    side: BorderSide(color: colors.tertiary),
                   ),
                   child: const Text('+30 s'),
                 ),
@@ -194,16 +192,16 @@ class RestBar extends StatelessWidget {
               child: TextButton(
                 onPressed: ctrl.toggle,
                 style: TextButton.styleFrom(
-                  foregroundColor: _barForeground,
+                  foregroundColor: colors.onTertiaryContainer,
                   backgroundColor: ctrl.paused
-                      ? _barForeground.withValues(alpha: 0.12)
-                      : Colors.transparent,
+                      ? colors.onTertiaryContainer.withValues(alpha: 0.12)
+                      : null,
                   minimumSize: const Size(88, 56),
                 ),
                 child: Text(
                   '${ctrl.seconds}',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: _barForeground,
+                    color: colors.onTertiaryContainer,
                     fontWeight: FontWeight.w500,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
@@ -216,6 +214,10 @@ class RestBar extends StatelessWidget {
                 child: FilledButton(
                   key: const ValueKey('rest-done'),
                   onPressed: ctrl.done,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.tertiary,
+                    foregroundColor: colors.onTertiary,
+                  ),
                   child: const Text('Done'),
                 ),
               ),
