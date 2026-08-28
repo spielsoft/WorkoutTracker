@@ -718,18 +718,13 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
       final target = widget.targets[label] ?? '';
       final suggested = widget.provisional.contains(label);
       final visualLabel = target.trim().isEmpty ? label : '$label → $target';
-      final suggestedColor = suggestedValueColor(Theme.of(context).colorScheme);
       return TextField(
         key: ValueKey('set-field-$label'),
         controller: widget.controllers[label],
         focusNode: _focusNodes[index],
         selectAllOnFocus: true,
         keyboardType: _numberKeyboard,
-        style: suggested
-            ? Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: suggestedColor)
-            : null,
+        style: suggested ? _suggestedStyle(context) : null,
         textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
         onTap: () => _selectAll(widget.controllers[label]!),
         onChanged: (_) => widget.onEntered(label),
@@ -787,6 +782,18 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
       ),
     );
   }
+}
+
+/// Styles a value the athlete has not yet confirmed for the current set.
+///
+/// Italic carries the state alongside the color rather than relying on hue
+/// alone, so the distinction survives poor gym lighting and does not depend on
+/// color vision.
+TextStyle? _suggestedStyle(BuildContext context) {
+  return Theme.of(context).textTheme.bodyLarge?.copyWith(
+    color: suggestedValueColor(Theme.of(context).colorScheme),
+    fontStyle: FontStyle.italic,
+  );
 }
 
 List<String> _fieldLabels(LogFormatParseResult format) {

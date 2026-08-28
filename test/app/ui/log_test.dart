@@ -456,6 +456,13 @@ void main() {
       suggested,
     );
     expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+          .style
+          ?.fontStyle,
+      FontStyle.italic,
+    );
+    expect(
       tester.getSemantics(find.bySemanticsLabel('New set Weight')).hint,
       contains('Suggested value'),
     );
@@ -469,6 +476,13 @@ void main() {
           .style
           ?.color,
       isNot(suggested),
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('set-field-Weight')))
+          .style
+          ?.fontStyle,
+      isNot(FontStyle.italic),
     );
     expect(
       tester.getSemantics(find.bySemanticsLabel('New set Weight')).hint,
