@@ -27,6 +27,7 @@ class LoggingFlow {
   final _loggedFieldCtrls = <int, Map<String, TextEditingController>>{};
   final _rawCtrls = <int, TextEditingController>{};
   final _provisional = <String>{};
+  List<String>? _resolvedTimerFields;
 
   LoggingVm get viewModel {
     final context = _context;
@@ -45,6 +46,7 @@ class LoggingFlow {
       }),
       rawCtrls: Map<int, TextEditingController>.unmodifiable(_rawCtrls),
       provisional: Set<String>.unmodifiable(_provisional),
+      timerFields: _timerFields(context),
     );
   }
 
@@ -63,6 +65,7 @@ class LoggingFlow {
     _blockLabel = blockLabel;
     _primaryRow = primaryRow;
     _selectedRow = selectedRow;
+    _resolvedTimerFields = null;
     final context = _context;
     final setAdvanced = currentSet != _nextSetNumber(context.selectedHistory);
     _syncCtrls(context, prefillNewSet: targetChanged || setAdvanced);
@@ -152,6 +155,25 @@ class LoggingFlow {
       selectedRow: _selectedRow,
       blockLabel: _blockLabel,
     );
+  }
+
+  /// Timer Fields the canonical Exercises row declares for this placement.
+  ///
+  /// The workbook's Exercises tab is the only source of timer configuration;
+  /// a placement never carries its own copy and no field label, unit, or
+  /// value implies timing.
+  ///
+  /// Resolving this rereads every canonical row, so the answer is held until
+  /// [update] supplies a different sheet or placement rather than recomputed
+  /// on each build.
+  List<String> _timerFields(ExerciseLoggingContext context) {
+    final name = context.selectedChoice.exercise;
+    return _resolvedTimerFields ??= () {
+      for (final exercise in _activeSheet.canonicalExercises.reversed) {
+        if (exercise.exercise == name) return exercise.timerFields;
+      }
+      return const <String>[];
+    }();
   }
 
   void _syncCtrls(
@@ -357,7 +379,9 @@ class LoggingVm {
     required this.loggedCtrls,
     required this.rawCtrls,
     required this.provisional,
-  }) : loggedEntries = List<RowHistoryEntry>.unmodifiable(loggedEntries);
+    Iterable<String> timerFields = const [],
+  }) : loggedEntries = List<RowHistoryEntry>.unmodifiable(loggedEntries),
+       timerFields = List<String>.unmodifiable(timerFields);
 
   final ExerciseLoggingContext context;
   final List<RowHistoryEntry> loggedEntries;
@@ -366,6 +390,9 @@ class LoggingVm {
   final Map<int, Map<String, TextEditingController>> loggedCtrls;
   final Map<int, TextEditingController> rawCtrls;
   final Set<String> provisional;
+
+  /// New-set field labels this exercise times, in Log Format order.
+  final List<String> timerFields;
 
   WorkoutChoice get selectedChoice => context.selectedChoice;
 }

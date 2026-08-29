@@ -549,6 +549,112 @@ void main() {
       expect(service.appliedPlans.last.cellUpdates.single.value, isEmpty);
     },
   );
+
+  testWidgets(
+    'new set entry times only the canonical Timer Fields of its exercise',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final service = TestValSvc.fromRows(
+        [
+          [...activeSheetFixedColumns, 'Week 1'],
+          [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+          [
+            'Side Plank',
+            '3',
+            '45s',
+            '',
+            '30s@8',
+            '',
+            '{Seconds}s@{RPE}',
+            'Core',
+            '',
+            'x',
+            '',
+          ],
+          [
+            'Front Plank',
+            '3',
+            '45s',
+            '',
+            '30s@8',
+            '',
+            '{Seconds}s@{RPE}',
+            'Core',
+            '',
+            'x',
+            '',
+          ],
+        ],
+        exercisesRows: [
+          exercisesSheetColumns,
+          [
+            'Side Plank',
+            'Timed hold',
+            '3',
+            '45s',
+            '',
+            '',
+            '{Seconds}s@{RPE}',
+            '30s@8',
+            "['Seconds']",
+          ],
+          [
+            'Front Plank',
+            'Untimed hold',
+            '3',
+            '45s',
+            '',
+            '',
+            '{Seconds}s@{RPE}',
+            '30s@8',
+            '',
+          ],
+        ],
+        cellFormulas: [
+          ...exerciseRowFormulas(sheetRowNumber: 3, exercisesRowNumber: 2),
+          ...exerciseRowFormulas(sheetRowNumber: 4, exercisesRowNumber: 3),
+        ],
+      );
+
+      await tester.pumpWidget(
+        WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+      );
+      await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Side Plank'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('set-field-Seconds')),
+          matching: find.byKey(const ValueKey('set-timer-Seconds')),
+        ),
+        findsOneWidget,
+        reason: 'a canonical Timer Field carries its own timer control',
+      );
+      expect(
+        find.byKey(const ValueKey('set-timer-RPE')),
+        findsNothing,
+        reason: 'an untimed field of the same exercise stays untimed',
+      );
+
+      await tester.tap(find.byTooltip('Back to exercises'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Front Plank'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('set-field-Seconds')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('set-timer-Seconds')),
+        findsNothing,
+        reason: 'an identically labeled field stays untimed when configured so',
+      );
+    },
+  );
 }
 
 void _expectFieldValue(String label, String value) {

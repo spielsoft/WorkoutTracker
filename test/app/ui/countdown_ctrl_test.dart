@@ -2,12 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/src/app/countdown.dart';
+import 'package:workout_tracker/src/app/exercise_timer.dart';
+import 'package:workout_tracker/src/app/rest.dart';
 
 // The injected signal proves only that the app asks the platform for one full
 // vibration. Neither it nor the injected clock can establish real haptic
 // hardware or execution while iOS has suspended the process; both remain
 // physical-device acceptance work.
 void main() {
+  testWidgets('each policy decides on its own whether it locks the app', (
+    tester,
+  ) async {
+    final ctrl = CountdownCtrl(signal: () async {});
+    addTearDown(ctrl.dispose);
+
+    expect(ctrl.modal, isFalse);
+
+    ctrl.start(restCountdown(const Duration(seconds: 90)));
+    expect(ctrl.heading, 'REST');
+    expect(ctrl.modal, isFalse, reason: 'rest stays nonmodal');
+
+    ctrl.start(
+      exerciseCountdown(
+        exercise: 'Side Plank',
+        duration: const Duration(seconds: 20),
+      ),
+    );
+    expect(ctrl.heading, 'Side Plank');
+    expect(ctrl.modal, isTrue);
+
+    ctrl.toggle();
+    expect(ctrl.modal, isTrue, reason: 'pausing does not release the lock');
+
+    ctrl.done();
+    expect(ctrl.modal, isFalse);
+  });
+
   testWidgets(
     'a fractional countdown expires at its exact deadline while displaying '
     'rounded whole seconds',

@@ -731,6 +731,25 @@ ParsedActiveSheet exerciseInventoryParsedSheet(
   );
 }
 
+/// Formula cells that bind one active workout row to its Exercises row.
+List<CellFormula> exerciseRowFormulas({
+  required int sheetRowNumber,
+  required int exercisesRowNumber,
+}) {
+  return [
+    CellFormula(
+      sheetRowNumber: sheetRowNumber,
+      sheetColumnNumber: 1,
+      formula: '=Exercises!A$exercisesRowNumber',
+    ),
+    CellFormula(
+      sheetRowNumber: sheetRowNumber,
+      sheetColumnNumber: 7,
+      formula: '=Exercises!G$exercisesRowNumber',
+    ),
+  ];
+}
+
 ParsedActiveSheet emptyExerciseInventoryParsedSheet() {
   return parseActiveSheet(
     ActiveSheetInput(

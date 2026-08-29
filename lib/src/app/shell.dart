@@ -12,6 +12,7 @@ import 'exercise_edit_screen.dart';
 import 'placement_screen.dart';
 import 'logging.dart';
 import 'countdown.dart';
+import 'exercise_timer.dart';
 import 'rest.dart';
 import 'workout_home.dart';
 import 'ui/flow.dart';
@@ -21,6 +22,9 @@ import 'ui/shared/a11y.dart';
 import 'ui/shared/error.dart';
 
 const _seed = Color(0xFF0E7C66);
+
+/// How far the app dims while an exercise countdown holds it.
+const _lockedOpacity = 0.35;
 
 ThemeData _theme() {
   const brightness = Brightness.dark;
@@ -170,42 +174,48 @@ class _AppShellSt extends State<AppShell> {
                     : const SizedBox.shrink(),
               ),
               Expanded(
-                child: FutureBuilder<void>(
-                  future: _init,
-                  builder: (context, _) => ListenableBuilder(
-                    listenable: _flow,
-                    builder: (context, _) {
-                      final pages = _flow.pages;
-                      return PopScope<Object?>(
-                        canPop: pages.length == 1,
-                        onPopInvokedWithResult: (didPop, _) {
-                          if (!didPop) _navKey.currentState?.maybePop();
-                        },
-                        child: Navigator(
-                          key: _navKey,
-                          pages: [
-                            for (final page in pages)
-                              if (page.view is SheetView ||
-                                  page.view is WorkoutHomeView)
-                                _RootPage(
-                                  key: ValueKey(page.id),
-                                  child: _page(page.view),
-                                )
-                              else
-                                MaterialPage<Object?>(
-                                  key: ValueKey(page.id),
-                                  child: _page(page.view),
-                                ),
-                          ],
-                          onDidRemovePage: (page) {
-                            final key = page.key;
-                            if (key is ValueKey<Object>) {
-                              _flow.didPop(key.value);
-                            }
+                child: ListenableBuilder(
+                  listenable: _countdown,
+                  builder: (context, child) =>
+                      _Locked(locked: _locked, child: child!),
+                  child: FutureBuilder<void>(
+                    future: _init,
+                    builder: (context, _) => ListenableBuilder(
+                      listenable: _flow,
+                      builder: (context, _) {
+                        final pages = _flow.pages;
+                        return PopScope<Object?>(
+                          canPop: pages.length == 1,
+                          onPopInvokedWithResult: (didPop, _) {
+                            if (didPop || _locked) return;
+                            _navKey.currentState?.maybePop();
                           },
-                        ),
-                      );
-                    },
+                          child: Navigator(
+                            key: _navKey,
+                            pages: [
+                              for (final page in pages)
+                                if (page.view is SheetView ||
+                                    page.view is WorkoutHomeView)
+                                  _RootPage(
+                                    key: ValueKey(page.id),
+                                    child: _page(page.view),
+                                  )
+                                else
+                                  MaterialPage<Object?>(
+                                    key: ValueKey(page.id),
+                                    child: _page(page.view),
+                                  ),
+                            ],
+                            onDidRemovePage: (page) {
+                              final key = page.key;
+                              if (key is ValueKey<Object>) {
+                                _flow.didPop(key.value);
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -216,8 +226,15 @@ class _AppShellSt extends State<AppShell> {
     );
   }
 
+  /// Whether a running countdown currently locks the rest of the app.
+  bool get _locked => _countdown.modal;
+
   void _startRest(Duration duration) {
     _countdown.start(restCountdown(duration));
+  }
+
+  void _startExerciseTimer(String exercise, Duration duration) {
+    _countdown.start(exerciseCountdown(exercise: exercise, duration: duration));
   }
 
   Widget _page(AppView view) {
@@ -273,6 +290,7 @@ class _AppShellSt extends State<AppShell> {
                     view: view,
                     actions: _flow.loaded,
                     onRest: _startRest,
+                    onExerciseTimer: _startExerciseTimer,
                   ),
                 ),
                 showError: false,
@@ -304,6 +322,37 @@ class _AppShellSt extends State<AppShell> {
           ],
         if (fill) Expanded(child: screen) else screen,
       ],
+    );
+  }
+}
+
+/// Dims and locks everything below the countdown bar while an exercise
+/// countdown runs.
+///
+/// Locking keeps the same subtree in place and only switches its gates, so
+/// releasing the app restores the screen the athlete left rather than
+/// rebuilding it. Pointer, focus, and accessibility are all withdrawn
+/// together so a locked control is never announced as usable.
+class _Locked extends StatelessWidget {
+  const _Locked({required this.locked, required this.child});
+
+  final bool locked;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope<Object?>(
+      canPop: !locked,
+      child: IgnorePointer(
+        ignoring: locked,
+        child: ExcludeFocus(
+          excluding: locked,
+          child: ExcludeSemantics(
+            excluding: locked,
+            child: Opacity(opacity: locked ? _lockedOpacity : 1, child: child),
+          ),
+        ),
+      ),
     );
   }
 }

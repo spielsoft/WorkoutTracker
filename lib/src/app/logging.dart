@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
 import 'controller.dart';
+import 'exercise_timer.dart';
 import 'logging_flow.dart';
 import 'rest.dart';
 import 'validation_core.dart';
@@ -16,6 +17,7 @@ import 'ui/shared/status.dart';
 
 const _segmentRadius = 8.0;
 const _keyboardGap = 8.0;
+const _timerButtonWidth = 48.0;
 const _undoWindow = Duration(seconds: 5);
 const _numberKeyboard = TextInputType.numberWithOptions(decimal: true);
 
@@ -42,17 +44,25 @@ abstract interface class LogActions {
   Future<bool> execute(WbkCmd cmd);
 }
 
+/// Asks the shell to time [exercise] for exactly [duration].
+typedef ExerciseTimerRequest =
+    void Function(String exercise, Duration duration);
+
 class LogScreen extends StatefulWidget {
   const LogScreen({
     required this.view,
     required this.actions,
     this.onRest,
+    this.onExerciseTimer,
     super.key,
   });
 
   final LogView view;
   final LogActions actions;
   final ValueChanged<Duration>? onRest;
+
+  /// Starts an exercise countdown from a timed new-set field.
+  final ExerciseTimerRequest? onExerciseTimer;
 
   @override
   State<LogScreen> createState() => _LogScreenSt();
@@ -199,6 +209,14 @@ class _LogScreenSt extends State<LogScreen> {
     if (_flow.markEntered(label)) setState(() {});
   }
 
+  /// Times the selected exercise without touching the set being entered.
+  void _startExerciseTimer(Duration duration) {
+    widget.onExerciseTimer?.call(
+      _flow.viewModel.selectedChoice.exercise,
+      duration,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = _flow.viewModel;
@@ -283,7 +301,10 @@ class _LogScreenSt extends State<LogScreen> {
             provisional: viewModel.provisional,
             setNumber: viewModel.nextSetNumber,
             isBusy: widget.view.isBusy,
+            exercise: selectedChoice.exercise,
+            timerFields: viewModel.timerFields,
             onEntered: _markEntered,
+            onTimer: _startExerciseTimer,
             onSave: _saveSet,
           ),
           if (widget.view.error case final error?) ...[
@@ -515,7 +536,10 @@ class _StructuredSetEditor extends StatefulWidget {
     required this.provisional,
     required this.setNumber,
     required this.isBusy,
+    required this.exercise,
+    required this.timerFields,
     required this.onEntered,
+    required this.onTimer,
     required this.onSave,
     super.key,
   });
@@ -526,7 +550,14 @@ class _StructuredSetEditor extends StatefulWidget {
   final Set<String> provisional;
   final int setNumber;
   final bool isBusy;
+
+  /// Full name of the exercise a timer counts down for.
+  final String exercise;
+
+  /// Field labels the canonical exercise times, in Log Format order.
+  final List<String> timerFields;
   final ValueChanged<String> onEntered;
+  final ValueChanged<Duration> onTimer;
   final VoidCallback onSave;
 
   @override
@@ -712,6 +743,17 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
       );
     }
 
+    Widget? timerButton(String label) {
+      if (!widget.timerFields.contains(label)) return null;
+      return _SetFieldTimerButton(
+        key: ValueKey('set-timer-$label'),
+        exercise: widget.exercise,
+        label: label,
+        controller: widget.controllers[label]!,
+        onTimer: widget.onTimer,
+      );
+    }
+
     TextField field(String label, int index) {
       final isLast = index == _labels.length - 1;
       final target = widget.targets[label] ?? '';
@@ -733,6 +775,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
         decoration: InputDecoration(
           label: ExcludeSemantics(child: Text(visualLabel)),
           border: const OutlineInputBorder(),
+          suffixIcon: timerButton(label),
         ),
       );
     }
@@ -754,6 +797,15 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < 520;
           final fieldWidth = narrow ? constraints.maxWidth : 112.0;
+          double widthFor(String label) {
+            if (narrow || !widget.timerFields.contains(label)) {
+              return fieldWidth;
+            }
+            // A timed field also carries a trailing control, so it keeps the
+            // same room for its value as an untimed field.
+            return fieldWidth + _timerButtonWidth;
+          }
+
           return Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -762,7 +814,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
               for (var i = 0; i < _labels.length; i += 1)
                 SizedBox(
                   key: _fieldKeys[i],
-                  width: fieldWidth,
+                  width: widthFor(_labels[i]),
                   child: accessibleField(_labels[i], i),
                 ),
               if (narrow)
@@ -774,6 +826,58 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
         },
       ),
     );
+  }
+}
+
+/// Starts an exercise countdown from one timed new-set field.
+///
+/// The control reads its field the moment it is pressed, so the countdown
+/// always uses the value the athlete can see. It never edits the field,
+/// confirms a suggestion, saves a set, or starts rest.
+class _SetFieldTimerButton extends StatelessWidget {
+  const _SetFieldTimerButton({
+    required this.exercise,
+    required this.label,
+    required this.controller,
+    required this.onTimer,
+    super.key,
+  });
+
+  final String exercise;
+  final String label;
+  final TextEditingController controller;
+  final ValueChanged<Duration> onTimer;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final duration = timerDuration(value.text);
+        final start = duration == null ? null : _start;
+        return Semantics(
+          container: true,
+          excludeSemantics: true,
+          button: true,
+          enabled: duration != null,
+          label: duration == null
+              ? 'Start $exercise $label timer, unavailable because $label is '
+                    'not a positive number of seconds'
+              : 'Start $exercise $label timer, ${value.text.trim()} seconds',
+          onTap: start,
+          child: IconButton(
+            onPressed: start,
+            icon: const Icon(Icons.timer_outlined),
+          ),
+        );
+      },
+    );
+  }
+
+  void _start() {
+    final duration = timerDuration(controller.text);
+    if (duration == null) return;
+    onTimer(duration);
   }
 }
 

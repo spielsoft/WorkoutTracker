@@ -21,7 +21,12 @@ typedef CountdownEnd = void Function(Duration elapsed);
 /// the countdown mechanics without sharing each other's behavior.
 @immutable
 final class Countdown {
-  const Countdown({required this.heading, required this.duration, this.onEnd});
+  const Countdown({
+    required this.heading,
+    required this.duration,
+    this.modal = false,
+    this.onEnd,
+  });
 
   /// Full-width heading shown above the controls, such as `REST` or a
   /// complete exercise name.
@@ -29,6 +34,12 @@ final class Countdown {
 
   /// Exact length of the countdown. Fractional seconds are honored.
   final Duration duration;
+
+  /// Whether this countdown locks the rest of the app while it runs.
+  ///
+  /// A modal countdown stays locked while paused and releases the app only
+  /// when it expires or the athlete presses Done.
+  final bool modal;
 
   /// Called with the time actually counted down when Done or expiry ends this
   /// countdown. A countdown replaced by a newer one never reports.
@@ -56,6 +67,9 @@ final class CountdownCtrl extends ChangeNotifier with WidgetsBindingObserver {
   bool get active => _countdown != null;
 
   bool get paused => _paused;
+
+  /// Whether a countdown is running that locks the rest of the app.
+  bool get modal => _countdown?.modal ?? false;
 
   String get heading => _countdown?.heading ?? '';
 
@@ -125,8 +139,10 @@ final class CountdownCtrl extends ChangeNotifier with WidgetsBindingObserver {
     if (!active || _paused) return;
     if (state == AppLifecycleState.resumed) {
       // The deadline is absolute, so resuming only reschedules the ticker and
-      // expires immediately when the deadline already passed.
+      // expires immediately when the deadline already passed. Notifying
+      // refreshes a display that could not tick while the app was away.
       _schedule();
+      if (active) notifyListeners();
       return;
     }
     _ticker?.cancel();

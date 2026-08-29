@@ -19,7 +19,7 @@ plan completes. It is deliberately not a slice here.
 - [x] Slice 2: Author Timer Fields on canonical exercises
 - [x] Slice 3: Share an exact labeled countdown with full vibration
 - [x] Slice 4: Remove unused next-field arrow buttons
-- [ ] Slice 5: Run a modal exercise countdown from a timed set field
+- [x] Slice 5: Run a modal exercise countdown from a timed set field
 - [ ] Slice 6: Record the measured duration when a countdown ends
 - [ ] Slice 7: Clean the timer test suite
 - [ ] Slice 8: Run the complete local timer guard
@@ -257,36 +257,36 @@ app interactive.
 
 ### Acceptance criteria
 
-- [ ] A public logging-flow test first demonstrates a timer icon on a
+- [x] A public logging-flow test first demonstrates a timer icon on a
       canonical timed field and no icon on an untimed field with the same or a
       different label.
-- [ ] Timer availability comes only from the canonical Exercises Timer Fields;
+- [x] Timer availability comes only from the canonical Exercises Timer Fields;
       no active-workout Timer Fields column or label/unit inference is added.
-- [ ] Timer icons appear only in new-set entry, never in logged-set editing,
+- [x] Timer icons appear only in new-set entry, never in logged-set editing,
       history, targets, placement, or unrelated numeric fields.
-- [ ] Each icon's accessible label names the exercise and source field and
+- [x] Each icon's accessible label names the exercise and source field and
       exposes whether the current value can start a timer.
-- [ ] Pressing an enabled icon reads the field's current value at that moment,
+- [x] Pressing an enabled icon reads the field's current value at that moment,
       accepts positive fractional seconds, and starts the exact duration.
-- [ ] Blank, zero, negative, non-finite, range, or otherwise nonnumeric values
+- [x] Blank, zero, negative, non-finite, range, or otherwise nonnumeric values
       cannot start a countdown and do not disturb an existing countdown.
-- [ ] Starting exercise timing leaves the field text, value origin, unsaved
+- [x] Starting exercise timing leaves the field text, value origin, unsaved
       set, and Sheet unchanged.
-- [ ] Starting exercise timing replaces an active rest countdown; the displaced
+- [x] Starting exercise timing replaces an active rest countdown; the displaced
       countdown cannot later vibrate.
-- [ ] The full exercise name appears above the symmetric `+30 s`, rounded
+- [x] The full exercise name appears above the symmetric `+30 s`, rounded
       countdown/pause, and Done controls and can wrap at narrow widths.
-- [ ] While exercise timing is active, underlying controls cannot receive
+- [x] While exercise timing is active, underlying controls cannot receive
       pointer, keyboard, back-navigation, or accessibility actions and are
       visibly dimmed.
-- [ ] Pausing keeps the modal lock; `+30 s` keeps it active; Done and natural
+- [x] Pausing keeps the modal lock; `+30 s` keeps it active; Done and natural
       expiry both restore interaction and accessibility focus.
-- [ ] A rest timer still leaves the app interactive and displays `REST`.
-- [ ] Lifecycle resume preserves the exact exercise deadline and signals once
+- [x] A rest timer still leaves the app interactive and displays `REST`.
+- [x] Lifecycle resume preserves the exact exercise deadline and signals once
       if expiry is first discovered on resume.
-- [ ] Narrow-phone, large-text, contrast, Android tap-target, iOS tap-target,
+- [x] Narrow-phone, large-text, contrast, Android tap-target, iOS tap-target,
       labeled-control, and semantics checks pass.
-- [ ] Focused canonical-read, logging-flow, shell, countdown, navigation, and
+- [x] Focused canonical-read, logging-flow, shell, countdown, navigation, and
       accessibility tests pass.
 
 ### Blocked by

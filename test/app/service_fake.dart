@@ -5,11 +5,22 @@ class TestValSvc implements WbkAccess {
   TestValSvc(ParsedActiveSheet activeSheet)
     : _io = _MemoryWbkIo(activeSheet: activeSheet);
 
-  TestValSvc.fromRows(List<List<String>> rows)
-    : _io = _MemoryWbkIo(
-        activeSheet: parseActiveSheet(ActiveSheetInput(rows: _fieldRows(rows))),
-        rows: _fieldRows(rows),
-      );
+  TestValSvc.fromRows(
+    List<List<String>> rows, {
+    List<List<String>> exercisesRows = const [],
+    List<CellFormula> cellFormulas = const [],
+  }) : _io = _MemoryWbkIo(
+         activeSheet: parseActiveSheet(
+           ActiveSheetInput(
+             rows: _fieldRows(rows),
+             exercisesRows: exercisesRows,
+             cellFormulas: cellFormulas,
+           ),
+         ),
+         rows: _fieldRows(rows),
+         exercisesRows: exercisesRows,
+         cellFormulas: cellFormulas,
+       );
 
   final _MemoryWbkIo _io;
   final spreadsheetIds = <String>[];
@@ -69,11 +80,17 @@ List<String> _fieldRow(List<String> source) {
 }
 
 class _MemoryWbkIo implements WbkIo {
-  _MemoryWbkIo({required this.activeSheet, List<List<String>>? rows})
-    : _rows = rows?.map((row) => row.toList()).toList();
+  _MemoryWbkIo({
+    required this.activeSheet,
+    List<List<String>>? rows,
+    this.exercisesRows = const [],
+    this.cellFormulas = const [],
+  }) : _rows = rows?.map((row) => row.toList()).toList();
 
   ParsedActiveSheet activeSheet;
   List<List<String>>? _rows;
+  final List<List<String>> exercisesRows;
+  final List<CellFormula> cellFormulas;
   final appliedPlans = <ActiveSheetWritePlan>[];
 
   @override
@@ -90,7 +107,13 @@ class _MemoryWbkIo implements WbkIo {
         .previewRowsAfterApplying(rows)
         .map((row) => row.toList())
         .toList();
-    activeSheet = parseActiveSheet(ActiveSheetInput(rows: _rows!));
+    activeSheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: _rows!,
+        exercisesRows: exercisesRows,
+        cellFormulas: cellFormulas,
+      ),
+    );
   }
 
   @override
