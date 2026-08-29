@@ -21,7 +21,7 @@ plan completes. It is deliberately not a slice here.
 - [x] Slice 4: Remove unused next-field arrow buttons
 - [x] Slice 5: Run a modal exercise countdown from a timed set field
 - [x] Slice 6: Record the measured duration when a countdown ends
-- [ ] Slice 7: Clean the timer test suite
+- [x] Slice 7: Clean the timer test suite
 - [ ] Slice 8: Run the complete local timer guard
 - [ ] Slice 9: Accept the physical iOS timer flow
 
@@ -369,20 +369,20 @@ accessibility, and catalog defaults.
 
 ### Acceptance criteria
 
-- [ ] The `test-cleanup` skill is explicitly loaded and followed for this
+- [x] The `test-cleanup` skill is explicitly loaded and followed for this
       slice.
-- [ ] Tests assert public contract results, application commands, visible user
+- [x] Tests assert public contract results, application commands, visible user
       behavior, semantics, and intentional injected clock/signal seams.
-- [ ] Tests that exist only to pin private names, internal maps, widget nesting,
+- [x] Tests that exist only to pin private names, internal maps, widget nesting,
       timer tick implementation, or callback ordering are removed or rewritten.
-- [ ] Fractional deadline, replacement, one completion signal, canonical
+- [x] Fractional deadline, replacement, one completion signal, canonical
       Timer Fields, authoring round-trip, new-set icon scope, modal lock,
       recorded duration, and rest nonmodal behavior retain durable coverage.
-- [ ] Physical vibration remains assigned to HITL acceptance rather than being
+- [x] Physical vibration remains assigned to HITL acceptance rather than being
       falsely claimed by a mocked platform channel.
-- [ ] No broad coverage deletion hides an untested product acceptance
+- [x] No broad coverage deletion hides an untested product acceptance
       criterion.
-- [ ] Every focused suite affected by cleanup passes.
+- [x] Every focused suite affected by cleanup passes.
 
 ### Blocked by
 

@@ -43,8 +43,15 @@ void main() {
   ) async {
     await _openLog(tester, exercise: 'Wall Sit');
 
-    expect(find.byKey(const ValueKey('set-timer-Hold')), findsOneWidget);
-    expect(find.byKey(const ValueKey('set-timer-RPE')), findsNothing);
+    expect(
+      find.semantics.byLabel('Start Wall Sit Hold timer, 40 seconds'),
+      findsOne,
+    );
+    expect(
+      _timerControls,
+      findsOne,
+      reason: 'the same exercise leaves its RPE field untimed',
+    );
   });
 
   testWidgets('the timer control names its exercise, field, and readiness', (
@@ -85,7 +92,7 @@ void main() {
   ) async {
     await _openLog(tester, history: '20s@8');
 
-    expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+    expect(_timerControls, findsOne);
 
     await tester.tap(find.byKey(const ValueKey('edit-S1')));
     await tester.pump();
@@ -95,27 +102,27 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byIcon(Icons.timer_outlined),
-      findsOneWidget,
+      _timerControls,
+      findsOne,
       reason: 'only the new set editor may start a timer',
     );
 
     await tester.tap(find.byTooltip('Back to exercises'));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.timer_outlined), findsNothing);
+    expect(_timerControls, findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('add-primary-exercise')));
     await tester.pumpAndSettle();
 
     expect(find.text('Choose exercise'), findsOneWidget);
-    expect(find.byIcon(Icons.timer_outlined), findsNothing);
+    expect(_timerControls, findsNothing);
   });
 
   testWidgets('the icon starts the exact value in the field when pressed', (
     tester,
   ) async {
-    final vibrations = _recordPlatformCalls(tester);
+    final signals = _recordPlatformCalls(tester);
     await _openLog(tester);
 
     await tester.enterText(_field('Seconds'), '2.6');
@@ -133,13 +140,13 @@ void main() {
       findsOneWidget,
       reason: 'the exact deadline is 2.6 seconds',
     );
-    expect(vibrations, isEmpty);
+    expect(signals, isEmpty);
 
     await tester.pump(const Duration(milliseconds: 1));
     await tester.pump();
 
     expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
-    expect(vibrations, ['HapticFeedback.vibrate']);
+    expect(signals, ['HapticFeedback.vibrate']);
   });
 
   testWidgets('Done partway through a hold records the time actually held', (
@@ -404,10 +411,10 @@ void main() {
     expect(_countdown(tester), '45');
   });
 
-  testWidgets('exercise timing replaces rest, which can no longer vibrate', (
+  testWidgets('exercise timing replaces rest, which can no longer signal', (
     tester,
   ) async {
-    final vibrations = _recordPlatformCalls(tester);
+    final signals = _recordPlatformCalls(tester);
     await _openLog(tester);
     await _save(tester);
 
@@ -422,12 +429,12 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     await tester.pump();
 
-    expect(vibrations, ['HapticFeedback.vibrate']);
+    expect(signals, ['HapticFeedback.vibrate']);
 
     await tester.pump(const Duration(minutes: 2));
     await tester.pump();
 
-    expect(vibrations, [
+    expect(signals, [
       'HapticFeedback.vibrate',
     ], reason: 'the displaced rest countdown must never signal');
     expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
@@ -544,7 +551,7 @@ void main() {
   testWidgets('resume keeps the exact deadline and signals expiry once', (
     tester,
   ) async {
-    final vibrations = _recordPlatformCalls(tester);
+    final signals = _recordPlatformCalls(tester);
     await _openLog(tester);
     await _startTimer(tester, '3.5');
 
@@ -557,7 +564,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
     expect(_countdown(tester), '2', reason: '1.5 seconds remain');
-    expect(vibrations, isEmpty);
+    expect(signals, isEmpty);
 
     await tester.pump(const Duration(milliseconds: 1499));
     expect(
@@ -569,7 +576,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1));
     await tester.pump();
 
-    expect(vibrations, ['HapticFeedback.vibrate']);
+    expect(signals, ['HapticFeedback.vibrate']);
     expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
     expect(_dim(tester), 1);
 
@@ -578,7 +585,7 @@ void main() {
     await tester.pump(const Duration(seconds: 10));
 
     expect(
-      vibrations,
+      signals,
       hasLength(1),
       reason: 'a suspended app cannot signal while it is away',
     );
@@ -586,7 +593,7 @@ void main() {
     _resume(tester);
     await tester.pump();
 
-    expect(vibrations, hasLength(2), reason: 'expiry is discovered on resume');
+    expect(signals, hasLength(2), reason: 'expiry is discovered on resume');
     expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
     expect(_dim(tester), 1);
 
@@ -594,7 +601,7 @@ void main() {
     _resume(tester);
     await tester.pump(const Duration(seconds: 5));
 
-    expect(vibrations, hasLength(2), reason: 'each countdown signals once');
+    expect(signals, hasLength(2), reason: 'each countdown signals once');
   });
 
   testWidgets('exercise timing stays usable on a narrow large-text phone', (
@@ -758,6 +765,10 @@ void _resume(WidgetTester tester) {
   }
 }
 
+/// Every control that can start an exercise countdown, located by the
+/// accessible name the product promises rather than by its icon glyph.
+final _timerControls = find.semantics.byLabel(RegExp(r'^Start .+ timer'));
+
 Finder _field(String label) => find.byKey(ValueKey('set-field-$label'));
 
 String _value(String label) => editableTextFor(_field(label)).controller.text;
@@ -793,6 +804,10 @@ String _countdown(WidgetTester tester) {
 }
 
 /// Effective opacity applied to the app below the countdown bar.
+///
+/// Reading the rendered opacity is a deliberate last resort: it is the only
+/// local evidence that a locked app is dimmed rather than merely inert. How
+/// that dim actually reads on a device stays physical acceptance work.
 double _dim(WidgetTester tester) {
   return tester
       .widgetList<Opacity>(

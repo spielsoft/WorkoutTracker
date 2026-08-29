@@ -629,11 +629,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.descendant(
-          of: find.byKey(const ValueKey('set-field-Seconds')),
-          matching: find.byKey(const ValueKey('set-timer-Seconds')),
-        ),
-        findsOneWidget,
+        find.semantics.byLabel('Start Side Plank Seconds timer, 30 seconds'),
+        findsOne,
         reason: 'a canonical Timer Field carries its own timer control',
       );
       expect(

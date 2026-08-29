@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/src/app/countdown.dart';
-import 'package:workout_tracker/src/app/ui/shared/status.dart';
 
 import '../../support/widget.dart';
 
@@ -9,7 +8,7 @@ const _longExerciseName = 'Copenhagen Side Plank With A Deliberately Long Name';
 const _controlKeys = ['countdown-add', 'countdown-toggle', 'countdown-done'];
 
 void main() {
-  testWidgets('countdown bar draws from distinct theme roles with contrast', (
+  testWidgets('a full-width heading row sits above the symmetric controls', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -21,61 +20,12 @@ void main() {
     ctrl.start(
       const Countdown(heading: 'REST', duration: Duration(seconds: 117)),
     );
-
     await tester.pumpWidget(_barApp(ctrl));
 
-    final colors = _colors;
-    final bar = tester.widget<Material>(
-      find.byKey(const ValueKey('countdown-bar')),
-    );
-    final countdown = tester.widget<Text>(find.text('117'));
-    final heading = tester.widget<Text>(find.text('REST'));
-    final add = tester.widget<OutlinedButton>(
-      find.widgetWithText(OutlinedButton, '+30 s'),
-    );
-    final done = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Done'),
-    );
-
-    expect(bar.color, colors.tertiaryContainer);
-    expect(bar.color, isNot(colors.surface));
-    expect(bar.color, isNot(stateStyle(colors, VisualSt.warning).background));
-    expect(countdown.style?.color, colors.onTertiaryContainer);
-    expect(heading.style?.color, colors.onTertiaryContainer);
-    expect(
-      add.style?.foregroundColor?.resolve(const <WidgetState>{}),
-      colors.onTertiaryContainer,
-    );
-    expect(
-      add.style?.side?.resolve(const <WidgetState>{})?.color,
-      colors.tertiary,
-    );
-    expect(
-      done.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      colors.tertiary,
-    );
-    expect(
-      done.style?.foregroundColor?.resolve(const <WidgetState>{}),
-      colors.onTertiary,
-    );
-    await expectFlutterAccessibilityGuidelines(tester);
-    ctrl.done();
-    await tester.pump();
-  });
-
-  testWidgets('a full-width heading row sits above the symmetric controls', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-
-    final ctrl = CountdownCtrl(signal: () async {});
-    addTearDown(ctrl.dispose);
-    ctrl.start(
-      const Countdown(heading: 'REST', duration: Duration(seconds: 90)),
-    );
-    await tester.pumpWidget(_barApp(ctrl));
+    expect(find.text('REST'), findsOneWidget);
+    expect(find.text('117'), findsOneWidget);
+    expect(find.text('+30 s'), findsOneWidget);
+    expect(find.text('Done'), findsOneWidget);
 
     final semantics = tester.ensureSemantics();
     expect(
@@ -98,6 +48,8 @@ void main() {
     for (final control in [add, toggle, done]) {
       expect(heading.bottom, lessThanOrEqualTo(control.top));
     }
+
+    await expectFlutterAccessibilityGuidelines(tester);
 
     ctrl.done();
     await tester.pump();
@@ -168,26 +120,36 @@ void main() {
     );
     await tester.pumpWidget(_barApp(ctrl));
 
-    Semantics countdown() {
-      return tester.widget<Semantics>(
-        find.byKey(const ValueKey('countdown-toggle')),
-      );
-    }
-
-    expect(
-      countdown().properties.label,
+    final paused = find.semantics.byLabel(
       'Pause Side Plank timer, 20 seconds remaining',
     );
-    expect(countdown().properties.toggled, isFalse);
+    expect(paused, findsOne);
+    expect(
+      paused,
+      isSemantics(
+        isButton: true,
+        hasToggledState: true,
+        isToggled: false,
+        hasTapAction: true,
+      ),
+    );
 
     await tester.tap(find.byKey(const ValueKey('countdown-toggle')));
     await tester.pump();
 
-    expect(
-      countdown().properties.label,
+    final resumed = find.semantics.byLabel(
       'Resume Side Plank timer, 20 seconds remaining',
     );
-    expect(countdown().properties.toggled, isTrue);
+    expect(resumed, findsOne);
+    expect(
+      resumed,
+      isSemantics(
+        isButton: true,
+        hasToggledState: true,
+        isToggled: true,
+        hasTapAction: true,
+      ),
+    );
 
     ctrl.done();
     await tester.pump();

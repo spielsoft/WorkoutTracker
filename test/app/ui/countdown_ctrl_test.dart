@@ -316,48 +316,32 @@ void main() {
     ctrl.done();
   });
 
-  testWidgets('a missing platform haptic channel cannot strand a countdown', (
+  testWidgets('an unusable platform haptic cannot strand either countdown', (
     tester,
   ) async {
-    final ctrl = CountdownCtrl(
-      signal: () async => throw MissingPluginException('haptic unavailable'),
-    );
-    addTearDown(ctrl.dispose);
+    final failures = [
+      MissingPluginException('haptic unavailable'),
+      PlatformException(code: 'haptic-unavailable'),
+    ];
 
-    ctrl.start(
-      const Countdown(heading: 'REST', duration: Duration(seconds: 1)),
-    );
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump();
+    for (final failure in failures) {
+      final ctrl = CountdownCtrl(signal: () async => throw failure);
+      addTearDown(ctrl.dispose);
 
-    expect(ctrl.active, isFalse);
-    expect(tester.takeException(), isNull);
+      for (final heading in ['REST', 'Side Plank']) {
+        ctrl.start(
+          Countdown(heading: heading, duration: const Duration(seconds: 1)),
+        );
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump();
 
-    ctrl.start(
-      const Countdown(heading: 'Side Plank', duration: Duration(seconds: 2)),
-    );
-    await tester.pump(const Duration(seconds: 2));
-    await tester.pump();
-
-    expect(ctrl.active, isFalse);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('a failing platform haptic channel cannot strand a countdown', (
-    tester,
-  ) async {
-    final ctrl = CountdownCtrl(
-      signal: () async => throw PlatformException(code: 'haptic-unavailable'),
-    );
-    addTearDown(ctrl.dispose);
-
-    ctrl.start(
-      const Countdown(heading: 'REST', duration: Duration(seconds: 1)),
-    );
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump();
-
-    expect(ctrl.active, isFalse);
-    expect(tester.takeException(), isNull);
+        expect(ctrl.active, isFalse, reason: '$heading after $failure');
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: '$heading after $failure',
+        );
+      }
+    }
   });
 }

@@ -76,34 +76,29 @@ void main() {
     },
   );
 
-  testWidgets('countdown toggles pause and offers add time and done buttons', (
+  testWidgets('rest pauses, extends, and dismisses from its own controls', (
     tester,
   ) async {
     await _openLog(tester, rest: '90s', sets: '3');
     await _save(tester);
 
-    expect(find.widgetWithText(OutlinedButton, '+30 s'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Done'), findsOneWidget);
-    expect(find.byIcon(Icons.pause), findsNothing);
-    expect(find.byIcon(Icons.play_arrow), findsNothing);
-
-    await tester.tap(find.byKey(const ValueKey('countdown-toggle')));
-    await tester.pump();
-    final countdown = tester.widget<Semantics>(
-      find.byKey(const ValueKey('countdown-toggle')),
-    );
-    expect(
-      countdown.properties.label,
-      'Resume REST timer, 90 seconds remaining',
-    );
-    expect(countdown.properties.toggled, isTrue);
-
-    await tester.pump(const Duration(seconds: 2));
     expect(find.text('90'), findsOneWidget);
+    expect(find.text('+30 s'), findsOneWidget);
+    expect(find.text('Done'), findsOneWidget);
+
+    // The countdown button's accessible pause/resume state is proven where it
+    // is announceable, in test/app/ui/countdown_bar_test.dart.
+    await tester.tap(find.byKey(const ValueKey('countdown-toggle')));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('90'), findsOneWidget, reason: 'pause holds the time');
 
     await tester.tap(find.text('+30 s'));
     await tester.pump();
     expect(find.text('120'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('countdown-toggle')));
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.text('115'), findsOneWidget, reason: 'resume continues it');
 
     await tester.tap(find.text('Done'));
     await tester.pump();
