@@ -75,6 +75,21 @@ EditableText editableTextFor(Finder textField) {
       as EditableText;
 }
 
+/// Fails when a retired next-field arrow accessory is visible anywhere.
+void expectNoNextFieldControl() {
+  expect(find.byIcon(Icons.arrow_forward), findsNothing);
+  expect(find.bySemanticsLabel(RegExp('Next field')), findsNothing);
+  expect(find.byTooltip(RegExp('Next field')), findsNothing);
+}
+
+bool inputHasFocus(Finder field) {
+  return editableTextFor(field).focusNode.hasFocus;
+}
+
+void expectInputFocused(Finder field, {String? reason}) {
+  expect(inputHasFocus(field), isTrue, reason: reason);
+}
+
 Future<void> expectFlutterAccessibilityGuidelines(WidgetTester tester) async {
   final semantics = tester.ensureSemantics();
   try {

@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 
+import '../../support/widget.dart';
+
 void main() {
   testWidgets('placement exposes selected exercise dynamic targets', (
     tester,
@@ -44,23 +46,26 @@ void main() {
     expect(find.widgetWithText(TextField, 'RPE'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Reps'), findsNothing);
 
-    Future<void> advance(String label) async {
-      final arrow = find.bySemanticsLabel('Next field $label');
-      expect(arrow, findsOneWidget);
-      await tester.ensureVisible(arrow);
+    Future<void> focusField(String label) async {
+      final field = find.widgetWithText(TextField, label);
+      await tester.ensureVisible(field);
       await tester.pumpAndSettle();
-      await tester.tap(arrow);
+      await tester.tap(field);
       await tester.pumpAndSettle();
+      expectInputFocused(field, reason: 'A direct tap must focus $label.');
+      expectNoNextFieldControl();
     }
 
-    await tester.tap(find.widgetWithText(TextField, 'Sets'));
-    await tester.pump();
-    await advance('Rest');
-    await advance('Tempo');
-    await advance('Notes');
-    await advance('Seconds');
-    await advance('RPE');
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+    for (final label in const [
+      'Sets',
+      'Rest',
+      'Tempo',
+      'Notes',
+      'Seconds',
+      'RPE',
+    ]) {
+      await focusField(label);
+    }
 
     await tester.enterText(find.widgetWithText(TextField, 'Seconds'), '45');
     await tester.ensureVisible(

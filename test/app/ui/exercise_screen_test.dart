@@ -1,6 +1,7 @@
 import 'dart:ui' show SemanticsAction;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
@@ -64,7 +65,7 @@ void main() {
     }
   });
 
-  testWidgets('exercise fields expose arrows in declaration order', (
+  testWidgets('hardware Tab traverses exercise fields in declaration order', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -76,29 +77,90 @@ void main() {
       ),
     );
 
-    Future<void> advance(String label) async {
-      final arrow = find.bySemanticsLabel('Next field $label');
-      expect(arrow, findsOneWidget);
-      await tester.ensureVisible(arrow);
-      await tester.pumpAndSettle();
-      await tester.tap(arrow);
-      await tester.pumpAndSettle();
+    const declared = [
+      'exercise-authoring-name',
+      'exercise-authoring-description',
+      'exercise-authoring-default-sets',
+      'exercise-authoring-default-tempo',
+      'exercise-authoring-default-rest',
+      'exercise-authoring-log-format',
+      'exercise-authoring-default-Weight',
+      'exercise-authoring-default-Reps',
+      'exercise-authoring-default-RPE',
+      'exercise-authoring-notes',
+    ];
+
+    String? focusedField() {
+      for (final identifier in declared) {
+        final field = find.byKey(ValueKey(identifier));
+        if (field.evaluate().isEmpty) continue;
+        if (inputHasFocus(field)) return identifier;
+      }
+      return null;
     }
 
-    await tester.tap(find.byKey(const ValueKey('exercise-authoring-name')));
+    await tester.tap(find.byKey(ValueKey(declared.first)));
     await tester.pump();
-    await advance('Description');
-    await advance('Default sets');
-    await advance('Default tempo');
-    await advance('Default rest');
-    await advance('Log format');
-    await advance('Default Weight');
-    await advance('Default Reps');
-    await advance('Default RPE');
-    await advance('Notes');
+    expect(focusedField(), declared.first);
 
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+    final visited = <String>[declared.first];
+    for (var step = 0; step < 30 && visited.last != declared.last; step += 1) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      final focused = focusedField();
+      if (focused != null && focused != visited.last) visited.add(focused);
+    }
+
+    expect(visited, declared);
+    expectNoNextFieldControl();
     expect(tester.testTextInput.isVisible, isTrue);
+  });
+
+  testWidgets('tapping an authoring field focuses and selects its value', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        EditExerciseScreen(
+          view: EditExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            exercise: CanonicalExercise(
+              sheetRowNumber: 2,
+              exercise: 'Side Plank',
+              defaultSets: '4',
+              defaultRest: '45s',
+              logFormat: '{Seconds}s@{RPE}',
+              defaultValues: const {'Seconds': '30', 'RPE': '8'},
+            ),
+          ),
+          actions: _EditActions(),
+        ),
+      ),
+    );
+
+    for (final identifier in const [
+      'exercise-authoring-default-sets',
+      'exercise-authoring-default-rest',
+      'exercise-authoring-default-Seconds',
+    ]) {
+      final field = find.byKey(ValueKey(identifier));
+      await tester.ensureVisible(field);
+      await tester.pumpAndSettle();
+      await tester.tap(field);
+      await tester.pumpAndSettle();
+
+      expectInputFocused(field, reason: 'A direct tap must focus $identifier.');
+      final editable = editableTextFor(field);
+      expect(editable.controller.text, isNotEmpty);
+      expect(editable.controller.selection.start, 0);
+      expect(
+        editable.controller.selection.end,
+        editable.controller.text.length,
+        reason: 'Focus must select $identifier for replacement.',
+      );
+    }
+    expectNoNextFieldControl();
   });
 
   testWidgets('valid formats show syntax help and current-value preview', (
@@ -623,10 +685,14 @@ void main() {
         '20',
       );
       await tester.pump();
-      expect(find.bySemanticsLabel('Next field Row 3 Reps'), findsOneWidget);
-      await tester.tap(find.bySemanticsLabel('Next field Row 3 Reps'));
+      expectNoNextFieldControl();
+      final reps = find.byKey(const ValueKey('format-update-3-Reps'));
+      await tester.ensureVisible(reps);
+      await tester.pumpAndSettle();
+      await tester.tap(reps);
       await tester.pump();
-      expect(find.bySemanticsLabel('Next field Row 3 RPE'), findsOneWidget);
+      expectInputFocused(reps, reason: 'A direct tap must focus Row 3 Reps.');
+      expectNoNextFieldControl();
       final confirm = find.byKey(const ValueKey('confirm-format-update'));
       await tester.scrollUntilVisible(
         confirm,

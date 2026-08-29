@@ -197,7 +197,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('set-field-Weight')));
       await tester.pump();
-      expect(find.bySemanticsLabel('Next field Reps'), findsOneWidget);
+      expectNoNextFieldControl();
       await expectFlutterAccessibilityGuidelines(tester);
 
       await tester.tap(find.byTooltip('Back to exercises'));
@@ -229,5 +229,64 @@ void main() {
       await tester.pumpAndSettle();
       await expectFlutterAccessibilityGuidelines(tester);
     }
+  });
+
+  testWidgets('entry forms app-wide show no next-field arrow control', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final service = TestValSvc(
+      exerciseInventoryParsedSheet([
+        exerciseRow('Squat', description: 'Back squat'),
+      ]),
+    );
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Squat').first);
+    await tester.pumpAndSettle();
+    final weight = find.byKey(const ValueKey('set-field-Weight'));
+    await tester.tap(weight);
+    await tester.pump();
+    expectInputFocused(weight, reason: 'Tapping a set field must focus it.');
+    expectNoNextFieldControl();
+
+    await tester.tap(find.byTooltip('Back to exercises'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Edit exercise library'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Create exercise'));
+    await tester.pumpAndSettle();
+    final name = find.byKey(const ValueKey('exercise-authoring-name'));
+    await tester.tap(name);
+    await tester.pump();
+    expectInputFocused(name, reason: 'Tapping an authoring field focuses it.');
+    expectNoNextFieldControl();
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Back to workout'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add to workout'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('existing-exercise-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Squat').last);
+    await tester.pumpAndSettle();
+    final sets = find.widgetWithText(TextField, 'Sets');
+    await tester.tap(sets);
+    await tester.pump();
+    expectInputFocused(sets, reason: 'Tapping a placement field focuses it.');
+    expectNoNextFieldControl();
   });
 }

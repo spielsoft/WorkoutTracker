@@ -3,7 +3,6 @@ import 'package:workout_tracker/contract.dart';
 
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
-import 'ui/shared/next_field.dart';
 
 enum ExerciseFormMode { create, edit }
 
@@ -278,7 +277,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
   late final TextEditingController _tempoCtrl;
   late final TextEditingController _notesCtrl;
   late final TextEditingController _formatCtrl;
-  late final FocusNode _notesFocus;
 
   @override
   void initState() {
@@ -290,7 +288,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _tempoCtrl = TextEditingController();
     _notesCtrl = TextEditingController();
     _formatCtrl = TextEditingController();
-    _notesFocus = FocusNode(debugLabel: 'Notes');
     _loadDraft(widget.initialDraft);
   }
 
@@ -314,7 +311,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _tempoCtrl.dispose();
     _notesCtrl.dispose();
     _formatCtrl.dispose();
-    _notesFocus.dispose();
     super.dispose();
   }
 
@@ -411,9 +407,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       ExerciseFormMode.edit => 'Edit exercise',
     };
     final parsedFormat = parseLogFormat(_formatCtrl.text);
-    final valueLabels = parsedFormat is ParsedLogFormat
-        ? parsedFormat.fieldLabels
-        : const <String>[];
 
     return Form(
       key: _formKey,
@@ -440,7 +433,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             semanticsIdentifier: 'exercise-authoring-name',
             labelText: 'Exercise name',
             icon: Icons.fitness_center_outlined,
-            nextLabel: 'Description',
             textInputAction: TextInputAction.next,
             selectAllOnFocus: false,
             onChanged: _changed,
@@ -459,7 +451,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             semanticsIdentifier: 'exercise-authoring-description',
             labelText: 'Description',
             icon: Icons.short_text_outlined,
-            nextLabel: 'Default sets',
             textInputAction: TextInputAction.next,
             selectAllOnFocus: false,
             onChanged: _changed,
@@ -484,7 +475,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       semanticsIdentifier: 'exercise-authoring-default-sets',
                       labelText: 'Default sets',
                       icon: Icons.format_list_numbered_outlined,
-                      nextLabel: 'Default tempo',
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.number,
                       onChanged: _changed,
@@ -499,7 +489,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       semanticsIdentifier: 'exercise-authoring-default-tempo',
                       labelText: 'Default tempo',
                       icon: Icons.graphic_eq_outlined,
-                      nextLabel: 'Default rest',
                       textInputAction: TextInputAction.next,
                       onChanged: _changed,
                     ),
@@ -513,7 +502,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                       semanticsIdentifier: 'exercise-authoring-default-rest',
                       labelText: 'Default rest',
                       icon: Icons.timer_outlined,
-                      nextLabel: 'Log format',
                       textInputAction: TextInputAction.next,
                       onChanged: _changed,
                     ),
@@ -530,9 +518,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                           semanticsIdentifier: 'exercise-authoring-log-format',
                           labelText: 'Log format',
                           icon: Icons.data_object_outlined,
-                          nextLabel: valueLabels.isEmpty
-                              ? 'Notes'
-                              : 'Default ${valueLabels.first}',
                           textInputAction: TextInputAction.next,
                           helperText:
                               'Use {Field}, such as {Weight (lbs)}, for 1–5 '
@@ -582,12 +567,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                               'exercise-authoring-default-${fieldLabels[index]}',
                           labelText: 'Default ${fieldLabels[index]}',
                           icon: Icons.tune_outlined,
-                          nextLabel: index < fieldLabels.length - 1
-                              ? 'Default ${fieldLabels[index + 1]}'
-                              : 'Notes',
-                          nextFocusNode: index < fieldLabels.length - 1
-                              ? null
-                              : _notesFocus,
                           textInputAction: TextInputAction.next,
                           onChanged: _changed,
                         ),
@@ -648,7 +627,6 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             child: TextFormField(
               key: const ValueKey('exercise-authoring-notes'),
               controller: _notesCtrl,
-              focusNode: _notesFocus,
               enabled: !widget.isBusy,
               decoration: const InputDecoration(
                 labelText: 'Notes',
@@ -747,8 +725,6 @@ class _AuthoringField extends StatefulWidget {
     required this.labelText,
     required this.icon,
     required this.textInputAction,
-    this.nextLabel,
-    this.nextFocusNode,
     this.keyboardType,
     this.helperText,
     this.validator,
@@ -763,10 +739,6 @@ class _AuthoringField extends StatefulWidget {
   final String labelText;
   final IconData icon;
   final TextInputAction textInputAction;
-  final String? nextLabel;
-
-  /// The field [nextLabel] names, when it is not the next node in traversal.
-  final FocusNode? nextFocusNode;
   final TextInputType? keyboardType;
   final String? helperText;
   final FormFieldValidator<String>? validator;
@@ -799,15 +771,6 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
     super.dispose();
   }
 
-  void _advance() {
-    final target = widget.nextFocusNode;
-    if (target != null) {
-      target.requestFocus();
-      return;
-    }
-    _focusNode.nextFocus();
-  }
-
   void _selectTextAfterFocus() {
     if (!_focusNode.hasFocus) {
       return;
@@ -825,7 +788,6 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
 
   @override
   Widget build(BuildContext context) {
-    final nextLabel = widget.nextLabel;
     return A11yTextField(
       identifier: widget.semanticsIdentifier,
       label: widget.labelText,
@@ -838,20 +800,12 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
           labelText: widget.labelText,
           border: const OutlineInputBorder(),
           prefixIcon: Icon(widget.icon),
-          suffixIcon: nextLabel == null
-              ? null
-              : NextFieldButton(
-                  focusNode: _focusNode,
-                  nextLabel: nextLabel,
-                  onNext: _advance,
-                ),
           helperText: widget.helperText,
         ),
         textInputAction: widget.textInputAction,
         keyboardType: widget.keyboardType,
         selectAllOnFocus: widget.selectAllOnFocus,
-        onFieldSubmitted: (_) =>
-            nextLabel == null ? _focusNode.unfocus() : _advance(),
+        onFieldSubmitted: (_) => _focusNode.nextFocus(),
         onTapOutside: (_) => _focusNode.unfocus(),
         validator: widget.validator,
         autovalidateMode: widget.autovalidateMode,

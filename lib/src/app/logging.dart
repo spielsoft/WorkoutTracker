@@ -11,7 +11,6 @@ import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/error.dart';
 import 'ui/shared/header.dart';
-import 'ui/shared/next_field.dart';
 import 'ui/shared/role.dart';
 import 'ui/shared/status.dart';
 
@@ -734,12 +733,6 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
         decoration: InputDecoration(
           label: ExcludeSemantics(child: Text(visualLabel)),
           border: const OutlineInputBorder(),
-          suffixIcon: isLast
-              ? null
-              : NextFieldButton(
-                  focusNode: _focusNodes[index],
-                  nextLabel: _labels[index + 1],
-                ),
         ),
       );
     }
@@ -955,9 +948,7 @@ class _LoggedSetFields extends StatelessWidget {
         entry: entry,
         label: label,
         controller: controllers[label]!,
-        nextLabel: index < fieldLabels.length - 1
-            ? '${entry.setLabel} ${fieldLabels[index + 1]}'
-            : null,
+        isLast: index == fieldLabels.length - 1,
       );
     }
 
@@ -1038,13 +1029,13 @@ class _LoggedSetField extends StatefulWidget {
     required this.entry,
     required this.label,
     required this.controller,
-    required this.nextLabel,
+    required this.isLast,
   });
 
   final RowHistoryEntry entry;
   final String label;
   final TextEditingController controller;
-  final String? nextLabel;
+  final bool isLast;
 
   @override
   State<_LoggedSetField> createState() => _LoggedSetFieldSt();
@@ -1069,7 +1060,7 @@ class _LoggedSetFieldSt extends State<_LoggedSetField> {
 
   @override
   Widget build(BuildContext context) {
-    final nextLabel = widget.nextLabel;
+    final isLast = widget.isLast;
     return A11yTextField(
       label: '${widget.entry.setLabel} ${widget.label}',
       valueListenable: widget.controller,
@@ -1079,19 +1070,14 @@ class _LoggedSetFieldSt extends State<_LoggedSetField> {
         focusNode: _focusNode,
         selectAllOnFocus: true,
         keyboardType: _numberKeyboard,
-        textInputAction: nextLabel == null
-            ? TextInputAction.done
-            : TextInputAction.next,
+        textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
         onTap: () => _selectAll(widget.controller),
         onSubmitted: (_) =>
-            nextLabel == null ? _focusNode.unfocus() : _focusNode.nextFocus(),
+            isLast ? _focusNode.unfocus() : _focusNode.nextFocus(),
         onTapOutside: (_) => _focusNode.unfocus(),
         decoration: InputDecoration(
           labelText: widget.label,
           border: const OutlineInputBorder(),
-          suffixIcon: nextLabel == null
-              ? null
-              : NextFieldButton(focusNode: _focusNode, nextLabel: nextLabel),
         ),
       ),
     );

@@ -18,7 +18,7 @@ plan completes. It is deliberately not a slice here.
 - [x] Slice 1: Persist canonical Timer Fields in schema 1.1
 - [x] Slice 2: Author Timer Fields on canonical exercises
 - [x] Slice 3: Share an exact labeled countdown with full vibration
-- [ ] Slice 4: Remove unused next-field arrow buttons
+- [x] Slice 4: Remove unused next-field arrow buttons
 - [ ] Slice 5: Run a modal exercise countdown from a timed set field
 - [ ] Slice 6: Record the measured duration when a countdown ends
 - [ ] Slice 7: Clean the timer test suite
@@ -211,19 +211,19 @@ field order.
 
 ### Acceptance criteria
 
-- [ ] A public UI behavior test first demonstrates that representative entry
+- [x] A public UI behavior test first demonstrates that representative entry
       forms contain no visible next-field arrow button.
-- [ ] No app screen renders the retired arrow icon, tooltip, semantics action,
+- [x] No app screen renders the retired arrow icon, tooltip, semantics action,
       or tap target.
-- [ ] The shared arrow component is deleted when it has no remaining callers.
-- [ ] Field declaration order and screen-reader traversal order are unchanged.
-- [ ] Directly tapping any field still focuses it, and focusing still selects
+- [x] The shared arrow component is deleted when it has no remaining callers.
+- [x] Field declaration order and screen-reader traversal order are unchanged.
+- [x] Directly tapping any field still focuses it, and focusing still selects
       the existing value for replacement.
-- [ ] Hardware-keyboard Tab traversal moves focus through the fields in
+- [x] Hardware-keyboard Tab traversal moves focus through the fields in
       declaration order.
-- [ ] Removing the control does not reduce spacing below accessibility tap
+- [x] Removing the control does not reduce spacing below accessibility tap
       targets or cause narrow/large-text overflow.
-- [ ] Focused workout-entry, authoring, placement, format-review, and broad
+- [x] Focused workout-entry, authoring, placement, format-review, and broad
       accessibility tests pass.
 
 ### Blocked by

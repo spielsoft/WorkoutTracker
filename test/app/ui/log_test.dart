@@ -1,10 +1,13 @@
 import 'dart:ui' show SemanticsAction;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/src/app/ui/shared/status.dart';
+
+import '../../support/widget.dart';
 
 void main() {
   testWidgets('keeps phone set entry in a compact task-first hierarchy', (
@@ -36,7 +39,7 @@ void main() {
   });
 
   testWidgets(
-    'forward accessory advances in format order before explicit save',
+    'hardware Tab advances set fields in format order before explicit save',
     (tester) async {
       final actions = _LogActions();
       await tester.pumpWidget(_app(actions: actions, view: _literalView()));
@@ -56,18 +59,20 @@ void main() {
 
       await tester.tap(load);
       await tester.pump();
-      expect(find.bySemanticsLabel('Next field Effort'), findsOneWidget);
+      expectInputFocused(load);
+      expectNoNextFieldControl();
 
       await tester.enterText(load, '102.5 kg');
-      await tester.tap(find.bySemanticsLabel('Next field Effort'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
-      expect(find.bySemanticsLabel('Next field Cue'), findsOneWidget);
+      expectInputFocused(effort);
       _expectFieldValue('Load', '102.5 kg');
 
       await tester.enterText(effort, '7.5');
-      await tester.tap(find.bySemanticsLabel('Next field Cue'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
-      expect(find.byIcon(Icons.arrow_forward), findsNothing);
+      expectInputFocused(cue);
+      expectNoNextFieldControl();
       _expectFieldValue('Effort', '7.5');
       await tester.enterText(cue, 'steady');
       await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -105,15 +110,12 @@ void main() {
     await tester.pump();
     _expectFieldValue('Weight', '225');
 
-    await tester.tap(find.bySemanticsLabel('Next field Reps'));
-    await tester.pump();
-    _expectFullSelection(tester, _field('Reps'));
-    await tester.tap(find.bySemanticsLabel('Next field RPE'));
-    await tester.pump();
-    _expectFullSelection(tester, _field('RPE'));
-    await tester.tap(find.bySemanticsLabel('Next field Pain'));
-    await tester.pump();
-    _expectFullSelection(tester, _field('Pain'));
+    for (final label in const ['Reps', 'RPE', 'Pain']) {
+      await tester.tap(_field(label));
+      await tester.pump();
+      expectInputFocused(_field(label));
+      _expectFullSelection(tester, _field(label));
+    }
 
     await tester.tap(_field('Weight'));
     await tester.pump();
@@ -129,7 +131,7 @@ void main() {
     await tester.enterText(_field('Load'), '100.5');
     await tester.enterText(_field('Effort'), '7');
     await tester.enterText(_field('Cue'), 'go');
-    expect(find.byIcon(Icons.arrow_forward), findsNothing);
+    expectNoNextFieldControl();
     expect(tester.testTextInput.isVisible, isTrue);
 
     await tester.tap(find.text('Development Workouts'));
@@ -142,33 +144,34 @@ void main() {
     _expectFieldValue('Cue', 'go');
   });
 
-  testWidgets('forward accessory follows the visible logging context', (
+  testWidgets('set field focus follows the visible logging context', (
     tester,
   ) async {
     final actions = _LogActions();
     await tester.pumpWidget(_app(actions: actions));
 
-    expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
+    expect(inputHasFocus(_field('Weight')), isFalse);
     await tester.tap(_field('Weight'));
     await tester.pump();
-    expect(find.bySemanticsLabel('Next field Reps'), findsOneWidget);
+    expectInputFocused(_field('Weight'));
+    expectNoNextFieldControl();
 
     await tester.tap(find.text('Leg Press'));
     await tester.pump();
     expect(actions.selectedRows, [4]);
-    expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
+    expect(inputHasFocus(_field('Weight')), isFalse);
 
     await tester.tap(_field('Weight'));
     await tester.pump();
     await tester.tap(find.byTooltip('Back to exercises'));
     await tester.pump();
     expect(actions.closed, isTrue);
-    expect(find.bySemanticsLabel('Next field Reps'), findsNothing);
+    expect(inputHasFocus(_field('Weight')), isFalse);
+    expectNoNextFieldControl();
   });
 
-  testWidgets('next arrow stays inside the active field on a narrow screen', (
-    tester,
-  ) async {
+  testWidgets('active set entry keeps tap targets on a narrow large-text '
+      'screen', (tester) async {
     tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -189,18 +192,16 @@ void main() {
     await tester.tap(field);
     await tester.pump();
 
-    final forward = find.bySemanticsLabel('Next field Reps');
-    expect(forward, findsOneWidget);
-    final arrow = find.byIcon(Icons.arrow_forward);
-    expect(arrow, findsOneWidget);
-
+    expectInputFocused(field);
+    expectNoNextFieldControl();
     expect(tester.takeException(), isNull);
+
     final fieldRect = tester.getRect(
       find.byKey(const ValueKey('set-field-Weight')),
     );
-    final arrowRect = tester.getRect(arrow);
-    expect(fieldRect.contains(arrowRect.center), isTrue);
-    expect(arrowRect.right, lessThanOrEqualTo(fieldRect.right));
+    expect(fieldRect.left, greaterThanOrEqualTo(0));
+    expect(fieldRect.right, lessThanOrEqualTo(320));
+    await expectFlutterAccessibilityGuidelines(tester);
   });
 
   testWidgets('keyboard shows the whole new-set editor when it fits', (
@@ -704,10 +705,12 @@ void main() {
     }
     await tester.tap(find.bySemanticsLabel('S1 Weight'));
     await tester.pump();
-    expect(find.bySemanticsLabel('Next field S1 Reps'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Next field S1 Reps'));
+    expectInputFocused(find.bySemanticsLabel('S1 Weight'));
+    expectNoNextFieldControl();
+    await tester.tap(find.bySemanticsLabel('S1 Reps'));
     await tester.pump();
-    expect(find.bySemanticsLabel('Next field S1 RPE'), findsOneWidget);
+    expectInputFocused(find.bySemanticsLabel('S1 Reps'));
+    expectNoNextFieldControl();
     expect(find.text('Weight'), findsOneWidget);
     expect(find.text('Reps'), findsOneWidget);
     expect(find.text('RPE'), findsOneWidget);
@@ -806,8 +809,9 @@ void main() {
     await tester.tap(weight);
     await tester.pump();
     _expectFullSelection(tester, weight);
-    await tester.tap(find.bySemanticsLabel('Next field S1 Reps'));
+    await tester.tap(find.bySemanticsLabel('S1 Reps'));
     await tester.pump();
+    expectInputFocused(find.bySemanticsLabel('S1 Reps'));
     _expectFullSelection(tester, find.bySemanticsLabel('S1 Reps'));
 
     await tester.tap(find.byTooltip('Cancel set edit'));

@@ -4,7 +4,6 @@ import 'package:workout_tracker/contract.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
-import 'ui/shared/next_field.dart';
 import 'ui/shared/role.dart';
 
 enum PlaceKind { primary, backup }
@@ -358,7 +357,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
                     child: _MetaField(
                       controller: _setsCtrl,
                       labelText: 'Sets',
-                      nextLabel: 'Rest',
+                      isLast: false,
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -367,7 +366,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
                     child: _MetaField(
                       controller: _restCtrl,
                       labelText: 'Rest',
-                      nextLabel: 'Tempo',
+                      isLast: false,
                     ),
                   ),
                   SizedBox(
@@ -375,7 +374,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
                     child: _MetaField(
                       controller: _tempoCtrl,
                       labelText: 'Tempo',
-                      nextLabel: 'Notes',
+                      isLast: false,
                     ),
                   ),
                   SizedBox(
@@ -383,7 +382,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
                     child: _MetaField(
                       controller: _notesCtrl,
                       labelText: 'Notes',
-                      nextLabel: targets.isEmpty ? null : targets.first.key,
+                      isLast: targets.isEmpty,
                     ),
                   ),
                   for (var index = 0; index < targets.length; index += 1)
@@ -393,9 +392,7 @@ class _PlaceFormSt extends State<_PlaceForm> {
                         key: ValueKey('placement-target-${targets[index].key}'),
                         controller: targets[index].value,
                         labelText: targets[index].key,
-                        nextLabel: index < targets.length - 1
-                            ? targets[index + 1].key
-                            : null,
+                        isLast: index == targets.length - 1,
                       ),
                     ),
                 ],
@@ -467,13 +464,13 @@ class _MetaField extends StatefulWidget {
     super.key,
     required this.controller,
     required this.labelText,
-    required this.nextLabel,
+    required this.isLast,
     this.keyboardType,
   });
 
   final TextEditingController controller;
   final String labelText;
-  final String? nextLabel;
+  final bool isLast;
   final TextInputType? keyboardType;
 
   @override
@@ -497,7 +494,7 @@ class _MetaFieldSt extends State<_MetaField> {
 
   @override
   Widget build(BuildContext context) {
-    final nextLabel = widget.nextLabel;
+    final isLast = widget.isLast;
     return A11yTextField(
       label: widget.labelText,
       valueListenable: widget.controller,
@@ -508,15 +505,10 @@ class _MetaFieldSt extends State<_MetaField> {
         decoration: InputDecoration(
           labelText: widget.labelText,
           border: const OutlineInputBorder(),
-          suffixIcon: nextLabel == null
-              ? null
-              : NextFieldButton(focusNode: _focusNode, nextLabel: nextLabel),
         ),
-        textInputAction: nextLabel == null
-            ? TextInputAction.done
-            : TextInputAction.next,
+        textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
         onSubmitted: (_) =>
-            nextLabel == null ? _focusNode.unfocus() : _focusNode.nextFocus(),
+            isLast ? _focusNode.unfocus() : _focusNode.nextFocus(),
         onTapOutside: (_) => _focusNode.unfocus(),
       ),
     );

@@ -514,9 +514,11 @@ void main() {
       await tester.tap(find.text('Front Plank'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const ValueKey('set-field-Seconds')));
+      final seconds = find.byKey(const ValueKey('set-field-Seconds'));
+      await tester.tap(seconds);
       await tester.pump();
-      expect(find.bySemanticsLabel('Next field RPE'), findsOneWidget);
+      expectInputFocused(seconds, reason: 'A direct tap must focus Seconds.');
+      expectNoNextFieldControl();
 
       await tester.tap(find.byKey(const ValueKey('edit-S1')));
       await tester.pump();

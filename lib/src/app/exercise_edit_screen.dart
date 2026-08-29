@@ -3,7 +3,6 @@ import 'package:workout_tracker/contract.dart';
 
 import 'exercise_form.dart';
 import 'ui/shared/header.dart';
-import 'ui/shared/next_field.dart';
 import 'ui/view.dart';
 
 final class EditExerciseView extends LoadedView {
@@ -136,17 +135,9 @@ class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
     super.dispose();
   }
 
-  String? _nextLabel(int placementIndex, int fieldIndex) {
-    final fields = widget.impact.fields;
-    if (fieldIndex < fields.length - 1) {
-      final row = widget.impact.placements[placementIndex].sheetRowNumber;
-      return 'Row $row ${fields[fieldIndex + 1]}';
-    }
-    if (placementIndex < widget.impact.placements.length - 1) {
-      final row = widget.impact.placements[placementIndex + 1].sheetRowNumber;
-      return 'Row $row ${fields.first}';
-    }
-    return null;
+  bool _isFinalField(int placementIndex, int fieldIndex) {
+    return fieldIndex == widget.impact.fields.length - 1 &&
+        placementIndex == widget.impact.placements.length - 1;
   }
 
   Future<void> _confirm() async {
@@ -246,7 +237,7 @@ class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
                             Builder(
                               builder: (context) {
                                 final field = widget.impact.fields[fieldIndex];
-                                final nextLabel = _nextLabel(
+                                final isFinal = _isFinalField(
                                   placementIndex,
                                   fieldIndex,
                                 );
@@ -266,10 +257,10 @@ class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
                                         decimal: true,
                                         signed: true,
                                       ),
-                                  textInputAction: nextLabel == null
+                                  textInputAction: isFinal
                                       ? TextInputAction.done
                                       : TextInputAction.next,
-                                  onFieldSubmitted: (_) => nextLabel == null
+                                  onFieldSubmitted: (_) => isFinal
                                       ? focusNode.unfocus()
                                       : focusNode.nextFocus(),
                                   onTapOutside: (_) => focusNode.unfocus(),
@@ -277,12 +268,6 @@ class _FormatUpdateReviewSt extends State<_FormatUpdateReview> {
                                     labelText:
                                         'Row ${placement.sheetRowNumber} $field',
                                     border: const OutlineInputBorder(),
-                                    suffixIcon: nextLabel == null
-                                        ? null
-                                        : NextFieldButton(
-                                            focusNode: focusNode,
-                                            nextLabel: nextLabel,
-                                          ),
                                   ),
                                   validator: (value) => _validateField(
                                     placement.sheetRowNumber,
