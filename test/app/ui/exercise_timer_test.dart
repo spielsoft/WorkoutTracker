@@ -628,6 +628,11 @@ void main() {
         lessThanOrEqualTo(tester.getRect(find.byKey(ValueKey(control))).top),
       );
     }
+    expect(
+      find.semantics.byLabel('New set Seconds'),
+      findsNothing,
+      reason: 'a locked control is not announced at this size either',
+    );
     await expectFlutterAccessibilityGuidelines(tester);
 
     await tester.pump(const Duration(seconds: 12));

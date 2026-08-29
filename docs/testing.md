@@ -69,14 +69,17 @@ flutter run -t dev/gym_preview.dart -d <device-id>
 
 `flutter devices` lists the identifiers. The fixture covers three workouts,
 three history blocks, a backup exercise, a deliberately long workout name, and
-two-, three-, and five-field log formats. Edit its rows to reproduce a specific
-workbook shape; active-sheet and `Exercises` writes both round-trip in memory,
-so logging, reordering, and authoring all behave as they do against a real
-Sheet.
+two-, three-, and five-field log formats. Its Legs workout also carries the
+timed exercises: Side Plank and a deliberately long-named Copenhagen variation
+both declare `Timer Fields` of `['Seconds']`, while Front Plank leaves the same
+`Seconds` label untimed. Edit its rows to reproduce a specific workbook shape;
+active-sheet and `Exercises` writes both round-trip in memory, so logging,
+reordering, and authoring all behave as they do against a real Sheet.
 
 This harness is a preview, not a validation tier. It proves nothing about
 Google, the schema contract, or any real workbook, and it never substitutes for
-`flutter test`.
+`flutter test`. `test/dev/gym_preview_test.dart` keeps the fixture honest by
+loading it through the real screens; it does not make the harness a tier.
 
 ### Simulator Keyboard
 

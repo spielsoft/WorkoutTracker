@@ -22,7 +22,7 @@ plan completes. It is deliberately not a slice here.
 - [x] Slice 5: Run a modal exercise countdown from a timed set field
 - [x] Slice 6: Record the measured duration when a countdown ends
 - [x] Slice 7: Clean the timer test suite
-- [ ] Slice 8: Run the complete local timer guard
+- [x] Slice 8: Run the complete local timer guard
 - [ ] Slice 9: Accept the physical iOS timer flow
 
 ## Slice 1: Persist canonical Timer Fields in schema 1.1
@@ -409,29 +409,29 @@ still requires the physical-device gate.
 
 ### Acceptance criteria
 
-- [ ] `dart format --output=none --set-exit-if-changed lib test integration_test dev`
+- [x] `dart format --output=none --set-exit-if-changed lib test integration_test dev`
       reports no changes.
-- [ ] `flutter analyze` reports no issues.
-- [ ] `flutter test` passes in full.
-- [ ] The broad Flutter accessibility guideline test passes.
-- [ ] The macOS accessibility probe runs against a local preview, or its skip
+- [x] `flutter analyze` reports no issues.
+- [x] `flutter test` passes in full.
+- [x] The broad Flutter accessibility guideline test passes.
+- [x] The macOS accessibility probe runs against a local preview, or its skip
       is recorded with a concrete reason.
-- [ ] The in-memory gym preview demonstrates Side Plank's timer icon, full-name
+- [x] The in-memory gym preview demonstrates Side Plank's timer icon, full-name
       two-row bar, rest replacement, modal dim/lock, pause, `+30 s`, Done,
       expiry, unlock, recorded duration, and unchanged set text without any
       Google access.
-- [ ] The preview fixture covers a timed exercise, so Slice 9 can be accepted
+- [x] The preview fixture covers a timed exercise, so Slice 9 can be accepted
       on a physical device without a real workbook.
-- [ ] A narrow large-text preview shows no clipped exercise identity,
+- [x] A narrow large-text preview shows no clipped exercise identity,
       overlapping controls, unreachable Done action, or exposed locked
       semantics.
-- [ ] Any repository-defined architecture guard runs successfully. If the
+- [x] Any repository-defined architecture guard runs successfully. If the
       repository still defines no dedicated architecture command, that absence
       is recorded rather than inventing one.
-- [ ] `git diff --check` passes and the diff contains no migration UI, active
+- [x] `git diff --check` passes and the diff contains no migration UI, active
       Timer Fields column, background notification path, live-test enablement,
       workbook write, secrets, or unrelated worktree changes.
-- [ ] Remaining physical-vibration risk is handed to Slice 9 without claiming
+- [x] Remaining physical-vibration risk is handed to Slice 9 without claiming
       local fakes resolved it.
 
 ### Blocked by

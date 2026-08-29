@@ -13,8 +13,16 @@ import 'package:workout_tracker/contract.dart';
 const _bench = '{Weight}x{Reps}@{RPE}';
 const _stepUp = '({Height (in)}, {Weight (lbs)})x{Reps}@{RPE},{Pain}';
 const _plank = '{Seconds}@{RPE}';
+const _sidePlank = '{Seconds}s@{RPE}';
+
+// The whole Timer Fields cell for an exercise whose Seconds field is timed.
+const _timedSeconds = "['Seconds']";
 
 const _longWorkout = 'Functional Athleticism & Upper Body Power';
+
+// Deliberately long so the countdown heading's wrap and the two-row timer bar
+// can be judged on a narrow phone with large text.
+const _longExercise = 'Copenhagen Side Plank (Bench Elevated)';
 
 // Exercise | Sets | Rest | Tempo | Targets | Notes | Log Format | Workout |
 // is_backup | is_exercise | <history...>
@@ -254,6 +262,48 @@ List<List<String>> _activeRows() {
       '',
       '',
     ],
+    [
+      'Side Plank',
+      '2',
+      '45 s',
+      '',
+      '30s@8',
+      'Hips stacked. Log each side separately.',
+      _sidePlank,
+      'Legs',
+      '',
+      'x',
+      '25s@7',
+      '25s@8',
+      '',
+      '30s@7',
+      '30s@8',
+      '',
+      '',
+      '',
+      '',
+    ],
+    [
+      _longExercise,
+      '3',
+      '45 s',
+      '',
+      '20@7',
+      'Top leg on the bench. Hips high.',
+      _plank,
+      'Legs',
+      '',
+      'x',
+      '15@7',
+      '15@8',
+      '',
+      '20@7',
+      '',
+      '',
+      '',
+      '',
+      '',
+    ],
   ];
 }
 
@@ -342,6 +392,30 @@ List<List<String>> _exercisesRows() {
       '',
     ],
     ['Front Plank', 'Forearm plank.', '3', '60 s', '', '', _plank, '@7', ''],
+    // The Seconds field is timed here and deliberately untimed on Front
+    // Plank, so the preview shows that the label never implies a timer.
+    [
+      'Side Plank',
+      'Side plank hold.',
+      '2',
+      '45 s',
+      '',
+      '',
+      _sidePlank,
+      's@8',
+      _timedSeconds,
+    ],
+    [
+      _longExercise,
+      'Copenhagen side plank from a bench.',
+      '3',
+      '45 s',
+      '',
+      '',
+      _plank,
+      '@7',
+      _timedSeconds,
+    ],
   ];
 }
 
@@ -450,12 +524,19 @@ class _MemoryStStore implements AppStStore {
   }
 }
 
-void main() {
-  runApp(
-    WorkoutTrackerApp(
-      svc: _MemoryAccess(),
-      appStStore: _MemoryStStore(),
-      initialSelection: _sheet,
-    ),
+/// The preview application over a fresh in-memory workbook.
+///
+/// Exposed so a test can prove the fixture still loads and still reaches a
+/// timed exercise through the real screens. Each call builds its own workbook,
+/// so preview writes never leak between runs.
+Widget gymPreviewApp() {
+  return WorkoutTrackerApp(
+    svc: _MemoryAccess(),
+    appStStore: _MemoryStStore(),
+    initialSelection: _sheet,
   );
+}
+
+void main() {
+  runApp(gymPreviewApp());
 }
