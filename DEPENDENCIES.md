@@ -20,6 +20,16 @@ Swift package graph and upstream release notes.
 | `path_provider` | 2.1.6 | Retained. The lockfile already selects the current compatible Apple implementation used by application-support persistence. |
 | `url_launcher` | 6.3.2 | Retained. It includes the current launch-mode correctness fix; no newer compatible installed fix was identified. |
 
+## Direct Dependency Additions
+
+`clock` was promoted from transitive to `direct main` on 2026-08-29 for the
+shared exercise countdown, which measures an exact deadline and must be
+fakeable under `flutter_test`. No new code ships as a result: the resolved
+graph already contained `clock` 1.1.2 through `package_info_plus`, and the
+promotion only records a package the application now references directly, as
+`depend_on_referenced_packages` requires. It is a pure-Dart Dart-team package
+with no platform implementation, so the Apple graph is unchanged.
+
 The resolved Apple graph is identical for iOS and macOS. Its important sign-in
 pins are `GoogleSignIn-iOS` 9.2.0 and `AppAuth-iOS` 2.1.0, with
 `GTMAppAuth` 5.0.0 and `GTMSessionFetcher` 3.5.0. The Flutter

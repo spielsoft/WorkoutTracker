@@ -11,7 +11,8 @@ import 'exercise_create_screen.dart';
 import 'exercise_edit_screen.dart';
 import 'placement_screen.dart';
 import 'logging.dart';
-import 'rest_timer.dart';
+import 'countdown.dart';
+import 'rest.dart';
 import 'workout_home.dart';
 import 'ui/flow.dart';
 import 'ui/sheet.dart';
@@ -126,7 +127,7 @@ class _AppShellSt extends State<AppShell> {
   late final AppFlow _flow;
   late final Future<void> _init;
   final _navKey = GlobalKey<NavigatorState>();
-  final _rest = RestCtrl();
+  final _countdown = CountdownCtrl();
 
   @override
   void initState() {
@@ -146,7 +147,7 @@ class _AppShellSt extends State<AppShell> {
 
   @override
   void dispose() {
-    _rest.dispose();
+    _countdown.dispose();
     _flow.dispose();
     super.dispose();
   }
@@ -160,11 +161,11 @@ class _AppShellSt extends State<AppShell> {
           child: Column(
             children: [
               ListenableBuilder(
-                listenable: _rest,
-                builder: (context, _) => _rest.active
+                listenable: _countdown,
+                builder: (context, _) => _countdown.active
                     ? ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 840),
-                        child: RestBar(ctrl: _rest),
+                        child: CountdownBar(ctrl: _countdown),
                       )
                     : const SizedBox.shrink(),
               ),
@@ -213,6 +214,10 @@ class _AppShellSt extends State<AppShell> {
         ),
       ),
     );
+  }
+
+  void _startRest(Duration duration) {
+    _countdown.start(restCountdown(duration));
   }
 
   Widget _page(AppView view) {
@@ -267,7 +272,7 @@ class _AppShellSt extends State<AppShell> {
                   child: LogScreen(
                     view: view,
                     actions: _flow.loaded,
-                    onRest: _rest.start,
+                    onRest: _startRest,
                   ),
                 ),
                 showError: false,

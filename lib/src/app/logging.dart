@@ -5,7 +5,7 @@ import 'package:workout_tracker/contract.dart';
 
 import 'controller.dart';
 import 'logging_flow.dart';
-import 'rest_timer.dart';
+import 'rest.dart';
 import 'validation_core.dart';
 import 'ui/view.dart';
 import 'ui/shared/a11y.dart';

@@ -17,7 +17,7 @@ plan completes. It is deliberately not a slice here.
 
 - [x] Slice 1: Persist canonical Timer Fields in schema 1.1
 - [x] Slice 2: Author Timer Fields on canonical exercises
-- [ ] Slice 3: Share an exact labeled countdown with full vibration
+- [x] Slice 3: Share an exact labeled countdown with full vibration
 - [ ] Slice 4: Remove unused next-field arrow buttons
 - [ ] Slice 5: Run a modal exercise countdown from a timed set field
 - [ ] Slice 6: Record the measured duration when a countdown ends
@@ -156,31 +156,31 @@ Slice 6 can record it without reaching into countdown internals.
 
 ### Acceptance criteria
 
-- [ ] A public countdown behavior test first demonstrates a fractional
+- [x] A public countdown behavior test first demonstrates a fractional
       duration expiring at its exact deadline while exposing a rounded integer
       for display.
-- [ ] Countdown state is derived from a deadline rather than accumulated
+- [x] Countdown state is derived from a deadline rather than accumulated
       whole-second subtraction, including after lifecycle suspension.
-- [ ] Pause preserves the exact remaining duration, resume continues it,
+- [x] Pause preserves the exact remaining duration, resume continues it,
       `+30 s` adds exactly 30 seconds, and Done clears it without signaling.
-- [ ] Ending a countdown exposes the elapsed duration through the module's
+- [x] Ending a countdown exposes the elapsed duration through the module's
       public surface, for both Done and expiry.
-- [ ] Starting a new countdown replaces the previous countdown and prevents
+- [x] Starting a new countdown replaces the previous countdown and prevents
       the replaced countdown from signaling later.
-- [ ] Natural expiry requests exactly one full platform vibration and clears
+- [x] Natural expiry requests exactly one full platform vibration and clears
       the active countdown.
-- [ ] Missing or failing platform haptics cannot crash or strand the countdown.
-- [ ] The timer bar has a full-width heading row above the unchanged symmetric
+- [x] Missing or failing platform haptics cannot crash or strand the countdown.
+- [x] The timer bar has a full-width heading row above the unchanged symmetric
       control row.
-- [ ] Rest shows `REST`; an exercise mode can show its full supplied name
+- [x] Rest shows `REST`; an exercise mode can show its full supplied name
       without shifting the three controls below it.
-- [ ] The countdown button retains accessible pause/resume state, remaining
+- [x] The countdown button retains accessible pause/resume state, remaining
       time, and timer identity.
-- [ ] Existing saved-set rest timers still start at the same time, remain
+- [x] Existing saved-set rest timers still start at the same time, remain
       usable during writes, remain nonmodal, and survive navigation.
-- [ ] Foreground/resume behavior is tested without claiming that a fake proves
+- [x] Foreground/resume behavior is tested without claiming that a fake proves
       physical vibration or suspended iOS execution.
-- [ ] Focused countdown, rest-bar, rest-flow, lifecycle, layout, and
+- [x] Focused countdown, rest-bar, rest-flow, lifecycle, layout, and
       accessibility tests pass.
 
 ### Blocked by

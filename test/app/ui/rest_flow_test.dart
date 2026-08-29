@@ -2,12 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
-import 'package:workout_tracker/src/app/rest_timer.dart';
+import 'package:workout_tracker/src/app/rest.dart';
 
 import '../../support/widget.dart';
 import '../service_fake.dart';
 
 void main() {
+  testWidgets('rest is headed REST and leaves the app interactive', (
+    tester,
+  ) async {
+    await _openLog(tester, rest: '90s', sets: '3');
+    await _save(tester);
+
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
+    expect(find.text('REST'), findsOneWidget);
+
+    final field = find.byKey(const ValueKey('set-field-RPE'));
+    await tester.ensureVisible(field);
+    await tester.tap(field);
+    await tester.pump();
+
+    expect(
+      editableTextFor(field).focusNode.hasFocus,
+      isTrue,
+      reason: 'a rest countdown must stay nonmodal',
+    );
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
+  });
+
   testWidgets('rest timer runs while the set write is still in flight', (
     tester,
   ) async {
@@ -18,7 +40,7 @@ void main() {
 
     await _save(tester);
 
-    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
     expect(find.text('180'), findsOneWidget);
   });
 
@@ -29,7 +51,7 @@ void main() {
 
       await _save(tester);
 
-      final timer = find.byKey(const ValueKey('rest-timer'));
+      final timer = find.byKey(const ValueKey('countdown-bar'));
       expect(timer, findsOneWidget);
       expect(find.text('180'), findsOneWidget);
       expect(
@@ -65,12 +87,15 @@ void main() {
     expect(find.byIcon(Icons.pause), findsNothing);
     expect(find.byIcon(Icons.play_arrow), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('rest-countdown')));
+    await tester.tap(find.byKey(const ValueKey('countdown-toggle')));
     await tester.pump();
     final countdown = tester.widget<Semantics>(
-      find.byKey(const ValueKey('rest-countdown')),
+      find.byKey(const ValueKey('countdown-toggle')),
     );
-    expect(countdown.properties.label, 'Resume timer, 90 seconds remaining');
+    expect(
+      countdown.properties.label,
+      'Resume REST timer, 90 seconds remaining',
+    );
     expect(countdown.properties.toggled, isTrue);
 
     await tester.pump(const Duration(seconds: 2));
@@ -82,7 +107,7 @@ void main() {
 
     await tester.tap(find.text('Done'));
     await tester.pump();
-    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
   });
 
   testWidgets('countdown disappears when it reaches zero', (tester) async {
@@ -91,7 +116,7 @@ void main() {
 
     expect(find.text('1'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
   });
 
   testWidgets('noninteger set prescription still starts a rest timer', (
@@ -100,21 +125,21 @@ void main() {
     await _openLog(tester, rest: '90s', sets: '3-4');
     await _save(tester);
 
-    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
   });
 
   testWidgets('final planned set starts a rest timer', (tester) async {
     await _openLog(tester, rest: '90s', sets: '1');
     await _save(tester);
 
-    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
   });
 
   testWidgets('blank rest starts no timer', (tester) async {
     await _openLog(tester, rest: '', sets: '3');
     await _save(tester);
 
-    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
   });
 
   testWidgets('blank fields neither save nor start rest', (tester) async {
@@ -140,14 +165,14 @@ void main() {
     await _save(tester);
 
     expect(service.appliedPlans, isEmpty);
-    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
   });
 
   testWidgets('unparseable rest starts no timer', (tester) async {
     await _openLog(tester, rest: 'eventually', sets: '3');
     await _save(tester);
 
-    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
   });
 
   test('supported rest spellings resolve', () {
@@ -166,7 +191,7 @@ void main() {
     await _save(tester);
 
     expect(find.text('Unable to save set'), findsOneWidget);
-    expect(find.byKey(const ValueKey('rest-timer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
     expect(find.text('180'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 5));
@@ -185,7 +210,7 @@ void main() {
 
     await _save(tester);
 
-    expect(find.byKey(const ValueKey('rest-timer')), findsNothing);
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
   });
 
   testWidgets('timer controls remain accessible on a narrow large-text phone', (
