@@ -3,7 +3,23 @@
 import 'package:flutter/widgets.dart';
 import 'package:workout_tracker/contract.dart';
 
+import 'countdown.dart';
 import 'validation_core.dart';
+
+/// Where a new-set value came from.
+///
+/// One origin replaces the several booleans these states would otherwise
+/// need, so a value can never be suggested and recorded at once.
+enum ValueOrigin {
+  /// Prefilled from a target or earlier set and not yet confirmed.
+  suggested,
+
+  /// The athlete's own entry, including a field they have left empty.
+  entered,
+
+  /// Measured by a countdown this field started.
+  recorded,
+}
 
 class LoggingFlow {
   LoggingFlow({
@@ -26,7 +42,7 @@ class LoggingFlow {
   final _newSetCtrls = <String, TextEditingController>{};
   final _loggedFieldCtrls = <int, Map<String, TextEditingController>>{};
   final _rawCtrls = <int, TextEditingController>{};
-  final _provisional = <String>{};
+  final _origins = <String, ValueOrigin>{};
   List<String>? _resolvedTimerFields;
 
   LoggingVm get viewModel {
@@ -45,7 +61,7 @@ class LoggingFlow {
           ),
       }),
       rawCtrls: Map<int, TextEditingController>.unmodifiable(_rawCtrls),
-      provisional: Set<String>.unmodifiable(_provisional),
+      origins: Map<String, ValueOrigin>.unmodifiable(_origins),
       timerFields: _timerFields(context),
     );
   }
@@ -71,7 +87,31 @@ class LoggingFlow {
     _syncCtrls(context, prefillNewSet: targetChanged || setAdvanced);
   }
 
-  bool markEntered(String label) => _provisional.remove(label);
+  /// Claims a field as the athlete's own entry, whatever it held before.
+  ///
+  /// Returns whether the origin actually changed, so a screen only rebuilds
+  /// for the keystroke that confirms a suggested or recorded value.
+  bool markEntered(String label) {
+    if (!_origins.containsKey(label) ||
+        _origins[label] == ValueOrigin.entered) {
+      return false;
+    }
+    _origins[label] = ValueOrigin.entered;
+    return true;
+  }
+
+  /// Writes the duration a countdown measured into the field that started it.
+  ///
+  /// The value is rounded exactly as the countdown the athlete watched, and
+  /// the field stops reading as an unconfirmed suggestion. Nothing else is
+  /// touched: no other field, no saved set, and no workbook.
+  bool markRecorded(String label, Duration elapsed) {
+    final controller = _newSetCtrls[label];
+    if (controller == null) return false;
+    controller.text = '${countdownSeconds(elapsed)}';
+    _origins[label] = ValueOrigin.recorded;
+    return true;
+  }
 
   SaveSetCmd? planSetSave() {
     final fieldValues = {
@@ -197,10 +237,11 @@ class LoggingFlow {
         .toList();
     for (final label in removedLabels) {
       _newSetCtrls.remove(label)?.dispose();
-      _provisional.remove(label);
+      _origins.remove(label);
     }
     for (final label in labels) {
       _newSetCtrls.putIfAbsent(label, TextEditingController.new);
+      _origins.putIfAbsent(label, () => ValueOrigin.entered);
     }
     if (prefill) {
       _prefillNewSet(context);
@@ -213,11 +254,12 @@ class LoggingFlow {
       FormattedLogEntry(:final fieldValues) => fieldValues,
       _ => context.targets.values,
     };
-    _provisional.clear();
     for (final MapEntry(key: label, value: controller)
         in _newSetCtrls.entries) {
       controller.text = values[label] ?? '';
-      if (controller.text.trim().isNotEmpty) _provisional.add(label);
+      _origins[label] = controller.text.trim().isEmpty
+          ? ValueOrigin.entered
+          : ValueOrigin.suggested;
     }
   }
 
@@ -378,7 +420,7 @@ class LoggingVm {
     required this.newSetCtrls,
     required this.loggedCtrls,
     required this.rawCtrls,
-    required this.provisional,
+    required this.origins,
     Iterable<String> timerFields = const [],
   }) : loggedEntries = List<RowHistoryEntry>.unmodifiable(loggedEntries),
        timerFields = List<String>.unmodifiable(timerFields);
@@ -389,7 +431,9 @@ class LoggingVm {
   final Map<String, TextEditingController> newSetCtrls;
   final Map<int, Map<String, TextEditingController>> loggedCtrls;
   final Map<int, TextEditingController> rawCtrls;
-  final Set<String> provisional;
+
+  /// Where each new-set field's current value came from.
+  final Map<String, ValueOrigin> origins;
 
   /// New-set field labels this exercise times, in Log Format order.
   final List<String> timerFields;

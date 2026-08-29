@@ -18,10 +18,17 @@ Duration? timerDuration(String value) {
 }
 
 /// Exercise policy for the shared countdown: headed by the full exercise
-/// name, modal, and recording nothing when it ends.
+/// name, modal, and reporting its measured duration back to the field that
+/// started it.
 Countdown exerciseCountdown({
   required String exercise,
   required Duration duration,
+  CountdownEnd? onEnd,
 }) {
-  return Countdown(heading: exercise, duration: duration, modal: true);
+  return Countdown(
+    heading: exercise,
+    duration: duration,
+    modal: true,
+    onEnd: onEnd,
+  );
 }

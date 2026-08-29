@@ -20,7 +20,7 @@ plan completes. It is deliberately not a slice here.
 - [x] Slice 3: Share an exact labeled countdown with full vibration
 - [x] Slice 4: Remove unused next-field arrow buttons
 - [x] Slice 5: Run a modal exercise countdown from a timed set field
-- [ ] Slice 6: Record the measured duration when a countdown ends
+- [x] Slice 6: Record the measured duration when a countdown ends
 - [ ] Slice 7: Clean the timer test suite
 - [ ] Slice 8: Run the complete local timer guard
 - [ ] Slice 9: Accept the physical iOS timer flow
@@ -325,23 +325,23 @@ Saving the set stays explicit. Recording a duration never writes to the Sheet.
 
 ### Acceptance criteria
 
-- [ ] A public logging behavior test first demonstrates Done partway through a
+- [x] A public logging behavior test first demonstrates Done partway through a
       countdown writing the elapsed seconds into the field that started it.
-- [ ] Expiry writes the full duration into that field.
-- [ ] The written value uses the same rounding as the visible countdown.
-- [ ] The value's origin becomes recorded, and a recorded value is neither
+- [x] Expiry writes the full duration into that field.
+- [x] The written value uses the same rounding as the visible countdown.
+- [x] The value's origin becomes recorded, and a recorded value is neither
       styled nor announced as a suggestion.
-- [ ] Suggested, entered, and recorded are one explicit origin rather than
+- [x] Suggested, entered, and recorded are one explicit origin rather than
       parallel booleans.
-- [ ] Ending a countdown writes only the field that started it and leaves every
+- [x] Ending a countdown writes only the field that started it and leaves every
       other field's text and origin unchanged.
-- [ ] Editing a recorded value by hand makes it entered.
-- [ ] Recording never saves a set, starts rest, or writes to the workbook.
-- [ ] A rest countdown ending writes no field.
-- [ ] A countdown displaced by a new countdown records nothing.
-- [ ] Semantics distinguish recorded from suggested and entered without relying
+- [x] Editing a recorded value by hand makes it entered.
+- [x] Recording never saves a set, starts rest, or writes to the workbook.
+- [x] A rest countdown ending writes no field.
+- [x] A countdown displaced by a new countdown records nothing.
+- [x] Semantics distinguish recorded from suggested and entered without relying
       on color alone.
-- [ ] Focused logging-flow, countdown, and accessibility tests pass.
+- [x] Focused logging-flow, countdown, and accessibility tests pass.
 
 ### Blocked by
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
 
 import 'controller.dart';
+import 'countdown.dart';
 import 'exercise_timer.dart';
 import 'logging_flow.dart';
 import 'rest.dart';
@@ -45,8 +46,15 @@ abstract interface class LogActions {
 }
 
 /// Asks the shell to time [exercise] for exactly [duration].
+///
+/// [onEnd] reports the measured duration once that countdown ends, by Done or
+/// by expiry, so the field that started it can record what was performed. A
+/// countdown replaced by a newer one never reports.
 typedef ExerciseTimerRequest =
-    void Function(String exercise, Duration duration);
+    void Function(String exercise, Duration duration, CountdownEnd onEnd);
+
+/// Starts a countdown for the new-set field named [label].
+typedef SetFieldTimerRequest = void Function(String label, Duration duration);
 
 class LogScreen extends StatefulWidget {
   const LogScreen({
@@ -210,11 +218,18 @@ class _LogScreenSt extends State<LogScreen> {
   }
 
   /// Times the selected exercise without touching the set being entered.
-  void _startExerciseTimer(Duration duration) {
+  void _startExerciseTimer(String label, Duration duration) {
     widget.onExerciseTimer?.call(
       _flow.viewModel.selectedChoice.exercise,
       duration,
+      (elapsed) => _markRecorded(label, elapsed),
     );
+  }
+
+  /// Writes what the countdown measured into the field that started it.
+  void _markRecorded(String label, Duration elapsed) {
+    if (!mounted) return;
+    if (_flow.markRecorded(label, elapsed)) setState(() {});
   }
 
   @override
@@ -298,7 +313,7 @@ class _LogScreenSt extends State<LogScreen> {
             logFormat: loggingContext.logFormat,
             targets: loggingContext.targets.values,
             controllers: viewModel.newSetCtrls,
-            provisional: viewModel.provisional,
+            origins: viewModel.origins,
             setNumber: viewModel.nextSetNumber,
             isBusy: widget.view.isBusy,
             exercise: selectedChoice.exercise,
@@ -533,7 +548,7 @@ class _StructuredSetEditor extends StatefulWidget {
     required this.logFormat,
     required this.targets,
     required this.controllers,
-    required this.provisional,
+    required this.origins,
     required this.setNumber,
     required this.isBusy,
     required this.exercise,
@@ -547,7 +562,9 @@ class _StructuredSetEditor extends StatefulWidget {
   final LogFormatParseResult logFormat;
   final Map<String, String> targets;
   final Map<String, TextEditingController> controllers;
-  final Set<String> provisional;
+
+  /// Where each field's current value came from.
+  final Map<String, ValueOrigin> origins;
   final int setNumber;
   final bool isBusy;
 
@@ -557,7 +574,7 @@ class _StructuredSetEditor extends StatefulWidget {
   /// Field labels the canonical exercise times, in Log Format order.
   final List<String> timerFields;
   final ValueChanged<String> onEntered;
-  final ValueChanged<Duration> onTimer;
+  final SetFieldTimerRequest onTimer;
   final VoidCallback onSave;
 
   @override
@@ -754,10 +771,14 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
       );
     }
 
+    ValueOrigin originOf(String label) {
+      return widget.origins[label] ?? ValueOrigin.entered;
+    }
+
     TextField field(String label, int index) {
       final isLast = index == _labels.length - 1;
       final target = widget.targets[label] ?? '';
-      final suggested = widget.provisional.contains(label);
+      final suggested = originOf(label) == ValueOrigin.suggested;
       final visualLabel = target.trim().isEmpty ? label : '$label → $target';
       return TextField(
         key: ValueKey('set-field-$label'),
@@ -783,9 +804,7 @@ class _StructuredSetEditorSt extends State<_StructuredSetEditor>
     Widget accessibleField(String label, int index) {
       return A11yTextField(
         label: 'New set $label',
-        hint: widget.provisional.contains(label)
-            ? 'Suggested value; edit to confirm'
-            : null,
+        hint: _originHint(originOf(label)),
         valueListenable: widget.controllers[label],
         child: field(label, index),
       );
@@ -846,7 +865,7 @@ class _SetFieldTimerButton extends StatelessWidget {
   final String exercise;
   final String label;
   final TextEditingController controller;
-  final ValueChanged<Duration> onTimer;
+  final SetFieldTimerRequest onTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -877,8 +896,21 @@ class _SetFieldTimerButton extends StatelessWidget {
   void _start() {
     final duration = timerDuration(controller.text);
     if (duration == null) return;
-    onTimer(duration);
+    onTimer(label, duration);
   }
+}
+
+/// Announces where a field's value came from.
+///
+/// A recorded value is real performed data, so it drops the suggestion
+/// treatment entirely and instead says who measured it. Screen-reader users
+/// therefore separate all three origins without seeing any styling.
+String? _originHint(ValueOrigin origin) {
+  return switch (origin) {
+    ValueOrigin.suggested => 'Suggested value; edit to confirm',
+    ValueOrigin.recorded => 'Recorded by the timer; edit to change',
+    ValueOrigin.entered => null,
+  };
 }
 
 /// Styles a value the athlete has not yet confirmed for the current set.

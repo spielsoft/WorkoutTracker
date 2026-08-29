@@ -15,6 +15,14 @@ typedef CountdownSignal = Future<void> Function();
 /// Reports how long a countdown actually ran once it ends.
 typedef CountdownEnd = void Function(Duration elapsed);
 
+/// A countdown duration as ordinary nearest-integer seconds.
+///
+/// One rounding serves both the visible countdown and any value measured from
+/// it, so a recorded duration always matches the number the athlete watched.
+int countdownSeconds(Duration duration) {
+  return (duration.inMicroseconds / Duration.microsecondsPerSecond).round();
+}
+
 /// One countdown and the policy that owns it.
 ///
 /// Callers supply the policy explicitly so rest and exercise timing can share
@@ -83,9 +91,7 @@ final class CountdownCtrl extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Remaining time as ordinary nearest-integer seconds, for display.
-  int get seconds {
-    return (remaining.inMicroseconds / Duration.microsecondsPerSecond).round();
-  }
+  int get seconds => countdownSeconds(remaining);
 
   /// Replaces any running countdown. The replaced countdown can no longer
   /// report its elapsed time or signal.

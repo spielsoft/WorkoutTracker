@@ -233,8 +233,14 @@ class _AppShellSt extends State<AppShell> {
     _countdown.start(restCountdown(duration));
   }
 
-  void _startExerciseTimer(String exercise, Duration duration) {
-    _countdown.start(exerciseCountdown(exercise: exercise, duration: duration));
+  void _startExerciseTimer(
+    String exercise,
+    Duration duration,
+    CountdownEnd onEnd,
+  ) {
+    _countdown.start(
+      exerciseCountdown(exercise: exercise, duration: duration, onEnd: onEnd),
+    );
   }
 
   Widget _page(AppView view) {

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/src/app/exercise_timer.dart';
+import 'package:workout_tracker/src/app/ui/shared/status.dart';
 
 import '../service_fake.dart';
 import '../../support/widget.dart';
@@ -139,6 +140,207 @@ void main() {
 
     expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
     expect(vibrations, ['HapticFeedback.vibrate']);
+  });
+
+  testWidgets('Done partway through a hold records the time actually held', (
+    tester,
+  ) async {
+    final service = await _openLog(tester);
+    await _startTimer(tester, '45');
+
+    await tester.pump(const Duration(seconds: 30));
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    expect(_value('Seconds'), '30');
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
+    expect(service.appliedPlans, isEmpty, reason: 'recording never saves');
+    expect(find.text('Save set S1'), findsOneWidget);
+  });
+
+  testWidgets('a hold that runs to expiry records its full duration', (
+    tester,
+  ) async {
+    final service = await _openLog(tester);
+
+    expect(_value('Seconds'), '30', reason: 'the prescription is suggested');
+    expect(_hint(tester, 'Seconds'), contains('Suggested'));
+
+    await tester.tap(find.byKey(const ValueKey('set-timer-Seconds')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 30));
+    await tester.pump();
+
+    expect(_value('Seconds'), '30');
+    expect(
+      _hint(tester, 'Seconds'),
+      contains('Recorded'),
+      reason: 'a completed hold stops reading as an unconfirmed suggestion',
+    );
+    expect(
+      find.byKey(const ValueKey('countdown-bar')),
+      findsNothing,
+      reason: 'recording never starts rest',
+    );
+    expect(service.appliedPlans, isEmpty);
+
+    await tester.tap(find.byKey(const ValueKey('set-timer-Seconds')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('countdown-add')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 60));
+    await tester.pump();
+
+    expect(
+      _value('Seconds'),
+      '60',
+      reason: 'an extended hold records the whole length it ran',
+    );
+  });
+
+  testWidgets('a recorded duration rounds exactly as the visible countdown', (
+    tester,
+  ) async {
+    await _openLog(tester);
+    await _startTimer(tester, '9.5');
+
+    expect(_countdown(tester), '10', reason: 'the display rounds to nearest');
+
+    await tester.pump(const Duration(milliseconds: 2400));
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    expect(_value('Seconds'), '2', reason: '2.4 seconds held rounds down');
+
+    await _startTimer(tester, '9.5');
+    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    expect(_value('Seconds'), '3', reason: '2.5 seconds held rounds up');
+  });
+
+  testWidgets('a recorded value reads as measured data, not as a suggestion', (
+    tester,
+  ) async {
+    await _openLog(tester);
+    final colors = Theme.of(tester.element(_field('Seconds'))).colorScheme;
+
+    expect(_hint(tester, 'Seconds'), 'Suggested value; edit to confirm');
+
+    await tester.enterText(_field('RPE'), '9');
+    await tester.pump();
+
+    expect(_hint(tester, 'RPE'), isEmpty, reason: 'an entered value is plain');
+
+    await _startTimer(tester, '45');
+    await tester.pump(const Duration(seconds: 30));
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    final recorded = _hint(tester, 'Seconds');
+    expect(recorded, contains('Recorded'));
+    expect(recorded, isNot('Suggested value; edit to confirm'));
+    expect(recorded, isNot(_hint(tester, 'RPE')));
+    expect(
+      _style(tester, 'Seconds')?.fontStyle,
+      isNot(FontStyle.italic),
+      reason: 'measured data is not styled as a suggestion',
+    );
+    expect(
+      _style(tester, 'Seconds')?.color,
+      isNot(suggestedValueColor(colors)),
+    );
+    await expectFlutterAccessibilityGuidelines(tester);
+  });
+
+  testWidgets('ending a countdown writes only the field that started it', (
+    tester,
+  ) async {
+    await _openLog(tester);
+
+    expect(_value('RPE'), '8');
+    expect(_style(tester, 'RPE')?.fontStyle, FontStyle.italic);
+
+    await _startTimer(tester, '45');
+    await tester.pump(const Duration(seconds: 30));
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    expect(_value('Seconds'), '30');
+    expect(_value('RPE'), '8');
+    expect(
+      _style(tester, 'RPE')?.fontStyle,
+      FontStyle.italic,
+      reason: 'another field keeps its own text and origin',
+    );
+    expect(_hint(tester, 'RPE'), contains('Suggested'));
+  });
+
+  testWidgets('editing a recorded value by hand makes it entered', (
+    tester,
+  ) async {
+    await _openLog(tester);
+    await _startTimer(tester, '45');
+    await tester.pump(const Duration(seconds: 30));
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    expect(_hint(tester, 'Seconds'), contains('Recorded'));
+
+    await tester.enterText(_field('Seconds'), '28');
+    await tester.pump();
+
+    expect(_value('Seconds'), '28');
+    expect(_hint(tester, 'Seconds'), isEmpty);
+    expect(_style(tester, 'Seconds')?.fontStyle, isNot(FontStyle.italic));
+  });
+
+  testWidgets('a rest countdown ends without recording any field', (
+    tester,
+  ) async {
+    await _openLog(tester);
+    await _save(tester);
+
+    expect(_heading(tester), 'REST');
+    expect(_countdown(tester), '45');
+
+    await tester.pump(const Duration(seconds: 45));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
+    expect(_value('Seconds'), '30');
+    expect(_value('RPE'), '8');
+    expect(_hint(tester, 'Seconds'), contains('Suggested'));
+  });
+
+  testWidgets('a countdown displaced by an exercise timer records nothing', (
+    tester,
+  ) async {
+    await _openLog(tester);
+    await _save(tester);
+
+    expect(_heading(tester), 'REST');
+    expect(_countdown(tester), '45');
+
+    await _startTimer(tester, '60');
+    expect(_heading(tester), 'Side Plank');
+
+    await tester.pump(const Duration(seconds: 45));
+    await tester.pump();
+
+    expect(
+      _value('Seconds'),
+      '60',
+      reason: 'the displaced rest countdown records nothing at its own end',
+    );
+    expect(_heading(tester), 'Side Plank');
+
+    await tester.pump(const Duration(seconds: 5));
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    expect(_value('Seconds'), '50');
   });
 
   testWidgets('starting a timer changes no set value, origin, or workbook', (
@@ -421,6 +623,7 @@ void main() {
     }
     await expectFlutterAccessibilityGuidelines(tester);
 
+    await tester.pump(const Duration(seconds: 12));
     await tester.tap(find.byKey(const ValueKey('countdown-done')));
     await tester.pump();
     await tester.ensureVisible(find.byKey(const ValueKey('set-field-Seconds')));
@@ -432,7 +635,8 @@ void main() {
     );
     expect(control.width, greaterThanOrEqualTo(48));
     expect(control.height, greaterThanOrEqualTo(48));
-    expect(_value('Seconds'), '45', reason: 'the entered value is untouched');
+    expect(_value('Seconds'), '12', reason: 'Done records the time held');
+    expect(_hint(tester, 'Seconds'), contains('Recorded'));
     await expectFlutterAccessibilityGuidelines(tester);
   });
 }
@@ -560,6 +764,10 @@ String _value(String label) => editableTextFor(_field(label)).controller.text;
 
 TextStyle? _style(WidgetTester tester, String label) {
   return tester.widget<TextField>(_field(label)).style;
+}
+
+String _hint(WidgetTester tester, String label) {
+  return tester.getSemantics(find.bySemanticsLabel('New set $label')).hint;
 }
 
 String _heading(WidgetTester tester) {
