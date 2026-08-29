@@ -174,47 +174,56 @@ class _AppShellSt extends State<AppShell> {
                     : const SizedBox.shrink(),
               ),
               Expanded(
-                child: ListenableBuilder(
-                  listenable: _countdown,
-                  builder: (context, child) =>
-                      _Locked(locked: _locked, child: child!),
-                  child: FutureBuilder<void>(
-                    future: _init,
-                    builder: (context, _) => ListenableBuilder(
-                      listenable: _flow,
-                      builder: (context, _) {
-                        final pages = _flow.pages;
-                        return PopScope<Object?>(
-                          canPop: pages.length == 1,
-                          onPopInvokedWithResult: (didPop, _) {
-                            if (didPop || _locked) return;
-                            _navKey.currentState?.maybePop();
-                          },
-                          child: Navigator(
-                            key: _navKey,
-                            pages: [
-                              for (final page in pages)
-                                if (page.view is SheetView ||
-                                    page.view is WorkoutHomeView)
-                                  _RootPage(
-                                    key: ValueKey(page.id),
-                                    child: _page(page.view),
-                                  )
-                                else
-                                  MaterialPage<Object?>(
-                                    key: ValueKey(page.id),
-                                    child: _page(page.view),
-                                  ),
-                            ],
-                            onDidRemovePage: (page) {
-                              final key = page.key;
-                              if (key is ValueKey<Object>) {
-                                _flow.didPop(key.value);
-                              }
+                // Every opaque route paints a modal barrier that drops the
+                // semantics of everything painted before it in the same
+                // container. Giving the pages their own container keeps that
+                // inside the page area, so a screen reader can still reach the
+                // countdown bar's pause, added time, and Done above it.
+                child: Semantics(
+                  container: true,
+                  explicitChildNodes: true,
+                  child: ListenableBuilder(
+                    listenable: _countdown,
+                    builder: (context, child) =>
+                        _Locked(locked: _locked, child: child!),
+                    child: FutureBuilder<void>(
+                      future: _init,
+                      builder: (context, _) => ListenableBuilder(
+                        listenable: _flow,
+                        builder: (context, _) {
+                          final pages = _flow.pages;
+                          return PopScope<Object?>(
+                            canPop: pages.length == 1,
+                            onPopInvokedWithResult: (didPop, _) {
+                              if (didPop || _locked) return;
+                              _navKey.currentState?.maybePop();
                             },
-                          ),
-                        );
-                      },
+                            child: Navigator(
+                              key: _navKey,
+                              pages: [
+                                for (final page in pages)
+                                  if (page.view is SheetView ||
+                                      page.view is WorkoutHomeView)
+                                    _RootPage(
+                                      key: ValueKey(page.id),
+                                      child: _page(page.view),
+                                    )
+                                  else
+                                    MaterialPage<Object?>(
+                                      key: ValueKey(page.id),
+                                      child: _page(page.view),
+                                    ),
+                              ],
+                              onDidRemovePage: (page) {
+                                final key = page.key;
+                                if (key is ValueKey<Object>) {
+                                  _flow.didPop(key.value);
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),

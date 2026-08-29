@@ -30,6 +30,26 @@ void main() {
     expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
   });
 
+  testWidgets('a running countdown stays reachable by screen reader', (
+    tester,
+  ) async {
+    await _openLog(tester, rest: '90s', sets: '3');
+    await _save(tester);
+
+    // The page area sits behind a modal route barrier. Reading the compiled
+    // semantics tree, rather than the bar's widget configuration, is what
+    // proves the barrier does not swallow the controls above it.
+    expect(find.semantics.byLabel('REST'), findsOne);
+    expect(find.semantics.byLabel(RegExp('^Pause REST timer, ')), findsOne);
+    expect(find.semantics.byLabel('+30 s'), findsOne);
+    expect(find.semantics.byLabel('Done'), findsOne);
+    expect(
+      find.semantics.byLabel('New set RPE'),
+      findsOne,
+      reason: 'rest is nonmodal, so the page stays reachable too',
+    );
+  });
+
   testWidgets('rest timer runs while the set write is still in flight', (
     tester,
   ) async {
