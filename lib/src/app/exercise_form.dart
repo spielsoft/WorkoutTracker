@@ -175,7 +175,7 @@ class CanonicalExerciseDraft {
   final String notes;
   final String logFormat;
 
-  /// Canonical timer configuration this form preserves but does not yet edit.
+  /// Log Format labels this exercise times, in declaration order.
   final List<String> timerFields;
 
   CanonicalExerciseDraft normalized() {
@@ -273,10 +273,12 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
   late final TextEditingController _setsCtrl;
   final _valueCtrls = <String, TextEditingController>{};
   List<String> _fieldLabels = const [];
+  final _timedLabels = <String>{};
   late final TextEditingController _restCtrl;
   late final TextEditingController _tempoCtrl;
   late final TextEditingController _notesCtrl;
   late final TextEditingController _formatCtrl;
+  late final FocusNode _notesFocus;
 
   @override
   void initState() {
@@ -288,6 +290,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _tempoCtrl = TextEditingController();
     _notesCtrl = TextEditingController();
     _formatCtrl = TextEditingController();
+    _notesFocus = FocusNode(debugLabel: 'Notes');
     _loadDraft(widget.initialDraft);
   }
 
@@ -311,6 +314,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _tempoCtrl.dispose();
     _notesCtrl.dispose();
     _formatCtrl.dispose();
+    _notesFocus.dispose();
     super.dispose();
   }
 
@@ -322,6 +326,9 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
     _tempoCtrl.text = draft.defaultTempo;
     _notesCtrl.text = draft.notes;
     _formatCtrl.text = draft.logFormat;
+    _timedLabels
+      ..clear()
+      ..addAll(draft.timerFields);
     _syncValueCtrls(draft.logFormat, values: draft.defaultValues);
   }
 
@@ -344,13 +351,27 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       defaultTempo: _tempoCtrl.text,
       notes: _notesCtrl.text,
       logFormat: _formatCtrl.text,
-      timerFields: widget.initialDraft.timerFields,
+      timerFields: [
+        for (final label in _fieldLabels)
+          if (_timedLabels.contains(label)) label,
+      ],
     );
   }
 
   void _changed(String _) {
     widget.onChanged?.call(_draft());
     setState(() {});
+  }
+
+  void _timerChanged(String label, bool timed) {
+    setState(() {
+      if (timed) {
+        _timedLabels.add(label);
+      } else {
+        _timedLabels.remove(label);
+      }
+    });
+    widget.onChanged?.call(_draft());
   }
 
   void _formatChanged(String value) {
@@ -564,8 +585,54 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
                           nextLabel: index < fieldLabels.length - 1
                               ? 'Default ${fieldLabels[index + 1]}'
                               : 'Notes',
+                          nextFocusNode: index < fieldLabels.length - 1
+                              ? null
+                              : _notesFocus,
                           textInputAction: TextInputAction.next,
                           onChanged: _changed,
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            A11yHeader(
+              label: 'Timer',
+              child: ExcludeSemantics(
+                child: Text(
+                  'Timer',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Timed fields count down in seconds while you log a set.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final twoColumn = constraints.maxWidth >= 620;
+                final fieldWidth = twoColumn
+                    ? (constraints.maxWidth - 12) / 2
+                    : constraints.maxWidth;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: [
+                    for (final label in fieldLabels)
+                      SizedBox(
+                        width: fieldWidth,
+                        child: _TimerCheckbox(
+                          key: ValueKey('exercise-authoring-timer-$label'),
+                          label: label,
+                          timed: _timedLabels.contains(label),
+                          enabled: !widget.isBusy,
+                          onChanged: (timed) => _timerChanged(label, timed),
                         ),
                       ),
                   ],
@@ -581,6 +648,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             child: TextFormField(
               key: const ValueKey('exercise-authoring-notes'),
               controller: _notesCtrl,
+              focusNode: _notesFocus,
               enabled: !widget.isBusy,
               decoration: const InputDecoration(
                 labelText: 'Notes',
@@ -643,6 +711,33 @@ bool _sameStringList(List<String> left, List<String> right) {
   return true;
 }
 
+/// One `Timer` column checkbox for a single Log Format field.
+class _TimerCheckbox extends StatelessWidget {
+  const _TimerCheckbox({
+    super.key,
+    required this.label,
+    required this.timed,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool timed;
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      value: timed,
+      onChanged: enabled ? (value) => onChanged(value ?? false) : null,
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      title: Text(label, semanticsLabel: 'Timer $label'),
+    );
+  }
+}
+
 class _AuthoringField extends StatefulWidget {
   const _AuthoringField({
     super.key,
@@ -653,6 +748,7 @@ class _AuthoringField extends StatefulWidget {
     required this.icon,
     required this.textInputAction,
     this.nextLabel,
+    this.nextFocusNode,
     this.keyboardType,
     this.helperText,
     this.validator,
@@ -668,6 +764,9 @@ class _AuthoringField extends StatefulWidget {
   final IconData icon;
   final TextInputAction textInputAction;
   final String? nextLabel;
+
+  /// The field [nextLabel] names, when it is not the next node in traversal.
+  final FocusNode? nextFocusNode;
   final TextInputType? keyboardType;
   final String? helperText;
   final FormFieldValidator<String>? validator;
@@ -698,6 +797,15 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
     }
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _advance() {
+    final target = widget.nextFocusNode;
+    if (target != null) {
+      target.requestFocus();
+      return;
+    }
+    _focusNode.nextFocus();
   }
 
   void _selectTextAfterFocus() {
@@ -732,14 +840,18 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
           prefixIcon: Icon(widget.icon),
           suffixIcon: nextLabel == null
               ? null
-              : NextFieldButton(focusNode: _focusNode, nextLabel: nextLabel),
+              : NextFieldButton(
+                  focusNode: _focusNode,
+                  nextLabel: nextLabel,
+                  onNext: _advance,
+                ),
           helperText: widget.helperText,
         ),
         textInputAction: widget.textInputAction,
         keyboardType: widget.keyboardType,
         selectAllOnFocus: widget.selectAllOnFocus,
         onFieldSubmitted: (_) =>
-            nextLabel == null ? _focusNode.unfocus() : _focusNode.nextFocus(),
+            nextLabel == null ? _focusNode.unfocus() : _advance(),
         onTapOutside: (_) => _focusNode.unfocus(),
         validator: widget.validator,
         autovalidateMode: widget.autovalidateMode,

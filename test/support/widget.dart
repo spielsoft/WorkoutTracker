@@ -288,6 +288,7 @@ class AppendingExerciseAuthoringService {
       exercise.notes,
       exercise.resolvedLogFormat,
       exercise.renderedDefaultValues,
+      exercise.renderedTimerFields,
     ]);
     final activeExerciseIndex = _exercises.indexWhere(
       (row) => row.first == 'Squat',
@@ -388,6 +389,7 @@ class EditingExerciseAuthoringService
       exercise.notes,
       exercise.resolvedLogFormat,
       exercise.renderedDefaultValues,
+      exercise.renderedTimerFields,
     ];
     return ValReport(
       spreadsheetId: spreadsheetId,

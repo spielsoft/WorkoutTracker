@@ -785,6 +785,87 @@ void main() {
     },
   );
 
+  test('changes placed Timer Fields without a format review', () async {
+    const format = '{Seconds}s@{RPE}';
+    final activeRows = [
+      [...activeSheetFixedColumns, 'Week 1'],
+      [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+      [
+        'Side Plank',
+        '3',
+        '45s',
+        'hold',
+        '30s@8',
+        '',
+        format,
+        'Core',
+        '',
+        'x',
+        '25s@8',
+      ],
+    ];
+    final exerciseRows = [
+      exercisesSheetColumns,
+      ['Side Plank', '', '3', '45s', 'hold', '', format, '30s@8'],
+    ];
+    const formulas = [
+      SheetsCellFormula(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 1,
+        formula: '=Exercises!A2',
+      ),
+      SheetsCellFormula(
+        sheetRowNumber: 3,
+        sheetColumnNumber: 7,
+        formula: '=Exercises!G2',
+      ),
+    ];
+    final reads = _SequencedSpreadsheetClient([
+      _workbookSnapshot(activeRows, exerciseRows, activeFormulas: formulas),
+      _workbookSnapshot(activeRows, exerciseRows, activeFormulas: formulas),
+      _workbookSnapshot(activeRows, exerciseRows, activeFormulas: formulas),
+    ]);
+    final writes = _RecordingWriteClient();
+    final sess = _session(reads, writes);
+    final initial = await sess.read();
+
+    final updated = await sess.execute(
+      UpdateExeCmd(
+        selected: initial.activeSheet.canonicalExercises.single,
+        exercise: ExerciseDef(
+          exercise: 'Side Plank',
+          defaultSets: '3',
+          defaultRest: '45s',
+          defaultTempo: 'hold',
+          logFormat: format,
+          defaultValues: const {'Seconds': '30', 'RPE': '8'},
+          timerFields: const ['Seconds'],
+        ),
+      ),
+    );
+
+    expect(updated.exeFormatImpact, isNull);
+    expect(writes.applyCount, 1);
+    final cellWrites = writes.operations.whereType<SheetsCellWrite>();
+    expect(
+      cellWrites.map((write) => write.sheet.title),
+      everyElement('Exercises'),
+    );
+    expect(
+      cellWrites.map(
+        (write) => (write.sheet.title, write.sheetColumnNumber, write.value),
+      ),
+      contains(('Exercises', 9, "['Seconds']")),
+    );
+    final context = updated.activeSheet.buildLoggingContext(
+      primaryRow: 3,
+      selectedRow: 3,
+      blockLabel: 'Week 1',
+    );
+    expect(context.targets.values, {'Seconds': '30', 'RPE': '8'});
+    expect(context.selectedHistory.entries.single.rawValue, '25s@8');
+  });
+
   test(
     'rejects a reviewed format update when placed Targets changed',
     () async {

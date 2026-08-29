@@ -16,7 +16,7 @@ plan completes. It is deliberately not a slice here.
 ## Progress
 
 - [x] Slice 1: Persist canonical Timer Fields in schema 1.1
-- [ ] Slice 2: Author Timer Fields on canonical exercises
+- [x] Slice 2: Author Timer Fields on canonical exercises
 - [ ] Slice 3: Share an exact labeled countdown with full vibration
 - [ ] Slice 4: Remove unused next-field arrow buttons
 - [ ] Slice 5: Run a modal exercise countdown from a timed set field
@@ -105,22 +105,22 @@ history.
 
 ### Acceptance criteria
 
-- [ ] A public exercise-authoring behavior test first demonstrates enabling a
+- [x] A public exercise-authoring behavior test first demonstrates enabling a
       timer field and saving it with the canonical exercise.
-- [ ] Create and edit forms show one shared Timer heading and one checkbox per
+- [x] Create and edit forms show one shared Timer heading and one checkbox per
       parsed Log Format field in declaration order.
-- [ ] Each checkbox has an accessible name that includes its field label and a
+- [x] Each checkbox has an accessible name that includes its field label and a
       state available without relying on color, icon, or position.
-- [ ] Existing timer selections load checked; untimed fields load unchecked.
-- [ ] Saving create or edit state writes only exact labels still declared by
+- [x] Existing timer selections load checked; untimed fields load unchecked.
+- [x] Saving create or edit state writes only exact labels still declared by
       the current valid Log Format.
-- [ ] A Log Format change cannot retain a stale Timer Fields label that no
+- [x] A Log Format change cannot retain a stale Timer Fields label that no
       longer exists.
-- [ ] Changing Timer Fields alone does not enter the format-impact flow or
+- [x] Changing Timer Fields alone does not enter the format-impact flow or
       rewrite placed Targets and history.
-- [ ] Busy forms disable the timer checkboxes consistently with other inputs.
-- [ ] The checkbox column remains usable at narrow widths and large text.
-- [ ] Focused authoring, application-command, write-plan, and accessibility
+- [x] Busy forms disable the timer checkboxes consistently with other inputs.
+- [x] The checkbox column remains usable at narrow widths and large text.
+- [x] Focused authoring, application-command, write-plan, and accessibility
       tests pass.
 
 ### Blocked by

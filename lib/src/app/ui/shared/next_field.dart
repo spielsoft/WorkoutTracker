@@ -4,11 +4,24 @@ class NextFieldButton extends StatelessWidget {
   const NextFieldButton({
     required this.focusNode,
     required this.nextLabel,
+    this.onNext,
     super.key,
   });
 
   final FocusNode focusNode;
   final String nextLabel;
+
+  /// Moves focus to [nextLabel] when plain traversal would land elsewhere.
+  final VoidCallback? onNext;
+
+  void _advance() {
+    final next = onNext;
+    if (next != null) {
+      next();
+      return;
+    }
+    focusNode.nextFocus();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +37,11 @@ class NextFieldButton extends StatelessWidget {
             container: true,
             label: label,
             button: true,
-            onTap: focusNode.nextFocus,
+            onTap: _advance,
             child: ExcludeSemantics(
               child: ExcludeFocus(
                 child: IconButton(
-                  onPressed: focusNode.nextFocus,
+                  onPressed: _advance,
                   icon: const Icon(Icons.arrow_forward),
                 ),
               ),

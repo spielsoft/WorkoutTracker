@@ -205,12 +205,11 @@ void main() {
       find.byKey(const ValueKey('exercise-authoring-name')),
       'Custom Rope Row',
     );
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('exercise-authoring-submit')),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('exercise-authoring-submit')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('exercise-authoring-submit')));
     await tester.pumpAndSettle();

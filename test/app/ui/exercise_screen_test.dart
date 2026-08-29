@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
 
+import '../../support/widget.dart';
+
 void main() {
   testWidgets('exercise forms identify whether they create or edit', (
     tester,
@@ -188,6 +190,132 @@ void main() {
     expect(actions.saved, isNull);
   });
 
+  testWidgets('one Timer heading names a checkbox for every declared field', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        CreateExerciseScreen(
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
+          actions: _CreateActions(),
+        ),
+      ),
+    );
+
+    expect(find.text('Timer'), findsOneWidget);
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Timer').first),
+      isSemantics(label: 'Timer', isHeader: true),
+    );
+    for (final label in const ['Weight', 'Reps', 'RPE']) {
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Timer $label').first),
+        isSemantics(
+          label: 'Timer $label',
+          hasCheckedState: true,
+          isChecked: false,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+    }
+
+    final format = find.byKey(const ValueKey('exercise-authoring-log-format'));
+    await tester.ensureVisible(format);
+    await tester.pumpAndSettle();
+    await tester.enterText(format, '({A},{b}){C c}-{D (kg)}/{E}');
+    await tester.pump();
+
+    expect(find.text('Timer'), findsOneWidget);
+    expect(find.bySemanticsLabel('Timer Weight'), findsNothing);
+    const declared = ['A', 'b', 'C c', 'D (kg)', 'E'];
+    var previous = tester.getTopLeft(find.bySemanticsLabel('Timer A').first);
+    for (final label in declared.skip(1)) {
+      final next = tester.getTopLeft(
+        find.bySemanticsLabel('Timer $label').first,
+      );
+      expect(
+        next.dy > previous.dy ||
+            (next.dy == previous.dy && next.dx > previous.dx),
+        isTrue,
+        reason: 'Timer $label must read after the field declared before it.',
+      );
+      previous = next;
+    }
+  });
+
+  testWidgets('timer selections save in Log Format declaration order', (
+    tester,
+  ) async {
+    final actions = _CreateActions();
+    await tester.pumpWidget(
+      _app(
+        CreateExerciseScreen(
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
+          actions: actions,
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-authoring-name')),
+      'Loaded Carry',
+    );
+    for (final label in const ['RPE', 'Weight']) {
+      final box = find.bySemanticsLabel('Timer $label').first;
+      await tester.ensureVisible(box);
+      await tester.pumpAndSettle();
+      await tester.tap(box);
+      await tester.pumpAndSettle();
+    }
+
+    final save = find.text('Save exercise');
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pump();
+
+    expect(actions.saved?.timerFields, ['Weight', 'RPE']);
+  });
+
+  testWidgets('timer checkboxes stay usable on a narrow large-text phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1400);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+
+    final actions = _CreateActions();
+    await tester.pumpWidget(
+      _app(
+        CreateExerciseScreen(
+          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
+          actions: actions,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final reps = find.bySemanticsLabel('Timer Reps').first;
+    await tester.ensureVisible(reps);
+    await tester.pumpAndSettle();
+    await tester.tap(reps);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Timer Reps').first),
+      isSemantics(label: 'Timer Reps', hasCheckedState: true, isChecked: true),
+    );
+    await expectFlutterAccessibilityGuidelines(tester);
+  });
+
   testWidgets('editing an exercise keeps its canonical Timer Fields', (
     tester,
   ) async {
@@ -226,6 +354,70 @@ void main() {
 
     expect(actions.saved?.notes, 'Keep hips stacked.');
     expect(actions.saved?.timerFields, ['Seconds']);
+  });
+
+  testWidgets('a Log Format change cannot save a timer label it removed', (
+    tester,
+  ) async {
+    final actions = _EditActions();
+    await tester.pumpWidget(
+      _app(
+        EditExerciseScreen(
+          view: EditExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            exercise: CanonicalExercise(
+              sheetRowNumber: 2,
+              exercise: 'Side Plank',
+              logFormat: '{Seconds}s@{RPE}',
+              timerFields: const ['Seconds'],
+            ),
+          ),
+          actions: actions,
+        ),
+      ),
+    );
+
+    expect(find.text('Timer'), findsOneWidget);
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Timer Seconds').first),
+      isSemantics(
+        label: 'Timer Seconds',
+        hasCheckedState: true,
+        isChecked: true,
+      ),
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Timer RPE').first),
+      isSemantics(label: 'Timer RPE', hasCheckedState: true, isChecked: false),
+    );
+
+    final rpe = find.bySemanticsLabel('Timer RPE').first;
+    await tester.ensureVisible(rpe);
+    await tester.pumpAndSettle();
+    await tester.tap(rpe);
+    await tester.pumpAndSettle();
+
+    final format = find.byKey(const ValueKey('exercise-authoring-log-format'));
+    await tester.ensureVisible(format);
+    await tester.pumpAndSettle();
+    await tester.enterText(format, '{Reps}@{RPE}');
+    await tester.pump();
+
+    expect(find.bySemanticsLabel('Timer Seconds'), findsNothing);
+    expect(find.bySemanticsLabel('Timer Reps'), findsOneWidget);
+
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -200));
+    await tester.pumpAndSettle();
+    final save = find.text('Save exercise');
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pump();
+
+    expect(actions.saved?.logFormat, '{Reps}@{RPE}');
+    expect(actions.saved?.timerFields, ['RPE']);
+    expect(actions.saved?.renderedTimerFields, "['RPE']");
   });
 
   testWidgets('invalid formats cannot update an exercise', (tester) async {
@@ -324,14 +516,11 @@ void main() {
         'Front Squat',
       );
       final cancel = find.widgetWithText(OutlinedButton, 'Cancel');
-      await tester.scrollUntilVisible(
-        cancel,
-        120,
-        scrollable: find.byType(Scrollable).first,
-      );
       await tester.drag(find.byType(Scrollable).first, const Offset(0, -100));
       await tester.pumpAndSettle();
-      await tester.tapAt(tester.getTopLeft(cancel) + const Offset(20, 5));
+      await tester.ensureVisible(cancel);
+      await tester.pumpAndSettle();
+      await tester.tap(cancel);
       await tester.pumpAndSettle();
 
       expect(find.text('Discard changes?'), findsOneWidget);
@@ -504,8 +693,19 @@ void main() {
 
 void _expectPending(WidgetTester tester) {
   _expectDisabled(tester, find.bySemanticsLabel('Exercise name'));
+  _expectDisabled(tester, find.bySemanticsLabel('Timer Weight'));
   _expectDisabled(tester, find.widgetWithText(OutlinedButton, 'Cancel'));
   _expectDisabled(tester, find.widgetWithText(FilledButton, 'Save exercise'));
+  expect(
+    tester.getSemantics(find.bySemanticsLabel('Timer Weight').first),
+    isSemantics(
+      label: 'Timer Weight',
+      hasCheckedState: true,
+      isChecked: false,
+      hasEnabledState: true,
+      isEnabled: false,
+    ),
+  );
   expect(find.byType(CircularProgressIndicator), findsOneWidget);
 }
 
