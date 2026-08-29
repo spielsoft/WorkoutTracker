@@ -145,8 +145,9 @@ void main() {
               'Notes',
               'Log Format',
               'Default Values',
+              'Timer Fields',
             ],
-            ['Squat', 'Back squat', '3', '3 min', '', '', '{Formula}', ''],
+            ['Squat', 'Back squat', '3', '3 min', '', '', '{Formula}', '', ''],
           ],
         ),
       );

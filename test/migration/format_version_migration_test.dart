@@ -37,9 +37,12 @@ void main() {
     final report = await migrator.migrate('approved', confirmed: true);
 
     expect(report.wasApplied, isTrue);
-    expect(report.refreshedSheet?.schemaViolations, isEmpty);
     expect(client.applyCount, 1);
-    expect(client.schemaVersion, workbookSchemaVersion);
+    expect(client.schemaVersion, '1.0');
+    expect(
+      report.refreshedSheet?.schemaViolations.single.message,
+      'Workbook schema version "1.0" is unsupported.',
+    );
     expect(client.exerciseRows[1][6], '{Weight}x{Reps}@{RPE}');
     expect(client.exerciseRows[1][7], '100x5@8');
     expect(client.activeRows[2][4], '95x5@8');
@@ -112,6 +115,27 @@ void main() {
     expect(unversionedReport.sourceVersion, isNull);
     expect(unversioned.applyCount, 0);
   });
+
+  test('offers no in-app upgrade for a 1.0 or 1.1 workbook', () async {
+    for (final version in ['1.0', '1.1']) {
+      final client = _Client(schemaVersion: version);
+      final routed = RoutedFieldMigrator(
+        client: client,
+        allowedSpreadsheetIds: const ['approved'],
+      );
+
+      final preview = await routed.dryRun('approved');
+      expect(preview.kind, WbkMigrationKind.format09, reason: version);
+      expect(preview.recognized, isFalse, reason: version);
+      expect(preview.canApply, isFalse, reason: version);
+      expect(preview.changes, isEmpty, reason: version);
+
+      final applied = await routed.migrate('approved', confirmed: true);
+      expect(applied.wasApplied, isFalse, reason: version);
+      expect(client.applyCount, 0, reason: version);
+      expect(client.schemaVersion, version, reason: version);
+    }
+  });
 }
 
 const _formatFormula = SheetsCellFormula(
@@ -144,7 +168,7 @@ class _Client implements SheetsWorkbookClient {
          ],
        ],
        exerciseRows = [
-         exercisesSheetColumns,
+         priorExercisesSheetColumns,
          [
            'Squat',
            'Back squat',

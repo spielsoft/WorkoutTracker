@@ -9,6 +9,7 @@ part 'active/input.dart';
 part 'active/parsed.dart';
 part 'active/parser.dart';
 part 'active/models.dart';
+part 'active/timer_fields.dart';
 part 'active/rows.dart';
 part 'active/plan_contracts.dart';
 part 'active/plan_expectations.dart';

@@ -188,6 +188,46 @@ void main() {
     expect(actions.saved, isNull);
   });
 
+  testWidgets('editing an exercise keeps its canonical Timer Fields', (
+    tester,
+  ) async {
+    final actions = _EditActions();
+    await tester.pumpWidget(
+      _app(
+        EditExerciseScreen(
+          view: EditExerciseView(
+            isBusy: false,
+            sheetLabel: 'Training',
+            exercise: CanonicalExercise(
+              sheetRowNumber: 2,
+              exercise: 'Side Plank',
+              logFormat: '{Seconds}s@{RPE}',
+              timerFields: const ['Seconds'],
+            ),
+          ),
+          actions: actions,
+        ),
+      ),
+    );
+
+    final notes = find.byKey(const ValueKey('exercise-authoring-notes'));
+    await tester.scrollUntilVisible(
+      notes,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.enterText(notes, 'Keep hips stacked.');
+    await tester.pump();
+    final save = find.text('Save exercise');
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pump();
+
+    expect(actions.saved?.notes, 'Keep hips stacked.');
+    expect(actions.saved?.timerFields, ['Seconds']);
+  });
+
   testWidgets('invalid formats cannot update an exercise', (tester) async {
     final actions = _EditActions();
     await tester.pumpWidget(

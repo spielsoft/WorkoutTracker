@@ -115,6 +115,7 @@ List<String> _exerciseRow(List<String> row) {
     padded[7],
     padded[8],
     _renderLegacyValues(format, reps: padded[3], rpe: padded[4]),
+    '',
     ...row.skip(9),
   ];
 }
@@ -181,6 +182,7 @@ const _exerciseColumns = [
   'Notes',
   'Log Format',
   'Default Values',
+  'Timer Fields',
 ];
 
 class SheetCellFormulaFixture {

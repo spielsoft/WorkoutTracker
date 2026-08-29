@@ -199,9 +199,10 @@ List<SchemaViolation> _exerciseColumnViolations(ActiveSheetInput sheet) {
   }
 
   final header = sheet.exercisesRows.first;
+  final required = _exercisesColumnsFor(sheet.schemaVersion);
   final violations = <SchemaViolation>[];
-  for (var i = 0; i < exercisesSheetColumns.length; i += 1) {
-    final expected = exercisesSheetColumns[i];
+  for (var i = 0; i < required.length; i += 1) {
+    final expected = required[i];
     if (_cell(header, i) == expected) {
       continue;
     }
@@ -213,7 +214,7 @@ List<SchemaViolation> _exerciseColumnViolations(ActiveSheetInput sheet) {
       ),
     );
   }
-  for (var i = exercisesSheetColumns.length; i < header.length; i += 1) {
+  for (var i = required.length; i < header.length; i += 1) {
     if (_cell(header, i).trim().isEmpty) {
       continue;
     }
@@ -258,13 +259,54 @@ List<SchemaViolation> _exerciseValueViolations(
         ),
       );
     }
+    if (_timerFieldsMessage(row, columns, format) case final message?) {
+      violations.add(
+        SchemaViolation(
+          sheetRowNumber: index + 1,
+          workout: defaultWorkoutName,
+          message: message,
+        ),
+      );
+    }
   }
   return violations;
 }
 
+String? _timerFieldsMessage(
+  List<String> row,
+  _ExercisesColumnIndexes columns,
+  LogFormatParseResult format,
+) {
+  final column = columns.timerFields;
+  if (column == null) {
+    return null;
+  }
+  final labels = _parseTimerFields(_cell(row, column));
+  if (labels == null) {
+    return 'Exercises Timer Fields is not a list of quoted labels.';
+  }
+  if (labels.toSet().length != labels.length) {
+    return 'Exercises Timer Fields repeats a label.';
+  }
+  if (format is ParsedLogFormat &&
+      labels.any((label) => !format.fieldLabels.contains(label))) {
+    return 'Exercises Timer Fields do not match Log Format.';
+  }
+  return null;
+}
+
 List<SchemaViolation> _versionViolations(ActiveSheetInput sheet) {
   if (!sheet.validateWorkbook) return const [];
-  final version = sheet.schemaVersion;
+  return wbkVersionViolations(sheet.schemaVersion);
+}
+
+/// Schema violations caused solely by a workbook's declared version.
+///
+/// The app reads [currentWbkVersion] and routes [priorWbkVersion] to its
+/// format conversion. Every other declared version is rejected, including the
+/// [convertedWbkVersion] that conversion produces, because that result has no
+/// `Timer Fields` column and only its owner can add one.
+List<SchemaViolation> wbkVersionViolations(String? version) {
   if (version == null) {
     return const [
       SchemaViolation(
@@ -284,6 +326,13 @@ List<SchemaViolation> _versionViolations(ActiveSheetInput sheet) {
     ];
   }
   return const [];
+}
+
+/// The Exercises columns a workbook declaring [schemaVersion] must have.
+List<String> _exercisesColumnsFor(String? schemaVersion) {
+  return schemaVersion == currentWbkVersion
+      ? exercisesSheetColumns
+      : priorExercisesSheetColumns;
 }
 
 List<SchemaViolation> _fixedColumnViolations(List<String> header) {
@@ -487,6 +536,7 @@ class _ExercisesColumnIndexes {
     required this.notes,
     required this.logFormat,
     required this.defaultValues,
+    required this.timerFields,
   });
 
   factory _ExercisesColumnIndexes.fromHeader(List<String> header) {
@@ -504,6 +554,7 @@ class _ExercisesColumnIndexes {
       notes: indexes['Notes']!,
       logFormat: indexes['Log Format']!,
       defaultValues: indexes['Default Values']!,
+      timerFields: indexes[timerFieldsColumn],
     );
   }
 
@@ -515,4 +566,7 @@ class _ExercisesColumnIndexes {
   final int notes;
   final int logFormat;
   final int defaultValues;
+
+  /// Null for the pre-1.1 Exercises contract, which has no timer column.
+  final int? timerFields;
 }

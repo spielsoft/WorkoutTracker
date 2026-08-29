@@ -32,9 +32,24 @@ temporary owner migration and its colocated tests are deleted together before
 MVP release.
 
 Workbook-version coverage verifies that new sheets write
-`workouttracker.schema_version=1.0`, declared `0.9` sheets retain their routed
-syntax until conversion, missing metadata selects only the original legacy
-converter, and a declared version is never guessed from headers.
+`workouttracker.schema_version=1.1`, declared `0.9` sheets retain their routed
+syntax until conversion, declared `1.0` sheets are rejected as unsupported and
+offered no in-app upgrade, missing metadata selects only the original legacy
+converter, and a declared version is never guessed from headers. The `0.9`
+conversion is covered as producing the `1.0` it always produced, whose result
+is then rejected rather than falsely claiming `1.1` compatibility.
+
+Schema 1.1 coverage verifies the nine-column Exercises header, blank
+`Timer Fields` reading as empty, populated cells round-tripping exact labels in
+Log Format declaration order, and malformed, repeated, or undeclared labels
+blocking every write. Exercise create and update plans are covered as writing
+`Timer Fields` while leaving active rows, Targets, and history untouched.
+Template coverage verifies that a missing catalog `timerFields` property parses
+as empty, that non-list and non-string values are rejected, that all maintained
+catalog records declare the property explicitly, and that every declared label
+exists in that record's parsed Log Format. The catalog only seeds new
+workbooks; upgrading an existing workbook to schema 1.1 is owner-performed work
+outside this repository's automation, so no test performs it.
 
 Fakes may prove what WorkoutTracker requests or accepts. They do not prove the
 behavior of Google Sign-In, Drive, Sheets, Firebase, OAuth, or Picker.
@@ -101,6 +116,11 @@ the placed DB Step-Up to its five-field format, and logs
 the Exercises definition, formula ownership, active Targets, the new set, and
 unchanged pre-conversion history. The teardown resets the fixture to its
 ordinary deterministic state even when an assertion fails.
+
+That live flow predates schema 1.1 and cannot pass as written: the `0.9`
+conversion still produces `1.0`, which the app now rejects, so nothing after
+the conversion can log a set. Rebuild the flow around a schema 1.1 fixture
+before running it again. Nothing in the timed-exercise plan needs it.
 
 Without the environment flag, it must skip before authentication. A live run
 must reset the fixture after itself; reset failures fail the test distinctly.

@@ -111,6 +111,13 @@ class _ExerciseWritePlanner {
           ? format.renderValues(exercise.defaultValues)
           : '',
     );
+    if (columns.timerFields case final timerColumn?) {
+      _setRowValue(
+        row,
+        timerColumn,
+        _renderTimerFields(format, exercise.timerFields),
+      );
+    }
     return row;
   }
 

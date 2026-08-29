@@ -1,10 +1,114 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:workout_tracker/contract.dart';
 import 'package:workout_tracker/sheets.dart';
-import 'package:workout_tracker/format.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final numeric = RegExp(r'^\d+(?:\.\d+)?$');
+
+  test('creates schema 1.1 workbooks with nine Exercises columns', () async {
+    expect(workbookSchemaVersion, '1.1');
+
+    final workbook = await loadWbkTmpl();
+
+    expect(workbook.exercisesSheet.rows.first, exercisesSheetColumns);
+    expect(exercisesSheetColumns.last, 'Timer Fields');
+    expect(
+      workbook.exercisesSheet.rows,
+      everyElement(hasLength(exercisesSheetColumns.length)),
+    );
+    expect(workbook.activeSheet.rows.single, activeSheetFixedColumns);
+  });
+
+  test('seeds Timer Fields for the two duration-based exercises', () async {
+    final workbook = await loadWbkTmpl();
+    final timerColumn = exercisesSheetColumns.indexOf('Timer Fields');
+    final timedRows = {
+      for (final row in workbook.exercisesSheet.rows.skip(1))
+        if (row[timerColumn].isNotEmpty) row.first: row[timerColumn],
+    };
+
+    expect(timedRows, {
+      'Copenhagen Side Plank': "['Seconds']",
+      'Side Plank': "['Seconds']",
+    });
+  });
+
+  test('every catalog record declares its Timer Fields explicitly', () async {
+    final raw = jsonDecode(await rootBundle.loadString(defaultExerciseAsset));
+    final records = (raw as List<Object?>).cast<Map<String, Object?>>();
+    expect(records, hasLength(42));
+    for (final record in records) {
+      expect(
+        record.containsKey('timerFields'),
+        isTrue,
+        reason: '${record['exercise']} must declare timerFields',
+      );
+    }
+
+    final defaults = await loadExerciseDefaults();
+    final timed = {
+      for (final exercise in defaults)
+        if (exercise.timerFields.isNotEmpty)
+          exercise.exercise: exercise.timerFields,
+    };
+    expect(timed, {
+      'Side Plank': ['Seconds'],
+      'Copenhagen Side Plank': ['Seconds'],
+    });
+    expect(
+      defaults.where((exercise) => exercise.timerFields.isEmpty),
+      hasLength(40),
+    );
+    for (final exercise in defaults) {
+      final format =
+          parseLogFormat(exercise.resolvedLogFormat) as ParsedLogFormat;
+      expect(
+        format.fieldLabels,
+        containsAll(exercise.timerFields),
+        reason: '${exercise.exercise} times an undeclared field',
+      );
+    }
+  });
+
+  test(
+    'catalog timerFields defaults to empty and rejects bad values',
+    () async {
+      Future<List<ExerciseDef>> load(String timerFields) {
+        return loadExerciseDefaults(
+          bundle: _JsonBundle('''
+[
+  {
+    "exercise": "Side Plank",
+    "defaultSets": "3",
+    "defaultRest": "45s",
+    "defaultTempo": "hold",
+    "logFormat": "{Seconds}s@{RPE}",
+    "defaultValues": {"Seconds": "30", "RPE": "8"}$timerFields
+  }
+]
+'''),
+          assetPath: 'memory.json',
+        );
+      }
+
+      expect((await load('')).single.timerFields, isEmpty);
+      expect((await load(', "timerFields": ["Seconds"]')).single.timerFields, [
+        'Seconds',
+      ]);
+      await expectLater(
+        load(', "timerFields": "Seconds"'),
+        throwsA(isA<FormatException>()),
+      );
+      await expectLater(
+        load(', "timerFields": [7]'),
+        throwsA(isA<FormatException>()),
+      );
+    },
+  );
 
   test(
     'seeds app-created workbooks from editable default exercises JSON',
@@ -96,7 +200,7 @@ void main() {
       final workbook = await loadWbkTmpl();
       final exerciseRows = workbook.exercisesSheet.rows.skip(1).toList();
       expect(exerciseRows, hasLength(defaults.length));
-      expect(exerciseRows, everyElement(hasLength(8)));
+      expect(exerciseRows, everyElement(hasLength(9)));
       final sortedDefaultNames =
           [for (final exercise in defaults) exercise.exercise]..sort(
             (left, right) => left.toLowerCase().compareTo(right.toLowerCase()),
@@ -146,4 +250,15 @@ void main() {
       'Pain': '0',
     });
   });
+}
+
+class _JsonBundle extends CachingAssetBundle {
+  _JsonBundle(this.json);
+
+  final String json;
+
+  @override
+  Future<ByteData> load(String key) async {
+    return ByteData.sublistView(Uint8List.fromList(utf8.encode(json)));
+  }
 }

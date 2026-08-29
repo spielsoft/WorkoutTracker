@@ -91,6 +91,7 @@ ExerciseDef _exerciseDefaultFromJson(Object? value) {
     notes: _optionalString(value, 'notes'),
     logFormat: _optionalString(value, 'logFormat'),
     defaultValues: _stringMap(value, 'defaultValues'),
+    timerFields: _optionalStringList(value, 'timerFields'),
   );
 }
 
@@ -111,6 +112,24 @@ String _optionalString(Map<String, Object?> json, String key) {
     return value;
   }
   throw FormatException('Exercise default "$key" must be a string.');
+}
+
+List<String> _optionalStringList(Map<String, Object?> json, String key) {
+  final value = json[key];
+  if (value == null) {
+    return const [];
+  }
+  if (value is! List<Object?>) {
+    throw FormatException('Exercise default "$key" must be a list.');
+  }
+  final labels = <String>[];
+  for (final entry in value) {
+    if (entry is! String) {
+      throw FormatException('Exercise default "$key" must hold strings.');
+    }
+    labels.add(entry);
+  }
+  return labels;
 }
 
 Map<String, String> _stringMap(Map<String, Object?> json, String key) {
@@ -141,5 +160,6 @@ List<String> _exerciseRow(ExerciseDef exercise) {
     exercise.notes,
     exercise.resolvedLogFormat,
     exercise.renderedDefaultValues,
+    exercise.renderedTimerFields,
   ];
 }

@@ -134,7 +134,9 @@ class ExerciseDef {
     this.notes = '',
     this.logFormat = defaultExerciseLogFormat,
     Map<String, String> defaultValues = const {},
-  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues);
+    Iterable<String> timerFields = const [],
+  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues),
+       timerFields = List<String>.unmodifiable(timerFields);
 
   final String exercise;
   final String description;
@@ -145,6 +147,9 @@ class ExerciseDef {
   final String logFormat;
   final Map<String, String> defaultValues;
 
+  /// Log Format labels this exercise should time.
+  final List<String> timerFields;
+
   String get resolvedLogFormat {
     return logFormat.trim().isEmpty ? defaultExerciseLogFormat : logFormat;
   }
@@ -154,6 +159,10 @@ class ExerciseDef {
       ParsedLogFormat format => format.renderValues(defaultValues),
       InvalidLogFormat() => '',
     };
+  }
+
+  String get renderedTimerFields {
+    return _renderTimerFields(parseLogFormat(resolvedLogFormat), timerFields);
   }
 
   @override
@@ -167,7 +176,8 @@ class ExerciseDef {
             defaultTempo == other.defaultTempo &&
             notes == other.notes &&
             logFormat == other.logFormat &&
-            _stringMapEquals(defaultValues, other.defaultValues);
+            _stringMapEquals(defaultValues, other.defaultValues) &&
+            _listEquals(timerFields, other.timerFields);
   }
 
   @override
@@ -181,6 +191,7 @@ class ExerciseDef {
       notes,
       logFormat,
       Object.hashAll(defaultValues.entries),
+      Object.hashAll(timerFields),
     );
   }
 
@@ -194,7 +205,8 @@ class ExerciseDef {
         'defaultTempo: $defaultTempo, '
         'notes: $notes, '
         'logFormat: $logFormat, '
-        'defaultValues: $defaultValues'
+        'defaultValues: $defaultValues, '
+        'timerFields: $timerFields'
         ')';
   }
 }

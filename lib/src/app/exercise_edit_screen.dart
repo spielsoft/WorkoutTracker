@@ -70,6 +70,7 @@ class EditExerciseScreen extends StatelessWidget {
               defaultTempo: pending.defaultTempo,
               notes: pending.notes,
               logFormat: pending.logFormat,
+              timerFields: pending.timerFields,
             )
           : CanonicalExerciseDraft.fromExercise(view.exercise),
       isBusy: view.isBusy,

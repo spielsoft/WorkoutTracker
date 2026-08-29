@@ -98,6 +98,119 @@ void main() {
     );
   });
 
+  test('canonical create and update write Timer Fields only', () {
+    final activeRows = [
+      historyHeaderRow(['Week 1']),
+      setLabelRow(['S1']),
+      activeRow(
+        'Side Plank',
+        targets: '30s@8',
+        logFormat: '{Seconds}s@{RPE}',
+        history: const ['25s@8'],
+      ),
+    ];
+    final exercisesRows = [
+      exercisesSheetColumns,
+      _exerciseRow(
+        'Side Plank',
+        format: '{Seconds}s@{RPE}',
+        values: const {'Seconds': '30', 'RPE': '8'},
+      ),
+    ];
+    final sheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: activeRows,
+        exercisesRows: exercisesRows,
+        validateWorkbook: true,
+      ),
+    );
+    final timed = ExerciseDef(
+      exercise: 'Side Plank',
+      defaultSets: '3',
+      defaultRest: '45s',
+      defaultTempo: 'hold',
+      logFormat: '{Seconds}s@{RPE}',
+      defaultValues: const {'Seconds': '30', 'RPE': '8'},
+      timerFields: const ['RPE', 'Seconds'],
+    );
+
+    final created = sheet.planCanonicalAppend(timed).previewRowsAfterApplying([
+      exercisesSheetColumns,
+    ]);
+    expect(created[1], hasLength(exercisesSheetColumns.length));
+    expect(created[1].last, "['Seconds', 'RPE']");
+
+    final update = sheet.planCanonicalUpdate(
+      selectedExercise: sheet.canonicalExercises.single,
+      exercise: timed,
+    );
+    final updatedRows = update.previewRowsAfterApplying(exercisesRows);
+    final reread = parseActiveSheet(
+      ActiveSheetInput(
+        rows: activeRows,
+        exercisesRows: updatedRows,
+        validateWorkbook: true,
+      ),
+    );
+
+    expect(reread.schemaViolations, isEmpty);
+    expect(reread.canonicalExercises.single.timerFields, ['Seconds', 'RPE']);
+    expect(update.formulaUpdates, isEmpty);
+    expect(
+      sheet.inspectFormatUpdate(
+        selectedExercise: sheet.canonicalExercises.single,
+        exercise: timed,
+      ),
+      isNull,
+    );
+    expect(reread.slots.single.targetValues, {'Seconds': '30', 'RPE': '8'});
+    expect(
+      reread
+          .buildLoggingContext(
+            primaryRow: 3,
+            selectedRow: 3,
+            blockLabel: 'Week 1',
+          )
+          .selectedHistory
+          .entries
+          .single
+          .rawValue,
+      '25s@8',
+    );
+  });
+
+  test('drops Timer Fields labels the Log Format no longer declares', () {
+    final sheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [historyHeaderRow([]), setLabelRow([])],
+        exercisesRows: const [exercisesSheetColumns],
+        validateWorkbook: true,
+      ),
+    );
+
+    final rows = sheet
+        .planCanonicalAppend(
+          ExerciseDef(
+            exercise: 'Side Plank',
+            logFormat: '{Reps}@{RPE}',
+            timerFields: const ['Seconds', 'RPE'],
+          ),
+        )
+        .previewRowsAfterApplying([exercisesSheetColumns]);
+
+    expect(rows[1].last, "['RPE']");
+    expect(
+      parseActiveSheet(
+        ActiveSheetInput(
+          rows: [historyHeaderRow([]), setLabelRow([])],
+          exercisesRows: rows,
+          validateWorkbook: true,
+        ),
+      ).schemaViolations,
+      isEmpty,
+    );
+  });
+
   test('canonical exercise defaults round-trip through append planning', () {
     final sheet = parseActiveSheet(
       ActiveSheetInput(
@@ -136,6 +249,7 @@ List<String> _exerciseRow(
   String name, {
   String format = defaultExerciseLogFormat,
   Map<String, String> values = const {},
+  String timerFields = '',
 }) {
   final parsed = parseLogFormat(format) as ParsedLogFormat;
   return [
@@ -147,5 +261,6 @@ List<String> _exerciseRow(
     '',
     format,
     parsed.renderValues(values),
+    timerFields,
   ];
 }

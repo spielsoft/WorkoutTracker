@@ -9,7 +9,10 @@ void main() {
     final sheet = _parse(fixture);
 
     expect(fixture.activeSheet.rows.first.take(10), activeSheetFixedColumns);
-    expect(fixture.exercisesSheet.rows.first.take(8), exercisesSheetColumns);
+    expect(
+      fixture.exercisesSheet.rows.first.take(exercisesSheetColumns.length),
+      exercisesSheetColumns,
+    );
     expect(sheet.schemaViolations, isEmpty);
     expect(sheet.selectableWorkouts, containsAll(['Legs', 'Upper', 'Default']));
     expect(sheet.canonicalExercises, isNotEmpty);

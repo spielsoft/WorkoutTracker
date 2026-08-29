@@ -52,8 +52,10 @@ class CanonicalExercise {
     this.logFormat = defaultExerciseLogFormat,
     LogFormatParseResult? format,
     Map<String, String> defaultValues = const {},
+    Iterable<String> timerFields = const [],
   }) : format = format ?? parseLogFormat(logFormat),
-       defaultValues = Map<String, String>.unmodifiable(defaultValues);
+       defaultValues = Map<String, String>.unmodifiable(defaultValues),
+       timerFields = List<String>.unmodifiable(timerFields);
 
   final int sheetRowNumber;
   final String exercise;
@@ -65,6 +67,9 @@ class CanonicalExercise {
   final String logFormat;
   final LogFormatParseResult format;
   final Map<String, String> defaultValues;
+
+  /// Log Format labels this exercise times, in declaration order.
+  final List<String> timerFields;
 
   String get displayName {
     final trimmed = exercise.trim();
@@ -190,6 +195,11 @@ class _WorkoutReadModelBuilder {
               _cell(sheet._exercisesRows[rowIndex], columns.logFormat),
             ),
             defaultValues: _defaultValues(
+              sheet._exercisesRows[rowIndex],
+              columns,
+              sheet._parseFormat,
+            ),
+            timerFields: _timerFields(
               sheet._exercisesRows[rowIndex],
               columns,
               sheet._parseFormat,
@@ -360,4 +370,19 @@ Map<String, String> _defaultValues(
   final parsed = parseFormat(_cell(row, columns.logFormat));
   if (parsed is! ParsedLogFormat) return const {};
   return parsed.parseValues(_cell(row, columns.defaultValues)) ?? const {};
+}
+
+List<String> _timerFields(
+  List<String> row,
+  _ExercisesColumnIndexes columns,
+  LogFormatParseResult Function(String) parseFormat,
+) {
+  final column = columns.timerFields;
+  if (column == null) return const [];
+  final labels = _parseTimerFields(_cell(row, column));
+  if (labels == null) return const [];
+  return _declaredTimerFields(
+    parseFormat(_cell(row, columns.logFormat)),
+    labels,
+  );
 }

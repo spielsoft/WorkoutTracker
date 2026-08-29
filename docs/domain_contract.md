@@ -7,20 +7,29 @@ it useful to a person working directly in Google Sheets.
 
 WorkoutTracker stores a document-visible Google Sheets developer-metadata
 entry named `workouttracker.schema_version`. The current workbook version is
-`1.0`. Declared `0.9` workbooks retain their previous syntax until deliberately
-converted. An absent key identifies the original legacy workbook format.
+`1.1`, which added the required Exercises `Timer Fields` column. Declared `0.9`
+workbooks retain their previous syntax until deliberately converted. An absent
+key identifies the original legacy workbook format.
+
+Version `1.0` is no longer supported. There is no in-app upgrade to `1.1`:
+adding the `Timer Fields` column and updating the version token is
+owner-performed work, and a declared `1.0` workbook is rejected until the owner
+completes it.
 
 The version selects a migration path but never replaces structural validation.
 Headers, values, formulas, and writable columns must still satisfy the declared
-version's contract before ordinary writes. New workbooks and successful legacy
-conversions receive the current version token.
+version's contract before ordinary writes. Only version `1.1` requires
+`Timer Fields`; `0.9` keeps the eight-column Exercises contract. New workbooks
+receive the current version token.
 
 A declared `0.9` workbook receives a preview before its bracket-token formats
 are converted to Python-style literal formats. Confirmation rereads the
 workbook, proves Default Values, Targets, and parseable history remain
 equivalent, applies the format and metadata changes in one batch, and preserves
-all history cells byte-for-byte. Missing metadata selects only the original
-legacy conversion; versions are never inferred from headers.
+all history cells byte-for-byte. That conversion produces the version `1.0` it
+has always produced, so its result is then rejected as unsupported; it must
+never stamp a version whose columns it did not create. Missing metadata selects
+only the original legacy conversion; versions are never inferred from headers.
 
 ## Required Tabs and Headers
 
@@ -34,7 +43,7 @@ Exercise | Sets | Rest | Tempo | Targets | Notes | Log Format | Workout | is_bac
 The workbook must also contain an `Exercises` tab with exactly these columns:
 
 ```text
-Exercise | Description | Default Sets | Default Rest | Default Tempo | Notes | Log Format | Default Values
+Exercise | Description | Default Sets | Default Rest | Default Tempo | Notes | Log Format | Default Values | Timer Fields
 ```
 
 A missing or empty required tab, missing or reordered required column, or
@@ -79,10 +88,23 @@ The app may heal missing or incorrect formulas in those two columns after
 validation. It must not heal row-local targets from canonical defaults or
 introduce app-only identifiers.
 
+`Exercises.Timer Fields` is canonical timer configuration owned by that row
+alone. A blank cell means no field is timed. A populated cell is a visible list
+of exact Log Format labels such as `['Seconds']`, written and read in Log
+Format declaration order so direct Sheet edits stay stable. Malformed syntax, a
+repeated label, or a label the same row's Log Format does not declare is
+blocking schema damage. Timer configuration is never copied to the active
+sheet, has no placement-level override, and never rewrites targets or history.
+
 Creating a canonical exercise appends one `Exercises` row. Adding that exercise
 to a workout creates a placement row: direct formulas for identity and log
 format, copied defaults for row-local targets, the selected workout, backup
 state, and empty history cells.
+
+The bundled exercise catalog seeds a new workbook once. Its optional
+`timerFields` array, absent meaning empty, sets the `Timer Fields` a new
+workbook starts with. It is never synchronized into an existing workbook, so
+changing the catalog cannot alter a workbook a person is already using.
 
 A primary placement is added from the workout exercise list. A backup placement
 must begin from its parent primary so insertion preserves adjacency and

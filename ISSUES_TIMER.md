@@ -15,7 +15,7 @@ plan completes. It is deliberately not a slice here.
 
 ## Progress
 
-- [ ] Slice 1: Persist canonical Timer Fields in schema 1.1
+- [x] Slice 1: Persist canonical Timer Fields in schema 1.1
 - [ ] Slice 2: Author Timer Fields on canonical exercises
 - [ ] Slice 3: Share an exact labeled countdown with full vibration
 - [ ] Slice 4: Remove unused next-field arrow buttons
@@ -52,32 +52,32 @@ this plan completes.
 
 ### Acceptance criteria
 
-- [ ] A public workbook-contract test first demonstrates a schema 1.1
+- [x] A public workbook-contract test first demonstrates a schema 1.1
       Exercises row with a timed field available in the canonical read model.
-- [ ] Schema 1.1 requires `Timer Fields` after `Default Values`; the active
+- [x] Schema 1.1 requires `Timer Fields` after `Default Values`; the active
       workout's fixed columns remain unchanged.
-- [ ] Blank Timer Fields parses as an empty immutable collection.
-- [ ] A populated Timer Fields cell round-trips exact labels in Log Format
+- [x] Blank Timer Fields parses as an empty immutable collection.
+- [x] A populated Timer Fields cell round-trips exact labels in Log Format
       declaration order.
-- [ ] Malformed syntax, duplicate labels, or a label absent from that row's Log
+- [x] Malformed syntax, duplicate labels, or a label absent from that row's Log
       Format produces blocking schema damage.
-- [ ] Exercise create and update plans write Timer Fields while leaving active
+- [x] Exercise create and update plans write Timer Fields while leaving active
       rows, Targets, and all history cells unchanged.
-- [ ] Newly created workbooks write schema metadata `1.1` and nine Exercises
+- [x] Newly created workbooks write schema metadata `1.1` and nine Exercises
       columns.
-- [ ] Catalog parsing treats a missing `timerFields` property as empty and
+- [x] Catalog parsing treats a missing `timerFields` property as empty and
       rejects non-list or non-string values.
-- [ ] All 42 maintained catalog exercises declare `timerFields` explicitly;
+- [x] All 42 maintained catalog exercises declare `timerFields` explicitly;
       Side Plank and Copenhagen Side Plank contain `Seconds`, and the other 40
       arrays are empty.
-- [ ] Loading catalog defaults proves every Timer Fields label exists in that
+- [x] Loading catalog defaults proves every Timer Fields label exists in that
       definition's parsed Log Format.
-- [ ] A declared version 1.0 workbook is rejected and no in-app 1.0-to-1.1
+- [x] A declared version 1.0 workbook is rejected and no in-app 1.0-to-1.1
       mutation is offered or applied.
-- [ ] The workbook domain and testing guidance describe schema 1.1, Timer
+- [x] The workbook domain and testing guidance describe schema 1.1, Timer
       Fields ownership, JSON seed-only behavior, and owner-performed upgrade
       outside this plan.
-- [ ] Focused contract, planning, template, and version tests pass.
+- [x] Focused contract, planning, template, and version tests pass.
 
 ### Blocked by
 

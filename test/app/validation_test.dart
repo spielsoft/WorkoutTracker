@@ -1525,7 +1525,7 @@ List<List<String>> _fieldExerciseRows(List<List<String>> rows) {
   return [
     rows.first,
     for (final source in rows.skip(1))
-      if (source.length <= exercisesSheetColumns.length)
+      if (source.length <= priorExercisesSheetColumns.length)
         source
       else
         [
@@ -1541,6 +1541,7 @@ List<List<String>> _fieldExerciseRows(List<List<String>> rows) {
             'Reps': source[3],
             'RPE': source[4],
           }),
+          '',
         ],
   ];
 }

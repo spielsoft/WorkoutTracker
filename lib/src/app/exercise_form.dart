@@ -137,7 +137,9 @@ class CanonicalExerciseDraft {
     required this.defaultTempo,
     required this.notes,
     required this.logFormat,
-  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues);
+    Iterable<String> timerFields = const [],
+  }) : defaultValues = Map<String, String>.unmodifiable(defaultValues),
+       timerFields = List<String>.unmodifiable(timerFields);
 
   static final defaults = CanonicalExerciseDraft(
     exerciseName: '',
@@ -160,6 +162,7 @@ class CanonicalExerciseDraft {
       defaultTempo: exercise.defaultTempo,
       notes: exercise.notes,
       logFormat: exercise.logFormat,
+      timerFields: exercise.timerFields,
     );
   }
 
@@ -171,6 +174,9 @@ class CanonicalExerciseDraft {
   final String defaultTempo;
   final String notes;
   final String logFormat;
+
+  /// Canonical timer configuration this form preserves but does not yet edit.
+  final List<String> timerFields;
 
   CanonicalExerciseDraft normalized() {
     final trimmedLogFormat = logFormat.trim();
@@ -188,6 +194,7 @@ class CanonicalExerciseDraft {
       logFormat: trimmedLogFormat.isEmpty
           ? defaultExerciseLogFormat
           : trimmedLogFormat,
+      timerFields: timerFields,
     );
   }
 
@@ -202,6 +209,7 @@ class CanonicalExerciseDraft {
       defaultTempo: draft.defaultTempo,
       notes: draft.notes,
       logFormat: draft.logFormat,
+      timerFields: draft.timerFields,
     );
   }
 
@@ -216,7 +224,8 @@ class CanonicalExerciseDraft {
             defaultRest == other.defaultRest &&
             defaultTempo == other.defaultTempo &&
             notes == other.notes &&
-            logFormat == other.logFormat;
+            logFormat == other.logFormat &&
+            _sameStringList(timerFields, other.timerFields);
   }
 
   @override
@@ -230,6 +239,7 @@ class CanonicalExerciseDraft {
       defaultTempo,
       notes,
       logFormat,
+      Object.hashAll(timerFields),
     );
   }
 }
@@ -334,6 +344,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       defaultTempo: _tempoCtrl.text,
       notes: _notesCtrl.text,
       logFormat: _formatCtrl.text,
+      timerFields: widget.initialDraft.timerFields,
     );
   }
 
@@ -618,6 +629,18 @@ bool _sameStringMap(Map<String, String> left, Map<String, String> right) {
     return false;
   }
   return left.entries.every((entry) => right[entry.key] == entry.value);
+}
+
+bool _sameStringList(List<String> left, List<String> right) {
+  if (left.length != right.length) {
+    return false;
+  }
+  for (var index = 0; index < left.length; index += 1) {
+    if (left[index] != right[index]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 class _AuthoringField extends StatefulWidget {

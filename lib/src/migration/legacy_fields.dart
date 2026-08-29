@@ -252,7 +252,12 @@ _LegacyPlan _plan(String spreadsheetId, _LegacyWorkbook workbook) {
     );
   }
 
-  _writeRow(operations, workbook.exercises.sheet, 1, exercisesSheetColumns);
+  _writeRow(
+    operations,
+    workbook.exercises.sheet,
+    1,
+    priorExercisesSheetColumns,
+  );
   var exerciseCount = 0;
   for (var index = 1; index < exerciseRows.length; index += 1) {
     final row = _padded(exerciseRows[index], 9);

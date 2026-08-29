@@ -258,7 +258,7 @@ List<List<String>> _activeRows() {
 }
 
 // Exercise | Description | Default Sets | Default Rest | Default Tempo |
-// Notes | Log Format | Default Values
+// Notes | Log Format | Default Values | Timer Fields
 List<List<String>> _exercisesRows() {
   return [
     exercisesSheetColumns,
@@ -271,6 +271,7 @@ List<List<String>> _exercisesRows() {
       '',
       _bench,
       'x5@8',
+      '',
     ],
     [
       'Dumbbell Bench Press',
@@ -281,6 +282,7 @@ List<List<String>> _exercisesRows() {
       '',
       _bench,
       'x8@8',
+      '',
     ],
     [
       'Overhead Press',
@@ -291,6 +293,7 @@ List<List<String>> _exercisesRows() {
       '',
       _bench,
       'x5@8',
+      '',
     ],
     [
       'Cable Fly',
@@ -301,6 +304,7 @@ List<List<String>> _exercisesRows() {
       '',
       _bench,
       'x12@8',
+      '',
     ],
     [
       'Weighted Pull Up',
@@ -311,9 +315,10 @@ List<List<String>> _exercisesRows() {
       '',
       _bench,
       'x6@8',
+      '',
     ],
-    ['Barbell Row', 'Pendlay style.', '3', '2 min', '', '', _bench, 'x8@8'],
-    ['Back Squat', 'High bar.', '5', '4 min', '3-1-1', '', _bench, 'x5@8'],
+    ['Barbell Row', 'Pendlay style.', '3', '2 min', '', '', _bench, 'x8@8', ''],
+    ['Back Squat', 'High bar.', '5', '4 min', '3-1-1', '', _bench, 'x5@8', ''],
     [
       'DB Step-Up',
       'Dumbbells at sides.',
@@ -323,9 +328,20 @@ List<List<String>> _exercisesRows() {
       '',
       _stepUp,
       '(12, )x8@8,0',
+      '',
     ],
-    ['Romanian Deadlift', 'Hip hinge.', '3', '2 min', '', '', _bench, 'x10@8'],
-    ['Front Plank', 'Forearm plank.', '3', '60 s', '', '', _plank, '@7'],
+    [
+      'Romanian Deadlift',
+      'Hip hinge.',
+      '3',
+      '2 min',
+      '',
+      '',
+      _bench,
+      'x10@8',
+      '',
+    ],
+    ['Front Plank', 'Forearm plank.', '3', '60 s', '', '', _plank, '@7', ''],
   ];
 }
 

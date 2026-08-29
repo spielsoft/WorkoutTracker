@@ -183,9 +183,15 @@ void main() {
   });
 
   test('routes declared 0.9 formats without treating them as 1.0', () async {
-    final old = _versionedSnapshot('{Reps}[@]{RPE}', '8@7');
     final parsedOld = await SheetsReadAdapter(
-      client: _FakeSheetsWorkbookClient(old, schemaVersion: '0.9'),
+      client: _FakeSheetsWorkbookClient(
+        _versionedSnapshot(
+          '{Reps}[@]{RPE}',
+          '8@7',
+          exerciseColumns: priorExercisesSheetColumns,
+        ),
+        schemaVersion: '0.9',
+      ),
     ).readParsedActiveSheet('spreadsheet-id');
 
     expect(parsedOld.schemaViolations, isEmpty);
@@ -199,7 +205,9 @@ void main() {
     });
 
     final current = await SheetsReadAdapter(
-      client: _FakeSheetsWorkbookClient(old),
+      client: _FakeSheetsWorkbookClient(
+        _versionedSnapshot('{Reps}[@]{RPE}', '8@7'),
+      ),
     ).readParsedActiveSheet('spreadsheet-id');
     expect(
       current.schemaViolations.map((issue) => issue.message),
@@ -222,7 +230,11 @@ void main() {
   });
 }
 
-SheetsWorkbookSnapshot _versionedSnapshot(String format, String values) {
+SheetsWorkbookSnapshot _versionedSnapshot(
+  String format,
+  String values, {
+  List<String> exerciseColumns = exercisesSheetColumns,
+}) {
   return SheetsWorkbookSnapshot(
     sheets: [
       SheetsGridSnapshot(
@@ -236,7 +248,7 @@ SheetsWorkbookSnapshot _versionedSnapshot(String format, String values) {
       SheetsGridSnapshot(
         sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
         rows: [
-          exercisesSheetColumns,
+          exerciseColumns,
           ['Lift', '', '1', '', '', '', format, values],
         ],
       ),

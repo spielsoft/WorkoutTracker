@@ -60,17 +60,25 @@ class VersionFormatMigrator implements FieldMigrator {
     final input = await SheetsReadAdapter(
       client: client,
     ).readActiveSheetInput(spreadsheetId);
-    if (input.schemaVersion != currentWbkVersion) {
+    if (input.schemaVersion != convertedWbkVersion) {
       throw StateError(
         'Converted workbook did not receive schema version '
-        '$currentWbkVersion.',
+        '$convertedWbkVersion.',
       );
     }
+    // This conversion only rewrites 0.9 log formats, so the workbook it
+    // produces is rejected for its version until the owner adds the schema
+    // columns that arrived later. Any other violation means the conversion
+    // itself damaged the workbook.
     final parsed = parseActiveSheet(input);
-    if (parsed.schemaViolations.isNotEmpty) {
+    final rejectedVersion = wbkVersionViolations(input.schemaVersion);
+    final damage = [
+      for (final violation in parsed.schemaViolations)
+        if (!rejectedVersion.contains(violation)) violation.message,
+    ];
+    if (damage.isNotEmpty) {
       throw StateError(
-        'Converted workbook failed validation: '
-        '${parsed.schemaViolations.map((item) => item.message).join(' ')}',
+        'Converted workbook failed validation: ${damage.join(' ')}',
       );
     }
     return plan.report.applied(parsed);
@@ -183,32 +191,23 @@ class _FormatWbk implements WbkStaleExpectation {
 
 _FormatPlan _plan(String spreadsheetId, _FormatWbk wb) {
   final version = wb.schemaMetadata?.value;
-  if (version == currentWbkVersion) {
-    return _FormatPlan(
-      report: FormatMigrationReport(
-        spreadsheetId: spreadsheetId,
-        changes: const [],
-        blockers: const [],
-        recognized: false,
-        sourceVersion: version,
-        historyCellCount: 0,
-        alreadyCurrent: true,
-      ),
-      operations: const [],
-    );
-  }
   if (version != priorWbkVersion) {
+    // Workbooks at or past this conversion's target need nothing from it, and
+    // it never offers to move one of them to another schema version.
+    final converted =
+        version == convertedWbkVersion || version == currentWbkVersion;
     return _FormatPlan(
       report: FormatMigrationReport(
         spreadsheetId: spreadsheetId,
         changes: const [],
         blockers: [
-          if (version != null)
+          if (version != null && !converted)
             'Workbook declares unsupported schema version "$version".',
         ],
         recognized: false,
         sourceVersion: version,
         historyCellCount: 0,
+        alreadyCurrent: converted,
       ),
       operations: const [],
     );
@@ -275,12 +274,12 @@ _FormatPlan _plan(String spreadsheetId, _FormatWbk wb) {
     }
   }
 
-  changes.add('Set workbook schema version to $currentWbkVersion.');
+  changes.add('Set workbook schema version to $convertedWbkVersion.');
   operations.add(
     SheetsMetadataWrite(
       sheet: wb.active.sheet,
       key: workbookSchemaKey,
-      value: currentWbkVersion,
+      value: convertedWbkVersion,
       metadataId: wb.schemaMetadata?.id,
     ),
   );
@@ -336,7 +335,10 @@ _Conversion? _convert(String text, String location, List<String> blockers) {
   final newFormat = parseLogFormat(after);
   if (newFormat is! ParsedLogFormat ||
       !_sameList(oldFormat.fieldLabels, newFormat.fieldLabels)) {
-    blockers.add('$location cannot be converted to a valid 1.0 Log Format.');
+    blockers.add(
+      '$location cannot be converted to a valid $convertedWbkVersion Log '
+      'Format.',
+    );
     return null;
   }
   return _Conversion(
