@@ -23,7 +23,7 @@ void main() {
     expect(workbook.activeSheet.rows.single, activeSheetFixedColumns);
   });
 
-  test('seeds Timer Fields for the two duration-based exercises', () async {
+  test('seeds Timer Fields for duration-based exercises', () async {
     final workbook = await loadWbkTmpl();
     final timerColumn = exercisesSheetColumns.indexOf('Timer Fields');
     final timedRows = {
@@ -33,6 +33,7 @@ void main() {
 
     expect(timedRows, {
       'Copenhagen Side Plank': "['Seconds']",
+      'Plank': "['Seconds']",
       'Side Plank': "['Seconds']",
     });
   });
@@ -40,7 +41,7 @@ void main() {
   test('every catalog record declares its Timer Fields explicitly', () async {
     final raw = jsonDecode(await rootBundle.loadString(defaultExerciseAsset));
     final records = (raw as List<Object?>).cast<Map<String, Object?>>();
-    expect(records, hasLength(42));
+    expect(records, hasLength(43));
     for (final record in records) {
       expect(
         record.containsKey('timerFields'),
@@ -58,7 +59,20 @@ void main() {
     expect(timed, {
       'Side Plank': ['Seconds'],
       'Copenhagen Side Plank': ['Seconds'],
+      'Plank': ['Seconds'],
     });
+    expect(
+      {
+        for (final exercise in defaults)
+          if (exercise.timerFields.isNotEmpty)
+            exercise.exercise: exercise.renderedDefaultValues,
+      },
+      {
+        'Copenhagen Side Plank': '20s@8',
+        'Plank': '90s@8',
+        'Side Plank': '30s@8',
+      },
+    );
     expect(
       defaults.where((exercise) => exercise.timerFields.isEmpty),
       hasLength(40),

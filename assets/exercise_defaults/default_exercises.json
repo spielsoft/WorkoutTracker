@@ -789,8 +789,8 @@
     "defaultSets": "3",
     "defaultRest": "45s",
     "defaultTempo": "hold",
-    "notes": "Top leg on bench, hips high, body in a straight line. Hold 20-30 seconds per side at RPE 7-8.",
-    "logFormat": "{Seconds}@{RPE}",
+    "notes": "Top leg on bench, hips high, body in a straight line. Hold 20 seconds per side at RPE 8.",
+    "logFormat": "{Seconds}s@{RPE}",
     "timerFields": [
       "Seconds"
     ],
@@ -803,7 +803,7 @@
     ],
     "defaultValues": {
       "Seconds": "20",
-      "RPE": "7"
+      "RPE": "8"
     }
   },
   {
@@ -907,6 +907,28 @@
     "defaultValues": {
       "Weight (lbs)": "30",
       "Reps": "10",
+      "RPE": "8"
+    }
+  },
+  {
+    "exercise": "Plank",
+    "description": "Front plank hold",
+    "defaultSets": "3",
+    "defaultRest": "60s",
+    "defaultTempo": "hold",
+    "notes": "Brace hard and keep hips level.",
+    "logFormat": "{Seconds}s@{RPE}",
+    "timerFields": [
+      "Seconds"
+    ],
+    "sourceTabs": [
+      "2026 Spring Tracker"
+    ],
+    "aliases": [
+      "Plank"
+    ],
+    "defaultValues": {
+      "Seconds": "90",
       "RPE": "8"
     }
   },
