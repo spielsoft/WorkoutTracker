@@ -254,11 +254,12 @@ void main() {
   testWidgets('one Timer heading names a checkbox for every declared field', (
     tester,
   ) async {
+    final actions = _CreateActions();
     await tester.pumpWidget(
       _app(
         CreateExerciseScreen(
           view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
-          actions: _CreateActions(),
+          actions: actions,
         ),
       ),
     );
@@ -282,6 +283,10 @@ void main() {
       );
     }
 
+    await tester.enterText(
+      find.byKey(const ValueKey('exercise-authoring-name')),
+      'Loaded Carry',
+    );
     final format = find.byKey(const ValueKey('exercise-authoring-log-format'));
     await tester.ensureVisible(format);
     await tester.pumpAndSettle();
@@ -290,54 +295,38 @@ void main() {
 
     expect(find.text('Timer'), findsOneWidget);
     expect(find.bySemanticsLabel('Timer Weight'), findsNothing);
+
     const declared = ['A', 'b', 'C c', 'D (kg)', 'E'];
-    var previous = tester.getTopLeft(find.bySemanticsLabel('Timer A').first);
-    for (final label in declared.skip(1)) {
-      final next = tester.getTopLeft(
-        find.bySemanticsLabel('Timer $label').first,
-      );
-      expect(
-        next.dy > previous.dy ||
-            (next.dy == previous.dy && next.dx > previous.dx),
-        isTrue,
-        reason: 'Timer $label must read after the field declared before it.',
-      );
-      previous = next;
-    }
-  });
-
-  testWidgets('timer selections save in Log Format declaration order', (
-    tester,
-  ) async {
-    final actions = _CreateActions();
-    await tester.pumpWidget(
-      _app(
-        CreateExerciseScreen(
-          view: const CreateExerciseView(isBusy: false, sheetLabel: 'Training'),
-          actions: actions,
-        ),
-      ),
+    final semantics = tester.ensureSemantics();
+    expect(
+      tester.semantics
+          .simulatedAccessibilityTraversal()
+          .map((node) => node.label)
+          .where((label) => label.startsWith('Timer '))
+          .toList(),
+      [for (final label in declared) 'Timer $label'],
+      reason: 'a screen reader reaches the checkboxes in declaration order',
     );
+    semantics.dispose();
 
-    await tester.enterText(
-      find.byKey(const ValueKey('exercise-authoring-name')),
-      'Loaded Carry',
-    );
-    for (final label in const ['RPE', 'Weight']) {
+    for (final label in declared.reversed) {
       final box = find.bySemanticsLabel('Timer $label').first;
       await tester.ensureVisible(box);
       await tester.pumpAndSettle();
       await tester.tap(box);
       await tester.pumpAndSettle();
     }
-
     final save = find.text('Save exercise');
     await tester.ensureVisible(save);
     await tester.pumpAndSettle();
     await tester.tap(save);
     await tester.pump();
 
-    expect(actions.saved?.timerFields, ['Weight', 'RPE']);
+    expect(
+      actions.saved?.timerFields,
+      declared,
+      reason: 'saved selections keep declaration order, not the order tapped',
+    );
   });
 
   testWidgets('timer checkboxes stay usable on a narrow large-text phone', (

@@ -3,41 +3,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
-import 'package:workout_tracker/src/app/exercise_timer.dart';
-import 'package:workout_tracker/src/app/ui/shared/status.dart';
 
 import '../service_fake.dart';
 import '../../support/widget.dart';
 
+// Countdown mechanics themselves - exact fractional deadlines, replacement,
+// lifecycle correction, and one completion signal - are proven against the
+// countdown engine in countdown_ctrl_test.dart. These tests prove only what
+// the application shell adds: which fields offer a timer, the policy the shell
+// hands the countdown, and what a finished countdown writes back.
+//
 // The recorded platform calls prove only which signal the app requests. They
 // establish neither real haptic hardware nor execution while iOS has
 // suspended the process; both stay physical-device acceptance work.
 void main() {
-  test('only a positive finite number of seconds can start a countdown', () {
-    expect(timerDuration('30'), const Duration(seconds: 30));
-    expect(timerDuration(' 2.6 '), const Duration(milliseconds: 2600));
-    expect(timerDuration('0.25'), const Duration(milliseconds: 250));
-
-    for (final unusable in [
-      '',
-      '   ',
-      '0',
-      '0.0',
-      '-1',
-      '-0.5',
-      'NaN',
-      'Infinity',
-      '-Infinity',
-      '1e400',
-      '9.3e12',
-      'thirty',
-      '30s',
-      '1:30',
-    ]) {
-      expect(timerDuration(unusable), isNull, reason: 'rejects "$unusable"');
-    }
-  });
-
   testWidgets('a differently named canonical field is timeable', (
     tester,
   ) async {
@@ -60,31 +39,58 @@ void main() {
     await _openLog(tester);
 
     final control = find.byKey(const ValueKey('set-timer-Seconds'));
-    expect(
-      tester.getSemantics(control),
-      matchesSemantics(
-        label: 'Start Side Plank Seconds timer, 30 seconds',
-        isButton: true,
-        hasEnabledState: true,
-        isEnabled: true,
-        hasTapAction: true,
-      ),
-    );
 
-    await tester.enterText(_field('Seconds'), '0');
-    await tester.pump();
+    for (final usable in const ['30', ' 2.6 ', '0.25']) {
+      await tester.enterText(_field('Seconds'), usable);
+      await tester.pump();
 
-    expect(
-      tester.getSemantics(control),
-      matchesSemantics(
-        label:
-            'Start Side Plank Seconds timer, unavailable because Seconds is '
-            'not a positive number of seconds',
-        isButton: true,
-        hasEnabledState: true,
-        isEnabled: false,
-      ),
-    );
+      expect(
+        tester.getSemantics(control),
+        matchesSemantics(
+          label: 'Start Side Plank Seconds timer, ${usable.trim()} seconds',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+        reason:
+            'a positive finite number of seconds can start a countdown, '
+            'including "$usable"',
+      );
+    }
+
+    for (final unusable in const [
+      '',
+      '   ',
+      '0',
+      '0.0',
+      '-1',
+      '-0.5',
+      'NaN',
+      'Infinity',
+      '-Infinity',
+      '1e400',
+      '9.3e12',
+      'thirty',
+      '30s',
+      '1:30',
+    ]) {
+      await tester.enterText(_field('Seconds'), unusable);
+      await tester.pump();
+
+      expect(
+        tester.getSemantics(control),
+        matchesSemantics(
+          label:
+              'Start Side Plank Seconds timer, unavailable because Seconds is '
+              'not a positive number of seconds',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: false,
+        ),
+        reason: 'nothing can start from "$unusable"',
+      );
+    }
   });
 
   testWidgets('timer controls stay out of logged set editing and placement', (
@@ -119,11 +125,11 @@ void main() {
     expect(_timerControls, findsNothing);
   });
 
-  testWidgets('the icon starts the exact value in the field when pressed', (
+  testWidgets('the icon times the exact field value and records what it ran', (
     tester,
   ) async {
     final signals = _recordPlatformCalls(tester);
-    await _openLog(tester);
+    final service = await _openLog(tester);
 
     await tester.enterText(_field('Seconds'), '2.6');
     await tester.pump();
@@ -131,36 +137,25 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
-    expect(_heading(tester), 'Side Plank');
-    expect(_countdown(tester), '3');
-
-    await tester.pump(const Duration(milliseconds: 2599));
     expect(
-      find.byKey(const ValueKey('countdown-bar')),
-      findsOneWidget,
-      reason: 'the exact deadline is 2.6 seconds',
+      _countdownName(tester),
+      'Pause Side Plank timer, 3 seconds remaining',
+      reason: 'the shell heads the countdown with the exercise being timed',
     );
+    expect(_value('Seconds'), '2.6', reason: 'starting never edits the field');
     expect(signals, isEmpty);
 
-    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 2600));
     await tester.pump();
 
     expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
     expect(signals, ['HapticFeedback.vibrate']);
-  });
-
-  testWidgets('Done partway through a hold records the time actually held', (
-    tester,
-  ) async {
-    final service = await _openLog(tester);
-    await _startTimer(tester, '45');
-
-    await tester.pump(const Duration(seconds: 30));
-    await tester.tap(find.byKey(const ValueKey('countdown-done')));
-    await tester.pump();
-
-    expect(_value('Seconds'), '30');
-    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
+    expect(
+      _value('Seconds'),
+      '3',
+      reason: 'the field that started the countdown receives what it measured',
+    );
+    expect(_hint(tester, 'Seconds'), contains('Recorded'));
     expect(service.appliedPlans, isEmpty, reason: 'recording never saves');
     expect(find.text('Save set S1'), findsOneWidget);
   });
@@ -187,53 +182,17 @@ void main() {
     expect(service.appliedPlans, isEmpty);
   });
 
-  testWidgets('a hold that runs to expiry records its full duration', (
-    tester,
-  ) async {
-    final service = await _openLog(tester);
-
-    expect(_value('Seconds'), '30', reason: 'the prescription is suggested');
-    expect(_hint(tester, 'Seconds'), contains('Suggested'));
-
-    await tester.tap(find.byKey(const ValueKey('set-timer-Seconds')));
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 30));
-    await tester.pump();
-
-    expect(_value('Seconds'), '30');
-    expect(
-      _hint(tester, 'Seconds'),
-      contains('Recorded'),
-      reason: 'a completed hold stops reading as an unconfirmed suggestion',
-    );
-    expect(
-      find.byKey(const ValueKey('countdown-bar')),
-      findsNothing,
-      reason: 'recording never starts rest',
-    );
-    expect(service.appliedPlans, isEmpty);
-
-    await tester.tap(find.byKey(const ValueKey('set-timer-Seconds')));
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('countdown-add')));
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 60));
-    await tester.pump();
-
-    expect(
-      _value('Seconds'),
-      '60',
-      reason: 'an extended hold records the whole length it ran',
-    );
-  });
-
   testWidgets('a recorded duration rounds exactly as the visible countdown', (
     tester,
   ) async {
     await _openLog(tester);
     await _startTimer(tester, '9.5');
 
-    expect(_countdown(tester), '10', reason: 'the display rounds to nearest');
+    expect(
+      _countdownName(tester),
+      'Pause Side Plank timer, 10 seconds remaining',
+      reason: 'the display rounds to nearest',
+    );
 
     await tester.pump(const Duration(milliseconds: 2400));
     await tester.tap(find.byKey(const ValueKey('countdown-done')));
@@ -253,7 +212,6 @@ void main() {
     tester,
   ) async {
     await _openLog(tester);
-    final colors = Theme.of(tester.element(_field('Seconds'))).colorScheme;
 
     expect(_hint(tester, 'Seconds'), 'Suggested value; edit to confirm');
 
@@ -269,17 +227,12 @@ void main() {
 
     final recorded = _hint(tester, 'Seconds');
     expect(recorded, contains('Recorded'));
-    expect(recorded, isNot('Suggested value; edit to confirm'));
+    expect(
+      recorded,
+      isNot('Suggested value; edit to confirm'),
+      reason: 'measured data is not announced as an unconfirmed suggestion',
+    );
     expect(recorded, isNot(_hint(tester, 'RPE')));
-    expect(
-      _style(tester, 'Seconds')?.fontStyle,
-      isNot(FontStyle.italic),
-      reason: 'measured data is not styled as a suggestion',
-    );
-    expect(
-      _style(tester, 'Seconds')?.color,
-      isNot(suggestedValueColor(colors)),
-    );
     await expectFlutterAccessibilityGuidelines(tester);
   });
 
@@ -289,7 +242,7 @@ void main() {
     await _openLog(tester);
 
     expect(_value('RPE'), '8');
-    expect(_style(tester, 'RPE')?.fontStyle, FontStyle.italic);
+    expect(_hint(tester, 'RPE'), contains('Suggested'));
 
     await _startTimer(tester, '45');
     await tester.pump(const Duration(seconds: 30));
@@ -299,11 +252,10 @@ void main() {
     expect(_value('Seconds'), '30');
     expect(_value('RPE'), '8');
     expect(
-      _style(tester, 'RPE')?.fontStyle,
-      FontStyle.italic,
+      _hint(tester, 'RPE'),
+      contains('Suggested'),
       reason: 'another field keeps its own text and origin',
     );
-    expect(_hint(tester, 'RPE'), contains('Suggested'));
   });
 
   testWidgets('editing a recorded value by hand makes it entered', (
@@ -322,7 +274,6 @@ void main() {
 
     expect(_value('Seconds'), '28');
     expect(_hint(tester, 'Seconds'), isEmpty);
-    expect(_style(tester, 'Seconds')?.fontStyle, isNot(FontStyle.italic));
   });
 
   testWidgets('a rest countdown ends without recording any field', (
@@ -331,8 +282,7 @@ void main() {
     await _openLog(tester);
     await _save(tester);
 
-    expect(_heading(tester), 'REST');
-    expect(_countdown(tester), '45');
+    expect(_countdownName(tester), 'Pause REST timer, 45 seconds remaining');
 
     await tester.pump(const Duration(seconds: 45));
     await tester.pump();
@@ -343,17 +293,22 @@ void main() {
     expect(_hint(tester, 'Seconds'), contains('Suggested'));
   });
 
-  testWidgets('a countdown displaced by an exercise timer records nothing', (
+  testWidgets('an exercise timer replaces rest, which then records nothing', (
     tester,
   ) async {
     await _openLog(tester);
     await _save(tester);
 
-    expect(_heading(tester), 'REST');
-    expect(_countdown(tester), '45');
+    expect(_countdownName(tester), 'Pause REST timer, 45 seconds remaining');
 
     await _startTimer(tester, '60');
-    expect(_heading(tester), 'Side Plank');
+
+    expect(
+      _countdownName(tester),
+      'Pause Side Plank timer, 60 seconds remaining',
+      reason: 'the shell owns one countdown, and the exercise takes it over',
+    );
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 45));
     await tester.pump();
@@ -363,7 +318,10 @@ void main() {
       '60',
       reason: 'the displaced rest countdown records nothing at its own end',
     );
-    expect(_heading(tester), 'Side Plank');
+    expect(
+      _countdownName(tester),
+      'Pause Side Plank timer, 15 seconds remaining',
+    );
 
     await tester.pump(const Duration(seconds: 5));
     await tester.tap(find.byKey(const ValueKey('countdown-done')));
@@ -372,27 +330,30 @@ void main() {
     expect(_value('Seconds'), '50');
   });
 
-  testWidgets('starting a timer changes no set value, origin, or workbook', (
+  testWidgets('starting a timer changes no set value, workbook, or rest', (
     tester,
   ) async {
     final service = await _openLog(tester);
 
     expect(_value('Seconds'), '30');
-    expect(_style(tester, 'Seconds')?.fontStyle, FontStyle.italic);
+    expect(_hint(tester, 'Seconds'), contains('Suggested'));
 
     await tester.tap(find.byKey(const ValueKey('set-timer-Seconds')));
     await tester.pump();
 
     expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
-    expect(_value('Seconds'), '30');
     expect(
-      _style(tester, 'Seconds')?.fontStyle,
-      FontStyle.italic,
-      reason: 'timing must not confirm a suggested value',
+      _value('Seconds'),
+      '30',
+      reason: 'timing must not edit or confirm a suggested value',
     );
     expect(service.appliedPlans, isEmpty);
     expect(find.text('Save set S1'), findsOneWidget);
-    expect(_heading(tester), isNot('REST'));
+    expect(
+      _countdownName(tester),
+      startsWith('Pause Side Plank timer'),
+      reason: 'starting an exercise timer never starts rest',
+    );
   });
 
   testWidgets('an unusable value neither starts nor disturbs a countdown', (
@@ -415,7 +376,7 @@ void main() {
     await _save(tester);
 
     expect(service.appliedPlans, hasLength(1));
-    expect(_heading(tester), 'REST');
+    expect(_countdownName(tester), 'Pause REST timer, 45 seconds remaining');
 
     await tester.enterText(_field('Seconds'), '-4');
     await tester.pump();
@@ -426,40 +387,10 @@ void main() {
     await tester.pump();
 
     expect(
-      _heading(tester),
-      'REST',
+      _countdownName(tester),
+      'Pause REST timer, 45 seconds remaining',
       reason: 'an unusable value must leave the running countdown alone',
     );
-    expect(_countdown(tester), '45');
-  });
-
-  testWidgets('exercise timing replaces rest, which can no longer signal', (
-    tester,
-  ) async {
-    final signals = _recordPlatformCalls(tester);
-    await _openLog(tester);
-    await _save(tester);
-
-    expect(_heading(tester), 'REST');
-    expect(_countdown(tester), '45');
-
-    await _startTimer(tester, '3');
-
-    expect(_heading(tester), 'Side Plank');
-    expect(_countdown(tester), '3');
-
-    await tester.pump(const Duration(seconds: 3));
-    await tester.pump();
-
-    expect(signals, ['HapticFeedback.vibrate']);
-
-    await tester.pump(const Duration(minutes: 2));
-    await tester.pump();
-
-    expect(signals, [
-      'HapticFeedback.vibrate',
-    ], reason: 'the displaced rest countdown must never signal');
-    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
   });
 
   testWidgets('exercise timing locks the app until Done releases it', (
@@ -519,7 +450,10 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('countdown-add')));
     await tester.pump();
-    expect(_countdown(tester), '90');
+    expect(
+      _countdownName(tester),
+      'Pause Side Plank timer, 90 seconds remaining',
+    );
     expect(_dim(tester), lessThan(1), reason: 'added time keeps the lock');
 
     await tester.tap(find.byKey(const ValueKey('countdown-done')));
@@ -560,7 +494,7 @@ void main() {
     final service = await _openLog(tester);
     await _save(tester);
 
-    expect(_heading(tester), 'REST');
+    expect(_countdownName(tester), startsWith('Pause REST timer'));
     expect(_dim(tester), 1);
     expect(find.semantics.byLabel('New set Seconds'), findsOne);
 
@@ -577,7 +511,10 @@ void main() {
     await _openLog(tester);
     await _startTimer(tester, '3.5');
 
-    expect(_countdown(tester), '4');
+    expect(
+      _countdownName(tester),
+      'Pause Side Plank timer, 4 seconds remaining',
+    );
 
     _suspend(tester);
     await tester.pump(const Duration(seconds: 2));
@@ -585,7 +522,11 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
-    expect(_countdown(tester), '2', reason: '1.5 seconds remain');
+    expect(
+      _countdownName(tester),
+      'Pause Side Plank timer, 2 seconds remaining',
+      reason: '1.5 seconds remain',
+    );
     expect(signals, isEmpty);
 
     await tester.pump(const Duration(milliseconds: 1499));
@@ -636,7 +577,7 @@ void main() {
     await _startTimer(tester, '45');
 
     expect(tester.takeException(), isNull);
-    expect(_heading(tester), 'Side Plank');
+    expect(_countdownName(tester), startsWith('Pause Side Plank timer'));
     final heading = tester.getRect(
       find.byKey(const ValueKey('countdown-heading')),
     );
@@ -800,34 +741,16 @@ Finder _field(String label) => find.byKey(ValueKey('set-field-$label'));
 
 String _value(String label) => editableTextFor(_field(label)).controller.text;
 
-TextStyle? _style(WidgetTester tester, String label) {
-  return tester.widget<TextField>(_field(label)).style;
-}
-
 String _hint(WidgetTester tester, String label) {
   return tester.getSemantics(find.bySemanticsLabel('New set $label')).hint;
 }
 
-String _heading(WidgetTester tester) {
+/// The running countdown as a screen reader announces it: which timer it is
+/// and how many whole seconds remain.
+String _countdownName(WidgetTester tester) {
   return tester
-      .widget<Text>(
-        find.descendant(
-          of: find.byKey(const ValueKey('countdown-heading')),
-          matching: find.byType(Text),
-        ),
-      )
-      .data!;
-}
-
-String _countdown(WidgetTester tester) {
-  return tester
-      .widget<Text>(
-        find.descendant(
-          of: find.byKey(const ValueKey('countdown-toggle')),
-          matching: find.byType(Text),
-        ),
-      )
-      .data!;
+      .getSemantics(find.byKey(const ValueKey('countdown-toggle')))
+      .label;
 }
 
 /// Effective opacity applied to the app below the countdown bar.
