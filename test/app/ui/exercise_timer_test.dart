@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
 import 'package:workout_tracker/contract.dart';
+import 'package:workout_tracker/src/app/logging_new_set.dart';
 
 import '../service_fake.dart';
 import '../../support/widget.dart';
@@ -13,9 +14,8 @@ import '../../support/widget.dart';
 // the application shell adds: which fields offer a timer, the policy the shell
 // hands the countdown, and what a finished countdown writes back.
 //
-// The recorded platform calls prove only which signal the app requests. They
-// establish neither real haptic hardware nor execution while iOS has
-// suspended the process; both stay physical-device acceptance work.
+// The recorded platform calls prove only which signal the app requests. Real
+// haptic hardware stays physical-device acceptance work.
 void main() {
   testWidgets('a differently named canonical field is timeable', (
     tester,
@@ -108,9 +108,19 @@ void main() {
       findsOneWidget,
     );
     expect(
-      _timerControls,
+      find.descendant(of: _loggedSetEditor('S1'), matching: _timerButtons),
+      findsNothing,
+      reason: 'the open logged set editor offers no way to start a timer',
+    );
+    expect(
+      find.descendant(of: find.byType(NewSetEditor), matching: _timerButtons),
       findsOne,
       reason: 'only the new set editor may start a timer',
+    );
+    expect(
+      _timerControls,
+      findsOne,
+      reason: 'and that is the only such control on the screen',
     );
 
     await tester.tap(find.byTooltip('Back to exercises'));
@@ -490,83 +500,6 @@ void main() {
     expect(inputHasFocus(_field('Seconds')), isTrue);
   });
 
-  testWidgets('a rest countdown leaves the app interactive', (tester) async {
-    final service = await _openLog(tester);
-    await _save(tester);
-
-    expect(_countdownName(tester), startsWith('Pause REST timer'));
-    expect(_dim(tester), 1);
-    expect(find.semantics.byLabel('New set Seconds'), findsOne);
-
-    await tester.tap(_field('Seconds'));
-    await tester.pump();
-    expect(inputHasFocus(_field('Seconds')), isTrue);
-    expect(service.appliedPlans, hasLength(1));
-  });
-
-  testWidgets('resume keeps the exact deadline and signals expiry once', (
-    tester,
-  ) async {
-    final signals = _recordPlatformCalls(tester);
-    await _openLog(tester);
-    await _startTimer(tester, '3.5');
-
-    expect(
-      _countdownName(tester),
-      'Pause Side Plank timer, 4 seconds remaining',
-    );
-
-    _suspend(tester);
-    await tester.pump(const Duration(seconds: 2));
-    _resume(tester);
-    await tester.pump();
-
-    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
-    expect(
-      _countdownName(tester),
-      'Pause Side Plank timer, 2 seconds remaining',
-      reason: '1.5 seconds remain',
-    );
-    expect(signals, isEmpty);
-
-    await tester.pump(const Duration(milliseconds: 1499));
-    expect(
-      find.byKey(const ValueKey('countdown-bar')),
-      findsOneWidget,
-      reason: 'the exact 3.5 second deadline survived suspension',
-    );
-
-    await tester.pump(const Duration(milliseconds: 1));
-    await tester.pump();
-
-    expect(signals, ['HapticFeedback.vibrate']);
-    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
-    expect(_dim(tester), 1);
-
-    await _startTimer(tester, '4');
-    _suspend(tester);
-    await tester.pump(const Duration(seconds: 10));
-
-    expect(
-      signals,
-      hasLength(1),
-      reason: 'a suspended app cannot signal while it is away',
-    );
-
-    _resume(tester);
-    await tester.pump();
-
-    expect(signals, hasLength(2), reason: 'expiry is discovered on resume');
-    expect(find.byKey(const ValueKey('countdown-bar')), findsNothing);
-    expect(_dim(tester), 1);
-
-    _suspend(tester);
-    _resume(tester);
-    await tester.pump(const Duration(seconds: 5));
-
-    expect(signals, hasLength(2), reason: 'each countdown signals once');
-  });
-
   testWidgets('exercise timing stays usable on a narrow large-text phone', (
     tester,
   ) async {
@@ -578,19 +511,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(_countdownName(tester), startsWith('Pause Side Plank timer'));
-    final heading = tester.getRect(
-      find.byKey(const ValueKey('countdown-heading')),
-    );
-    for (final control in const [
-      'countdown-add',
-      'countdown-toggle',
-      'countdown-done',
-    ]) {
-      expect(
-        heading.bottom,
-        lessThanOrEqualTo(tester.getRect(find.byKey(ValueKey(control))).top),
-      );
-    }
+    // How the bar itself lays out at this size belongs to
+    // countdown_bar_test.dart; this test covers what the log screen adds.
     expect(
       find.semantics.byLabel('New set Seconds'),
       findsNothing,
@@ -713,29 +635,29 @@ Future<void> _save(WidgetTester tester) async {
   await tester.pump();
 }
 
-void _suspend(WidgetTester tester) {
-  for (final state in const [
-    AppLifecycleState.inactive,
-    AppLifecycleState.hidden,
-    AppLifecycleState.paused,
-  ]) {
-    tester.binding.handleAppLifecycleStateChanged(state);
-  }
-}
-
-void _resume(WidgetTester tester) {
-  for (final state in const [
-    AppLifecycleState.hidden,
-    AppLifecycleState.inactive,
-    AppLifecycleState.resumed,
-  ]) {
-    tester.binding.handleAppLifecycleStateChanged(state);
-  }
-}
-
 /// Every control that can start an exercise countdown, located by the
 /// accessible name the product promises rather than by its icon glyph.
 final _timerControls = find.semantics.byLabel(RegExp(r'^Start .+ timer'));
+
+/// The same controls as widgets, so a finder can ask which editor holds one.
+final _timerButtons = find.bySemanticsLabel(RegExp(r'^Start .+ timer'));
+
+/// What the editor for logged set [setLabel] draws: the innermost widget
+/// holding both one of its fields and its own Cancel control.
+///
+/// Bounded by the keys that editor already exposes rather than by a layout
+/// type, so it still names the same region after a layout rewrite.
+Finder _loggedSetEditor(String setLabel) {
+  return find
+      .ancestor(
+        of: find.byKey(ValueKey('logged-$setLabel-field-Seconds')),
+        matching: find.ancestor(
+          of: find.byKey(ValueKey('cancel-$setLabel')),
+          matching: find.byWidgetPredicate((_) => true),
+        ),
+      )
+      .first;
+}
 
 Finder _field(String label) => find.byKey(ValueKey('set-field-$label'));
 

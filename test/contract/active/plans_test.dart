@@ -280,7 +280,7 @@ void main() {
     expect(written[1].last, "['Seconds']");
   });
 
-  test('an apostrophe label survives canonical create, update, and reread', () {
+  test('an apostrophe label survives a canonical update', () {
     const label = "Athlete's Hold";
     const format = "{Athlete's Hold}s@{RPE}";
     final activeRows = [
@@ -310,46 +310,36 @@ void main() {
     );
     expect(sheet.schemaViolations, isEmpty);
 
-    final timed = ExerciseDef(
-      exercise: 'Wall Sit',
-      defaultSets: '3',
-      defaultRest: '45s',
-      defaultTempo: 'hold',
-      logFormat: format,
-      defaultValues: const {label: '30', 'RPE': '8'},
-      timerFields: const [label],
-    );
+    // Appending an awkward label and rereading it is covered above for every
+    // label the Log Format grammar admits; only the update path is proven
+    // here, down to the escape it has to write.
+    final updated = sheet
+        .planCanonicalUpdate(
+          selectedExercise: sheet.canonicalExercises.single,
+          exercise: ExerciseDef(
+            exercise: 'Wall Sit',
+            defaultSets: '3',
+            defaultRest: '45s',
+            defaultTempo: 'hold',
+            logFormat: format,
+            defaultValues: const {label: '30', 'RPE': '8'},
+            timerFields: const [label],
+          ),
+        )
+        .previewRowsAfterApplying(exercisesRows);
+    expect(updated[1].last, r"['Athlete\'s Hold']");
 
-    final created = sheet.planCanonicalAppend(timed).previewRowsAfterApplying([
-      exercisesSheetColumns,
-    ]);
-    expect(created[1].last, r"['Athlete\'s Hold']");
-
-    final createdReread = parseActiveSheet(
-      ActiveSheetInput(
-        rows: [historyHeaderRow([]), setLabelRow([])],
-        exercisesRows: created,
-        validateWorkbook: true,
-      ),
-    );
-    expect(createdReread.schemaViolations, isEmpty);
-    expect(createdReread.canonicalExercises.single.timerFields, [label]);
-
-    final update = sheet.planCanonicalUpdate(
-      selectedExercise: sheet.canonicalExercises.single,
-      exercise: timed,
-    );
-    final updatedReread = parseActiveSheet(
+    final reread = parseActiveSheet(
       ActiveSheetInput(
         rows: activeRows,
-        exercisesRows: update.previewRowsAfterApplying(exercisesRows),
+        exercisesRows: updated,
         validateWorkbook: true,
       ),
     );
 
-    expect(updatedReread.schemaViolations, isEmpty);
-    expect(updatedReread.canonicalExercises.single.timerFields, [label]);
-    expect(updatedReread.slots.single.targetValues, {label: '30', 'RPE': '8'});
+    expect(reread.schemaViolations, isEmpty);
+    expect(reread.canonicalExercises.single.timerFields, [label]);
+    expect(reread.slots.single.targetValues, {label: '30', 'RPE': '8'});
   });
 
   test('canonical exercise defaults round-trip through append planning', () {
