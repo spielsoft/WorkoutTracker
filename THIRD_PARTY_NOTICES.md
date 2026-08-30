@@ -12,11 +12,12 @@ package's installed `pubspec.yaml` and `LICENSE` file.
 | --- | --- | --- | --- |
 | Flutter SDK (`flutter`) | SDK-bundled | BSD-3-Clause | [Flutter](https://github.com/flutter/flutter) |
 | `clock` | 1.1.2 | Apache-2.0 | [Dart clock](https://github.com/dart-lang/core/tree/main/pkgs/clock) |
-| `googleapis` | 16.0.0 | BSD-3-Clause | [googleapis.dart](https://github.com/google/googleapis.dart/tree/master/generated/googleapis) |
+| `googleapis` | 17.0.0 | BSD-3-Clause | [googleapis.dart](https://github.com/google/googleapis.dart/tree/master/generated/googleapis) |
 | `http` | 1.6.0 | BSD-3-Clause | [Dart HTTP](https://github.com/dart-lang/http/tree/master/pkgs/http) |
 | `google_sign_in` | 7.2.0 | BSD-3-Clause | [Flutter packages](https://github.com/flutter/packages/tree/main/packages/google_sign_in/google_sign_in) |
 | `path_provider` | 2.1.6 | BSD-3-Clause | [Flutter packages](https://github.com/flutter/packages/tree/main/packages/path_provider/path_provider) |
 | `url_launcher` | 6.3.2 | BSD-3-Clause | [Flutter packages](https://github.com/flutter/packages/tree/main/packages/url_launcher/url_launcher) |
+| `wakelock_plus` | 1.7.0 | BSD-3-Clause | [wakelock_plus](https://github.com/fluttercommunity/wakelock_plus/tree/main/wakelock_plus) |
 
 This direct-dependency inventory is not a substitute for the complete license
 information of a built application. Flutter plugins select platform-specific

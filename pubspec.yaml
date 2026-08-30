@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  googleapis: ^16.0.0
+  googleapis: ^17.0.0
   http: ^1.6.0
   clock: ^1.1.2
   google_sign_in: ^7.2.0
