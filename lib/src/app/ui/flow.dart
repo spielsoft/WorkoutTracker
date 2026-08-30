@@ -165,16 +165,17 @@ final class AppFlow extends ChangeNotifier {
   }
 
   Future<CmdResult> _chooseSheet() async {
+    final WorkspaceUiSt workspace;
     try {
-      final workspace = await _workspace.chooseSheet();
-      final selected = workspace.selectedSheet;
-      if (selected == null) return const CmdResult.failed();
-      _sheetText = selected.id;
-      return _validate();
+      workspace = await _workspace.chooseSheet();
     } on Object catch (error) {
       _ctrl.reportSelectionFailure(error);
       return CmdResult.failed(error.toString());
     }
+    final selected = workspace.selectedSheet;
+    if (selected == null) return const CmdResult.failed();
+    _sheetText = selected.id;
+    return _validate();
   }
 
   Future<CmdResult> _signIn() async {
@@ -189,16 +190,17 @@ final class AppFlow extends ChangeNotifier {
   }
 
   Future<CmdResult> _createSheet(String name) async {
+    final WorkspaceUiSt workspace;
     try {
-      final workspace = await _workspace.createSheet(name: name);
-      final selected = workspace.selectedSheet;
-      if (selected == null) return const CmdResult.failed();
-      _sheetText = selected.id;
-      return _validate();
+      workspace = await _workspace.createSheet(name: name);
     } on Object catch (error) {
       _ctrl.reportSelectionFailure(error);
       return CmdResult.failed(error.toString());
     }
+    final selected = workspace.selectedSheet;
+    if (selected == null) return const CmdResult.failed();
+    _sheetText = selected.id;
+    return _validate();
   }
 
   Future<CmdResult> _signOut() async {

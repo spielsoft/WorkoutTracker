@@ -138,7 +138,7 @@ class NativeSignInAuthGateway extends ChangeNotifier
       return null;
     }
     try {
-      return account.authorizationClient.authorizationHeaders(scopes);
+      return await account.authorizationClient.authorizationHeaders(scopes);
     } on GoogleSignInException catch (error) {
       switch (error.code) {
         case GoogleSignInExceptionCode.canceled:

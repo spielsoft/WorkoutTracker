@@ -117,6 +117,68 @@ void main() {
       await events.close();
     },
   );
+
+  test(
+    'a cancelled authorization reports no headers instead of throwing',
+    () async {
+      final events = _InitEvents();
+      final gateway = NativeSignInAuthGateway(
+        cfg: const GoogleSignInCfg(),
+        authEvents: events,
+      );
+      await gateway.authorizationHeaders(const []);
+      events.add(
+        GoogleSignInAuthenticationEventSignIn(
+          user: const _Account(
+            email: 'athlete@example.com',
+            authorization: _CancellingAuthorizationClient(
+              GoogleSignInExceptionCode.canceled,
+            ),
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await expectLater(
+        gateway.authorizationHeaders(const ['scope']),
+        completion(isNull),
+      );
+
+      gateway.dispose();
+      await events.close();
+    },
+  );
+
+  test(
+    'an unrecognised authorization failure still reaches the caller',
+    () async {
+      final events = _InitEvents();
+      final gateway = NativeSignInAuthGateway(
+        cfg: const GoogleSignInCfg(),
+        authEvents: events,
+      );
+      await gateway.authorizationHeaders(const []);
+      events.add(
+        GoogleSignInAuthenticationEventSignIn(
+          user: const _Account(
+            email: 'athlete@example.com',
+            authorization: _CancellingAuthorizationClient(
+              GoogleSignInExceptionCode.unknownError,
+            ),
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await expectLater(
+        gateway.authorizationHeaders(const ['scope']),
+        throwsA(isA<GoogleSignInException>()),
+      );
+
+      gateway.dispose();
+      await events.close();
+    },
+  );
 }
 
 class _InitEvents implements AuthEvents {
@@ -142,10 +204,12 @@ class _InitEvents implements AuthEvents {
 }
 
 class _Account implements GoogleSignInAccount {
-  const _Account({required this.email});
+  const _Account({required this.email, this.authorization});
 
   @override
   final String email;
+
+  final GoogleSignInAuthorizationClient? authorization;
 
   @override
   String? get displayName => 'Athlete';
@@ -163,5 +227,43 @@ class _Account implements GoogleSignInAccount {
 
   @override
   GoogleSignInAuthorizationClient get authorizationClient =>
-      throw UnsupportedError('Authorization is outside this test contract.');
+      authorization ??
+      (throw UnsupportedError('Authorization is outside this test contract.'));
+}
+
+/// Fails every authorization request asynchronously, the way the real client
+/// does: its `authorizationHeaders` is `async`, so the failure arrives as a
+/// rejected future rather than a synchronous throw.
+class _CancellingAuthorizationClient
+    implements GoogleSignInAuthorizationClient {
+  const _CancellingAuthorizationClient(this.code);
+
+  final GoogleSignInExceptionCode code;
+
+  Future<Never> _fail() async => throw GoogleSignInException(code: code);
+
+  @override
+  Future<Map<String, String>?> authorizationHeaders(
+    List<String> scopes, {
+    bool promptIfNecessary = false,
+  }) => _fail();
+
+  @override
+  Future<GoogleSignInClientAuthorization?> authorizationForScopes(
+    List<String> scopes,
+  ) => _fail();
+
+  @override
+  Future<GoogleSignInClientAuthorization> authorizeScopes(
+    List<String> scopes,
+  ) => _fail();
+
+  @override
+  Future<GoogleSignInServerAuthorization?> authorizeServer(
+    List<String> scopes,
+  ) => _fail();
+
+  @override
+  Future<void> clearAuthorizationToken({required String accessToken}) =>
+      _fail();
 }

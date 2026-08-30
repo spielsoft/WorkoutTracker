@@ -14,6 +14,15 @@ User-visible changes to WorkoutTracker are recorded here. Releases follow
 ### Changed
 
 - Support, privacy, and self-build documentation now describe the source MVP.
+- Minimum supported operating systems are now iOS 15 and macOS 12 (Monterey),
+  matching the Flutter SDK the application is built and validated against.
+
+### Fixed
+
+- Screen, countdown, and exercise-authoring headings announce as headings
+  again to VoiceOver and TalkBack.
+- A cancelled or interrupted Google authorization now reports that no headers
+  are available instead of raising the cancellation as an error.
 
 ## 1.0.0-rc.1 - Pending
 
