@@ -23,7 +23,7 @@ plan completes. It is deliberately not a slice here.
 - [x] Slice 6: Record the measured duration when a countdown ends
 - [x] Slice 7: Clean the timer test suite
 - [x] Slice 8: Run the complete local timer guard
-- [ ] Slice 9: Accept the physical iOS timer flow
+- [x] Slice 9: Accept the physical iOS timer flow
 
 ## Slice 1: Persist canonical Timer Fields in schema 1.1
 
@@ -42,7 +42,7 @@ or changing targets and history.
 
 Extend the bundled exercise catalog contract with an optional timer-field
 array whose omission means empty. Make all 42 maintained definitions explicit,
-enabling `Seconds` only for Side Plank and Copenhagen Side Plank. The catalog
+enabling `Seconds` only for the duration-based exercises. The catalog
 continues to seed new workbooks once and never synchronizes into existing
 workbooks.
 
@@ -68,8 +68,9 @@ this plan completes.
 - [x] Catalog parsing treats a missing `timerFields` property as empty and
       rejects non-list or non-string values.
 - [x] All 42 maintained catalog exercises declare `timerFields` explicitly;
-      Side Plank and Copenhagen Side Plank contain `Seconds`, and the other 40
-      arrays are empty.
+      the duration-based exercises contain `Seconds`, and every other array is
+      empty. Slice 1 shipped Side Plank and Copenhagen Side Plank; the owner
+      seeded Plank afterwards, so three are timed today.
 - [x] Loading catalog defaults proves every Timer Fields label exists in that
       definition's parsed Log Format.
 - [x] A declared version 1.0 workbook is rejected and no in-app 1.0-to-1.1
@@ -466,8 +467,9 @@ and is deliberately not part of this slice.
 
 ### Acceptance criteria
 
-- [ ] The harness runs on a physical iPhone in release or profile mode, and the
-      device and OS version are recorded.
+- [x] The harness runs on a physical iPhone in release or profile mode, and the
+      device and OS version are recorded. Waived by the owner: the flow was
+      accepted on a physical iPhone without the device and OS being recorded.
 - [x] No Google account is used and no workout workbook is read or written.
 - [x] A fractional exercise duration expires at its exact time while the visible
       count uses ordinary rounding.
@@ -482,8 +484,9 @@ and is deliberately not part of this slice.
       the rest of the app interactive.
 - [x] Background/resume behavior is observed as best effort and is not treated
       as a guaranteed suspended-app alert.
-- [ ] The final report records the physical device and OS, observed behavior,
-      commits under test, and every unresolved risk.
+- [x] The final report records the physical device and OS, observed behavior,
+      commits under test, and every unresolved risk. Waived for the device and
+      OS alone, per the criterion above; the rest is recorded.
 
 ### Blocked by
 

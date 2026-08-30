@@ -101,7 +101,7 @@ promise an alert while iOS has suspended the process.
 35. As a catalog maintainer, I want every bundled exercise to declare `timerFields` explicitly, so that intended defaults are reviewable in source.
 36. As a catalog maintainer, I want a missing `timerFields` property interpreted as empty, so that external or older catalog entries remain safely untimed.
 37. As a Side Plank user, I want its Seconds field timed by default in a newly created workbook, so that the primary MVP example works without editing the exercise.
-38. As a Copenhagen Side Plank user, I want its Seconds field timed by default in a newly created workbook, so that the other duration-based catalog exercise behaves consistently.
+38. As a Copenhagen Side Plank or Plank user, I want each remaining duration-based catalog exercise timed by default in a newly created workbook, so that they behave consistently with Side Plank.
 39. As a maintainer, I want one countdown engine to own deadlines, lifecycle correction, pause, extension, completion, and signaling, so that rest and exercise timers cannot drift apart.
 40. As a maintainer, I want rest and exercise policies supplied explicitly to the shared countdown, so that sharing a widget does not accidentally share modal behavior.
 41. As a maintainer, I want timer metadata parsed and rendered behind a small contract, so that Sheet syntax does not leak throughout UI code.
@@ -139,8 +139,9 @@ promise an alert while iOS has suspended the process.
 - Catalog `timerFields` is an array of exact labels. A missing property parses
   as an empty array, although all maintained catalog records declare it
   explicitly.
-- The maintained catalog enables `Seconds` for Side Plank and Copenhagen Side
-  Plank and leaves every other current exercise empty.
+- The maintained catalog enables `Seconds` for every duration-based exercise -
+  Side Plank, Copenhagen Side Plank, and Plank - and leaves every other current
+  exercise empty. Plank was seeded after Slice 1 landed.
 - Exercise creation and editing show generated default-value rows with one
   shared `Timer` column heading and one accessible checkbox per Log Format
   field.
@@ -201,7 +202,7 @@ promise an alert while iOS has suspended the process.
 - Write-plan tests cover creation and editing of Timer Fields while proving
   that active rows, targets, and history remain unchanged.
 - Template tests cover JSON omission as empty, explicit arrays on all current
-  records, the two default timed exercises, nine-column Exercises rows, and
+  records, the three default timed exercises, nine-column Exercises rows, and
   version 1.1 metadata for new workbooks.
 - Exercise authoring tests cover the shared Timer heading, declaration-order
   checkboxes, create/edit round trips, disabled busy state, and accessible

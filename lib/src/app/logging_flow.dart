@@ -112,6 +112,11 @@ class LoggingFlow {
   /// A measured hold never reports less than a second. Stopping the moment a
   /// countdown starts would otherwise write a zero the field cannot restart
   /// from, replacing a prescription with a number nobody performed.
+  ///
+  /// This floor is a reviewed decision, not an oversight: reaching it takes a
+  /// deliberate start and stop inside one second. Letting the athlete choose
+  /// between stopping and resetting is the better answer, and waits for the
+  /// countdown to grow stopwatch controls.
   bool markRecorded(String label, Duration elapsed) {
     final controller = _newSetCtrls[label];
     if (controller == null) return false;
