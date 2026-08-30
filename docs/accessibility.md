@@ -8,10 +8,11 @@ Accessibility is part of each UI change, not a release-only pass.
 - Repeated fields include context, for example `New set Weight` and
   `S1 Weight`.
 - State conveyed by color, icon, or shape is also present in semantics.
-- Headings are declared through `A11yHeader`, which sets `headingLevel`. The
-  `header` flag is a no-op on iOS and Android and must not be used; a test that
-  asserts `isHeader` proves nothing a screen reader hears, so assert the
-  heading level with `expectHeadingLevel`.
+- Headings are declared through `A11yHeader`, which sets both `header: true`
+  and `headingLevel: 1`. `headingLevel` reaches the iOS and Android heading
+  APIs in Flutter 3.47, while the legacy `header` flag remains part of the
+  common accessibility bridge used by macOS. Semantics tests assert both
+  properties: use `isHeader: true` and `expectHeadingLevel`.
 - Tap targets and text contrast meet Flutter's Android and iOS guidelines.
 - Layout remains usable with large text and narrow mobile widths.
 - Format-generated defaults and targets use stable `Default <field>` and

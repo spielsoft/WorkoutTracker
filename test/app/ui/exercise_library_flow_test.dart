@@ -40,6 +40,7 @@ void main() {
     final heading = find.byWidgetPredicate(
       (widget) =>
           widget is Semantics &&
+          widget.properties.header == true &&
           widget.properties.headingLevel == 1 &&
           widget.properties.label?.contains('Edit exercises') == true,
     );

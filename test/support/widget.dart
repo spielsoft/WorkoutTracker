@@ -92,13 +92,10 @@ void expectInputFocused(Finder field, {String? reason}) {
 
 /// Asserts the heading level a screen reader receives for [finder].
 ///
-/// Since Flutter 3.47 the `header` flag is a no-op on iOS and Android, so
-/// `isHeader` no longer proves anything a screen reader hears. Only
-/// `headingLevel > 0` maps to `UIAccessibilityTraitHeader` and
-/// `View.setHeading`, and it is carried to the platform verbatim as
-/// `SemanticsData.headingLevel` in `SemanticsUpdateBuilder.updateNode`.
-/// `matchesSemantics` has no `headingLevel` argument, so read the data
-/// directly.
+/// `headingLevel > 0` maps to the iOS and Android heading APIs, while
+/// `isHeader` keeps the legacy macOS/common-bridge contract. The latter is
+/// checked with `matchesSemantics`; `matchesSemantics` has no `headingLevel`
+/// argument, so read that data directly.
 void expectHeadingLevel(WidgetTester tester, Finder finder, int level) {
   expect(
     tester.getSemantics(finder).getSemanticsData().headingLevel,

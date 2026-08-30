@@ -10,6 +10,9 @@ contract:
 | Application orchestration | `test/app/{service,validation,controller,workspace,store}_test.dart`, `test/app/ui/flow_test.dart` | Protect validation-before-write, rereads, account binding, persistence failures, restore and command serialization, and public commands. |
 | Account and sheet access | `test/app/{account_session,auth_client,selection,create_dialog}_test.dart`, `test/app/ui/{sheet,sheet_flow,sheet_picker_page}_test.dart` | Protect optional Dart-override validation, Apple-native configuration delegation, accepted native callback shapes, requested scopes, app-owned adapter calls, account mismatch handling, and visible selection flows. Fakes do not establish Google Sign-In or Drive behavior. |
 | Workout and exercise flows | `test/app/{progress,live_logging_entry}_test.dart`, `test/app/ui/{workout_home,logging_flow,log,navigation,placement_flow,exercise_library_flow,exercise_authoring,exercise_screen,library_search}_test.dart` | Protect generated default/target fields, target-prefilled logging, raw-set editing, navigation, authoring, placement, reorder auto-scroll, progress, and error recovery. |
+| Timer, countdown, rest, and awake behavior | `test/app/ui/{exercise_timer,countdown_bar,countdown_ctrl,rest_flow,awake}_test.dart` | Protect timed-field eligibility, exact and rounded countdown behavior, pause/resume, replacement, expiry, duration recording, modal exercise timing, nonmodal rest timing, set-save integration, lifecycle correction, and the ten-minute awake lease. |
+| Heading semantics | `test/app/ui/{header,exercise_library_flow,exercise_screen,countdown_bar}_test.dart` | Protect reusable screen headings, the exercise-authoring `Timer` heading, and countdown headings with both the legacy `header` flag and Flutter 3.47 `headingLevel`. |
+| Development preview | `test/dev/gym_preview_test.dart` | Load the in-memory schema 1.1 fixture through the real screens and cover timed Side Plank behavior, an explicitly untimed same-label field, and a long timed exercise heading without Google credentials or workbook writes. |
 | Shell and accessibility | `test/app/ui/shell_test.dart` | Runs Flutter accessibility guidelines in core states and checks narrow, large-text workflows through visible outcomes. |
 
 ## Unusual Checks
@@ -26,9 +29,10 @@ contract:
   rebuilt live flow must follow.
 - Native Apple bundle and accessibility smoke checks are release commands, not
   simulated Dart tests. See `BUILDING.md` and `docs/accessibility.md`.
-- Dynamic-field live acceptance inspects both a conventional Weight/Reps/RPE
-  exercise and a non-conventional format in the app and resulting Google
-  Sheet. The local suite proves only WorkoutTracker's contracts.
+- Dynamic-field local acceptance covers conventional and non-conventional
+  formats through the app and its application-owned requests. No live Google
+  acceptance test currently exists, and the local suite proves only
+  WorkoutTracker's contracts.
 
 ## Cleanup Classification
 

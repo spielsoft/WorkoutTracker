@@ -124,13 +124,12 @@ even referenced by its source.
 Five regressions came from the SDK rather than from any package.
 
 The `header` semantics flag is now a no-op on iOS and Android; a heading is
-declared only by `headingLevel > 0`, which maps to `UIAccessibilityTraitHeader`
-with `accessibilityHeadingLevel` on iOS and `View.setHeading` on Android. The
-framework still records the old flag, so the suite kept passing while every
-screen header, the countdown heading, and the authoring `Timer` heading stopped
-announcing as headings on device. `A11yHeader` now sets `headingLevel: 1`, and
-the assertions that used to check `isHeader` check the heading level a screen
-reader actually receives.
+declared there by `headingLevel > 0`, which maps to
+`UIAccessibilityTraitHeader` with `accessibilityHeadingLevel` on iOS and
+`View.setHeading` on Android. The framework still carries the legacy flag
+through its common accessibility bridge for macOS, so `A11yHeader` intentionally
+sets both `header: true` and `headingLevel: 1`. The reusable-header, countdown,
+and authoring tests assert both contracts.
 
 Flutter 3.47 supports iOS 15 and later and macOS 12 (Monterey) and later. The
 Apple deployment targets were below both, at `IPHONEOS_DEPLOYMENT_TARGET` 13.0
@@ -162,14 +161,13 @@ package language version, and `dart format` changes style with it; raising it to
 chained calls off a wrapped argument list. That churn belongs to a decision
 about adopting the 3.13 language version, not to this regression fix.
 
-The requirement this application did gain is a Flutter requirement rather than a
+The requirement this application gained is a Flutter requirement rather than a
 Dart one. The iOS mapping for `headingLevel` arrived with 3.47; in 3.44 the
 property documented only web `aria-level` and Android `isHeading`, so a source
 build of the migrated `A11yHeader` on 3.44 would compile and then announce no
-heading at all in VoiceOver. `environment: flutter:` is the field that states
-that directly. Adding it is a policy choice about who may build from source and
-is left to the owner; `BUILDING.md` still routes builders through the Dart
-constraint alone.
+heading at all in VoiceOver. The source-build minimum is therefore Flutter
+3.47.0, declared as `environment: flutter: ">=3.47.0"` in `pubspec.yaml` and
+documented in `BUILDING.md`; CI remains pinned to Flutter 3.47.2.
 
 Two packages stay behind, both pinned by the new SDK rather than skipped:
 `material_color_utilities` 0.13.0 against 0.13.1 available, from `flutter`, and

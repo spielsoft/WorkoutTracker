@@ -8,8 +8,10 @@ User-visible changes to WorkoutTracker are recorded here. Releases follow
 ### Added
 
 - Public-source policy, builder-owned configuration, CI, and release guidance.
-- Durable application-support persistence and production-composed live Google
-  validation.
+- Timed exercise fields with exact, pausable countdowns that record measured
+  durations, alongside the existing nonmodal rest timer.
+- Durable application-support persistence and production-composed support for a
+  future live Google validation harness. No live Google test currently exists.
 
 ### Changed
 

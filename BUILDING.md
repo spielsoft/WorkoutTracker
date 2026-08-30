@@ -20,7 +20,8 @@ Flutter scaffolding is not evidence that a platform is supported.
 Install:
 
 - Git;
-- a Flutter SDK compatible with the Dart constraint in `pubspec.yaml`; and
+- Flutter 3.47.0 or later (the source-build minimum declared in
+  `pubspec.yaml`); and
 - Xcode with its requested components and license accepted.
 
 Confirm that Flutter sees a working Apple toolchain:
@@ -82,7 +83,8 @@ flutter test
 These checks use application-owned fakes. They do not prove Google, OAuth,
 Firebase, or native sign-in behavior.
 
-Public CI runs this gate on Linux with Flutter 3.47.2. It intentionally has no
+Public CI runs this gate on Linux with Flutter 3.47.2, within the source-build
+minimum of Flutter 3.47.0. It intentionally has no
 Google credentials and does not run the opt-in live test. Apple builds remain a
 local release gate because Xcode availability, signing, provisioning, and
 bundle inspection cannot be established reliably by that unsigned Linux job.

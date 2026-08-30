@@ -18,7 +18,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     expect(
       tester.getSemantics(find.byType(A11yHeader)),
-      matchesSemantics(label: 'Squat'),
+      matchesSemantics(label: 'Squat', isHeader: true),
     );
     expectHeadingLevel(tester, find.byType(A11yHeader), 1);
     semantics.dispose();
@@ -42,7 +42,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     expect(
       tester.getSemantics(find.byType(A11yHeader)),
-      matchesSemantics(label: 'Squat'),
+      matchesSemantics(label: 'Squat', isHeader: true),
     );
     expectHeadingLevel(tester, find.byType(A11yHeader), 1);
     semantics.dispose();
@@ -65,7 +65,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       expect(
         tester.getSemantics(find.byType(A11yHeader)),
-        matchesSemantics(label: 'Squat, Edit exercises'),
+        matchesSemantics(label: 'Squat, Edit exercises', isHeader: true),
       );
       expectHeadingLevel(tester, find.byType(A11yHeader), 1);
       semantics.dispose();

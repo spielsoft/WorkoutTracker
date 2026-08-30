@@ -22,10 +22,10 @@ class A11yScreen extends StatelessWidget {
 /// only. Without the exclusion the child's own text merges into the annotated
 /// node and the heading is announced twice.
 ///
-/// The heading is declared with `headingLevel`, not the older `header` flag.
-/// Since Flutter 3.47 `header` is a no-op on iOS and Android, and only
-/// `headingLevel > 0` reaches `UIAccessibilityTraitHeader` with
-/// `accessibilityHeadingLevel` on iOS and `View.setHeading` on Android.
+/// Both heading properties are intentional. Flutter 3.47 maps
+/// `headingLevel > 0` to the iOS and Android heading APIs, while the legacy
+/// `header` flag remains part of Flutter's common accessibility bridge for
+/// macOS.
 class A11yHeader extends StatelessWidget {
   const A11yHeader({required this.label, required this.child, super.key});
 
@@ -35,6 +35,7 @@ class A11yHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
+      header: true,
       headingLevel: 1,
       label: label,
       child: ExcludeSemantics(child: child),

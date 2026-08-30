@@ -30,7 +30,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     expect(
       tester.getSemantics(find.byKey(const ValueKey('countdown-heading'))),
-      matchesSemantics(label: 'REST'),
+      matchesSemantics(label: 'REST', isHeader: true),
     );
     expectHeadingLevel(
       tester,
@@ -101,7 +101,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     expect(
       tester.getSemantics(find.byKey(const ValueKey('countdown-heading'))),
-      matchesSemantics(label: _longExerciseName),
+      matchesSemantics(label: _longExerciseName, isHeader: true),
     );
     expectHeadingLevel(
       tester,
