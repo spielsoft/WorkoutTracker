@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:workout_tracker/migration.dart';
 
 import '../controller.dart';
 import '../selection.dart';
@@ -23,7 +22,6 @@ final class AppFlow extends ChangeNotifier {
     GoogleAccountSession? accountSession,
     AppStStore? appStStore,
     SheetPicker? picker,
-    this.fieldMigrator,
     this._sheetOpener = const UrlSheetOpener(),
     String initialText = '',
     SelectedSheet? initialSelection,
@@ -48,12 +46,9 @@ final class AppFlow extends ChangeNotifier {
   final bool _showAccount;
   final bool _hasPicker;
   final SheetOpener _sheetOpener;
-  final FieldMigrator? fieldMigrator;
   late final LoadedFlow loaded;
   bool _showLoaded = false;
   String _sheetText;
-  WbkMigrationReport? _migration;
-  bool _migrationPending = false;
 
   AppView get view {
     return pages.last.view;
@@ -63,10 +58,7 @@ final class AppFlow extends ChangeNotifier {
     final report = _ctrl.report;
     final workspace = _workspace.state;
     final busy =
-        _ctrl.isBusy ||
-        _migrationPending ||
-        workspace.isCommandInFlight ||
-        workspace.isInitializing;
+        _ctrl.isBusy || workspace.isCommandInFlight || workspace.isInitializing;
     if (!_showLoaded || report == null || report.hasBlockingIssues) {
       return [
         AppPage(id: _sheetPageId, view: _sheetView(report, workspace, busy)),
@@ -93,14 +85,12 @@ final class AppFlow extends ChangeNotifier {
       availability: workspace.pickerAvailability,
       showAvailability: workspace.selectedSheet == null && _hasPicker,
       showTextFallback: !_hasPicker || workspace.fallbackAvailable,
-      hasLoadedWorkout:
-          report != null && !report.hasBlockingIssues && _migration == null,
+      hasLoadedWorkout: report != null && !report.hasBlockingIssues,
       report: report,
       account: workspace.accountProfile,
       hasPicker: _hasPicker,
       showAccount: _showAccount,
       accountMismatch: workspace.accountMismatch,
-      migration: _migration,
     );
   }
 
@@ -151,7 +141,6 @@ final class AppFlow extends ChangeNotifier {
         exerciseRow,
       ),
       OpenSheet() => await _openSheet(),
-      ConfirmWbkMigration() => await _confirmMigration(),
       DismissSheetError() => _dismissError(),
     };
     notifyListeners();
@@ -170,55 +159,9 @@ final class AppFlow extends ChangeNotifier {
         ? await _ctrl.validateSelection(_sheetText)
         : await _ctrl.validateSelected(selected);
     final report = _ctrl.report;
-    await _inspectMigration(report);
-    _showLoaded =
-        ok && report != null && !report.hasBlockingIssues && _migration == null;
+    _showLoaded = ok && report != null && !report.hasBlockingIssues;
     if (_showLoaded) loaded.showHome();
     return CmdResult.result(ok);
-  }
-
-  Future<void> _inspectMigration(ValReport? report) async {
-    _migration = null;
-    final migrator = fieldMigrator;
-    if (migrator == null || report == null) return;
-    try {
-      final candidate = await migrator.dryRun(report.sheetId);
-      if (_ctrl.report?.sheetId == report.sheetId && candidate.recognized) {
-        _migration = candidate;
-      }
-    } on Object {
-      // Ordinary schema guidance remains available when inspection fails.
-    }
-  }
-
-  Future<CmdResult> _confirmMigration() async {
-    final report = _ctrl.report;
-    final migration = _migration;
-    final migrator = fieldMigrator;
-    if (report == null ||
-        migration == null ||
-        migration.spreadsheetId != report.sheetId ||
-        !migration.canApply ||
-        migrator == null) {
-      return const CmdResult.failed('This sheet cannot be converted safely.');
-    }
-
-    _migrationPending = true;
-    notifyListeners();
-    try {
-      await migrator.migrate(
-        report.sheetId,
-        confirmed: true,
-        expected: migration,
-      );
-      return _validate();
-    } on Object catch (error) {
-      _ctrl.reportSelectionFailure(error);
-      return CmdResult.failed('Unable to update workout sheet: $error');
-    } finally {
-      _migrationPending = false;
-      notifyListeners();
-    }
   }
 
   Future<CmdResult> _chooseSheet() async {
@@ -263,7 +206,6 @@ final class AppFlow extends ChangeNotifier {
     _ctrl.clearSelection();
     _sheetText = '';
     _showLoaded = false;
-    _migration = null;
     loaded.reset();
     return const CmdResult.done();
   }
@@ -294,7 +236,7 @@ final class AppFlow extends ChangeNotifier {
 
   CmdResult _returnToWorkout() {
     final report = _ctrl.report;
-    if (report == null || report.hasBlockingIssues || _migration != null) {
+    if (report == null || report.hasBlockingIssues) {
       return const CmdResult.failed();
     }
     loaded.showHome();
@@ -305,9 +247,7 @@ final class AppFlow extends ChangeNotifier {
   Future<CmdResult> _repairAll() async {
     final ok = await _ctrl.repairFormulas();
     if (ok) {
-      await _inspectMigration(_ctrl.report);
-      _showLoaded =
-          _ctrl.report?.hasBlockingIssues == false && _migration == null;
+      _showLoaded = _ctrl.report?.hasBlockingIssues == false;
       if (_showLoaded) loaded.showHome();
     }
     return CmdResult.result(ok);
@@ -319,9 +259,7 @@ final class AppFlow extends ChangeNotifier {
       selectedRow: exerciseRow,
     );
     if (ok) {
-      await _inspectMigration(_ctrl.report);
-      _showLoaded =
-          _ctrl.report?.hasBlockingIssues == false && _migration == null;
+      _showLoaded = _ctrl.report?.hasBlockingIssues == false;
       if (_showLoaded) loaded.showHome();
     }
     return CmdResult.result(ok);

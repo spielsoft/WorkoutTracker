@@ -15,8 +15,8 @@ const activeSheetFixedColumns = [
   'is_exercise',
 ];
 
-/// Exercises columns required before schema 1.1 added `Timer Fields`.
-const priorExercisesSheetColumns = [
+/// Exercises columns required by schema [currentWbkVersion].
+const exercisesSheetColumns = [
   'Exercise',
   'Description',
   'Default Sets',
@@ -25,11 +25,6 @@ const priorExercisesSheetColumns = [
   'Notes',
   'Log Format',
   'Default Values',
-];
-
-/// Exercises columns required by schema [currentWbkVersion].
-const exercisesSheetColumns = [
-  ...priorExercisesSheetColumns,
   timerFieldsColumn,
 ];
 

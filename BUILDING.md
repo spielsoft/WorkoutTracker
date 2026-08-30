@@ -74,7 +74,7 @@ values, API keys, or local credential files.
 ## 4. Run the Credential-Free Local Gate
 
 ```sh
-dart format --output=none --set-exit-if-changed lib test integration_test
+dart format --output=none --set-exit-if-changed lib test dev
 flutter analyze
 flutter test
 ```
@@ -227,18 +227,16 @@ established bundle identity.
 
 ## 7. Run the Opt-In Live Google Gate
 
-The live integration test destructively resets and writes only the named
+No live Google test currently exists; the former live logging flow depended on
+the removed `0.9` conversion and was deleted with it. Until one is rebuilt
+against a schema `1.1` fixture, report live Google integration as unverified
+rather than as passing, and treat step 4 as the complete automated gate.
+
+Any rebuilt live test destructively resets and writes only the named
 development fixture documented in [`docs/testing.md`](docs/testing.md). Run it
-only with explicit approval and a prepared macOS login session:
-
-```sh
-WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
-  flutter test integration_test/live_logging_flow_test.dart -d macos
-```
-
-Without the environment flag, the test skips before authentication. Report a
-skipped live run as skipped, not as passing Google integration, and report any
-fixture reset failure distinctly.
+only with explicit approval and a prepared macOS login session, require an
+explicit environment flag to leave it skipping before authentication, and
+report any fixture reset failure distinctly.
 
 ## 8. Prepare Release Notes
 

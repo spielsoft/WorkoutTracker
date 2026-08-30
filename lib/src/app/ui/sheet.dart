@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:workout_tracker/migration.dart';
 
 import '../account.dart';
 import '../repair.dart';
@@ -27,7 +26,6 @@ final class SheetView extends AppView {
     required this.hasPicker,
     required this.showAccount,
     this.accountMismatch,
-    this.migration,
     super.error,
   });
 
@@ -43,7 +41,6 @@ final class SheetView extends AppView {
   final bool hasPicker;
   final bool showAccount;
   final AcctMismatch? accountMismatch;
-  final WbkMigrationReport? migration;
 }
 
 sealed class SheetCmd {
@@ -105,10 +102,6 @@ final class OpenSheet extends SheetCmd {
   const OpenSheet();
 }
 
-final class ConfirmWbkMigration extends SheetCmd {
-  const ConfirmWbkMigration();
-}
-
 final class DismissSheetError extends SheetCmd {
   const DismissSheetError();
 }
@@ -166,51 +159,6 @@ class _SheetScreenSt extends State<SheetScreen> {
     await widget.run(CreateSheet(name.isEmpty ? initial : name));
   }
 
-  Future<void> _showMigrationDialog() async {
-    final migration = widget.view.migration;
-    final isFormat = migration?.kind == WbkMigrationKind.format09;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          isFormat
-              ? 'Update workout sheet formats?'
-              : 'Convert old workout sheet?',
-        ),
-        content: Text(
-          isFormat
-              ? 'WorkoutTracker will replace the listed bracket notation '
-                    'with Python-style formats and set the workbook schema '
-                    'to 1.0. Default Values, Targets, formulas, and workout '
-                    'history will be preserved. The sheet is reread before '
-                    'writing and conversion stops if it changed.'
-              : 'WorkoutTracker will update this sheet to the current '
-                    'columns. Exercise data, formulas, and workout history '
-                    'will be preserved. The sheet is reread before writing '
-                    'and conversion stops if it changed.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            key: ValueKey(
-              isFormat
-                  ? 'confirm-format-sheet-conversion'
-                  : 'confirm-legacy-sheet-conversion',
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(isFormat ? 'Update formats' : 'Convert sheet'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && mounted) {
-      await widget.run(const ConfirmWbkMigration());
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final view = widget.view;
@@ -255,8 +203,6 @@ class _SheetScreenSt extends State<SheetScreen> {
         if (view.report case final report?)
           ValidationSummary(
             report: report,
-            migration: view.migration,
-            onMigrate: view.isBusy ? null : _showMigrationDialog,
             onRepairFormulas: view.isBusy
                 ? null
                 : () async {

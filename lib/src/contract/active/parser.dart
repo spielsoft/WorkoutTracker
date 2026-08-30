@@ -1,9 +1,6 @@
 part of '../active.dart';
 
 ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
-  final parseFormat = sheet.schemaVersion == priorWbkVersion
-      ? parseLegacyLogFormat
-      : parseLogFormat;
   final versionViolations = _versionViolations(sheet);
   final validateExercises =
       sheet.validateWorkbook || sheet.exercisesRows.isNotEmpty;
@@ -16,11 +13,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
   final exerciseViolations = [
     ...exerciseHeaderViolations,
     if (exerciseColumns != null)
-      ..._exerciseValueViolations(
-        sheet.exercisesRows,
-        exerciseColumns,
-        parseFormat,
-      ),
+      ..._exerciseValueViolations(sheet.exercisesRows, exerciseColumns),
   ];
   if (sheet.rows.isEmpty) {
     return ParsedActiveSheet._(
@@ -39,7 +32,6 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
       rows: sheet.rows,
       exercisesRows: sheet.exercisesRows,
       cellFormulas: sheet.cellFormulas,
-      parseFormat: parseFormat,
     );
   }
 
@@ -63,7 +55,6 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
       rows: sheet.rows,
       exercisesRows: sheet.exercisesRows,
       cellFormulas: sheet.cellFormulas,
-      parseFormat: parseFormat,
     );
   }
 
@@ -90,7 +81,7 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     }
 
     final workout = _cell(row, columns.workout).trim();
-    final logFormat = parseFormat(_logFormatCell(row, columns));
+    final logFormat = parseLogFormat(_logFormatCell(row, columns));
     final targetValues = logFormat is ParsedLogFormat
         ? logFormat.parseValues(_cell(row, columns.targets))
         : null;
@@ -174,7 +165,6 @@ ParsedActiveSheet parseActiveSheet(ActiveSheetInput sheet) {
     rows: sheet.rows,
     exercisesRows: sheet.exercisesRows,
     cellFormulas: sheet.cellFormulas,
-    parseFormat: parseFormat,
   );
 }
 
@@ -199,7 +189,7 @@ List<SchemaViolation> _exerciseColumnViolations(ActiveSheetInput sheet) {
   }
 
   final header = sheet.exercisesRows.first;
-  final required = _exercisesColumnsFor(sheet.schemaVersion);
+  const required = exercisesSheetColumns;
   final violations = <SchemaViolation>[];
   for (var i = 0; i < required.length; i += 1) {
     final expected = required[i];
@@ -232,13 +222,12 @@ List<SchemaViolation> _exerciseColumnViolations(ActiveSheetInput sheet) {
 List<SchemaViolation> _exerciseValueViolations(
   List<List<String>> rows,
   _ExercisesColumnIndexes columns,
-  LogFormatParseResult Function(String) parseFormat,
 ) {
   final violations = <SchemaViolation>[];
   for (var index = 1; index < rows.length; index += 1) {
     final row = rows[index];
     if (_cell(row, columns.exercise).trim().isEmpty) continue;
-    final format = parseFormat(_cell(row, columns.logFormat));
+    final format = parseLogFormat(_cell(row, columns.logFormat));
     if (format case InvalidLogFormat(:final errors)) {
       violations.add(
         SchemaViolation(
@@ -277,11 +266,7 @@ String? _timerFieldsMessage(
   _ExercisesColumnIndexes columns,
   LogFormatParseResult format,
 ) {
-  final column = columns.timerFields;
-  if (column == null) {
-    return null;
-  }
-  final labels = _parseTimerFields(_cell(row, column));
+  final labels = _parseTimerFields(_cell(row, columns.timerFields));
   if (labels == null) {
     return 'Exercises Timer Fields is not a list of quoted labels.';
   }
@@ -302,10 +287,9 @@ List<SchemaViolation> _versionViolations(ActiveSheetInput sheet) {
 
 /// Schema violations caused solely by a workbook's declared version.
 ///
-/// The app reads [currentWbkVersion] and routes [priorWbkVersion] to its
-/// format conversion. Every other declared version is rejected, including the
-/// [convertedWbkVersion] that conversion produces, because that result has no
-/// `Timer Fields` column and only its owner can add one.
+/// [currentWbkVersion] is the only version the app reads. Every other declared
+/// version, and a missing one, is unsupported schema damage that only the
+/// workbook's owner can resolve.
 List<SchemaViolation> wbkVersionViolations(String? version) {
   if (version == null) {
     return const [
@@ -316,7 +300,7 @@ List<SchemaViolation> wbkVersionViolations(String? version) {
       ),
     ];
   }
-  if (version != priorWbkVersion && version != currentWbkVersion) {
+  if (version != currentWbkVersion) {
     return [
       SchemaViolation(
         sheetRowNumber: 1,
@@ -326,13 +310,6 @@ List<SchemaViolation> wbkVersionViolations(String? version) {
     ];
   }
   return const [];
-}
-
-/// The Exercises columns a workbook declaring [schemaVersion] must have.
-List<String> _exercisesColumnsFor(String? schemaVersion) {
-  return schemaVersion == currentWbkVersion
-      ? exercisesSheetColumns
-      : priorExercisesSheetColumns;
 }
 
 List<SchemaViolation> _fixedColumnViolations(List<String> header) {
@@ -554,7 +531,7 @@ class _ExercisesColumnIndexes {
       notes: indexes['Notes']!,
       logFormat: indexes['Log Format']!,
       defaultValues: indexes['Default Values']!,
-      timerFields: indexes[timerFieldsColumn],
+      timerFields: indexes[timerFieldsColumn]!,
     );
   }
 
@@ -566,7 +543,5 @@ class _ExercisesColumnIndexes {
   final int notes;
   final int logFormat;
   final int defaultValues;
-
-  /// Null for the pre-1.1 Exercises contract, which has no timer column.
-  final int? timerFields;
+  final int timerFields;
 }

@@ -1603,10 +1603,13 @@ List<List<String>> _fieldExerciseRows(List<List<String>> rows) {
   if (rows.isEmpty || rows.first.join('|') != exercisesSheetColumns.join('|')) {
     return rows;
   }
+  // Fixture rows authored in the shorter Reps/RPE shorthand are widened into
+  // the current contract; rows already written in it pass through.
+  const shorthandWidth = 9;
   return [
     rows.first,
     for (final source in rows.skip(1))
-      if (source.length <= priorExercisesSheetColumns.length)
+      if (source.length < shorthandWidth)
         source
       else
         [

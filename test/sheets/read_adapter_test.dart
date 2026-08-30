@@ -182,39 +182,6 @@ void main() {
     );
   });
 
-  test('routes declared 0.9 formats without treating them as 1.0', () async {
-    final parsedOld = await SheetsReadAdapter(
-      client: _FakeSheetsWorkbookClient(
-        _versionedSnapshot(
-          '{Reps}[@]{RPE}',
-          '8@7',
-          exerciseColumns: priorExercisesSheetColumns,
-        ),
-        schemaVersion: '0.9',
-      ),
-    ).readParsedActiveSheet('spreadsheet-id');
-
-    expect(parsedOld.schemaViolations, isEmpty);
-    expect(parsedOld.canonicalExercises.single.defaultValues, {
-      'Reps': '8',
-      'RPE': '7',
-    });
-    expect(parsedOld.slots.single.targetValues, const {
-      'Reps': '8',
-      'RPE': '7',
-    });
-
-    final current = await SheetsReadAdapter(
-      client: _FakeSheetsWorkbookClient(
-        _versionedSnapshot('{Reps}[@]{RPE}', '8@7'),
-      ),
-    ).readParsedActiveSheet('spreadsheet-id');
-    expect(
-      current.schemaViolations.map((issue) => issue.message),
-      contains('Targets do not match Log Format.'),
-    );
-  });
-
   test('does not infer a schema version from workbook structure', () async {
     final parsed = await SheetsReadAdapter(
       client: _FakeSheetsWorkbookClient(
@@ -230,11 +197,7 @@ void main() {
   });
 }
 
-SheetsWorkbookSnapshot _versionedSnapshot(
-  String format,
-  String values, {
-  List<String> exerciseColumns = exercisesSheetColumns,
-}) {
+SheetsWorkbookSnapshot _versionedSnapshot(String format, String values) {
   return SheetsWorkbookSnapshot(
     sheets: [
       SheetsGridSnapshot(
@@ -248,7 +211,7 @@ SheetsWorkbookSnapshot _versionedSnapshot(
       SheetsGridSnapshot(
         sheet: const SheetsSheetIdentity(sheetId: 84, title: 'Exercises'),
         rows: [
-          exerciseColumns,
+          exercisesSheetColumns,
           ['Lift', '', '1', '', '', '', format, values],
         ],
       ),

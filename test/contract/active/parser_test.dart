@@ -144,17 +144,12 @@ void main() {
     }
   });
 
-  test('accepts schema 1.1, rejects 1.0, and still parses 0.9', () {
+  test('accepts schema 1.1 and rejects every other declared version', () {
     String? versionMessage(String? version) {
       final sheet = parseActiveSheet(
         ActiveSheetInput(
           rows: [historyHeaderRow([]), setLabelRow([])],
-          exercisesRows: [
-            if (version == '1.1')
-              exercisesSheetColumns
-            else
-              exercisesSheetColumns.take(8).toList(),
-          ],
+          exercisesRows: [exercisesSheetColumns],
           validateWorkbook: true,
           schemaVersion: version,
         ),
@@ -165,10 +160,13 @@ void main() {
     }
 
     expect(versionMessage('1.1'), isNull);
-    expect(versionMessage('0.9'), isNull);
     expect(
       versionMessage('1.0'),
       'Workbook schema version "1.0" is unsupported.',
+    );
+    expect(
+      versionMessage('0.9'),
+      'Workbook schema version "0.9" is unsupported.',
     );
     expect(
       versionMessage(null),

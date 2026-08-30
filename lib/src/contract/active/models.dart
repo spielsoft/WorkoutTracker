@@ -191,19 +191,14 @@ class _WorkoutReadModelBuilder {
             ),
             notes: _cell(sheet._exercisesRows[rowIndex], columns.notes),
             logFormat: _cell(sheet._exercisesRows[rowIndex], columns.logFormat),
-            format: sheet._parseFormat(
+            format: parseLogFormat(
               _cell(sheet._exercisesRows[rowIndex], columns.logFormat),
             ),
             defaultValues: _defaultValues(
               sheet._exercisesRows[rowIndex],
               columns,
-              sheet._parseFormat,
             ),
-            timerFields: _timerFields(
-              sheet._exercisesRows[rowIndex],
-              columns,
-              sheet._parseFormat,
-            ),
+            timerFields: _timerFields(sheet._exercisesRows[rowIndex], columns),
           ),
     ];
   }
@@ -365,24 +360,17 @@ class _WorkoutReadModelBuilder {
 Map<String, String> _defaultValues(
   List<String> row,
   _ExercisesColumnIndexes columns,
-  LogFormatParseResult Function(String) parseFormat,
 ) {
-  final parsed = parseFormat(_cell(row, columns.logFormat));
+  final parsed = parseLogFormat(_cell(row, columns.logFormat));
   if (parsed is! ParsedLogFormat) return const {};
   return parsed.parseValues(_cell(row, columns.defaultValues)) ?? const {};
 }
 
-List<String> _timerFields(
-  List<String> row,
-  _ExercisesColumnIndexes columns,
-  LogFormatParseResult Function(String) parseFormat,
-) {
-  final column = columns.timerFields;
-  if (column == null) return const [];
-  final labels = _parseTimerFields(_cell(row, column));
+List<String> _timerFields(List<String> row, _ExercisesColumnIndexes columns) {
+  final labels = _parseTimerFields(_cell(row, columns.timerFields));
   if (labels == null) return const [];
   return _declaredTimerFields(
-    parseFormat(_cell(row, columns.logFormat)),
+    parseLogFormat(_cell(row, columns.logFormat)),
     labels,
   );
 }

@@ -45,7 +45,7 @@ class ExeFormatImpact {
   );
 
   ExeUpdatePlan plan(Map<int, Map<String, String>> valuesByRow) {
-    final format = _sheet._parseFormat(exercise.resolvedLogFormat);
+    final format = parseLogFormat(exercise.resolvedLogFormat);
     if (format is! ParsedLogFormat) {
       return ExeUpdatePlan.invalid('The proposed Log Format is invalid.');
     }
@@ -148,7 +148,7 @@ ExeFormatImpact? _formatImpact(
   required ExerciseDef exercise,
 }) {
   final oldFormat = selected.format;
-  final newFormat = sheet._parseFormat(exercise.resolvedLogFormat);
+  final newFormat = parseLogFormat(exercise.resolvedLogFormat);
   if (oldFormat is! ParsedLogFormat || newFormat is! ParsedLogFormat) {
     return null;
   }

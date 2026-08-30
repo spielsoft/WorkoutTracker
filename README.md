@@ -27,10 +27,8 @@ The `Exercises` tab stores matching `Default Values`; active workout rows store
 independently editable `Targets`. Sets, Rest, and Tempo remain fixed metadata.
 Blank field values are valid, but a nonblank Default Values or Targets cell
 that does not match its Log Format blocks app writes until corrected.
-Declared `0.9` sheets preview their Python-style conversion before a confirmed,
-stale-checked batch. Default Values and Targets retain their meaning, and
-history stays byte-for-byte unchanged; entries the current format cannot parse
-remain available as raw text.
+History entries the current format cannot parse remain available as unchanged
+raw text rather than being discarded.
 
 ## Current Status
 

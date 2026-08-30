@@ -206,7 +206,7 @@ class _WorkoutRowWritePlanner {
       CellUpdate(
         sheetRowNumber: sheetRowNumber,
         sheetColumnNumber: activeColumns.targets + 1,
-        value: switch (context.sheet._parseFormat(logFormat)) {
+        value: switch (parseLogFormat(logFormat)) {
           ParsedLogFormat format => format.renderValues(metadata.targetValues),
           InvalidLogFormat() => '',
         },

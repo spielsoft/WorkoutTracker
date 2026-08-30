@@ -6,30 +6,18 @@ it useful to a person working directly in Google Sheets.
 ## Workbook Version
 
 WorkoutTracker stores a document-visible Google Sheets developer-metadata
-entry named `workouttracker.schema_version`. The current workbook version is
-`1.1`, which added the required Exercises `Timer Fields` column. Declared `0.9`
-workbooks retain their previous syntax until deliberately converted. An absent
-key identifies the original legacy workbook format.
+entry named `workouttracker.schema_version`. Version `1.1`, which requires the
+Exercises `Timer Fields` column, is the only version the app supports. New
+workbooks receive that version token.
 
-Version `1.0` is no longer supported. There is no in-app upgrade to `1.1`:
-adding the `Timer Fields` column and updating the version token is
-owner-performed work, and a declared `1.0` workbook is rejected until the owner
-completes it.
+Every other declared version, and an absent key, is blocking schema damage
+reported on the ordinary repair path. There is no in-app conversion or upgrade:
+bringing a workbook to `1.1` is owner-performed work in Google Sheets. A
+declared version is never inferred from headers.
 
-The version selects a migration path but never replaces structural validation.
-Headers, values, formulas, and writable columns must still satisfy the declared
-version's contract before ordinary writes. Only version `1.1` requires
-`Timer Fields`; `0.9` keeps the eight-column Exercises contract. New workbooks
-receive the current version token.
-
-A declared `0.9` workbook receives a preview before its bracket-token formats
-are converted to Python-style literal formats. Confirmation rereads the
-workbook, proves Default Values, Targets, and parseable history remain
-equivalent, applies the format and metadata changes in one batch, and preserves
-all history cells byte-for-byte. That conversion produces the version `1.0` it
-has always produced, so its result is then rejected as unsupported; it must
-never stamp a version whose columns it did not create. Missing metadata selects
-only the original legacy conversion; versions are never inferred from headers.
+The version never replaces structural validation. Headers, values, formulas,
+and writable columns must still satisfy the `1.1` contract before ordinary
+writes.
 
 ## Required Tabs and Headers
 
@@ -53,10 +41,9 @@ column positions must never be guessed.
 ## Active Rows and Workouts
 
 An active-sheet row currently represents an exercise when its first display
-cell is non-empty and not part of a merged human-only first-column row. New and
-migrated rows also carry `x` in `is_exercise`; the styled-layout plan will make
-that marker authoritative after the owner migration is complete. Other rows
-are ignored.
+cell is non-empty and not part of a merged human-only first-column row. New
+rows also carry `x` in `is_exercise`; the styled-layout plan will make that
+marker authoritative. Other rows are ignored.
 
 - Blank `Workout` means the default workout.
 - Blank `is_backup` means false.

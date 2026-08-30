@@ -45,8 +45,7 @@ class _ExerciseWritePlanner {
   }
 
   bool _hasValidFormat(ExerciseDef exercise) {
-    return context.sheet._parseFormat(exercise.resolvedLogFormat)
-        is ParsedLogFormat;
+    return parseLogFormat(exercise.resolvedLogFormat) is ParsedLogFormat;
   }
 
   ExercisesWritePlan planCanonicalReorder(ReorderIntent intent) {
@@ -103,7 +102,7 @@ class _ExerciseWritePlanner {
     _setRowValue(row, columns.defaultTempo, exercise.defaultTempo);
     _setRowValue(row, columns.notes, exercise.notes);
     _setRowValue(row, logFormatColumn, exercise.resolvedLogFormat);
-    final format = context.sheet._parseFormat(exercise.resolvedLogFormat);
+    final format = parseLogFormat(exercise.resolvedLogFormat);
     _setRowValue(
       row,
       columns.defaultValues,
@@ -111,13 +110,11 @@ class _ExerciseWritePlanner {
           ? format.renderValues(exercise.defaultValues)
           : '',
     );
-    if (columns.timerFields case final timerColumn?) {
-      _setRowValue(
-        row,
-        timerColumn,
-        _renderTimerFields(format, exercise.timerFields),
-      );
-    }
+    _setRowValue(
+      row,
+      columns.timerFields,
+      _renderTimerFields(format, exercise.timerFields),
+    );
     return row;
   }
 

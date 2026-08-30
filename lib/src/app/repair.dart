@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:workout_tracker/contract.dart';
-import 'package:workout_tracker/migration.dart';
 
 import 'validation.dart';
 import 'ui/shared/status.dart';
@@ -13,8 +12,6 @@ class ValidationSummary extends StatelessWidget {
     this.onRepairFormulas,
     this.onRepairFormulaIssue,
     this.onOpenSpreadsheet,
-    this.migration,
-    this.onMigrate,
     super.key,
   });
 
@@ -26,8 +23,6 @@ class ValidationSummary extends StatelessWidget {
   })?
   onRepairFormulaIssue;
   final Future<void> Function()? onOpenSpreadsheet;
-  final WbkMigrationReport? migration;
-  final Future<void> Function()? onMigrate;
 
   @override
   Widget build(BuildContext context) {
@@ -38,46 +33,7 @@ class ValidationSummary extends StatelessWidget {
       (issue) => issue.needsChoice,
     );
     final panels = <Widget>[
-      if (migration case final migration?)
-        IssuePanel(
-          icon: Icons.upgrade_outlined,
-          title: _migrationTitle(migration),
-          lines: [
-            if (migration.canApply)
-              migration.kind == WbkMigrationKind.format09
-                  ? 'This sheet needs conversion from version 0.9 to 1.0.'
-                  : 'This sheet uses an older WorkoutTracker column layout.',
-            if (migration.blockers.isNotEmpty) 'Spreadsheet details',
-            ...migration.blockers,
-          ],
-          action: migration.canApply
-              ? FilledButton.icon(
-                  key: ValueKey(
-                    migration.kind == WbkMigrationKind.format09
-                        ? 'convert-format-sheet'
-                        : 'convert-legacy-sheet',
-                  ),
-                  onPressed: onMigrate == null
-                      ? null
-                      : () => unawaited(onMigrate!()),
-                  icon: const Icon(Icons.upgrade_outlined),
-                  label: Text(
-                    migration.kind == WbkMigrationKind.format09
-                        ? 'Update formats'
-                        : 'Convert old sheet',
-                  ),
-                )
-              : FilledButton.icon(
-                  key: const ValueKey('open-legacy-sheet'),
-                  onPressed: onOpenSpreadsheet == null
-                      ? null
-                      : () => unawaited(onOpenSpreadsheet!()),
-                  icon: const Icon(Icons.open_in_new_outlined),
-                  label: const Text('Open in Google Sheets'),
-                ),
-          tone: migration.canApply ? IssueTone.warning : IssueTone.error,
-        )
-      else if (report.hasSchemaDamage)
+      if (report.hasSchemaDamage)
         IssuePanel(
           icon: Icons.report_problem_outlined,
           title: 'Fix the active sheet structure',
@@ -140,17 +96,6 @@ class ValidationSummary extends StatelessWidget {
       ],
     );
   }
-}
-
-String _migrationTitle(WbkMigrationReport report) {
-  if (report.kind == WbkMigrationKind.format09) {
-    return report.canApply
-        ? 'Update workout sheet formats'
-        : 'Workout sheet format update needs attention';
-  }
-  return report.canApply
-      ? 'Convert old workout sheet'
-      : 'Old workout sheet needs attention';
 }
 
 String _manualRepairItemLine(ManualRepairItem item) {

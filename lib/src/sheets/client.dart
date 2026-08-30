@@ -4,7 +4,6 @@ import '../defaults.dart';
 
 const workbookSchemaKey = 'workouttracker.schema_version';
 const workbookSchemaVersion = currentWbkVersion;
-const priorWorkbookSchemaVersion = priorWbkVersion;
 
 abstract interface class SheetsWorkbookClient {
   Future<SheetsWorkbookMetadata> fetchMetadata(String spreadsheetId);

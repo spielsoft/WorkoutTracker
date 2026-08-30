@@ -10,7 +10,6 @@ contract:
 | Application orchestration | `test/app/{service,validation,controller,workspace,store}_test.dart`, `test/app/ui/flow_test.dart` | Protect validation-before-write, rereads, account binding, persistence failures, restore and command serialization, and public commands. |
 | Account and sheet access | `test/app/{account_session,auth_client,selection,create_dialog}_test.dart`, `test/app/ui/{sheet,sheet_flow,sheet_picker_page}_test.dart` | Protect optional Dart-override validation, Apple-native configuration delegation, accepted native callback shapes, requested scopes, app-owned adapter calls, account mismatch handling, and visible selection flows. Fakes do not establish Google Sign-In or Drive behavior. |
 | Workout and exercise flows | `test/app/{progress,live_logging_entry}_test.dart`, `test/app/ui/{workout_home,logging_flow,log,navigation,placement_flow,exercise_library_flow,exercise_authoring,exercise_screen,library_search}_test.dart` | Protect generated default/target fields, target-prefilled logging, raw-set editing, navigation, authoring, placement, reorder auto-scroll, progress, and error recovery. |
-| Temporary owner migration | `test/migration/legacy_field_migration_test.dart` | Proves version dispatch, allowlisting, dry-run blockers, field conversion, metadata stamping, and raw-history preservation for the temporary pre-MVP migrator. Delete it with the migrator after owner workbooks are converted. |
 | Shell and accessibility | `test/app/ui/shell_test.dart` | Runs Flutter accessibility guidelines in core states and checks narrow, large-text workflows through visible outcomes. |
 
 ## Unusual Checks
@@ -21,13 +20,10 @@ contract:
 - `test/app/live_logging_entry_test.dart` proves the application-owned live-test
   entry composes workspace selection and public logging commands. Its fake
   service is not evidence of Google behavior.
-- `integration_test/live_logging_flow_test.dart` is excluded from the default
-  suite. Without `WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1` it skips before
-  login. Only the documented opt-in macOS run establishes live Google behavior,
-  and it may reset and write the development Sheet.
-- `integration_test/legacy_field_migration_test.dart` is also excluded. It
-  dry-runs only when explicitly enabled and requires the exact spreadsheet ID
-  again as confirmation before applying the temporary owner migration.
+- No live Google test currently exists, so `flutter test` is the whole suite.
+  The former live logging flow depended on the deleted `0.9` conversion; see
+  `docs/testing.md` for the fixture that survives it and the opt-in rules any
+  rebuilt live flow must follow.
 - Native Apple bundle and accessibility smoke checks are release commands, not
   simulated Dart tests. See `BUILDING.md` and `docs/accessibility.md`.
 - Dynamic-field live acceptance inspects both a conventional Weight/Reps/RPE

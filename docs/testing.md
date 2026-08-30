@@ -27,17 +27,12 @@ callback order.
 
 For dynamic exercise fields, retain public coverage for unique Log Format
 labels, Default Values and Targets round-trips, target prefill versus saved
-history precedence, raw-history preservation, and stale-write rejection. The
-temporary owner migration and its colocated tests are deleted together before
-MVP release.
+history precedence, raw-history preservation, and stale-write rejection.
 
 Workbook-version coverage verifies that new sheets write
-`workouttracker.schema_version=1.1`, declared `0.9` sheets retain their routed
-syntax until conversion, declared `1.0` sheets are rejected as unsupported and
-offered no in-app upgrade, missing metadata selects only the original legacy
-converter, and a declared version is never guessed from headers. The `0.9`
-conversion is covered as producing the `1.0` it always produced, whose result
-is then rejected rather than falsely claiming `1.1` compatibility.
+`workouttracker.schema_version=1.1`, that every other declared version and
+missing metadata is rejected as unsupported schema damage with no in-app
+upgrade offered, and that a declared version is never guessed from headers.
 
 Schema 1.1 coverage verifies the nine-column Exercises header, blank
 `Timer Fields` reading as empty, populated cells round-tripping exact labels in
@@ -96,63 +91,25 @@ Restart the Simulator application for the change to take effect. Set it back to
 
 ## Live Google Integration
 
-The writable fixture is:
+The writable development fixture is:
 
 ```text
 https://docs.google.com/spreadsheets/d/1zQrmCYelrNqRMv4WtJcOrtezSxoaVniXzXi4XgKva_E/edit?gid=0#gid=0
 ```
 
-The live test can reset and write this Sheet. Run it only when the active task
-explicitly requires real Google validation and the user is ready for login and
-fixture writes:
+No live Google test currently exists. The former live logging flow was built
+around a declared `0.9` workbook and its in-app conversion, both of which are
+gone, so it was deleted rather than left unrunnable. Rebuild it against a
+schema `1.1` fixture when real Google validation is next required.
 
-```sh
-WORKOUT_TRACKER_RUN_LIVE_GOOGLE_TESTS=1 \
-  flutter test integration_test/live_logging_flow_test.dart -d macos
-```
+The fixture identity, `LiveLoggingEntry`, and the reset harness in
+`test/support/reset.dart` remain and are covered by the local suite. The reset
+harness is allowlisted to the Sheet above and to no other workbook.
 
-This command targets the supported macOS app and only the allowlisted
-development Sheet. It resets that fixture to a declared `0.9` workbook,
-reviews the format-conversion dry run, confirms conversion to `1.0`, upgrades
-the placed DB Step-Up to its five-field format, and logs
-`(12, 15)x8@8,0`. It then reads the Sheet directly to verify version metadata,
-the Exercises definition, formula ownership, active Targets, the new set, and
-unchanged pre-conversion history. The teardown resets the fixture to its
-ordinary deterministic state even when an assertion fails.
-
-That live flow predates schema 1.1 and cannot pass as written: the `0.9`
-conversion still produces `1.0`, which the app now rejects, so nothing after
-the conversion can log a set. Rebuild the flow around a schema 1.1 fixture
-before running it again. Nothing in the timed-exercise plan needs it.
-
-Without the environment flag, it must skip before authentication. A live run
-must reset the fixture after itself; reset failures fail the test distinctly.
-
-## Temporary Owner Migration
-
-The pre-MVP app recognizes an exact unversioned legacy workbook and offers a
-confirmed **Convert old sheet** action. It dry-runs first, rereads before
-writing, stamps version `0.9`, and revalidates the converted workbook. Other
-damaged or versioned workbooks remain on the normal repair path.
-The v1 converter preserves legacy Reps text under `Reps`, or under the explicit
-`Seconds` alias used by timed exercises; it does not guess arbitrary fields.
-
-Before migrating an owner workbook, make a disposable copy and run the
-temporary field migrator in dry-run mode:
-
-```sh
-WORKOUT_TRACKER_RUN_LEGACY_FIELD_MIGRATION=1 \
-WORKOUT_TRACKER_LEGACY_MIGRATION_SPREADSHEET_ID=<copied-sheet-id> \
-  flutter test integration_test/legacy_field_migration_test.dart -d macos
-```
-
-Review its listed changes, counts, and blockers. To apply only after explicit
-owner approval, rerun the same command with the exact spreadsheet ID repeated
-as `WORKOUT_TRACKER_CONFIRM_LEGACY_FIELD_MIGRATION`. The allowlist and exact
-confirmation prevent accidental writes to any other workbook. Inspect the copy
-in Google Sheets and in the app before repeating the process for an original.
-Delete the temporary migrator, integration harness, and migration tests after
-all owner workbooks complete the combined field/layout migration.
+A live test may reset and write that Sheet, so any rebuilt flow stays opt-in:
+it must skip before authentication without its explicit environment flag, must
+reset the fixture after itself, and must fail distinctly when that reset fails.
+Never enable such a test implicitly.
 
 ## Release Validation
 
