@@ -468,19 +468,19 @@ and is deliberately not part of this slice.
 
 - [ ] The harness runs on a physical iPhone in release or profile mode, and the
       device and OS version are recorded.
-- [ ] No Google account is used and no workout workbook is read or written.
-- [ ] A fractional exercise duration expires at its exact time while the visible
+- [x] No Google account is used and no workout workbook is read or written.
+- [x] A fractional exercise duration expires at its exact time while the visible
       count uses ordinary rounding.
-- [ ] Exercise timing shows the full exercise name, replaces rest, dims and
+- [x] Exercise timing shows the full exercise name, replaces rest, dims and
       locks every underlying app action, remains locked while paused, and
       unlocks on Done and expiry.
-- [ ] Expiry produces one full system vibration rather than the old impact
+- [x] Expiry produces one full system vibration rather than the old impact
       thunk; it does not repeat and adds no sound.
-- [ ] Stopping a hold early records the elapsed time in the field, and running
+- [x] Stopping a hold early records the elapsed time in the field, and running
       to expiry records the full duration.
-- [ ] Rest timing displays `REST`, produces the same full vibration, and leaves
+- [x] Rest timing displays `REST`, produces the same full vibration, and leaves
       the rest of the app interactive.
-- [ ] Background/resume behavior is observed as best effort and is not treated
+- [x] Background/resume behavior is observed as best effort and is not treated
       as a guaranteed suspended-app alert.
 - [ ] The final report records the physical device and OS, observed behavior,
       commits under test, and every unresolved risk.
