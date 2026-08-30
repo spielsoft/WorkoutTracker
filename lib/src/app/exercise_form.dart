@@ -4,6 +4,27 @@ import 'package:workout_tracker/contract.dart';
 import 'ui/shared/a11y.dart';
 import 'ui/shared/header.dart';
 
+/// Width of the Timer column that sits beside every default-value row at the
+/// ordinary text size.
+///
+/// Wide enough for the shared heading and a full checkbox tap target while
+/// leaving the value field the rest of a narrow phone.
+const _timerColumnWidth = 76.0;
+
+/// The widest the Timer column may grow for large text, so the value field it
+/// sits beside keeps room for a number.
+const _maxTimerColumnWidth = 160.0;
+
+/// Width of the Timer column at the reader's text size.
+///
+/// The heading scales with the text around it, so a column fixed at the
+/// ordinary width would clip it. Growing with the scaler keeps the whole word
+/// readable; the cap keeps the value field usable on a narrow phone.
+double _timerColumnWidthFor(BuildContext context) {
+  final scaled = MediaQuery.textScalerOf(context).scale(_timerColumnWidth);
+  return scaled.clamp(_timerColumnWidth, _maxTimerColumnWidth);
+}
+
 enum ExerciseFormMode { create, edit }
 
 class ExerciseAuthoringScreen extends StatefulWidget {
@@ -407,6 +428,7 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
       ExerciseFormMode.edit => 'Edit exercise',
     };
     final parsedFormat = parseLogFormat(_formatCtrl.text);
+    final timerColumnWidth = _timerColumnWidthFor(context);
 
     return Form(
       key: _formKey,
@@ -544,77 +566,63 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
           ),
           if (parsedFormat case ParsedLogFormat(:final fieldLabels)) ...[
             const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final twoColumn = constraints.maxWidth >= 620;
-                final fieldWidth = twoColumn
-                    ? (constraints.maxWidth - 12) / 2
-                    : constraints.maxWidth;
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    for (var index = 0; index < fieldLabels.length; index += 1)
-                      SizedBox(
-                        width: fieldWidth,
-                        child: _AuthoringField(
-                          key: ValueKey(
-                            'exercise-authoring-default-${fieldLabels[index]}',
-                          ),
-                          controller: _valueCtrls[fieldLabels[index]]!,
-                          enabled: !widget.isBusy,
-                          semanticsIdentifier:
-                              'exercise-authoring-default-${fieldLabels[index]}',
-                          labelText: 'Default ${fieldLabels[index]}',
-                          icon: Icons.tune_outlined,
-                          textInputAction: TextInputAction.next,
-                          onChanged: _changed,
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            A11yHeader(
-              label: 'Timer',
-              child: Text(
-                'Timer',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+            Row(
+              children: [
+                const Expanded(child: SizedBox.shrink()),
+                SizedBox(
+                  width: timerColumnWidth,
+                  child: A11yHeader(
+                    label: 'Timer',
+                    child: Text(
+                      'Timer',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
+            for (var index = 0; index < fieldLabels.length; index += 1) ...[
+              if (index > 0) const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _AuthoringField(
+                      key: ValueKey(
+                        'exercise-authoring-default-${fieldLabels[index]}',
+                      ),
+                      controller: _valueCtrls[fieldLabels[index]]!,
+                      enabled: !widget.isBusy,
+                      semanticsIdentifier:
+                          'exercise-authoring-default-${fieldLabels[index]}',
+                      labelText: 'Default ${fieldLabels[index]}',
+                      textInputAction: TextInputAction.next,
+                      onChanged: _changed,
+                    ),
+                  ),
+                  SizedBox(
+                    width: timerColumnWidth,
+                    child: _TimerCheckbox(
+                      key: ValueKey(
+                        'exercise-authoring-timer-${fieldLabels[index]}',
+                      ),
+                      label: fieldLabels[index],
+                      timed: _timedLabels.contains(fieldLabels[index]),
+                      enabled: !widget.isBusy,
+                      onChanged: (timed) =>
+                          _timerChanged(fieldLabels[index], timed),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 6),
             Text(
               'Timed fields count down in seconds while you log a set.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
-            ),
-            const SizedBox(height: 4),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final twoColumn = constraints.maxWidth >= 620;
-                final fieldWidth = twoColumn
-                    ? (constraints.maxWidth - 12) / 2
-                    : constraints.maxWidth;
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 4,
-                  children: [
-                    for (final label in fieldLabels)
-                      SizedBox(
-                        width: fieldWidth,
-                        child: _TimerCheckbox(
-                          key: ValueKey('exercise-authoring-timer-$label'),
-                          label: label,
-                          timed: _timedLabels.contains(label),
-                          enabled: !widget.isBusy,
-                          onChanged: (timed) => _timerChanged(label, timed),
-                        ),
-                      ),
-                  ],
-                );
-              },
             ),
           ],
           const SizedBox(height: 12),
@@ -688,6 +696,10 @@ bool _sameStringList(List<String> left, List<String> right) {
 }
 
 /// One `Timer` column checkbox for a single Log Format field.
+/// One `Timer` column checkbox, beside the default-value row it belongs to.
+///
+/// The row's own label names the field, so the checkbox carries that name in
+/// semantics instead of repeating it on screen.
 class _TimerCheckbox extends StatelessWidget {
   const _TimerCheckbox({
     super.key,
@@ -704,12 +716,10 @@ class _TimerCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CheckboxListTile(
+    return Checkbox(
       value: timed,
       onChanged: enabled ? (value) => onChanged(value ?? false) : null,
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      title: Text(label, semanticsLabel: 'Timer $label'),
+      semanticLabel: 'Timer $label',
     );
   }
 }
@@ -721,7 +731,7 @@ class _AuthoringField extends StatefulWidget {
     required this.enabled,
     required this.semanticsIdentifier,
     required this.labelText,
-    required this.icon,
+    this.icon,
     required this.textInputAction,
     this.keyboardType,
     this.helperText,
@@ -735,7 +745,10 @@ class _AuthoringField extends StatefulWidget {
   final bool enabled;
   final String semanticsIdentifier;
   final String labelText;
-  final IconData icon;
+
+  /// Leading glyph, or null for the generated default-value fields, whose
+  /// row label already names them.
+  final IconData? icon;
   final TextInputAction textInputAction;
   final TextInputType? keyboardType;
   final String? helperText;
@@ -797,7 +810,7 @@ class _AuthoringFieldSt extends State<_AuthoringField> {
         decoration: InputDecoration(
           labelText: widget.labelText,
           border: const OutlineInputBorder(),
-          prefixIcon: Icon(widget.icon),
+          prefixIcon: widget.icon == null ? null : Icon(widget.icon),
           helperText: widget.helperText,
         ),
         textInputAction: widget.textInputAction,

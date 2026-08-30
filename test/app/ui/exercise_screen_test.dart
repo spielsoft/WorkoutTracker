@@ -1,6 +1,5 @@
-import 'dart:ui' show SemanticsAction;
-
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/app.dart';
@@ -374,6 +373,18 @@ void main() {
     expect(
       tester.getSemantics(find.bySemanticsLabel('Timer Reps').first),
       isSemantics(label: 'Timer Reps', hasCheckedState: true, isChecked: true),
+    );
+
+    // The column heading scales with the text around it, so a column sized for
+    // the ordinary text size would cut the word short.
+    final heading = find.text('Timer');
+    await tester.ensureVisible(heading);
+    await tester.pumpAndSettle();
+    final headingText = tester.renderObject<RenderParagraph>(heading);
+    expect(
+      headingText.size.width,
+      greaterThanOrEqualTo(headingText.getMaxIntrinsicWidth(double.infinity)),
+      reason: 'the Timer heading must fit its column rather than clip',
     );
     await expectFlutterAccessibilityGuidelines(tester);
   });
