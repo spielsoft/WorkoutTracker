@@ -83,6 +83,19 @@ repeated label, or a label the same row's Log Format does not declare is
 blocking schema damage. Timer configuration is never copied to the active
 sheet, has no placement-level override, and never rewrites targets or history.
 
+A Log Format label may hold any character except braces, so the two characters
+the list itself reserves are escaped with a backslash inside the quotes:
+
+- `\'` is an apostrophe, as in `['Athlete\'s Hold']`;
+- `\\` is a backslash, as in `['Tempo \\ Hold']`.
+
+Nothing else is escaped. Commas, brackets, spaces, and non-ASCII text stand for
+themselves inside the quotes, so `['Hold, Seconds']` and `['Sekundenhalt ⏱']`
+are each one label and a label keeps its own leading and trailing spaces. Only
+padding outside the quotes is ignored. A backslash before any other character
+is malformed rather than a guess, so a hand-typed mistake is reported instead
+of quietly becoming a different label; write `\\` to mean a literal backslash.
+
 Creating a canonical exercise appends one `Exercises` row. Adding that exercise
 to a workout creates a placement row: direct formulas for identity and log
 format, copied defaults for row-local targets, the selected workout, backup

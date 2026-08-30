@@ -144,6 +144,67 @@ void main() {
     }
   });
 
+  test('blocks a malformed Timer Fields escape', () {
+    const malformedCells = {
+      // A lone backslash before the closing quote leaves the list unterminated
+      // even though the row declares a label ending in a backslash.
+      r'{Seconds\}s@{RPE}': r"['Seconds\']",
+      // `\d` is not an escape this codec defines, so the cell is damage rather
+      // than a label of `Seconds\d` or `Secondsd`.
+      r'{Seconds\d}s@{RPE}': r"['Seconds\d']",
+      // Quotes open a label; they cannot be escaped outside one.
+      '{Seconds}s@{RPE}': r"[\'Seconds\']",
+    };
+
+    for (final entry in malformedCells.entries) {
+      final sheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [historyHeaderRow([]), setLabelRow([])],
+          exercisesRows: [
+            exercisesSheetColumns,
+            exerciseRow(
+              'Side Plank',
+              format: entry.key,
+              timerFields: entry.value,
+            ),
+          ],
+          validateWorkbook: true,
+        ),
+      );
+
+      expect(
+        sheet.schemaViolations.map((violation) => violation.message),
+        contains('Exercises Timer Fields is not a list of quoted labels.'),
+        reason: entry.value,
+      );
+    }
+  });
+
+  test('blocks the unescaped apostrophe cell escaping replaces', () {
+    List<String> violations(String timerFields) {
+      return parseActiveSheet(
+        ActiveSheetInput(
+          rows: [historyHeaderRow([]), setLabelRow([])],
+          exercisesRows: [
+            exercisesSheetColumns,
+            exerciseRow(
+              'Wall Sit',
+              format: "{Athlete's Hold}s@{RPE}",
+              timerFields: timerFields,
+            ),
+          ],
+          validateWorkbook: true,
+        ),
+      ).schemaViolations.map((violation) => violation.message).toList();
+    }
+
+    expect(
+      violations("['Athlete's Hold']"),
+      contains('Exercises Timer Fields is not a list of quoted labels.'),
+    );
+    expect(violations(r"['Athlete\'s Hold']"), isEmpty);
+  });
+
   test('accepts schema 1.1 and rejects every other declared version', () {
     String? versionMessage(String? version) {
       final sheet = parseActiveSheet(

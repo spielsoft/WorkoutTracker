@@ -211,6 +211,147 @@ void main() {
     );
   });
 
+  test('every awkward Log Format label round-trips through Timer Fields', () {
+    const awkwardLabels = [
+      'Seconds',
+      "Athlete's Hold",
+      r'Back\Slash',
+      r"It\'s Timed",
+      'Hold, Seconds',
+      'Hold [left]',
+      ' Padded Hold ',
+      'Sekundenhalt ⏱ é',
+      '保持 🏋 秒',
+    ];
+
+    for (final label in awkwardLabels) {
+      final format = '{$label}s@{RPE}';
+      final sheet = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [historyHeaderRow([]), setLabelRow([])],
+          exercisesRows: const [exercisesSheetColumns],
+          validateWorkbook: true,
+        ),
+      );
+      final written = sheet
+          .planCanonicalAppend(
+            ExerciseDef(
+              exercise: 'Timed Hold',
+              logFormat: format,
+              timerFields: [label, 'RPE'],
+            ),
+          )
+          .previewRowsAfterApplying([exercisesSheetColumns]);
+      final reread = parseActiveSheet(
+        ActiveSheetInput(
+          rows: [historyHeaderRow([]), setLabelRow([])],
+          exercisesRows: written,
+          validateWorkbook: true,
+        ),
+      );
+
+      expect(reread.schemaViolations, isEmpty, reason: label);
+      expect(reread.canonicalExercises.single.timerFields, [
+        label,
+        'RPE',
+      ], reason: label);
+    }
+  });
+
+  test('an ordinary label still renders as a plain quoted list', () {
+    final sheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [historyHeaderRow([]), setLabelRow([])],
+        exercisesRows: const [exercisesSheetColumns],
+        validateWorkbook: true,
+      ),
+    );
+
+    final written = sheet
+        .planCanonicalAppend(
+          ExerciseDef(
+            exercise: 'Side Plank',
+            logFormat: '{Seconds}s@{RPE}',
+            timerFields: const ['Seconds'],
+          ),
+        )
+        .previewRowsAfterApplying([exercisesSheetColumns]);
+
+    expect(written[1].last, "['Seconds']");
+  });
+
+  test('an apostrophe label survives canonical create, update, and reread', () {
+    const label = "Athlete's Hold";
+    const format = "{Athlete's Hold}s@{RPE}";
+    final activeRows = [
+      historyHeaderRow(['Week 1']),
+      setLabelRow(['S1']),
+      activeRow(
+        'Wall Sit',
+        targets: '30s@8',
+        logFormat: format,
+        history: const ['25s@8'],
+      ),
+    ];
+    final exercisesRows = [
+      exercisesSheetColumns,
+      _exerciseRow(
+        'Wall Sit',
+        format: format,
+        values: const {label: '30', 'RPE': '8'},
+      ),
+    ];
+    final sheet = parseActiveSheet(
+      ActiveSheetInput(
+        rows: activeRows,
+        exercisesRows: exercisesRows,
+        validateWorkbook: true,
+      ),
+    );
+    expect(sheet.schemaViolations, isEmpty);
+
+    final timed = ExerciseDef(
+      exercise: 'Wall Sit',
+      defaultSets: '3',
+      defaultRest: '45s',
+      defaultTempo: 'hold',
+      logFormat: format,
+      defaultValues: const {label: '30', 'RPE': '8'},
+      timerFields: const [label],
+    );
+
+    final created = sheet.planCanonicalAppend(timed).previewRowsAfterApplying([
+      exercisesSheetColumns,
+    ]);
+    expect(created[1].last, r"['Athlete\'s Hold']");
+
+    final createdReread = parseActiveSheet(
+      ActiveSheetInput(
+        rows: [historyHeaderRow([]), setLabelRow([])],
+        exercisesRows: created,
+        validateWorkbook: true,
+      ),
+    );
+    expect(createdReread.schemaViolations, isEmpty);
+    expect(createdReread.canonicalExercises.single.timerFields, [label]);
+
+    final update = sheet.planCanonicalUpdate(
+      selectedExercise: sheet.canonicalExercises.single,
+      exercise: timed,
+    );
+    final updatedReread = parseActiveSheet(
+      ActiveSheetInput(
+        rows: activeRows,
+        exercisesRows: update.previewRowsAfterApplying(exercisesRows),
+        validateWorkbook: true,
+      ),
+    );
+
+    expect(updatedReread.schemaViolations, isEmpty);
+    expect(updatedReread.canonicalExercises.single.timerFields, [label]);
+    expect(updatedReread.slots.single.targetValues, {label: '30', 'RPE': '8'});
+  });
+
   test('canonical exercise defaults round-trip through append planning', () {
     final sheet = parseActiveSheet(
       ActiveSheetInput(

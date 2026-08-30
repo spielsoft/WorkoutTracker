@@ -37,8 +37,12 @@ upgrade offered, and that a declared version is never guessed from headers.
 Schema 1.1 coverage verifies the nine-column Exercises header, blank
 `Timer Fields` reading as empty, populated cells round-tripping exact labels in
 Log Format declaration order, and malformed, repeated, or undeclared labels
-blocking every write. Exercise create and update plans are covered as writing
-`Timer Fields` while leaving active rows, Targets, and history untouched.
+blocking every write. The round-trip is covered for every awkward label the Log
+Format grammar admits, including apostrophes, backslashes, commas, brackets,
+leading and trailing spaces, and non-ASCII text, so an ordinary label still
+renders as a plain `['Seconds']` while a malformed escape stays blocked.
+Exercise create and update plans are covered as writing `Timer Fields` while
+leaving active rows, Targets, and history untouched.
 Template coverage verifies that a missing catalog `timerFields` property parses
 as empty, that non-list and non-string values are rejected, that all maintained
 catalog records declare the property explicitly, and that every declared label
