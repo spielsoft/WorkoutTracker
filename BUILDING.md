@@ -82,7 +82,7 @@ flutter test
 These checks use application-owned fakes. They do not prove Google, OAuth,
 Firebase, or native sign-in behavior.
 
-Public CI runs this gate on Linux with Flutter 3.44.2. It intentionally has no
+Public CI runs this gate on Linux with Flutter 3.47.2. It intentionally has no
 Google credentials and does not run the opt-in live test. Apple builds remain a
 local release gate because Xcode availability, signing, provisioning, and
 bundle inspection cannot be established reliably by that unsigned Linux job.

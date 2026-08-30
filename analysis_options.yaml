@@ -9,6 +9,19 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# Analysis owns the Dart sources this repository writes. `build/` is generated
+# and ignored, and the platform directories hold Swift, Gradle, and C++ rather
+# than Dart, so none of these can contribute a finding worth acting on. There
+# is no `web/**` entry because this application has no web target.
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - windows/**
+    - macos/**
+    - linux/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

@@ -82,11 +82,9 @@ void main() {
     expect(front.selectedChoice.canonicalRow, 2);
     expect(front.timerFields, ['Seconds']);
     expect(side.selectedChoice.canonicalRow, 3);
-    expect(
-      side.timerFields,
-      ['Hold'],
-      reason: 'the twin name must not decide which row configures a timer',
-    );
+    expect(side.timerFields, [
+      'Hold',
+    ], reason: 'the twin name must not decide which row configures a timer');
     expect(
       sheet.healingIssues,
       isEmpty,

@@ -80,8 +80,10 @@ SDK selects them, not because they were skipped: `clock`, `matcher`,
 `stack_trace`, `test_api`, `meta`, `material_color_utilities`, and
 `vector_math` come from `flutter` and `flutter_test`; `code_assets`, `hooks`,
 `record_use`, and `objective_c` come from the `path_provider_foundation` chain.
-Moving them requires a Flutter SDK upgrade, which is a machine-level change
-outside a dependency review.
+Moving them requires a Flutter SDK upgrade. This application is the only
+consumer of Flutter on the machine that builds it, so that SDK is a reviewable
+dependency of this project rather than shared infrastructure, and the owner
+directed the upgrade the next day. The record below covers it.
 
 The CI Flutter pin moved from 3.44.2 to 3.44.6 so the toolchain that gates a
 pull request is the one the upgrade was validated against.
@@ -94,8 +96,108 @@ machine - which predates this upgrade and is a signing condition rather than a
 compilation failure, so the macOS Swift graph is resolved and reviewed but its
 clean signed build in `BUILDING.md` remains unrun.
 
+## 2026-08-30 Flutter SDK Upgrade
+
+The Flutter SDK moved 3.44.6 -> 3.47.2 and Dart 3.12.2 -> 3.13.2 at the owner's
+direction. This is the upgrade the section above deferred, so its compatibility
+review is recorded here and the packages the old SDK held back are reviewed as
+part of it. The release notes and breaking-change guides were read directly;
+three of the four regressions they named are invisible to the test suite.
+
+`flutter pub upgrade --major-versions` then released ten of the eleven pinned
+packages. None is a direct dependency of this application, and only `clock` is
+even referenced by its source.
+
+| Package | Move | Review result |
+| --- | --- | --- |
+| `clock` | 1.1.2 -> 1.1.3 | The one direct dependency here. It keeps microseconds in `monthsAgo`, `monthsFromNow`, and `yearsAgo`. The countdown uses `clock.now()` and `Duration` arithmetic, none of which touch those helpers. |
+| `code_assets` | 1.2.1 -> 2.0.0 | Major. Its break removes `const` map and set keys for `OS`, `Architecture`, and `Sanitizer`, and it adds header validation of bundled dynamic libraries. Reached only through the `path_provider_foundation` build hook; no application code imports it. |
+| `record_use` | 0.6.0 -> 1.1.1 | Major only in reaching a stable 1.0.0. 1.1.1 fixes quadratic deserialization and index corruption in `Recordings.fromJson`. Build-time, same chain. |
+| `hooks` | 2.0.2 -> 2.2.0 | Adds `ProtocolExtension.setupLogger` and `HookInputUserDefines.baseUri`, and fixes Windows drive letters being parsed as URI schemes. Build-time, same chain. |
+| `objective_c` | 9.5.0 -> 9.6.0 | More generated Objective-C categories, plus the `code_assets` 2.0.0 bump above. Same chain. |
+| `matcher` | 0.12.19 -> 0.12.20 | Test-only. Exceptions from `operator ==` now fail a test instead of reading as unequal. No suite behavior changed. |
+| `test_api` | 0.7.11 -> 0.7.12 | Test-only. Allows `analyzer` major version 13. |
+| `meta` | 1.18.0 -> 1.19.0 | Graduates `@RecordUse()` and `@mustBeConst` out of experimental. Neither is used here. |
+| `stack_trace` | 1.12.1 -> 1.12.2 | Relaxes V8 trace parsing when the initial description is missing. |
+| `vector_math` | 2.2.0 -> 2.4.2 | Documentation for the geometry filter and `Plane` APIs, `identity` constructor optimizations, and removal of the long-deprecated `SimplexNoise`, which this application never referenced. |
+
+Five regressions came from the SDK rather than from any package.
+
+The `header` semantics flag is now a no-op on iOS and Android; a heading is
+declared only by `headingLevel > 0`, which maps to `UIAccessibilityTraitHeader`
+with `accessibilityHeadingLevel` on iOS and `View.setHeading` on Android. The
+framework still records the old flag, so the suite kept passing while every
+screen header, the countdown heading, and the authoring `Timer` heading stopped
+announcing as headings on device. `A11yHeader` now sets `headingLevel: 1`, and
+the assertions that used to check `isHeader` check the heading level a screen
+reader actually receives.
+
+Flutter 3.47 supports iOS 15 and later and macOS 12 (Monterey) and later. The
+Apple deployment targets were below both, at `IPHONEOS_DEPLOYMENT_TARGET` 13.0
+in three build configurations and `MACOSX_DEPLOYMENT_TARGET` 10.15 in three
+more; they are now 15.0 and 12.0. Nothing else in either project named a
+minimum, and `LSMinimumSystemVersion` already derives from the build setting.
+
+The newer lint set added `unawaited_return_in_try_block`, which found a real
+defect: `NativeSignInAuthGateway.authorizationHeaders` returned the platform
+future from inside its `try`, so its `catch` never ran and a cancelled,
+interrupted, or UI-unavailable authorization surfaced as a thrown exception
+instead of a null result. Awaiting it makes that arm reachable, which is a
+behavior change, and two tests now pin both sides of it. The two reports in
+`AppFlow` were not defects: each `try` exists for its own picker call, and the
+validation tail was moved out of the block it was never meant to guard.
+
+The fifth regression was the quietest: the Dart 3.13.2 formatter rewrites
+`test/contract/active/models_test.dart`, so `dart format
+--set-exit-if-changed` failed on the committed tree even at the unchanged
+`^3.12.2` language version. One file is reformatted. This was the format gate
+failing, not a test or analyzer signal, which is why it went unnoticed.
+
+The Dart constraint in `pubspec.yaml` stays `^3.12.2`. Nothing forces a bump:
+Flutter reverted its own floor to `^3.11.0` in this release, 3.13.2 already
+satisfies `^3.12.2`, and no source change in this upgrade needed a Dart 3.13
+language feature. A bump would not be free either. The constraint sets the
+package language version, and `dart format` changes style with it; raising it to
+`^3.13.2` rewrites twenty-nine otherwise untouched files, mostly by moving
+chained calls off a wrapped argument list. That churn belongs to a decision
+about adopting the 3.13 language version, not to this regression fix.
+
+The requirement this application did gain is a Flutter requirement rather than a
+Dart one. The iOS mapping for `headingLevel` arrived with 3.47; in 3.44 the
+property documented only web `aria-level` and Android `isHeading`, so a source
+build of the migrated `A11yHeader` on 3.44 would compile and then announce no
+heading at all in VoiceOver. `environment: flutter:` is the field that states
+that directly. Adding it is a policy choice about who may build from source and
+is left to the owner; `BUILDING.md` still routes builders through the Dart
+constraint alone.
+
+Two packages stay behind, both pinned by the new SDK rather than skipped:
+`material_color_utilities` 0.13.0 against 0.13.1 available, from `flutter`, and
+`test_api` 0.7.12 against 0.7.13 available, from `flutter_test`. `flutter pub
+outdated` reports every direct and development dependency as current.
+
+The Apple graph did not move. `GoogleSignIn-iOS` stays 9.2.0, `AppAuth-iOS`
+2.1.0, `GTMAppAuth` 5.0.0, `GTMSessionFetcher` 3.5.0, `app-check` 11.3.1,
+`GoogleUtilities` 8.1.3, `InteropForGoogle` 101.0.0, and `Promises` 2.4.1. An
+iOS simulator build and `xcodebuild -resolvePackageDependencies` on the macOS
+workspace both left all four checked-in `Package.resolved` files byte-identical,
+as they always have been.
+
+The CI Flutter pin moved from 3.44.6 to 3.47.2 so the toolchain that gates a
+pull request is the one this upgrade was validated against.
+
+Validation: `dart format`, `flutter analyze` with zero issues, and the complete
+`flutter test` suite pass. An unsigned iOS simulator build compiles the whole
+native graph and reports `MinimumOSVersion` 15.0 in the bundle. The macOS
+compile-only build in `BUILDING.md` succeeds and its bundle reports
+`LSMinimumSystemVersion` 12.0; the clean signed macOS build still stops at
+provisioning, which predates this upgrade.
+
 Authoritative upstream records:
 
+- [Flutter 3.47 release notes](https://docs.flutter.dev/release/release-notes/release-notes-3.47.0)
+- [Semantics header and heading level breaking change](https://docs.flutter.dev/release/breaking-changes/semantics-header-heading-level)
+- [Flutter supported platforms](https://docs.flutter.dev/reference/supported-platforms)
 - [googleapis.dart changelog](https://github.com/google/googleapis.dart/blob/master/generated/googleapis/CHANGELOG.md)
 - [Dart HTTP changelog](https://github.com/dart-lang/http/blob/master/pkgs/http/CHANGELOG.md)
 - [Flutter Google Sign-In changelog](https://github.com/flutter/packages/blob/main/packages/google_sign_in/google_sign_in/CHANGELOG.md)
