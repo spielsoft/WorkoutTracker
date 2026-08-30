@@ -37,15 +37,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Edit exercises'), findsOneWidget);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Semantics &&
-            widget.properties.header == true &&
-            widget.properties.label?.contains('Edit exercises') == true,
-      ),
-      findsOneWidget,
+    final heading = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics &&
+          widget.properties.headingLevel == 1 &&
+          widget.properties.label?.contains('Edit exercises') == true,
     );
+    expect(heading, findsOneWidget);
+    expectHeadingLevel(tester, heading, 1);
     expect(
       find.bySemanticsLabel(RegExp(r'Edit exercise library')),
       findsOneWidget,

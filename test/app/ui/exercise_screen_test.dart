@@ -267,8 +267,9 @@ void main() {
     expect(find.text('Timer'), findsOneWidget);
     expect(
       tester.getSemantics(find.bySemanticsLabel('Timer').first),
-      isSemantics(label: 'Timer', isHeader: true),
+      isSemantics(label: 'Timer'),
     );
+    expectHeadingLevel(tester, find.bySemanticsLabel('Timer').first, 1);
     for (final label in const ['Weight', 'Reps', 'RPE']) {
       expect(
         tester.getSemantics(find.bySemanticsLabel('Timer $label').first),

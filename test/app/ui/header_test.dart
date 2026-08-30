@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_tracker/src/app/ui/shared/a11y.dart';
 import 'package:workout_tracker/src/app/ui/shared/header.dart';
 
+import '../../support/widget.dart';
+
 void main() {
   testWidgets('a header announces its label once, not once per visible copy', (
     tester,
@@ -16,8 +18,9 @@ void main() {
     final semantics = tester.ensureSemantics();
     expect(
       tester.getSemantics(find.byType(A11yHeader)),
-      matchesSemantics(label: 'Squat', isHeader: true),
+      matchesSemantics(label: 'Squat'),
     );
+    expectHeadingLevel(tester, find.byType(A11yHeader), 1);
     semantics.dispose();
   });
 
@@ -39,8 +42,9 @@ void main() {
     final semantics = tester.ensureSemantics();
     expect(
       tester.getSemantics(find.byType(A11yHeader)),
-      matchesSemantics(label: 'Squat', isHeader: true),
+      matchesSemantics(label: 'Squat'),
     );
+    expectHeadingLevel(tester, find.byType(A11yHeader), 1);
     semantics.dispose();
   });
 
@@ -61,8 +65,9 @@ void main() {
       final semantics = tester.ensureSemantics();
       expect(
         tester.getSemantics(find.byType(A11yHeader)),
-        matchesSemantics(label: 'Squat, Edit exercises', isHeader: true),
+        matchesSemantics(label: 'Squat, Edit exercises'),
       );
+      expectHeadingLevel(tester, find.byType(A11yHeader), 1);
       semantics.dispose();
     },
   );
