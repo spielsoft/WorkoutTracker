@@ -578,11 +578,9 @@ class _AuthoringFormSt extends State<ExerciseAuthoringForm> {
             const SizedBox(height: 12),
             A11yHeader(
               label: 'Timer',
-              child: ExcludeSemantics(
-                child: Text(
-                  'Timer',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+              child: Text(
+                'Timer',
+                style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
             const SizedBox(height: 4),

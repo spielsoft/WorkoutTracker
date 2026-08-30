@@ -18,6 +18,9 @@ class A11yScreen extends StatelessWidget {
   }
 }
 
+/// A header whose announcement comes solely from [label]; [child] is visual
+/// only. Without the exclusion the child's own text merges into the annotated
+/// node and the heading is announced twice.
 class A11yHeader extends StatelessWidget {
   const A11yHeader({required this.label, required this.child, super.key});
 
@@ -26,7 +29,11 @@ class A11yHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(header: true, label: label, child: child);
+    return Semantics(
+      header: true,
+      label: label,
+      child: ExcludeSemantics(child: child),
+    );
   }
 }
 

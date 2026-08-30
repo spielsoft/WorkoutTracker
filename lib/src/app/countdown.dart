@@ -233,14 +233,12 @@ class CountdownBar extends StatelessWidget {
             A11yHeader(
               key: const ValueKey('countdown-heading'),
               label: ctrl.heading,
-              child: ExcludeSemantics(
-                child: Text(
-                  ctrl.heading,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colors.onTertiaryContainer,
-                    fontWeight: FontWeight.w600,
-                  ),
+              child: Text(
+                ctrl.heading,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colors.onTertiaryContainer,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
