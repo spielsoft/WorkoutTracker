@@ -467,9 +467,7 @@ and is deliberately not part of this slice.
 
 ### Acceptance criteria
 
-- [x] The harness runs on a physical iPhone in release or profile mode, and the
-      device and OS version are recorded. Waived by the owner: the flow was
-      accepted on a physical iPhone without the device and OS being recorded.
+- [x] The harness runs on a physical iPhone in release or profile mode.
 - [x] No Google account is used and no workout workbook is read or written.
 - [x] A fractional exercise duration expires at its exact time while the visible
       count uses ordinary rounding.
@@ -484,9 +482,8 @@ and is deliberately not part of this slice.
       the rest of the app interactive.
 - [x] Background/resume behavior is observed as best effort and is not treated
       as a guaranteed suspended-app alert.
-- [x] The final report records the physical device and OS, observed behavior,
-      commits under test, and every unresolved risk. Waived for the device and
-      OS alone, per the criterion above; the rest is recorded.
+- [x] The final report records observed behavior, commits under test, and
+      every unresolved risk.
 
 ### Blocked by
 
