@@ -409,6 +409,12 @@ class LoggingFlow {
 ///
 /// A Log Format that does not parse offers no fields at all, so nothing is
 /// entered against a format the app cannot render back into the sheet.
+/// The fields a set of this format is entered through, in declaration order.
+///
+/// The invalid arm satisfies exhaustiveness rather than describing behavior a
+/// person can reach: an unparseable row format is blocking schema damage, so
+/// such a workbook stops at repair and never opens a logging screen. It has no
+/// test for that reason.
 List<String> _newSetLabels(LogFormatParseResult format) {
   return switch (format) {
     ParsedLogFormat(:final fieldLabels) => fieldLabels,
