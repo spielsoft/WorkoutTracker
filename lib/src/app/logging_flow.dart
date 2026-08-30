@@ -46,7 +46,6 @@ class LoggingFlow {
   final _loggedFieldCtrls = <int, Map<String, TextEditingController>>{};
   final _rawCtrls = <int, TextEditingController>{};
   final _origins = <String, ValueOrigin>{};
-  List<String>? _resolvedTimerFields;
 
   LoggingVm get viewModel {
     final context = _context;
@@ -65,7 +64,7 @@ class LoggingFlow {
       }),
       rawCtrls: Map<int, TextEditingController>.unmodifiable(_rawCtrls),
       origins: Map<String, ValueOrigin>.unmodifiable(_origins),
-      timerFields: _timerFields(context),
+      timerFields: context.timerFields,
     );
   }
 
@@ -84,7 +83,6 @@ class LoggingFlow {
     _blockLabel = blockLabel;
     _primaryRow = primaryRow;
     _selectedRow = selectedRow;
-    _resolvedTimerFields = null;
     final context = _context;
     final setAdvanced = currentSet != _nextSetNumber(context.selectedHistory);
     _syncCtrls(context, prefillNewSet: targetChanged || setAdvanced);
@@ -209,19 +207,6 @@ class LoggingFlow {
       selectedRow: _selectedRow,
       blockLabel: _blockLabel,
     );
-  }
-
-  /// Timer Fields the canonical Exercises row declares for this placement.
-  ///
-  /// The contract layer resolves this through the placement's own direct
-  /// Exercises formula, so the shell never picks a canonical row by name.
-  /// A placement never carries its own copy and no field label, unit, or
-  /// value implies timing.
-  ///
-  /// The answer is held until [update] supplies a different sheet or
-  /// placement rather than reread on each build.
-  List<String> _timerFields(ExerciseLoggingContext context) {
-    return _resolvedTimerFields ??= context.timerFields;
   }
 
   void _syncCtrls(
@@ -458,6 +443,11 @@ class LoggingVm {
   final Map<String, ValueOrigin> origins;
 
   /// New-set field labels this exercise times, in Log Format order.
+  ///
+  /// The contract layer resolves these through the placement's own direct
+  /// Exercises formula, so the shell never picks a canonical row by name.
+  /// A placement never carries its own copy and no field label, unit, or
+  /// value implies timing.
   final List<String> timerFields;
 
   WorkoutChoice get selectedChoice => context.selectedChoice;
