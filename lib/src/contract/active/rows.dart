@@ -102,12 +102,3 @@ class _PrimarySlotBuilder {
 
   WorkoutSlot toSlot() => primary._withBackups(backups);
 }
-
-WorkoutChoice _choiceForSlot(WorkoutSlot slot) {
-  return WorkoutChoice(
-    sheetRowNumber: slot.sheetRowNumber,
-    exercise: slot.exercise,
-    isBackup: slot.isBackup,
-    logFormat: slot.logFormat,
-  );
-}

@@ -75,6 +75,19 @@ The app may heal missing or incorrect formulas in those two columns after
 validation. It must not heal row-local targets from canonical defaults or
 introduce app-only identifiers.
 
+The `Exercise` formula is a placement's only binding to a canonical row.
+Canonical names may repeat, so a name match identifies nothing and is never a
+binding. A placement is bound only when its `Exercise` cell holds a direct
+reference into the `Exercises` name column, such as `=Exercises!A7`, and the
+referenced row names an exercise. A missing formula, a computed lookup, a
+reference into another column, and a reference outside the grid all leave the
+placement unbound.
+
+An unbound placement reads no canonical configuration at all, so no field is
+timed. Timing is opt-in configuration rather than a default, the repair path
+already reports the missing or broken formula, and the alternative would be
+guessing a row by name; a placement never borrows another row's timers.
+
 `Exercises.Timer Fields` is canonical timer configuration owned by that row
 alone. A blank cell means no field is timed. A populated cell is a visible list
 of exact Log Format labels such as `['Seconds']`, written and read in Log
@@ -82,6 +95,7 @@ Format declaration order so direct Sheet edits stay stable. Malformed syntax, a
 repeated label, or a label the same row's Log Format does not declare is
 blocking schema damage. Timer configuration is never copied to the active
 sheet, has no placement-level override, and never rewrites targets or history.
+A placement reads it from the row its `Exercise` formula binds it to.
 
 A Log Format label may hold any character except braces, so the two characters
 the list itself reserves are escaped with a backslash inside the quotes:

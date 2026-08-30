@@ -187,8 +187,7 @@ class _WritePlanningContext {
   }
 
   int exerciseColumn(String activeColumnName) {
-    return sheet._exerciseFormulaColumns[activeColumnName] ??
-        _defaultExerciseColumn(activeColumnName);
+    return sheet._exerciseColumn(activeColumnName);
   }
 
   List<CellUpdate> rowReorderCellUpdates({
@@ -282,11 +281,15 @@ List<T> _reordered<T>(List<T> items, ReorderIntent intent) {
   return List<T>.unmodifiable(reordered);
 }
 
+/// One direct `Exercises` reference, quoted or not: `=Exercises!A7`.
+final _exerciseRefPattern = RegExp(r"^=('?Exercises'?)!([A-Z]+)(\d+)$");
+
+/// Reads the cell a direct `Exercises` formula points at, or null.
+///
+/// Anything else - a blank cell, a computed lookup, a reference to another
+/// tab - is not a binding and never becomes one by guessing.
 _ExerciseRef? _exerciseRef(String formula) {
-  final normalized = formula.trim();
-  final match = RegExp(
-    r"^=('?Exercises'?)!([A-Z]+)(\d+)$",
-  ).firstMatch(normalized);
+  final match = _exerciseRefPattern.firstMatch(formula.trim());
   if (match == null) {
     return null;
   }

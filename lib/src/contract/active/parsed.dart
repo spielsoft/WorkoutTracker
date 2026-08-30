@@ -256,4 +256,10 @@ class ParsedActiveSheet {
     }
     return _rows[rowIndex];
   }
+
+  /// The `Exercises` column a formula-driven active column references.
+  int _exerciseColumn(String activeColumnName) {
+    return _exerciseFormulaColumns[activeColumnName] ??
+        _defaultExerciseColumn(activeColumnName);
+  }
 }

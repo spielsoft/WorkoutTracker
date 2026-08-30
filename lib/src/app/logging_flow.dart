@@ -208,21 +208,15 @@ class LoggingFlow {
 
   /// Timer Fields the canonical Exercises row declares for this placement.
   ///
-  /// The workbook's Exercises tab is the only source of timer configuration;
-  /// a placement never carries its own copy and no field label, unit, or
+  /// The contract layer resolves this through the placement's own direct
+  /// Exercises formula, so the shell never picks a canonical row by name.
+  /// A placement never carries its own copy and no field label, unit, or
   /// value implies timing.
   ///
-  /// Resolving this rereads every canonical row, so the answer is held until
-  /// [update] supplies a different sheet or placement rather than recomputed
-  /// on each build.
+  /// The answer is held until [update] supplies a different sheet or
+  /// placement rather than reread on each build.
   List<String> _timerFields(ExerciseLoggingContext context) {
-    final name = context.selectedChoice.exercise;
-    return _resolvedTimerFields ??= () {
-      for (final exercise in _activeSheet.canonicalExercises.reversed) {
-        if (exercise.exercise == name) return exercise.timerFields;
-      }
-      return const <String>[];
-    }();
+    return _resolvedTimerFields ??= context.timerFields;
   }
 
   void _syncCtrls(

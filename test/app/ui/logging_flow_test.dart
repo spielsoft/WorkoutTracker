@@ -652,6 +652,110 @@ void main() {
       );
     },
   );
+
+  testWidgets('each placement times the Exercises row its own formula names', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    // Two canonical rows may share one name, so the visible name cannot
+    // choose between them. Row 2 times Seconds; row 3 times Hold.
+    final service = TestValSvc.fromRows(
+      [
+        [...activeSheetFixedColumns, 'Week 1'],
+        [...List.filled(activeSheetFixedColumns.length, ''), 'S1'],
+        [
+          'Plank',
+          '3',
+          '45s',
+          '',
+          '30s@8',
+          '',
+          '{Seconds}s@{RPE}',
+          'Core',
+          '',
+          'x',
+          '',
+        ],
+        [
+          'Plank',
+          '3',
+          '45s',
+          '',
+          '40@8',
+          '',
+          '{Hold}@{RPE}',
+          'Core',
+          '',
+          'x',
+          '',
+        ],
+      ],
+      exercisesRows: [
+        exercisesSheetColumns,
+        [
+          'Plank',
+          'Front plank hold',
+          '3',
+          '45s',
+          '',
+          '',
+          '{Seconds}s@{RPE}',
+          '30s@8',
+          "['Seconds']",
+        ],
+        [
+          'Plank',
+          'Side plank hold',
+          '3',
+          '45s',
+          '',
+          '',
+          '{Hold}@{RPE}',
+          '40@8',
+          "['Hold']",
+        ],
+      ],
+      cellFormulas: [
+        ...exerciseRowFormulas(sheetRowNumber: 3, exercisesRowNumber: 2),
+        ...exerciseRowFormulas(sheetRowNumber: 4, exercisesRowNumber: 3),
+      ],
+    );
+
+    await tester.pumpWidget(
+      WorkoutTrackerApp(svc: service, initialText: 'spreadsheet-id'),
+    );
+    await tester.tap(find.byKey(const ValueKey('validate-spreadsheet')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('workout-exercise-3')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.semantics.byLabel('Start Plank Seconds timer, 30 seconds'),
+      findsOne,
+      reason: 'the row 2 placement times the field row 2 declares',
+    );
+
+    await tester.tap(find.byTooltip('Back to exercises'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('workout-exercise-4')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('set-field-Hold')), findsOneWidget);
+    expect(
+      find.semantics.byLabel('Start Plank Hold timer, 40 seconds'),
+      findsOne,
+      reason: 'the row 3 placement times the field row 3 declares',
+    );
+    expect(
+      find.byKey(const ValueKey('set-timer-RPE')),
+      findsNothing,
+      reason: 'neither row times RPE',
+    );
+  });
 }
 
 void _expectFieldValue(String label, String value) {
