@@ -204,8 +204,6 @@ class _WorkoutOverviewTile extends StatelessWidget {
                           children: [
                             Text(
                               slot.exercise,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 2),
@@ -245,13 +243,7 @@ class _WorkoutOverviewTile extends StatelessWidget {
                                     children: [
                                       const Icon(backupIcon, size: 18),
                                       const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          backup.exercise,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
+                                      Expanded(child: Text(backup.exercise)),
                                     ],
                                   ),
                                 ),

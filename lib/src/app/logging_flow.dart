@@ -6,6 +6,9 @@ import 'package:workout_tracker/contract.dart';
 import 'countdown.dart';
 import 'validation_core.dart';
 
+/// The shortest hold a countdown will report.
+const _leastRecordedSeconds = 1;
+
 /// Where a new-set value came from.
 ///
 /// One origin replaces the several booleans these states would otherwise
@@ -105,10 +108,16 @@ class LoggingFlow {
   /// The value is rounded exactly as the countdown the athlete watched, and
   /// the field stops reading as an unconfirmed suggestion. Nothing else is
   /// touched: no other field, no saved set, and no workbook.
+  ///
+  /// A measured hold never reports less than a second. Stopping the moment a
+  /// countdown starts would otherwise write a zero the field cannot restart
+  /// from, replacing a prescription with a number nobody performed.
   bool markRecorded(String label, Duration elapsed) {
     final controller = _newSetCtrls[label];
     if (controller == null) return false;
-    controller.text = '${countdownSeconds(elapsed)}';
+    final measured = countdownSeconds(elapsed);
+    controller.text =
+        '${measured < _leastRecordedSeconds ? _leastRecordedSeconds : measured}';
     _origins[label] = ValueOrigin.recorded;
     return true;
   }

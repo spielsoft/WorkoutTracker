@@ -165,6 +165,28 @@ void main() {
     expect(find.text('Save set S1'), findsOneWidget);
   });
 
+  testWidgets('a hold stopped at once still records a full second', (
+    tester,
+  ) async {
+    final service = await _openLog(tester);
+    await _startTimer(tester, '45');
+
+    await tester.tap(find.byKey(const ValueKey('countdown-done')));
+    await tester.pump();
+
+    expect(
+      _value('Seconds'),
+      '1',
+      reason: 'a zero would replace the prescription and disable the timer',
+    );
+    expect(
+      find.bySemanticsLabel(RegExp('^Start .+ Seconds timer, 1 seconds')),
+      findsOne,
+      reason: 'the recorded value can start another countdown',
+    );
+    expect(service.appliedPlans, isEmpty);
+  });
+
   testWidgets('a hold that runs to expiry records its full duration', (
     tester,
   ) async {

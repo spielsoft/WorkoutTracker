@@ -280,11 +280,7 @@ class _LogScreenSt extends State<LogScreen> {
                       label: Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Text(
-                            choice.exercise,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Text(choice.exercise, textAlign: TextAlign.center),
                         ],
                       ),
                       icon: Icon(

@@ -350,8 +350,6 @@ class _ExerciseInventoryRow extends StatelessWidget {
                         children: [
                           Text(
                             exercise.displayName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           if (isHighlighted) ...[
