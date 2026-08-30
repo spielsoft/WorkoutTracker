@@ -280,36 +280,3 @@ List<T> _reordered<T>(List<T> items, ReorderIntent intent) {
   reordered.insert(intent.toIndex, item);
   return List<T>.unmodifiable(reordered);
 }
-
-/// One direct `Exercises` reference, quoted or not: `=Exercises!A7`.
-final _exerciseRefPattern = RegExp(r"^=('?Exercises'?)!([A-Z]+)(\d+)$");
-
-/// Reads the cell a direct `Exercises` formula points at, or null.
-///
-/// Anything else - a blank cell, a computed lookup, a reference to another
-/// tab - is not a binding and never becomes one by guessing.
-_ExerciseRef? _exerciseRef(String formula) {
-  final match = _exerciseRefPattern.firstMatch(formula.trim());
-  if (match == null) {
-    return null;
-  }
-  return _ExerciseRef(
-    columnNumber: _columnNumber(match.group(2)!),
-    rowNumber: int.parse(match.group(3)!),
-  );
-}
-
-class _ExerciseRef {
-  const _ExerciseRef({required this.columnNumber, required this.rowNumber});
-
-  final int columnNumber;
-  final int rowNumber;
-}
-
-int _columnNumber(String letters) {
-  var columnNumber = 0;
-  for (final codeUnit in letters.codeUnits) {
-    columnNumber = columnNumber * 26 + (codeUnit - 64);
-  }
-  return columnNumber;
-}

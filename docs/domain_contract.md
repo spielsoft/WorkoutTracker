@@ -83,6 +83,15 @@ referenced row names an exercise. A missing formula, a computed lookup, a
 reference into another column, and a reference outside the grid all leave the
 placement unbound.
 
+That binding also anchors the row's other formula-driven columns. `Log Format`
+must reference the same `Exercises` row the `Exercise` formula names. A
+well-formed reference to a different row is a split binding, reported on the
+ordinary repair path so one placement can never read two canonical rows at
+once. When the `Exercise` formula binds no row there is no anchor: a single
+canonical row of that name stands in as the repair target, and otherwise every
+formula-driven cell is reported so one repair binds the whole placement to the
+row the owner picks.
+
 An unbound placement reads no canonical configuration at all, so no field is
 timed. Timing is opt-in configuration rather than a default, the repair path
 already reports the missing or broken formula, and the alternative would be

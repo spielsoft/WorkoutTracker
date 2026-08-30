@@ -87,6 +87,11 @@ void main() {
       ['Hold'],
       reason: 'the twin name must not decide which row configures a timer',
     );
+    expect(
+      sheet.healingIssues,
+      isEmpty,
+      reason: 'both formulas of each placement already name one row',
+    );
   });
 
   test('an unreadable Exercises binding times nothing', () {

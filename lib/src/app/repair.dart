@@ -244,6 +244,8 @@ String _formulaReasonLabel(HealingIssueReason reason) {
       return 'missing formula';
     case HealingIssueReason.brokenFormula:
       return 'broken formula';
+    case HealingIssueReason.mismatchedRow:
+      return 'points at the wrong Exercises row';
   }
 }
 

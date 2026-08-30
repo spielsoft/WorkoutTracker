@@ -1,6 +1,12 @@
 part of '../active.dart';
 
-enum HealingIssueReason { missingFormula, brokenFormula }
+/// Why one formula-driven cell cannot stand as written.
+///
+/// [mismatchedRow] is not a broken formula: the cell holds a perfectly good
+/// direct reference, just to a canonical row other than the one the
+/// placement's `Exercise` formula binds it to. Saying so is the difference
+/// between "retype this" and "this row is quietly reading two exercises".
+enum HealingIssueReason { missingFormula, brokenFormula, mismatchedRow }
 
 class FormulaHealingIssue {
   FormulaHealingIssue({
@@ -264,6 +270,17 @@ List<FormulaHealingIssue> _healingIssues(
       exerciseColumns.exercise,
       exerciseName,
     );
+    final boundRow = _boundExercisesRow(
+      formulas[_CellAddress(sheetRowNumber, columns.exercise + 1)] ?? '',
+      nameColumnIndex: exerciseColumns.exercise,
+      exercisesRows: sheet.exercisesRows,
+    );
+    // The one row every formula-driven cell on this placement must name.
+    // The `Exercise` formula is the binding, so it answers first; only when
+    // it says nothing does a single name match stand in as the repair target.
+    final requiredRow =
+        boundRow ?? (candidates.length == 1 ? candidates.single : null);
+
     final cells = <HealingCellIssue>[];
     for (final formulaColumn in _formulaDrivenColumns(
       columns,
@@ -272,33 +289,25 @@ List<FormulaHealingIssue> _healingIssues(
       final sheetColumnNumber = formulaColumn.activeSheetColumnIndex + 1;
       final currentFormula =
           formulas[_CellAddress(sheetRowNumber, sheetColumnNumber)] ?? '';
-      if (currentFormula.trim().isEmpty) {
-        cells.add(
-          HealingCellIssue(
-            sheetRowNumber: sheetRowNumber,
-            sheetColumnNumber: sheetColumnNumber,
-            columnName: formulaColumn.activeColumnName,
-            reason: HealingIssueReason.missingFormula,
-            currentFormula: '',
-          ),
-        );
-      } else if (!_matchesAnyDirectRef(
+      final reason = _cellReason(
         currentFormula,
         exerciseColumn: formulaColumn.exerciseColumnIndex + 1,
-        exercisesSheetRowNumbers: candidates.isEmpty
-            ? exerciseChoices.map((choice) => choice.sheetRowNumber)
-            : candidates,
-      )) {
-        cells.add(
-          HealingCellIssue(
-            sheetRowNumber: sheetRowNumber,
-            sheetColumnNumber: sheetColumnNumber,
-            columnName: formulaColumn.activeColumnName,
-            reason: HealingIssueReason.brokenFormula,
-            currentFormula: currentFormula,
-          ),
-        );
+        isBinding: formulaColumn.activeSheetColumnIndex == columns.exercise,
+        boundRow: boundRow,
+        requiredRow: requiredRow,
+      );
+      if (reason == null) {
+        continue;
       }
+      cells.add(
+        HealingCellIssue(
+          sheetRowNumber: sheetRowNumber,
+          sheetColumnNumber: sheetColumnNumber,
+          columnName: formulaColumn.activeColumnName,
+          reason: reason,
+          currentFormula: currentFormula,
+        ),
+      );
     }
 
     if (cells.isEmpty) {
@@ -309,8 +318,8 @@ List<FormulaHealingIssue> _healingIssues(
       FormulaHealingIssue(
         activeSheetRowNumber: sheetRowNumber,
         exerciseName: exerciseName,
-        preselectedRow: candidates.length == 1 ? candidates.single : null,
-        needsChoice: candidates.length != 1,
+        preselectedRow: requiredRow,
+        needsChoice: requiredRow == null,
         candidateRows: candidates,
         exerciseChoices: exerciseChoices,
         cells: cells,
@@ -319,6 +328,37 @@ List<FormulaHealingIssue> _healingIssues(
   }
 
   return issues;
+}
+
+/// Why one formula-driven cell cannot stand, or null when it can.
+///
+/// [isBinding] marks the `Exercise` cell, which answers to nothing but
+/// itself: it is readable or it is not. Every other cell must name
+/// [requiredRow], so a well-formed reference to a different canonical row is
+/// a split binding rather than a broken formula. A row with no [requiredRow]
+/// at all - no readable binding and no single name match - fails every
+/// populated cell so that one repair rebinds the whole placement to the row
+/// the person picks, instead of leaving half of it pointing somewhere else.
+HealingIssueReason? _cellReason(
+  String formula, {
+  required int exerciseColumn,
+  required bool isBinding,
+  required int? boundRow,
+  required int? requiredRow,
+}) {
+  if (formula.trim().isEmpty) {
+    return HealingIssueReason.missingFormula;
+  }
+  if (isBinding) {
+    return boundRow == null ? HealingIssueReason.brokenFormula : null;
+  }
+  final reference = _exerciseRef(formula);
+  if (reference == null || reference.columnNumber != exerciseColumn) {
+    return HealingIssueReason.brokenFormula;
+  }
+  return reference.rowNumber == requiredRow
+      ? null
+      : HealingIssueReason.mismatchedRow;
 }
 
 List<HealingChoice> _exerciseChoices(
@@ -360,47 +400,6 @@ List<int> _matchingRows(
   return matches;
 }
 
-bool _matchesDirectRef(
-  String formula, {
-  required int exerciseColumn,
-  required int exercisesSheetRowNumber,
-}) {
-  final expected = _directExercisesFormula(
-    exerciseColumn: exerciseColumn,
-    exercisesSheetRowNumber: exercisesSheetRowNumber,
-  );
-  final quotedExpected =
-      "='Exercises'!${_columnLetter(exerciseColumn)}"
-      '$exercisesSheetRowNumber';
-  final normalized = formula.trim();
-  return normalized == expected || normalized == quotedExpected;
-}
-
-bool _matchesAnyDirectRef(
-  String formula, {
-  required int exerciseColumn,
-  required Iterable<int> exercisesSheetRowNumbers,
-}) {
-  for (final rowNumber in exercisesSheetRowNumbers) {
-    if (_matchesDirectRef(
-      formula,
-      exerciseColumn: exerciseColumn,
-      exercisesSheetRowNumber: rowNumber,
-    )) {
-      return true;
-    }
-  }
-  return false;
-}
-
-String _directExercisesFormula({
-  required int exerciseColumn,
-  required int exercisesSheetRowNumber,
-}) {
-  return '=Exercises!${_columnLetter(exerciseColumn)}'
-      '$exercisesSheetRowNumber';
-}
-
 int _defaultExerciseColumn(String activeColumnName) {
   switch (activeColumnName) {
     case 'Exercise':
@@ -422,17 +421,6 @@ int _defaultExerciseColumn(String activeColumnName) {
     default:
       return 1;
   }
-}
-
-String _columnLetter(int oneBasedColumnNumber) {
-  var columnNumber = oneBasedColumnNumber;
-  var letters = '';
-  while (columnNumber > 0) {
-    final remainder = (columnNumber - 1) % 26;
-    letters = String.fromCharCode(65 + remainder) + letters;
-    columnNumber = (columnNumber - 1) ~/ 26;
-  }
-  return letters;
 }
 
 class _FormulaDrivenColumn {

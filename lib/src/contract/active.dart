@@ -1,6 +1,7 @@
 import '../log_format/format.dart';
 import '../defaults.dart';
 
+part 'active/exercises_ref.dart';
 part 'active/healing.dart';
 part 'active/helpers.dart';
 part 'active/history.dart';

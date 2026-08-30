@@ -312,32 +312,22 @@ class _WorkoutReadModelBuilder {
       return const {};
     }
     final activeColumn = columns.exercise + 1;
-    final canonicalColumn = sheet._exerciseColumn('Exercise');
     final canonicalRows = <int, int>{};
     for (final cellFormula in sheet._cellFormulas) {
       if (cellFormula.sheetColumnNumber != activeColumn) {
         continue;
       }
-      final reference = _exerciseRef(cellFormula.formula);
-      if (reference == null ||
-          reference.columnNumber != canonicalColumn ||
-          !_namesExercise(reference.rowNumber, exerciseColumns)) {
+      final boundRow = _boundExercisesRow(
+        cellFormula.formula,
+        nameColumnIndex: exerciseColumns.exercise,
+        exercisesRows: sheet._exercisesRows,
+      );
+      if (boundRow == null) {
         continue;
       }
-      canonicalRows[cellFormula.sheetRowNumber] = reference.rowNumber;
+      canonicalRows[cellFormula.sheetRowNumber] = boundRow;
     }
     return canonicalRows;
-  }
-
-  bool _namesExercise(int rowNumber, _ExercisesColumnIndexes columns) {
-    final rowIndex = rowNumber - 1;
-    if (rowIndex < 1 || rowIndex >= sheet._exercisesRows.length) {
-      return false;
-    }
-    return _cell(
-      sheet._exercisesRows[rowIndex],
-      columns.exercise,
-    ).trim().isNotEmpty;
   }
 
   /// Timer Fields declared by a canonical row [_readCanonicalRows] resolved.
