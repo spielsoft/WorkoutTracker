@@ -12,7 +12,6 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:workout_tracker/contract.dart';
 
 import 'exercise_timer.dart';
 import 'logging_flow.dart';
@@ -28,12 +27,13 @@ typedef SetFieldTimerRequest = void Function(String label, Duration duration);
 
 /// The editor for the set being entered, with its fields, timers, and Save.
 ///
-/// The Log Format, targets, controllers, origins, timed fields, and next set
-/// number all describe one set together, so the editor takes the whole [vm]
-/// and reads that half of it itself rather than making the caller take it
-/// apart and risk pairing the pieces wrongly. The editor reports the
-/// athlete's intent through [onEntered], [onTimer], and [onSave]; it owns no
-/// set state of its own beyond focus and layout.
+/// The fields, targets, values, origins, timed fields, and set number all
+/// describe one set together, so the editor takes them as the single [vm]
+/// its flow already assembles rather than making the caller take that apart
+/// and risk pairing the pieces wrongly. That value carries the new set alone,
+/// so nothing here can read or edit a set already logged. The editor reports
+/// the athlete's intent through [onEntered], [onTimer], and [onSave]; it owns
+/// no set state of its own beyond focus and layout.
 class NewSetEditor extends StatefulWidget {
   const NewSetEditor({
     required this.vm,
@@ -44,8 +44,8 @@ class NewSetEditor extends StatefulWidget {
     super.key,
   });
 
-  /// The logging flow's current state; only its new-set half is read.
-  final LoggingVm vm;
+  /// The set being entered.
+  final NewSetVm vm;
   final bool isBusy;
   final ValueChanged<String> onEntered;
   final SetFieldTimerRequest onTimer;
@@ -67,7 +67,7 @@ class _NewSetEditorSt extends State<NewSetEditor> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _labels = _fieldLabels(widget.vm.context.logFormat);
+    _labels = widget.vm.labels;
     _fieldKeys = _createFieldKeys(_labels);
     _focusNodes = _createFocusNodes(_labels);
   }
@@ -95,7 +95,7 @@ class _NewSetEditorSt extends State<NewSetEditor> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(NewSetEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final labels = _fieldLabels(widget.vm.context.logFormat);
+    final labels = widget.vm.labels;
     if (_sameLabels(labels, _labels)) return;
     _disposeFocusNodes();
     _labels = labels;
@@ -226,15 +226,15 @@ class _NewSetEditorSt extends State<NewSetEditor> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final vm = widget.vm;
-    final controllers = vm.newSetCtrls;
-    final targets = vm.context.targets.values;
+    final controllers = vm.ctrls;
+    final targets = vm.targets;
     final timerFields = vm.timerFields;
 
     Widget saveButton() {
       return FilledButton.icon(
         onPressed: widget.isBusy ? null : widget.onSave,
         icon: const Icon(Icons.save_outlined),
-        label: Text('Save set S${vm.nextSetNumber}'),
+        label: Text('Save set S${vm.setNumber}'),
       );
     }
 
@@ -242,7 +242,7 @@ class _NewSetEditorSt extends State<NewSetEditor> with WidgetsBindingObserver {
       if (!timerFields.contains(label)) return null;
       return _SetFieldTimerButton(
         key: ValueKey('set-timer-$label'),
-        exercise: vm.selectedChoice.exercise,
+        exercise: vm.exercise,
         label: label,
         controller: controllers[label]!,
         onTimer: widget.onTimer,
@@ -401,13 +401,6 @@ TextStyle? _suggestedStyle(BuildContext context) {
     color: suggestedValueColor(Theme.of(context).colorScheme),
     fontStyle: FontStyle.italic,
   );
-}
-
-List<String> _fieldLabels(LogFormatParseResult format) {
-  return switch (format) {
-    ParsedLogFormat(:final fieldLabels) => fieldLabels,
-    InvalidLogFormat() => const <String>[],
-  };
 }
 
 bool _sameLabels(List<String> left, List<String> right) {

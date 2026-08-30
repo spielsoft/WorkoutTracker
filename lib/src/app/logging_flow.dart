@@ -236,10 +236,7 @@ class LoggingFlow {
     ExerciseLoggingContext context, {
     required bool prefill,
   }) {
-    final labels = switch (context.logFormat) {
-      ParsedLogFormat(:final fieldLabels) => fieldLabels.toSet(),
-      InvalidLogFormat() => <String>{},
-    };
+    final labels = _newSetLabels(context.logFormat).toSet();
     final removedLabels = _newSetCtrls.keys
         .where((label) => !labels.contains(label))
         .toList();
@@ -408,6 +405,17 @@ class LoggingFlow {
   }
 }
 
+/// The fields a new set is entered through, in Log Format order.
+///
+/// A Log Format that does not parse offers no fields at all, so nothing is
+/// entered against a format the app cannot render back into the sheet.
+List<String> _newSetLabels(LogFormatParseResult format) {
+  return switch (format) {
+    ParsedLogFormat(:final fieldLabels) => fieldLabels,
+    InvalidLogFormat() => const <String>[],
+  };
+}
+
 final class SetRecovery {
   const SetRecovery({
     required this.setLabel,
@@ -447,4 +455,64 @@ class LoggingVm {
   final List<String> timerFields;
 
   WorkoutChoice get selectedChoice => context.selectedChoice;
+
+  /// Everything the set being entered is made of, and nothing else.
+  ///
+  /// Built here from this one context so the pieces always describe the same
+  /// set, and built lazily because the logged-set half of the screen never
+  /// asks for it.
+  late final NewSetVm newSet = NewSetVm._(
+    labels: _newSetLabels(context.logFormat),
+    exercise: context.selectedChoice.exercise,
+    setNumber: nextSetNumber,
+    targets: context.targets.values,
+    ctrls: newSetCtrls,
+    origins: origins,
+    timerFields: timerFields,
+  );
+}
+
+/// The set the athlete is about to perform.
+///
+/// The fields, what the plan prescribes for them, what they currently hold,
+/// where each of those values came from, which of them this exercise times,
+/// and the number the set will be saved as all describe one set together.
+/// [LoggingVm.newSet] assembles them from a single context and is the only
+/// thing that can: the constructor is library-private, so no caller can pair
+/// one set's fields with another set's values.
+///
+/// Nothing here describes a set already logged. A screen given this cannot
+/// reach logged-set controllers or entries even by mistake.
+class NewSetVm {
+  NewSetVm._({
+    required Iterable<String> labels,
+    required this.exercise,
+    required this.setNumber,
+    required this.targets,
+    required this.ctrls,
+    required this.origins,
+    required Iterable<String> timerFields,
+  }) : labels = List<String>.unmodifiable(labels),
+       timerFields = List<String>.unmodifiable(timerFields);
+
+  /// The fields to enter, in Log Format order.
+  final List<String> labels;
+
+  /// The exercise this set will be logged against.
+  final String exercise;
+
+  /// The number this set will be saved as.
+  final int setNumber;
+
+  /// What the plan prescribes for each field, keyed by label.
+  final Map<String, String> targets;
+
+  /// The value each field currently holds, keyed by label.
+  final Map<String, TextEditingController> ctrls;
+
+  /// Where each field's current value came from.
+  final Map<String, ValueOrigin> origins;
+
+  /// The labels this exercise times, a subset of [labels].
+  final List<String> timerFields;
 }

@@ -300,7 +300,7 @@ class _LogScreenSt extends State<LogScreen> {
               '${widget.view.target.blockLabel}-'
               '${widget.view.target.selectedRow}',
             ),
-            vm: viewModel,
+            vm: viewModel.newSet,
             isBusy: widget.view.isBusy,
             onEntered: _markEntered,
             onTimer: _startExerciseTimer,
