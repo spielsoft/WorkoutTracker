@@ -150,6 +150,14 @@ void main() {
     expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
   });
 
+  testWidgets('unitless rest starts a timer in seconds', (tester) async {
+    await _openLog(tester, rest: '120', sets: '3');
+    await _save(tester);
+
+    expect(find.byKey(const ValueKey('countdown-bar')), findsOneWidget);
+    expect(find.text('120'), findsOneWidget);
+  });
+
   testWidgets('blank rest starts no timer', (tester) async {
     await _openLog(tester, rest: '', sets: '3');
     await _save(tester);
@@ -191,6 +199,7 @@ void main() {
   });
 
   test('supported rest spellings resolve', () {
+    expect(restDuration('120'), const Duration(seconds: 120));
     expect(restDuration('3 min'), const Duration(minutes: 3));
     expect(restDuration('90s'), const Duration(seconds: 90));
     expect(restDuration('1.5 min'), const Duration(seconds: 90));

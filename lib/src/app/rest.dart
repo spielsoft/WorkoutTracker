@@ -2,7 +2,7 @@ import 'countdown.dart';
 
 const _restHeading = 'REST';
 
-/// Reads a workbook Rest cell such as `90s`, `1.5 min`, or `1:30`.
+/// Reads a workbook Rest cell such as `90`, `90s`, `1.5 min`, or `1:30`.
 Duration? restDuration(String value) {
   final text = value.trim().toLowerCase();
   final minuteSecond = RegExp(r'^(\d+):(\d{1,2})$').firstMatch(text);
@@ -14,12 +14,12 @@ Duration? restDuration(String value) {
   }
 
   final match = RegExp(
-    r'^(\d+(?:\.\d+)?)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes)$',
+    r'^(\d+(?:\.\d+)?)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes)?$',
   ).firstMatch(text);
   if (match == null) return null;
   final amount = double.parse(match.group(1)!);
-  final unit = match.group(2)!;
-  final multiplier = unit.startsWith('s') ? 1 : 60;
+  final unit = match.group(2);
+  final multiplier = unit == null || unit.startsWith('s') ? 1 : 60;
   return _positiveDuration((amount * multiplier).round());
 }
 

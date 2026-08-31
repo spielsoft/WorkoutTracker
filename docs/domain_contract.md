@@ -56,6 +56,10 @@ The active sheet owns workout placement and row-local metadata: fixed `Sets`,
 `Rest`, and `Tempo`; format-driven `Targets`; plus `Notes`, `Workout`,
 `is_backup`, and `is_exercise`.
 
+A positive numeric `Rest` value with no unit is seconds. Explicit seconds and
+minutes units and `minutes:seconds` notation are also accepted; blank or other
+text leaves the rest timer disabled without changing the stored cell.
+
 `Exercises.Default Values` and active-row `Targets` use their row's `Log
 Format` to render the declared field map into one cell. Labels are exact,
 case-sensitive, unique keys. A blank value is allowed, including a blank

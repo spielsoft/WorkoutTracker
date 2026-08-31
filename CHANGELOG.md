@@ -25,6 +25,7 @@ User-visible changes to WorkoutTracker are recorded here. Releases follow
   again to VoiceOver and TalkBack.
 - A cancelled or interrupted Google authorization now reports that no headers
   are available instead of raising the cancellation as an error.
+- Unitless Rest values now start the countdown in seconds.
 
 ## 1.0.0-rc.1 - Pending
 
